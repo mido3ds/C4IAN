@@ -15,7 +15,7 @@ title: \huge{Tactical MANET}
 
 # 1. Problem Statement
 <!-- Introduction to the problem (max 30 words) -->
-A communication system for military, used during operations in areas with no internet infrastructure. 
+A `mobile ad-hoc network` communication system for military, for operations in areas with no internet infrastructure.
 Deployed units can stream audio, video and sensors readings to command centres.
 Command centres can stream audio and message codes to some/all unit(s).
 
@@ -33,9 +33,9 @@ TODO
 - Number of modules must be at least equal to number of team members
 - Max number of modules including the integration of whole project must not exceed 6
 modules -->
-| Module Name                    | Function                                                                                                   | Input                                                                                    | Expected Output                            | % of used Libraries |
-|--------------------------------|------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|--------------------------------------------|---------------------|
-| Unit Client                    | Stream and receive streams to/from command centres                                                         | Device audio, video, sensors and message codes. Streams and messages from command centre | Send streams and show play audio/messages  | TODO                |
-| Cmd. Centre Client             | Stream and receive streams to/from deployed units                                                          | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages  | TODO                |
-| Router                         | Determine how a certain ip-packet should be forwarded. Implements some `MANET` ad-hoc protocol             | IP packet to forward                                                                     | IP address of node to forward to           | TODO                |
-| Simulation & Emulation Scripts | Build, configure and monitor the simulation/emulation of the manet. Define the topology and mobility model | User commands and arguments or configuration file                                        | Commands to emulation/simulation/actual-HW | TODO                |
+| Module Name        | Function                                                                                                     | Input                                                                                    | Expected Output                            | % of used Libraries |
+|--------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|--------------------------------------------|---------------------|
+| Unit Client        | Stream and receive streams to/from command centres                                                           | Device audio, video, sensors and message codes. Streams and messages from command centre | Send streams and show play audio/messages  | TODO                |
+| Cmd. Centre Client | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics            | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages  | TODO                |
+| Router             | Determine how a certain ip-packet should be forwarded. Implements some `MANET` ad-hoc protocol               | IP packet to forward                                                                     | IP address of node to forward to           | TODO                |
+| Testbed            | Build, configure and monitor the simulation/emulation of the `MANEt`. Define the topology and mobility model | User commands and arguments or configuration file                                        | Commands to emulation/simulation/actual-HW | TODO                |
