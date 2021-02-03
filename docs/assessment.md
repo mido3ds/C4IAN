@@ -19,7 +19,7 @@ A communication application for tactical teams, used in areas where there is no 
 - Video streaming from soldiers' dash cams.
 - Audio streaming from soldiers' microphones. 
 - Transmitting raw data from various sensors (e.g GPS, thermal sensors, health sensors, etc \dots).
-- Sending message codes (every code has its predefined meaning), then transmitting them live to the command centre(s).
+- Sending message codes (every code has its predefined meaning), then transmitting them live to the command center(s).
 
 The application should allow the units to communicate securely, with low latency and high throughput.
 
@@ -28,7 +28,7 @@ The application should use a complex routing protocol that utilizes redundancy i
 The application should be ready to deploy to devices with low-power microprocessors running linux. Unfortunately, we have to emulate those devices for budget reasons, and to be able to test various stressful mobility models, which would be nearly impossible using actual hardware. 
 
 # Use Cases
-- Nation wide emergency situations, when most/all of the internet infrastructure is gone, and emergency tactical units need to communicate with the command centre with no preconfigured setup.
+- Nation wide emergency situations, when most/all of the internet infrastructure is gone, and emergency tactical units need to communicate with the command center with no preconfigured setup.
 - Plot a frequently updated map of deployed units' positions and their current activities in places with no internet coverage.
 - Rapidly notify nearby units of any danger.
 - Use complex multi-layer digital encryption that is not feasible in analog communications via RF.

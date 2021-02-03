@@ -15,11 +15,11 @@ This document lists details of the graduation project requirements and specifica
 
 # Project Description
 A communication system for military, used in areas with no internet infrastructure. 
-The system connects the command centre(s) with deployed units in two-way communications.
+The system connects the command center(s) with deployed units in two-way communications.
 
 ## Nodes
 Nodes include:
-- Fixed number of pre-known command centres computers.
+- Fixed number of pre-known command Centers computers.
 - Devices with soldiers, connected with sensors, dashcam and audio input.
 
 All nodes are provided with wireless communication modules that follow `IEEE 802.11` standards.
@@ -32,9 +32,9 @@ The system should let the soldiers devices:
 - stream raw data from various sensors (e.g GPS, thermal sensors, health sensors, etc \dots),
 - and send message codes (every code has its predefined meaning)
 
-to all the command centres.
+to all the command Centers.
 
-The system should let the command centres:
+The system should let the command Centers:
 
 - send audio commands,
 - and send command codes (every code has its predefined meaning)

@@ -16,8 +16,8 @@ title: \huge{Tactical MANET}
 # 1. Problem Statement
 <!-- Introduction to the problem (max 30 words) -->
 A `mobile ad-hoc network` communication system for military, for operations in areas with no internet infrastructure.
-Deployed units can stream audio, video and sensors readings to command centres.
-Command centres can stream audio and message codes to some/all unit(s).
+Deployed units can stream audio, video and sensors readings to command Centers.
+Command Centers can stream audio and message codes to some/all unit(s).
 
 # 2. Motivation
 <!-- Why are you motivated to work on this problem? (max 30 words) -->
@@ -37,7 +37,7 @@ Figure \ref{fig:modules} shows the modules diagram.
 modules -->
 | Module Name        | Function                                                                                                     | Input                                                                                    | Expected Output                                | % of used Libraries |
 |--------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------|---------------------|
-| Unit Client        | Stream and receive streams to/from command centres                                                           | Device audio, video, sensors and message codes. Streams and messages from command centre | Send streams and show play audio/messages      | TODO                |
-| Cmd. Centre Client | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics            | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages      | TODO                |
+| Unit Client        | Stream and receive streams to/from command Centers                                                           | Device audio, video, sensors and message codes. Streams and messages from command center | Send streams and show play audio/messages      | TODO                |
+| Cmd. Center Client | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics            | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages      | TODO                |
 | Router             | Determine how a certain ip-packet should be forwarded. Implements some `MANET` ad-hoc protocol               | IP packet (with final destination) to forward                                            | Path from this node to final destination       | TODO                |
 | Testbed            | Build, configure and monitor the simulation/emulation of the `MANEt`. Define the topology and mobility model | User commands and arguments or configuration file                                        | Commands to emulation, simulation or actual-HW | TODO                |
