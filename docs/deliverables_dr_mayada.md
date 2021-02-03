@@ -26,16 +26,18 @@ We are interested in decentralized/distributed algorithms and designing/building
 # 3. System Architecture
 <!-- In this section, draw the block diagram of your system showing the flow between
 different modules. -->
-TODO
+Figure \ref{fig:modules} shows the modules diagram.
+
+![Modules Diagram \label{fig:modules}](figures/modules_diagram.png)
 
 # 4. List of Deliverables
 <!-- State the main modules of your system with its function, inputs and expected outputs
 - Number of modules must be at least equal to number of team members
 - Max number of modules including the integration of whole project must not exceed 6
 modules -->
-| Module Name        | Function                                                                                                     | Input                                                                                    | Expected Output                            | % of used Libraries |
-|--------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|--------------------------------------------|---------------------|
-| Unit Client        | Stream and receive streams to/from command centres                                                           | Device audio, video, sensors and message codes. Streams and messages from command centre | Send streams and show play audio/messages  | TODO                |
-| Cmd. Centre Client | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics            | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages  | TODO                |
-| Router             | Determine how a certain ip-packet should be forwarded. Implements some `MANET` ad-hoc protocol               | IP packet (with final destination) to forward                                            | Path from this node to final destination   | TODO                |
-| Testbed            | Build, configure and monitor the simulation/emulation of the `MANEt`. Define the topology and mobility model | User commands and arguments or configuration file                                        | Commands to emulation/simulation/actual-HW | TODO                |
+| Module Name        | Function                                                                                                     | Input                                                                                    | Expected Output                                | % of used Libraries |
+|--------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------|---------------------|
+| Unit Client        | Stream and receive streams to/from command centres                                                           | Device audio, video, sensors and message codes. Streams and messages from command centre | Send streams and show play audio/messages      | TODO                |
+| Cmd. Centre Client | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics            | Audio and message codes. Streams and messages from deplyed units                         | Send streams and show play audio/messages      | TODO                |
+| Router             | Determine how a certain ip-packet should be forwarded. Implements some `MANET` ad-hoc protocol               | IP packet (with final destination) to forward                                            | Path from this node to final destination       | TODO                |
+| Testbed            | Build, configure and monitor the simulation/emulation of the `MANEt`. Define the topology and mobility model | User commands and arguments or configuration file                                        | Commands to emulation, simulation or actual-HW | TODO                |
