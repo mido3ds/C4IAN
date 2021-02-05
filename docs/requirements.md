@@ -141,7 +141,10 @@ The system will be tested in 2 different environments: virtual and actual hardwa
 Using virtualization/emulation, each node (unit/command center) will be deployed in a virtual machine.
 Each node will have a static ip equivalent to that stored in nodes databases.
 
-Ther should be `UI` for units' clients that connects with them over forwarded ports, receives their screens and audio and sends them button actions and fake audio/video/position/heartbeat inputs.
+Ther should be `UI` for units' clients that:
+- connects with them over forwarded ports,
+- receives their screens and audio, 
+- and sends them button actions and fake audio/video/position/heartbeat inputs,
 
 Mininet-wifi will be used to simulate the wiereless connections and create topologies.
 
