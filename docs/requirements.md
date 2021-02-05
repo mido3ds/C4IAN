@@ -19,29 +19,32 @@ The system connects the command center(s) with deployed units in two-way communi
 
 ## Nodes
 Nodes include:
-- Fixed number of pre-known command Centers computers.
-- Devices with soldiers, connected with sensors, dashcam and audio input.
+- Fixed number of pre-known command centers computers.
+- Devices with deployed units, connected with sensors, dashcam and audio input.
 
 All nodes are provided with wireless communication modules that follow `IEEE 802.11` standards.
 
-## Functional Features
-The system should let the soldiers devices:
+## Functional Requirements
+### Units
+The system should let the deployed units devices:
 
 - stream video from dash cams,
 - stream audio from microphones,
 - stream raw data from various sensors (e.g GPS, thermal sensors, health sensors, etc \dots),
 - and send message codes (every code has its predefined meaning)
 
-to all the command Centers.
+to all the command centers.
 
-The system should let the command Centers:
+### Command Centers
+The system should let the command centers:
 
 - send audio commands,
 - and send command codes (every code has its predefined meaning)
 
-to one (unicast), some (multicast) or all (boradcast) of the soldiers devices.
+to one (unicast), some (multicast) or all (boradcast) of the deployed units devices.
 
-## Non-functional Features
+
+## Non-functional Requirements
 The system should allow the units to communicate securely, with low latency and high throughput.
 
 The system have to use a complex routing protocol that utilizes redundancy in the topology to increase communication reliability.
