@@ -6,7 +6,7 @@
 
 <script>
   export default {
-    name: 'Unit UI'
+    name: 'unit-ui'
   }
 </script>
 
