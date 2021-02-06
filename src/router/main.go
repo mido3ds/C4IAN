@@ -1,13 +1,14 @@
 package main
 
 import (
-   "fmt"
-   "github.com/akamensky/argparse"
-   "os"
+	"fmt"
+	"os"
+
+	"github.com/akamensky/argparse"
 )
 
 func main() {
-   // Create new parser object
+	// Create new parser object
 	parser := argparse.NewParser("print", "Prints provided string to stdout")
 	// Create string flag
 	s := parser.String("s", "string", &argparse.Options{Required: true, Help: "String to print"})
