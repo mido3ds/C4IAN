@@ -1,4 +1,4 @@
-module github.com/mido3ds/tactical-manet/src/comm/daemon
+module github.com/mido3ds/tactical_manet/src/comm/daemon
 
 go 1.15
 

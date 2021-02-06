@@ -1,4 +1,4 @@
-module github.com/mido3ds/tactical-manet/src/router
+module github.com/mido3ds/tactical_manet/src/router
 
 go 1.15
 
