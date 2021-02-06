@@ -1,5 +1,5 @@
 {
-  "name": "unit-ui",
+  "name": "Unit UI",
   "version": "0.0.1",
   "author": "Mahmoud Adas, Yosry Mohammad, Ahmed Mahmoud, Abdulrahman Khalid",
   "description": "UI for unit client",
@@ -19,7 +19,7 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "unit-ui",
+    "productName": "Unit UI",
     "appId": "com.cufe.tmanet.unit.ui",
     "directories": {
       "output": "build"

@@ -6,7 +6,7 @@
 
 <script>
   export default {
-    name: 'comm-ui'
+    name: 'Command Center UI'
   }
 </script>
 

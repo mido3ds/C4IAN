@@ -1,5 +1,5 @@
 {
-  "name": "comm-ui",
+  "name": "Command Center UI",
   "version": "0.0.1",
   "author": "Mahmoud Adas, Yosry Mohammad, Ahmed Mahmoud, Abdulrahman Khalid",
   "description": "UI for command client.",
@@ -19,7 +19,7 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "comm-ui",
+    "productName": "Command Center UI",
     "appId": "com.cufe.tmanet.comm.ui",
     "directories": {
       "output": "build"
