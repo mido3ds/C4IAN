@@ -22,6 +22,8 @@ $ sudo apt update && sudo apt install -y wget && (
 
 ## Issues
 - `electron: error while loading shared libraries: libgconf-2.so.4: cannot open shared object file: No such file or directory`
+
+[Solution] Run:
 ```
 $ sudo apt install -y libgconf-2-4
 ```

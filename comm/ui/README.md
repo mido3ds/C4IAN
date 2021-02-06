@@ -1,6 +1,6 @@
 # Command UI
 
-> UI for commands center
+> UI for command client.
 
 #### Build Setup
 
