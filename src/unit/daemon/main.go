@@ -8,17 +8,42 @@ import (
 )
 
 func main() {
-	// Create new parser object
-	parser := argparse.NewParser("print", "Prints provided string to stdout")
-	// Create string flag
-	s := parser.String("s", "string", &argparse.Options{Required: true, Help: "String to print"})
-	// Parse input
+	args := parseArgs()
+
+	// TODO: open db
+	// TODO: wrap writing to db
+	// TODO: open port
+	// TODO: define interface for virt
+	fmt.Println(args)
+}
+
+// Args store command line arguments
+type Args struct {
+	// null if no store path
+	StorePath string
+
+	IsVirt bool
+	Port   int
+}
+
+func parseArgs() Args {
+	parser := argparse.NewParser("unit-daemon", "Unit client daemon")
+	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
+
+	virt := parser.NewCommand("virt", "Run in virtual mode")
+	port := virt.Int("p", "port", &argparse.Options{Default: 3070, Help: "Port to bind to"})
+
+	parser.NewCommand("hw", "Run in hardware mode")
+
 	err := parser.Parse(os.Args)
 	if err != nil {
-		// In case of error print error and print usage
-		// This can also be done by passing -h or --help flags
 		fmt.Print(parser.Usage(err))
+		os.Exit(1)
 	}
-	// Finally print the collected string
-	fmt.Println(*s)
+
+	return Args{
+		StorePath: *storePath,
+		IsVirt:    virt.Happened(),
+		Port:      *port,
+	}
 }
