@@ -20,17 +20,19 @@ func main() {
 
 // Args store command line arguments
 type Args struct {
-	StorePath string
-	KeysPath  string
-	Port      int
-	UIPort    string
+	StorePath   string
+	KeysPath    string
+	PrivKeyPath string
+	Port        int
+	UIPort      string
 }
 
 func parseArgs() Args {
 	parser := argparse.NewParser("unit-daemon", "Unit client daemon")
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Required: true})
-	keysPath := parser.String("k", "keys", &argparse.Options{Help: "Path to keys file. To get commands IPs and their pub-keys", Required: true})
+	keysPath := parser.String("k", "keys", &argparse.Options{Help: "Path to keys file. To get commands IPs and their pub-keys.", Required: true})
+	privKeyPath := parser.String("", "priv-key", &argparse.Options{Help: "Path to private key file.", Required: true})
 
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
 	uiPort := parser.String("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
@@ -42,9 +44,10 @@ func parseArgs() Args {
 	}
 
 	return Args{
-		StorePath: *storePath,
-		KeysPath:  *keysPath,
-		Port:      *port,
-		UIPort:    *uiPort,
+		StorePath:   *storePath,
+		KeysPath:    *keysPath,
+		PrivKeyPath: *privKeyPath,
+		Port:        *port,
+		UIPort:      *uiPort,
 	}
 }

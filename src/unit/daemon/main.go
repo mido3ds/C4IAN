@@ -21,11 +21,12 @@ func main() {
 // Args store command line arguments
 type Args struct {
 	// null if no store path
-	StorePath string
-	KeysPath  string
-	Port      int
-	IsVirt    bool
-	UIPort    int
+	StorePath   string
+	KeysPath    string
+	PrivKeyPath string
+	Port        int
+	IsVirt      bool
+	UIPort      int
 }
 
 func parseArgs() Args {
@@ -33,6 +34,7 @@ func parseArgs() Args {
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
 	keysPath := parser.String("k", "keys", &argparse.Options{Help: "Path to keys file. To get commands IPs and their pub-keys.", Required: true})
+	privKeyPath := parser.String("", "priv-key", &argparse.Options{Help: "Path to private key file.", Required: true})
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
 
 	virt := parser.NewCommand("virt", "Run in virtual mode")
@@ -45,10 +47,11 @@ func parseArgs() Args {
 	}
 
 	return Args{
-		StorePath: *storePath,
-		KeysPath:  *keysPath,
-		Port:      *port,
-		IsVirt:    virt.Happened(),
-		UIPort:    *uiPort,
+		StorePath:   *storePath,
+		KeysPath:    *keysPath,
+		PrivKeyPath: *privKeyPath,
+		Port:        *port,
+		IsVirt:      virt.Happened(),
+		UIPort:      *uiPort,
 	}
 }
