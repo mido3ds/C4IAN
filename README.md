@@ -1,3 +1,5 @@
+> Follow the rest of `README`s.
+
 # Development
 ## Common Requirements
 ### golang 1.15.8
@@ -34,4 +36,5 @@ For `VSCode` support:
 $ sudo apt install -y libgconf-2-4
 ```
 
-Follow the rest of `README`s.
+## Daemonize
+You need to use `systemd`/`runc` service to turn executable into a daemon.
