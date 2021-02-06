@@ -23,9 +23,9 @@ type Args struct {
 	// null if no store path
 	StorePath string
 	KeysPath  string
-	Adr       string
-	// null if not virtual
-	UIAdr string
+	Port      int
+	IsVirt    bool
+	UIPort    int
 }
 
 func parseArgs() Args {
@@ -33,10 +33,10 @@ func parseArgs() Args {
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
 	keysPath := parser.String("k", "keys", &argparse.Options{Help: "Path to keys file. To get commands IPs and their pub-keys.", Required: true})
-	adr := parser.String("a", "adr", &argparse.Options{Help: "Main address is the address+port the client will bind to receive connections from other clients.", Default: "0.0.0.0:4070"})
+	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
 
 	virt := parser.NewCommand("virt", "Run in virtual mode")
-	uiAdr := virt.String("", "ui-adr", &argparse.Options{Default: "0.0.0.0:3070", Help: "UI address+port the client will bind to connect with its UI."})
+	uiPort := virt.Int("", "ui-port", &argparse.Options{Default: 3070, Help: "UI port the client will bind to, to connect with its UI."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -47,7 +47,8 @@ func parseArgs() Args {
 	return Args{
 		StorePath: *storePath,
 		KeysPath:  *keysPath,
-		Adr:       *adr,
-		UIAdr:     *uiAdr,
+		Port:      *port,
+		IsVirt:    virt.Happened(),
+		UIPort:    *uiPort,
 	}
 }

@@ -6,8 +6,8 @@ $ go build
 
 ## Run
 ```
-# store data at "comms.db", read public keys from "unit-keys.db", main address is 127.0.0.1:9180 and UI address is 127.0.0.1:7061
-$ ./daemon --store comms.db --keys unit-keys.db --adr 127.0.0.1:9180 --ui-adr 127.0.0.1:7061
+# main port is 9180, UI port is 7061, store data at "comms.db", read public keys from "unit-keys.db"
+$ ./daemon --port 9180 --ui-port 7061 --store comms.db --keys unit-keys.db
 
 # for more options
 $ ./daemon --help

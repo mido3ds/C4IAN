@@ -22,8 +22,8 @@ func main() {
 type Args struct {
 	StorePath string
 	KeysPath  string
-	Adr       string
-	UIAdr     string
+	Port      int
+	UIPort    string
 }
 
 func parseArgs() Args {
@@ -32,8 +32,8 @@ func parseArgs() Args {
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Required: true})
 	keysPath := parser.String("k", "keys", &argparse.Options{Help: "Path to keys file. To get commands IPs and their pub-keys", Required: true})
 
-	adr := parser.String("a", "adr", &argparse.Options{Help: "Main address+port the client will bind to receive connections from other clients.", Default: "0.0.0.0:4170"})
-	uiAdr := parser.String("", "ui-adr", &argparse.Options{Default: "0.0.0.0:3170", Help: "UI address+port the client will bind to connect with its UI."})
+	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
+	uiPort := parser.String("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -44,7 +44,7 @@ func parseArgs() Args {
 	return Args{
 		StorePath: *storePath,
 		KeysPath:  *keysPath,
-		Adr:       *adr,
-		UIAdr:     *uiAdr,
+		Port:      *port,
+		UIPort:    *uiPort,
 	}
 }
