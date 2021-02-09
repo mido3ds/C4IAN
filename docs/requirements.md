@@ -124,9 +124,9 @@ The system allows nodes to communicate with low latency and high throughput.
 Video streams must be viewable at minimum of 20 fps.
 
 ## Routing
-> TODO: define routing algorithm
-
 The system uses a complex routing protocol that utilizes redundancy in the topology to increase communication reliability.
+
+The routing protocol is multipath-multicasting with [Multiple Description Coding (MDC)](https://www.researchgate.net/publication/277235710_Seamless_reliable_video_multicast_in_wireless_ad_hoc_networks) which is optimized for video streaming in ad-hoc networks.
 
 ## Security
 - All transmitted data are encrypted.
