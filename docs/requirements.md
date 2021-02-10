@@ -43,6 +43,18 @@ Features:
 - High mobility.
 - Operated by one person.
 
+### Gateways
+Devices deployed on semi-stationary vehicles, connected to units and centers.
+Acts as a gateway between the 2 groups.
+
+- Low-gain high-frequency antennas, connected to units.
+- High-gain low-frequency high-power antennas, connected to command centers.
+- High power consumption.
+- Medium mobility.
+- High wireless ranges.
+- Operated by one person.
+- Acts as a unit.
+
 ### Command Centers
 High-end computers at the command and control centers, accessed by units leaders.
 
