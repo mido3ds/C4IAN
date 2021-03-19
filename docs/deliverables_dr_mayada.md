@@ -22,6 +22,7 @@ Command Centers can stream audio and message codes to some/all unit(s).
 # 2. Motivation
 <!-- Why are you motivated to work on this problem? (max 30 words) -->
 We are interested in decentralized/distributed algorithms and designing/building complex systems.
+Ad-hoc networks are known to be challenging in designing, building and debugging.
 
 # 3. System Architecture
 <!-- In this section, draw the block diagram of your system showing the flow between
