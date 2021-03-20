@@ -53,7 +53,7 @@
     }
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "vue": "^2.5.16",
     "vue-devtools": "^5.1.4",
     "vue-electron": "^1.0.6",
