@@ -13,27 +13,27 @@ title: \huge{Tactical MANET}
 | Ahmed Mahmoud      | \texttt{Ahmed.Afifi98@eng-st.cu.edu.eg}          |
 | Abdulrahman Khalid | \texttt{abdulrahman.elshafie98@eng-st.cu.edu.eg} |
 
-# 1. Problem Statement
+# Problem Statement
 <!-- Introduction to the problem (max 30 words) -->
 A `mobile ad-hoc network` communication system for military, for operations in areas with no internet infrastructure.
 Deployed units can stream audio, video and sensors readings to command Centers.
 Command Centers can stream audio and message codes to some/all unit(s).
 
-# 2. Motivation
+# Motivation
 <!-- Why are you motivated to work on this problem? (max 30 words) -->
 The military needs to perform live data-analysis, communicate effectively over large distances.
 Ad-hoc networks promise more flexibilty than manual radio broadcasting.
 
 We are also interested in building distributed systems.
 
-# 3. System Architecture
+# System Architecture
 <!-- In this section, draw the block diagram of your system showing the flow between
 different modules. -->
 Figure \ref{fig:modules} shows the modules diagram.
 
 ![Modules Diagram \label{fig:modules}](figures/modules_diagram.png)
 
-# 4. List of Deliverables
+# List of Deliverables
 <!-- State the main modules of your system with its function, inputs and expected outputs
 - Number of modules must be at least equal to number of team members
 - Max number of modules including the integration of whole project must not exceed 6
