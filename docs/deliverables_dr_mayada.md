@@ -26,12 +26,20 @@ Ad-hoc networks promise more flexibilty than manual radio broadcasting.
 
 We are also interested in building distributed systems.
 
+# System Overview
+
+Figure \ref{fig:nodes} shows the nodes diagram.
+
+![Nodes Diagram \label{fig:nodes}](figures/nodes_diagram.png)
+
 # System Architecture
 <!-- In this section, draw the block diagram of your system showing the flow between
 different modules. -->
+
 Figure \ref{fig:modules} shows the modules diagram.
 
-![Modules Diagram \label{fig:modules}](figures/modules_diagram.png)
+![Modules Diagram \label{fig:modules}](figures/system_modules_diagram.png)
+
 
 # List of Deliverables
 <!-- State the main modules of your system with its function, inputs and expected outputs
