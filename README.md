@@ -1,6 +1,29 @@
-> Follow the rest of `README`s.
+# C4IAN
+![C4IAN Logo](./logo.png)
+Tactical Mobile ad-hoc network.
+Build a network on the go for tactical teams in war and emeregency situations.
+
+Supports video/audio streaming and messaging with unicast, multicast and broadcast cababilities.
+
+## Problem Statement
+Tactical teams face troubles to achieve scalable and reliable communications in the battlefield or during
+emergencies due to the lack of a network infrastructure and the high mobility of units. They also need a
+method to collect real time data and analyze it to have a competitive advantage in the battleground.
+
+## Motivation
+Mobile ad-hoc networks can be formed on-the-go, without any infrastructure. They promise more
+flexibility and reliability than manual radio broadcasting. We are interested in building such complex
+distributed systems.
+
+## System Overview
+![System Overview](./docs/figures/nodes_diagram.png)
+
+## System Architecture
+![System Architecture](./docs/figures/system_modules_diagram.png)
 
 # Development
+> Follow the rest of `README`s.
+
 ## Common Requirements
 ### golang 1.15.8
 ```
