@@ -1,5 +1,5 @@
 ---
-title: \huge{C4IA}
+title: \huge{C4IAN}
 ---
 
 <!-- use this template before submitting https://drive.google.com/file/d/13Ot9Atu3ej9Qkhx067NDUw7WJr63n8wF/view?fbclid=IwAR2cSzbeAUklcX4H2SILcNGqgvFeBzn9GKeCGNjVsJfFKL69gAVUFI6j4T8 -->
@@ -15,7 +15,7 @@ title: \huge{C4IA}
 
 # Problem Statement
 <!-- Introduction to the problem (max 30 words) -->
-A `mobile ad-hoc network` communication system for military, for operations in areas with no internet infrastructure.
+A `mobile ad-hoc network` communication system for the military, for operations in areas with no internet infrastructure.
 Deployed units can stream audio, video and sensors readings to command Centers.
 Command Centers can stream audio and message codes to some/all unit(s).
 
@@ -46,12 +46,12 @@ Figure \ref{fig:modules} shows the modules diagram.
 - Number of modules must be at least equal to number of team members
 - Max number of modules including the integration of whole project must not exceed 6
 modules -->
-| Module Name               | Function                                                                                          | Input                                                                                     | Expected Output                                            | % of used Libraries      |
-|---------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|------------------------------------------------------------|--------------------------|
-| Unit Client               | Stream and receive streams to/from command centers                                                | Device audio, video, sensors and message codes. Streams and messages from command centers | Send streams and show play audio/messages                  | ~0% (not including `UI`) |
-| Cmd. Center Client        | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics | Audio and message codes. Streams and messages from deplyed units                          | Send streams and show play audio/messages                  | ~0% (not including `UI`) |
-| Media Codec               | Capture video+audio, encode it, receive it and decode it                                          | Captured video/audio or encoded video/audio                                               | Encoded/Decoded video/audio                                | >90%                     |
-| Node Discovery            | Build a map of nearby nodes for routing protocols                                                 | None                                                                                      | Necessary mapping of network topology                      | ~0%                      |
-| Unicast+Broadcast Routing | Determine how to send a given `IP` packet to one destination or all nodes                         | `IP` packet from linux to send or forward                                                 | Packet accept/reject and updated forwarding/routing tables | ~0%                      |
-| Multicast Routing         | Determine how to send a given `IP` packet to an `IP` group                                        | `IP` packet from linux to send or forward                                                 | Packet accept/reject and updated forwarding/routing tables | ~0%                      |
+| Module Name               | Function                                                                                          | Input                                                                                     | Expected Output                                            | % of used Libraries  |
+|---------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|------------------------------------------------------------|----------------------|
+| Unit Client               | Stream and receive streams to/from command centers                                                | Device audio, video, sensors and message codes. Streams and messages from command centers | Send streams and show play audio/messages                  | ~0% (Excluding `UI`) |
+| Cmd. Center Client        | Stream and receive streams to/from deployed units. Shows a map of all units with their statistics | Audio and message codes. Streams and messages from deployed units                          | Send streams and show play audio/messages                  | ~0% (Excluding `UI`) |
+| Media Codec               | Capture video+audio, encode it, receive it and decode it                                          | Captured video/audio or encoded video/audio                                               | Encoded/Decoded video/audio                                | >90%                 |
+| Node Discovery            | Build a map of nearby nodes for routing protocols                                                 | None                                                                                      | Necessary mapping of network topology                      | ~0%                  |
+| Unicast+Broadcast Routing | Determine how to send a given `IP` packet to one destination or all nodes                         | `IP` packet from linux to send or forward                                                 | Packet accept/reject and updated forwarding/routing tables | ~0%                  |
+| Multicast Routing         | Determine how to send a given `IP` packet to an `IP` group                                        | `IP` packet from linux to send or forward                                                 | Packet accept/reject and updated forwarding/routing tables | ~0%                  |
 
