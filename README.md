@@ -69,8 +69,7 @@ $ (
     sudo apt install -y git
     cd /tmp
     git clone git://github.com/intrig-unicamp/mininet-wifi
-    cd mininet-wifi
-    sudo util/install.sh -Wln
+    sudo mininet-wifi/util/install.sh -Wln
 )
 ```
 
