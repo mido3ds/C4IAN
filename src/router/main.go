@@ -5,11 +5,13 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
+	"os/signal"
+	"strconv"
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
 	"github.com/akamensky/argparse"
 	"github.com/jsimonetti/rtnetlink/rtnl"
-
 	"github.com/mdlayher/ethernet"
 	"github.com/mdlayher/raw"
 )
@@ -17,7 +19,24 @@ import (
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 
-	// parse args
+	args := parseArgs()
+
+	addIptablesRule(args.queueNumber)
+
+	registerInterruptHandler()
+
+	// start modules
+	go startForwarder(args)
+	startController()
+}
+
+type Args struct {
+	ifaceName   string
+	loIfaceName string
+	queueNumber int
+}
+
+func parseArgs() *Args {
 	parser := argparse.NewParser("router", "Sets forwarding table in linux to route packets in adhoc-network")
 	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name"})
 	loIfaceName := parser.String("", "lo", &argparse.Options{Required: false, Help: "Loopback interface name", Default: "lo"})
@@ -29,9 +48,45 @@ func main() {
 		os.Exit(1)
 	}
 
-	// start modules
-	go startForwarder(*ifaceName, *loIfaceName, *queueNumber)
-	startController()
+	return &Args{
+		ifaceName:   *ifaceName,
+		loIfaceName: *loIfaceName,
+		queueNumber: *queueNumber,
+	}
+}
+
+func registerInterruptHandler() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go interruptSignalHandler(c)
+}
+
+func interruptSignalHandler(c chan os.Signal) {
+	<-c
+
+	removeIptablesRule()
+
+	log.Println("closing gracefully")
+	os.Exit(0)
+}
+
+func addIptablesRule(queueNumber int) {
+	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE").Run()
+	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "--queue-num", strconv.Itoa(queueNumber))
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal("couldn't add iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
+	}
+	log.Println("added NFQUEUE rule to OUTPUT chain in iptables")
+}
+
+func removeIptablesRule() {
+	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE")
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatal("couldn't remove iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
+	}
+	log.Println("remove NFQUEUE rule to OUTPUT chain in iptables")
 }
 
 func startController() {
@@ -39,15 +94,15 @@ func startController() {
 	select {}
 }
 
-func startForwarder(ifaceName string, loIfaceName string, queueNumber int) {
+func startForwarder(args *Args) {
 	// get interfaces
-	iface, err := net.InterfaceByName(ifaceName)
+	iface, err := net.InterfaceByName(args.ifaceName)
 	if err != nil {
-		log.Fatal("couldn't get interface ", ifaceName, " error:", err)
+		log.Fatal("couldn't get interface ", args.ifaceName, " error:", err)
 	}
-	loIface, err := net.InterfaceByName(loIfaceName)
+	loIface, err := net.InterfaceByName(args.loIfaceName)
 	if err != nil {
-		log.Fatal("couldn't get interface ", loIfaceName, " error:", err)
+		log.Fatal("couldn't get interface ", args.loIfaceName, " error:", err)
 	}
 
 	// connect to rtnl
@@ -62,14 +117,14 @@ func startForwarder(ifaceName string, loIfaceName string, queueNumber int) {
 	if err != nil {
 		log.Fatal("can't link-up the interface", err)
 	}
-	log.Print(ifaceName, " is up")
+	log.Print(args.ifaceName, " is up")
 
 	// open lo interface
 	err = rtnlConn.LinkUp(loIface)
 	if err != nil {
 		log.Fatal("can't link-up lo interface", err)
 	}
-	log.Print(loIfaceName, " is up")
+	log.Print(args.loIfaceName, " is up")
 
 	// connect raw to iface
 	ifaceRawConn, err := raw.ListenPacket(iface, mSecEtherType, nil)
