@@ -48,6 +48,32 @@ For `VSCode` support:
 - Add `"go.gopath": "~/.config/go/1.15/"` to your `VSCode` settings.json file to enable `Go` extension tools.
 - Open each golang project in its own `VSCode` session, e.g. `$ code src/router` to be able to use linter and gopls.
 
+### Mininet-Wifi
+`$ python --version`
+
+if it's 3, you are good to go, otherwise do the following:
+
+```
+$ sudo mv /bin/python /bin/python.old
+$ sudo ln /bin/python3 /bin/python
+```
+
+It may break your system, in this case reverse it back: `sudo m /bin/python.old /bin/python`
+
+Then install mininet-wifi:
+
+```
+$ (
+    set -e
+    sudo apt update
+    sudo apt install -y git
+    cd /tmp
+    git clone git://github.com/intrig-unicamp/mininet-wifi
+    cd mininet-wifi
+    sudo util/install.sh -Wln
+)
+```
+
 ### yarn
 ### nodejs
 
