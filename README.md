@@ -19,7 +19,7 @@ distributed systems.
 ![System Overview](./docs/figures/nodes_diagram.png)
 
 ## System Architecture
-![System Architecture](./docs/figures/system_modules_diagram.png)
+![System Architecture](./docs/figures/net_stack.png)
 
 # Development
 > Follow the rest of `README`s.
