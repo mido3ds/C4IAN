@@ -51,7 +51,7 @@ For `VSCode` support:
 ### Mininet-Wifi
 `$ python --version`
 
-if it's 3, you are good to go, otherwise do the following:
+If it's 3, you are good to go, otherwise do the following:
 
 ```
 $ sudo mv /bin/python /bin/python.old
