@@ -1,7 +1,7 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 """
-TopoEdit (originaly MiniEdit): a simple network editor for Mininet
+MiniEdit: a simple network editor for Mininet
 
 This is edited by Mahmoud Adas (2021)
 
@@ -22,7 +22,7 @@ OpenFlow icon from https://www.opennetworking.org/
 # pylint: disable=too-many-statements,attribute-defined-outside-init
 # pylint: disable=missing-docstring
 
-TOPOEDIT_VERSION = '2.3'
+MINIEDIT_VERSION = '2.3'
 
 from optparse import OptionParser
 from subprocess import call
@@ -84,7 +84,7 @@ from mn_wifi.module import Mac80211Hwsim
 from mn_wifi.wmediumdConnector import interference
 
 
-info( 'TopoEdit running against Mininet '+VERSION, '\n' )
+info( 'MiniEdit running against Mininet '+VERSION, '\n' )
 MININET_VERSION = re.sub(r'[^\d\.]', '', VERSION)
 
 TOPODEF = 'none'
@@ -1982,7 +1982,7 @@ class ToolTip(object):
             tw.destroy()
 
 
-class TopoEdit(Frame):
+class MiniEdit(Frame):
     "A simple network editor for Mininet."
 
     def __init__(self, parent=None, cheight=600, cwidth=1000):
@@ -2018,7 +2018,7 @@ class TopoEdit(Frame):
 
         Frame.__init__(self, parent)
         self.action = None
-        self.appName = 'TopoEdit'
+        self.appName = 'MiniEdit'
         self.fixedFont = font.Font ( family="DejaVu Sans Mono", size="14" )
 
         # Style
@@ -2200,7 +2200,7 @@ class TopoEdit(Frame):
         # Application menu
         appMenu = Menu( mbar, tearoff=False )
         mbar.add_cascade( label="Help", font=font, menu=appMenu )
-        appMenu.add_command( label='About TopoEdit', command=self.about,
+        appMenu.add_command( label='About MiniEdit', command=self.about,
                              font=font)
     # Canvas
 
@@ -2363,7 +2363,7 @@ class TopoEdit(Frame):
     def loadTopology( self ):
         "Load command."
         myFormats = [
-            ('Mininet/Mininet-WiFi Topology','*.json'),
+            ('Mininet/Mininet-WiFi Topology','*.topo'),
             ('All Files','*'),
         ]
         f = filedialog.askopenfile(filetypes=myFormats, mode='rb')
@@ -2675,7 +2675,7 @@ class TopoEdit(Frame):
     def saveTopology( self ):
         "Save command."
         myFormats = [
-            ('Mininet Topology','*.json'),
+            ('Mininet Topology','*.topo'),
             ('All Files','*'),
         ]
 
@@ -3923,7 +3923,7 @@ class TopoEdit(Frame):
             about = Toplevel( bg='white' )
             about.title( 'About' )
             desc = self.appName + ': a simple network editor for MiniNet'
-            version = 'TopoEdit ' + TOPOEDIT_VERSION
+            version = 'MiniEdit ' + MINIEDIT_VERSION
             author = 'Originally by: Bob Lantz <rlantz@cs>, April 2010'
             enhancements = 'Enhancements by: Ramon Fontes, Since October 2018'
             modified = 'Modified by: Mahmoud Adas, April 2021'
@@ -4802,7 +4802,7 @@ class TopoEdit(Frame):
         ## NOTE: MAKE SURE THIS IS LAST THING CALLED
         # Start the CLI if enabled
         if self.appPrefs['startCLI'] == '1':
-            info( "\n\n NOTE: PLEASE REMEMBER TO EXIT THE CLI BEFORE YOU PRESS THE STOP BUTTON. Not exiting will prevent TopoEdit from quitting and will prevent you from starting the network again during this session.\n\n")
+            info( "\n\n NOTE: PLEASE REMEMBER TO EXIT THE CLI BEFORE YOU PRESS THE STOP BUTTON. Not exiting will prevent MiniEdit from quitting and will prevent you from starting the network again during this session.\n\n")
             CLI(self.net)
 
     def start( self ):
@@ -5028,7 +5028,7 @@ class TopoEdit(Frame):
                  "command line. It can create parametrized topologies,\n"
                  "invoke the Mininet CLI, and run tests." )
 
-        usage = ( '%prog [/path/to/mininet-network.json] [options]\n'
+        usage = ( '%prog [/path/to/mininet-network.topo] [options]\n'
                   '(type %prog -h for details)' )
 
         opts = OptionParser( description=desc, usage=usage )
@@ -5260,7 +5260,7 @@ class TopoEdit(Frame):
         importNet.stop()
 
 def miniEditImages():
-    "Create and return images for TopoEdit."
+    "Create and return images for MiniEdit."
 
     # Image data. Git will be unhappy. However, the alternative
     # is to keep track of separate binary files, which is also
@@ -5580,7 +5580,7 @@ def addDictOption( opts, choicesDict, default, name, helpStr=None ):
 
 if __name__ == '__main__':
     setLogLevel( 'info' )
-    app = TopoEdit()
+    app = MiniEdit()
     ### import topology if specified ###
     app.parseArgs()
     app.importTopo()
