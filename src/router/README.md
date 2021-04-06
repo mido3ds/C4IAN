@@ -13,7 +13,7 @@ $ go build
 ## Run
 ```
 # start router and attach to interface "sta1-wlan0"
-$ sudo ./router -i sta1-wlan0
+$ sudo ./router -i sta1-wlan0 -p passphrase
 
 # list all options
 $ ./router --help
