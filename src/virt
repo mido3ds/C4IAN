@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+
+from typing import NamedTuple, List
+import json
+import sys
+import argparse
+
+from mininet.log import setLogLevel
+from mn_wifi.link import wmediumd, adhoc
+from mn_wifi.cli import CLI
+from mn_wifi.net import Mininet_wifi
+from mn_wifi.wmediumdConnector import interference
+
+WIRELESS_CONF = {
+    'cls': adhoc,
+    'ssid': 'C4IAN-GLOBAL-SSID',
+    'ht_cap': 'HT40+',
+    'channel': 5,
+    'mode': 'g',
+}
+PROPAGATION_MODEL = {
+    'model': 'logDistance',
+    'exp': 4,
+}
+
+
+class Position(NamedTuple):
+    lat: int  # x
+    long: int  # y
+    z: int  # height relative to water level
+
+    def __str__(self) -> str:
+        return f'{self.lat},{self.long},{self.z}'
+
+
+class Node(NamedTuple):
+    name: str
+    position: Position
+
+
+def read_topo(path_to_json: str) -> List[Node]:
+    with open(path_to_json) as f:
+        topo = json.load(f)
+
+    def cast(i): return int(float(i))
+
+    return [
+        Node(unit['opts']['hostname'],
+             Position(cast(unit['x']), cast(unit['y']), 0))
+        for unit in topo['aps']
+    ] + [
+        Node(cmd['opts']['hostname'],
+             Position(cast(cmd['x']), cast(cmd['y']), 0))
+        for cmd in topo['stations']
+    ]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Virtualize a topology using mininet-wifi.'
+    )
+    parser.add_argument('topology', help='Path to .topo file to load')
+    return parser.parse_args()
+
+
+nodes = read_topo(parse_args().topology)
+
+setLogLevel('info')
+
+net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference)
+
+print("*** Creating nodes")
+stations = {}
+for node in nodes:
+    stations[node.name] = net.addStation(
+        node.name, position=str(node.position)
+    )
+
+print("*** Configuring wifi nodes")
+net.configureWifiNodes()
+net.setPropagationModel(**PROPAGATION_MODEL)
+
+print("*** Creating links")
+for node in nodes:
+    net.addLink(
+        stations[node.name],
+        intf=f'{node.name}-wlan0',
+        **WIRELESS_CONF
+    )
+
+print("*** Starting network")
+net.build()
+print()
+
+print("*** Running CLI")
+CLI(net)
+
+print("*** Stopping network")
+net.stop()

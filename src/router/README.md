@@ -12,14 +12,8 @@ $ go build
 
 ## Run
 ```
-# redirect all packets to queue 0
-$ sudo iptables -A OUTPUT -j NFQUEUE --queue-num 0
-
-# start router and attach to interface "wlan0"
-$ sudo ./router --iface wlan0 --queue-num 0
-
-# you must undo the redirect, otherwise all packets will stuck
-$ sudo iptables -D OUTPUT -j NFQUEUE --queue-num 0
+# start router and attach to interface "sta1-wlan0"
+$ sudo ./router -i sta1-wlan0 -p passphrase
 
 # list all options
 $ ./router --help
