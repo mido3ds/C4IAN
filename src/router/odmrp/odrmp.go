@@ -1,6 +1,8 @@
 package odmrp
 
-import . "github.com/mido3ds/C4IAN/src/utils"
+import (
+	"github.com/mido3ds/C4IAN/src/utils"
+)
 
 type Node struct {
 	down                     bool
@@ -8,5 +10,5 @@ type Node struct {
 	ip_address               IP
 	multicast_source_address IP
 	multicast_group          []IP // addresses of the multicast group the node is part of
-	multicastReceivers       Interface
+	multicastReceivers       utils.Interface
 }
