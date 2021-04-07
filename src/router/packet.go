@@ -1,6 +1,9 @@
 package main
 
-import "regexp"
+import (
+	"regexp"
+	"strconv"
+)
 
 type IP string
 
@@ -15,8 +18,8 @@ const (
 
 type Packet struct {
 	cast_mode     Cast
-	source_addr   string
-	dest_addr     string
+	source_addr   IP
+	dest_addr     IP
 	hops_traveled int
 	time_to_live  int
 	payload       string // could be []byte !?
@@ -53,13 +56,13 @@ func new_packet() Packet {
 }
 
 func (ip IP) get_address_ip_type() Cast {
-	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, ip)
+	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, string(ip))
 	if err != nil {
 		if is_matched {
 			return MULTICAST
 		}
 	}
-	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, ip)
+	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, string(ip))
 	if err != nil {
 		if is_matched {
 			return BROADCAST
@@ -81,7 +84,7 @@ func (p *Packet) to_string() string {
 		cast_mode = "broadcast"
 		break
 	}
-	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr +
-		", Destination Address: " + p.dest_addr + "\nTime To Live: " + string(p.time_to_live) +
-		", Hops Traveled: " + string(p.hops_traveled))
+	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + string(p.source_addr) +
+		", Destination Address: " + string(p.dest_addr) + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
+		", Hops Traveled: " + strconv.Itoa(p.hops_traveled))
 }
