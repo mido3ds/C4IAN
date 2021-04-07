@@ -38,7 +38,7 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 }
 
 func (c *IPLayerConn) Write(packet []byte, version byte) error {
-	// mark as looped back
+	// mark as raw
 	packet[1] |= byte(1)
 
 	if version == 4 {

@@ -106,11 +106,7 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				continue
 			}
 
-			// TODO: should use imDestination(ip4, ip6, destIP), but it slows down alot
-			// without it you can't send to yourself from non-loopback
-			// (e.g `ping 10.0.0.1` when your ip is 10.0.0.1`)
-
-			if IsRawPacket(packet) || ipPacket.destIP.IsLoopback() { // to me
+			if IsRawPacket(packet) || imDestination(f.router.ip4, f.router.ip6, ipPacket.destIP) {
 				p.SetVerdict(netfilter.NF_ACCEPT)
 				continue
 			} else { // to out
@@ -153,7 +149,8 @@ func (f *Forwarder) Close() {
 }
 
 func imDestination(ip4, ip6, destIP net.IP) bool {
-	return destIP.Equal(ip4) || destIP.Equal(ip6) || destIP.IsLoopback()
+	// TODO: if should use ipv6 more frequent, put ip6 check first for speed
+	return destIP.Equal(ip4) || destIP.IsLoopback() || destIP.Equal(ip6)
 }
 
 func getNextHopHWAddr(destIP *net.IP) (net.HardwareAddr, error) {
