@@ -26,14 +26,14 @@ type Packet struct {
 }
 
 type odmrp_join_query struct {
-	valid_     int
+	valid_     bool
 	seqno_     int
 	hop_count_ int
-	piggyback_ int
+	piggyback_ bool
 }
 
 type odmrp_join_reply struct {
-	valid_ int
+	valid_ bool
 	seqno_ int
 	count_ int
 	// struct prev_hop_pairs pairs_[OD_MAX_NUM_PREV_HOP_PAIRS];
@@ -56,19 +56,23 @@ func new_packet() Packet {
 }
 
 func (ip IP) get_address_ip_type() Cast {
-	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, string(ip))
+	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, ip.to_string())
 	if err != nil {
 		if is_matched {
 			return MULTICAST
 		}
 	}
-	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, string(ip))
+	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, ip.to_string())
 	if err != nil {
 		if is_matched {
 			return BROADCAST
 		}
 	}
 	return UNICAST
+}
+
+func (ip IP) to_string() string {
+	return string(ip)
 }
 
 func (p *Packet) to_string() string {
@@ -84,7 +88,7 @@ func (p *Packet) to_string() string {
 		cast_mode = "broadcast"
 		break
 	}
-	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + string(p.source_addr) +
-		", Destination Address: " + string(p.dest_addr) + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
+	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr.to_string() +
+		", Destination Address: " + p.dest_addr.to_string() + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
 		", Hops Traveled: " + strconv.Itoa(p.hops_traveled))
 }
