@@ -37,17 +37,14 @@ type Interface interface {
 }
 
 // Set Thread functions
-
-// Create new set non thread
-func CreatSetNonThread() *SetNonThread {
+func NewSetNonThread() *SetNonThread {
 	s := &SetNonThread{}
 	s.keys = make(map[interface{}]void)
 
 	return s
 }
 
-// Create new set wih threading
-func CreatSetThread() *SetThread {
+func NewSetThread() *SetThread {
 	s := &SetThread{}
 	s.keys = make(map[interface{}]void)
 
@@ -56,10 +53,10 @@ func CreatSetThread() *SetThread {
 
 func NewSet(settype SetType) Interface {
 	if settype == NON_THREAD {
-		return CreatSetNonThread()
+		return NewSetNonThread()
 	}
 
-	return CreatSetThread()
+	return NewSetThread()
 }
 
 func (s *SetThread) Insert(keys ...interface{}) {
@@ -118,7 +115,7 @@ func (s *SetThread) Clear() {
 }
 
 func (s *SetThread) Clone() Interface {
-	cpy := CreatSetThread()
+	cpy := NewSetThread()
 	for key := range s.keys {
 		cpy.Insert(key)
 	}
@@ -183,7 +180,7 @@ func (s *SetNonThread) Clear() {
 }
 
 func (s *SetNonThread) Clone() Interface {
-	cpy := CreatSetNonThread()
+	cpy := NewSetNonThread()
 	for key := range s.keys {
 		cpy.Insert(key)
 	}
