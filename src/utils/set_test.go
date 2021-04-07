@@ -12,7 +12,7 @@ func TestSetNonThread(t *testing.T) {
 		THREAD,
 	}
 	for _, typ := range types {
-		set1 := NewSet(typ)
+		set1 := newSet(typ)
 		size := 100
 
 		for i := 0; i < size; i++ {
@@ -50,7 +50,7 @@ func TestSetClear(t *testing.T) {
 		THREAD,
 	}
 	for _, typ := range types {
-		set1 := NewSet(typ)
+		set1 := newSet(typ)
 		size := 100
 
 		for i := 0; i < size; i++ {
@@ -73,7 +73,7 @@ func TestSetClone(t *testing.T) {
 		THREAD,
 	}
 	for _, typ := range types {
-		set1 := NewSet(typ)
+		set1 := newSet(typ)
 		size := 100
 		for i := 0; i < size; i++ {
 			set1.Insert(strconv.Itoa(i))
@@ -104,7 +104,7 @@ func TestSetClone(t *testing.T) {
 }
 
 func TestSetThread(t *testing.T) {
-	set1 := NewSet(THREAD)
+	set1 := newSet(THREAD)
 
 	var wg sync.WaitGroup
 

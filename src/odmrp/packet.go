@@ -1,4 +1,4 @@
-package main
+package odmrp
 
 import (
 	"regexp"
@@ -25,14 +25,14 @@ type Packet struct {
 	payload       string // could be []byte !?
 }
 
-type odmrp_join_query struct {
+type JoinQuery struct {
 	valid_     bool
 	seqno_     int
 	hop_count_ int
 	piggyback_ bool
 }
 
-type odmrp_join_reply struct {
+type JoinReply struct {
 	valid_ bool
 	seqno_ int
 	count_ int
@@ -40,29 +40,29 @@ type odmrp_join_reply struct {
 }
 
 // string to odmrpaddr_t
-type hdr_odmrp struct {
+type Header struct {
 	valid_ack_       int
 	mcastgroup_addr_ string
 	prev_hop_addr_   string
-	join_query_      odmrp_join_query
-	join_reply_      odmrp_join_reply
+	join_query_      JoinQuery
+	join_reply_      JoinReply
 }
 
-func new_packet() Packet {
+func newPacket() Packet {
 	var p Packet
 	p.time_to_live = DEFAULT_TIME_TO_LIVE
 	p.hops_traveled = 0
 	return p
 }
 
-func (ip IP) get_address_ip_type() Cast {
-	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, ip.to_string())
+func (ip IP) getIpType() Cast {
+	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, ip.ToString())
 	if err != nil {
 		if is_matched {
 			return MULTICAST
 		}
 	}
-	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, ip.to_string())
+	is_matched, err = regexp.MatchString(MULTICAST_PATTERN, ip.ToString())
 	if err != nil {
 		if is_matched {
 			return BROADCAST
@@ -71,11 +71,11 @@ func (ip IP) get_address_ip_type() Cast {
 	return UNICAST
 }
 
-func (ip IP) to_string() string {
+func (ip IP) ToString() string {
 	return string(ip)
 }
 
-func (p *Packet) to_string() string {
+func (p *Packet) ToString() string {
 	var cast_mode string
 	switch mode := p.cast_mode; mode {
 	case UNICAST:
@@ -88,7 +88,7 @@ func (p *Packet) to_string() string {
 		cast_mode = "broadcast"
 		break
 	}
-	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr.to_string() +
-		", Destination Address: " + p.dest_addr.to_string() + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
+	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr.toString() +
+		", Destination Address: " + p.dest_addr.toString() + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
 		", Hops Traveled: " + strconv.Itoa(p.hops_traveled))
 }

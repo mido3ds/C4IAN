@@ -1,4 +1,4 @@
-package main
+package odmrp
 
 type Node struct {
 	down                     bool

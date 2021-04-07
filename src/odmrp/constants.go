@@ -1,4 +1,4 @@
-package main
+package odmrp
 
 const (
 	MULTICAST_PATTERN = "^(?:2[23][4-9])\\." +
