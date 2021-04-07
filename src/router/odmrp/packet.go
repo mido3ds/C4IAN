@@ -88,7 +88,7 @@ func (p *Packet) ToString() string {
 		cast_mode = "broadcast"
 		break
 	}
-	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr.toString() +
-		", Destination Address: " + p.dest_addr.toString() + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
+	return ("Packet Casting Mode: " + cast_mode + "\n Source Address: " + p.source_addr.ToString() +
+		", Destination Address: " + p.dest_addr.ToString() + "\nTime To Live: " + strconv.Itoa(p.time_to_live) +
 		", Hops Traveled: " + strconv.Itoa(p.hops_traveled))
 }
