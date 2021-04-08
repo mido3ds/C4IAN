@@ -61,7 +61,8 @@ func (f *Forwarder) ForwardFromMACLayer() {
 		if err != nil {
 			log.Fatal("failed to build packet decrypter, err: ", err)
 		}
-		if verified := pd.DecryptAndVerifyHeaders(); !verified {
+		verified := pd.DecryptAndVerifyHeaders()
+		if !verified {
 			continue
 		}
 
@@ -80,6 +81,7 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			}
 		} else { // i'm a forwarder
 			// determine next hop
+			// TODO: get zoneID of dest&src and ZLen
 			nextHopHWAddr, err := getNextHopHWAddr(&pd.DestIP)
 			if err != nil {
 				log.Fatal("failed to determine packets destination: ", err)
@@ -121,13 +123,12 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				p.SetVerdict(netfilter.NF_DROP)
 
 				// determine next hop
+				// TODO: get zoneID of dest&src and ZLen
 				nextHopHWAddr, err := getNextHopHWAddr(&ipPacket.destIP)
 				if err != nil {
 					log.Fatal("failed to determine packets destination: ", err)
 				}
 
-				// TODO: hash IP payload
-				// TODO: get zoneID of dest&src and ZLen
 				sgzipPacket, err := sgzip.MarshalBinary(1, 2, 3, packet)
 				if err != nil {
 					log.Fatal(err)
