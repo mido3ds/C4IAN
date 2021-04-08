@@ -75,6 +75,10 @@ $ (
 
 ### yarn
 ### nodejs
+### daemonize
+```
+$ sudo apt update && sudo apt install -y daemonize
+```
 
 ## Issues
 - `electron: error while loading shared libraries: libgconf-2.so.4: cannot open shared object file: No such file or directory`
@@ -83,6 +87,3 @@ $ (
 ```
 $ sudo apt install -y libgconf-2-4
 ```
-
-## Daemonize
-You need to use `systemd`/`runc` service to turn executable into a daemon.

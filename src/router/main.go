@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
+	fmt.Println("-----------------------")
 	defer log.Println("finished cleaning up, closing")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
 
 	ifaceName, pass, err := parseArgs()
 	if err != nil {
