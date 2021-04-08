@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	fmt.Println("-----------------------")
 	defer log.Println("finished cleaning up, closing")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
@@ -21,6 +20,7 @@ func main() {
 		fmt.Print(err)
 		os.Exit(1)
 	}
+	fmt.Println("-----------------------")
 
 	router, err := NewRouter(ifaceName, pass)
 	if err != nil {
@@ -44,9 +44,9 @@ func main() {
 }
 
 func parseArgs() (string, string, error) {
-	parser := argparse.NewParser("router", "Sets forwarding table in linux to route packets in adhoc-network")
-	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name"})
-	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption"})
+	parser := argparse.NewParser("router", "Sets forwarding table in linux to route packets in adhoc-network.")
+	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name."})
+	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
