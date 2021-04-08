@@ -66,10 +66,12 @@ func (f *Forwarder) ForwardFromMACLayer() {
 		}
 
 		if imDestination(f.router.ip, pd.DestIP) { // i'm destination,
-			ippacket, err := pd.DecryptAll()
+			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
 			}
+
+			ippacket := packet[SGZIPHeaderLen:]
 
 			// receive message by injecting it in loopback
 			err = f.ipConn.Write(ippacket)

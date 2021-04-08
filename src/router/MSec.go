@@ -126,5 +126,5 @@ func (p *PacketDecrypter) DecryptAll() ([]byte, error) {
 		return nil, err
 	}
 
-	return p.out.Bytes()[SGZIPHeaderLen:], nil
+	return p.out.Bytes(), nil
 }
