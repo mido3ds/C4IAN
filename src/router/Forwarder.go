@@ -56,19 +56,23 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			log.Fatal("failed to read from interface, err: ", err)
 		}
 
+		// decrypt and verify sgzip+ip headers
 		pd, err := f.router.msec.NewPacketDecrypter(packet)
 		if err != nil {
-			log.Fatal("failed build packet decrypter, err: ", err)
+			log.Fatal("failed to build packet decrypter, err: ", err)
+		}
+		if verified := pd.DecryptAndVerifyHeaders(); !verified {
+			continue
 		}
 
 		if imDestination(f.router.ip, pd.DestIP) { // i'm destination,
-			packet, err := pd.DecryptAll()
+			ippacket, err := pd.DecryptAll()
 			if err != nil {
-				log.Fatal("failed to decrypt rest of the packet")
+				continue
 			}
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(packet)
+			err = f.ipConn.Write(ippacket)
 			if err != nil {
 				log.Fatal("failed to write to lo interface: ", err)
 			}
@@ -91,6 +95,11 @@ func (f *Forwarder) ForwardFromMACLayer() {
 // ForwardFromIPLayer periodically forwards packets from IP to MAC
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
+	sgzip, err := NewSGZIPacketMarshaler(f.router.iface.MTU)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	packets := f.nfq.GetPackets()
 
 	log.Println("started receiving from IP layer")
@@ -115,8 +124,15 @@ func (f *Forwarder) ForwardFromIPLayer() {
 					log.Fatal("failed to determine packets destination: ", err)
 				}
 
+				// TODO: hash IP payload
+				// TODO: get zoneID of dest&src and ZLen
+				sgzipPacket, err := sgzip.MarshalBinary(1, 2, 3, packet)
+				if err != nil {
+					log.Fatal(err)
+				}
+
 				// encrypt
-				encryptedPacket, err := f.router.msec.Encrypt(packet)
+				encryptedPacket, err := f.router.msec.Encrypt(sgzipPacket)
 				if err != nil {
 					log.Fatal("failed to encrypt packet, err: ", err)
 				}
@@ -138,6 +154,7 @@ func (f *Forwarder) Close() {
 }
 
 func imDestination(ip, destIP net.IP) bool {
+	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }
 
