@@ -9,7 +9,7 @@ import (
 type Router struct {
 	faceName string
 	iface    *net.Interface
-	ip4, ip6 net.IP
+	ip       net.IP
 	msec     *MSecLayer
 }
 
@@ -21,19 +21,17 @@ func NewRouter(ifaceName, passphrase string) (*Router, error) {
 	}
 
 	// get initial ip addresses
-	ip4, ip6, err := GetMyIPs(iface)
+	ip, _, err := GetMyIPs(iface)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iface ips, err: %s", err)
 	}
-	log.Println("iface ipv4: ", ip4)
-	log.Println("iface ipv6: ", ip6)
+	log.Println("iface ipv4: ", ip)
 
 	return &Router{
 		faceName: ifaceName,
 		iface:    iface,
 		msec:     NewMSecLayer(passphrase),
-		ip4:      ip4,
-		ip6:      ip6,
+		ip:       ip,
 	}, nil
 }
 

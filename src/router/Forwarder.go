@@ -61,14 +61,14 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			log.Fatal("failed build packet decrypter, err: ", err)
 		}
 
-		if imDestination(f.router.ip4, f.router.ip6, pd.DestIP) { // i'm destination,
+		if imDestination(f.router.ip, pd.DestIP) { // i'm destination,
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				log.Fatal("failed to decrypt rest of the packet")
 			}
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(packet, pd.Version)
+			err = f.ipConn.Write(packet)
 			if err != nil {
 				log.Fatal("failed to write to lo interface: ", err)
 			}
@@ -103,12 +103,8 @@ func (f *Forwarder) ForwardFromIPLayer() {
 			ipPacket, err := ParseIPPacket(packet)
 			if err != nil {
 				log.Println("[error] failed to parse dest ip, drop it, err: ", err)
-				continue
-			}
-
-			if IsRawPacket(packet) || imDestination(f.router.ip4, f.router.ip6, ipPacket.destIP) {
+			} else if IsRawPacket(packet) || imDestination(f.router.ip, ipPacket.destIP) {
 				p.SetVerdict(netfilter.NF_ACCEPT)
-				continue
 			} else { // to out
 				// steal packet
 				p.SetVerdict(netfilter.NF_DROP)
@@ -117,13 +113,6 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				nextHopHWAddr, err := getNextHopHWAddr(&ipPacket.destIP)
 				if err != nil {
 					log.Fatal("failed to determine packets destination: ", err)
-				}
-
-				if ipPacket.version == 6 {
-					// fix stupid issue with IPv6 headers srcIP = ::1
-					// which result in the response not returning back to the original sender
-					// TODO: find better solution
-					copy(packet[8:24], f.router.ip6)
 				}
 
 				// encrypt
@@ -148,9 +137,8 @@ func (f *Forwarder) Close() {
 	f.nfq.Close()
 }
 
-func imDestination(ip4, ip6, destIP net.IP) bool {
-	// TODO: if should use ipv6 more frequent, put ip6 check first for speed
-	return destIP.Equal(ip4) || destIP.IsLoopback() || destIP.Equal(ip6)
+func imDestination(ip, destIP net.IP) bool {
+	return destIP.Equal(ip) || destIP.IsLoopback()
 }
 
 func getNextHopHWAddr(destIP *net.IP) (net.HardwareAddr, error) {

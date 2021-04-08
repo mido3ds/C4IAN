@@ -20,7 +20,7 @@ var (
 )
 
 type IPLayerConn struct {
-	fd4, fd6 int
+	fd4 int
 }
 
 func NewIPLayerConn() (*IPLayerConn, error) {
@@ -29,30 +29,18 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 		return nil, err
 	}
 
-	fd6, err := syscall.Socket(syscall.AF_INET6, syscall.SOCK_RAW, syscall.IPPROTO_RAW)
-	if err != nil {
-		return nil, err
-	}
-
-	return &IPLayerConn{fd4: fd4, fd6: fd6}, nil
+	return &IPLayerConn{fd4: fd4}, nil
 }
 
-func (c *IPLayerConn) Write(packet []byte, version byte) error {
+func (c *IPLayerConn) Write(packet []byte) error {
 	// mark as raw
 	packet[1] |= byte(1)
 
-	if version == 4 {
-		return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
-	} else if version == 6 {
-		return syscall.Sendto(c.fd6, packet, 0, &loopbackRawAddrIPv6)
-	}
-
-	return errInvalidIPVersion
+	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
 }
 
 func (c *IPLayerConn) Close() {
 	syscall.Close(c.fd4)
-	syscall.Close(c.fd6)
 }
 
 func IsRawPacket(packet []byte) bool {
