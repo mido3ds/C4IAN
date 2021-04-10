@@ -9,4 +9,5 @@ const (
 	MAX_NUM_PREV_HOP_PAIRS = 100
 	JOIN_QUERY_SIZE        = 16
 	JOIN_REPLY_SIZE        = 16
+	PACKET_BUFFER_SIZE     = 20
 )
