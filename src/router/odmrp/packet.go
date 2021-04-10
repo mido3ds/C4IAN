@@ -25,29 +25,6 @@ type Packet struct {
 	payload       string // could be []byte !?
 }
 
-type JoinQuery struct {
-	valid_     bool
-	seqno_     int
-	hop_count_ int
-	piggyback_ bool
-}
-
-type JoinReply struct {
-	valid_ bool
-	seqno_ int
-	count_ int
-	// struct prev_hop_pairs pairs_[OD_MAX_NUM_PREV_HOP_PAIRS];
-}
-
-// string to odmrpaddr_t
-type Header struct {
-	valid_ack_       int
-	mcastgroup_addr_ string
-	prev_hop_addr_   string
-	join_query_      JoinQuery
-	join_reply_      JoinReply
-}
-
 func newPacket() Packet {
 	var p Packet
 	p.time_to_live = DEFAULT_TIME_TO_LIVE

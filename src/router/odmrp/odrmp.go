@@ -23,10 +23,5 @@ type MessageCacheEntry struct {
 	source_address IP
 }
 
-type ODMRPPacket struct {
-	packet_type        byte
-	source_ddr         string
-	multicast_group_ip IP
-	prev_hop_ip        IP
-	sequence_number    int
+type Agent struct {
 }
