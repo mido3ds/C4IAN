@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -21,5 +22,36 @@ func Test_sgzipChecksum(t *testing.T) {
 				t.Errorf("sgzipChecksum() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func Benchmark_sgzipChecksum(b *testing.B) {
+	arr := []byte{255, 255, 255, 255, 255}
+	for n := 0; n < b.N; n++ {
+		sgzipChecksum(arr)
+	}
+}
+
+func BenchmarkMarshalBinary(b *testing.B) {
+	pm, err := NewSGZIPacketMarshaler(1500)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(pm.MarshalBinary(1, 5, 12, []byte{1}))
+	for n := 0; n < b.N; n++ {
+		_, err := pm.MarshalBinary(1, 5, 12, pm.buffer[:1000])
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func BenchmarkUnpackSGZIPHeader(b *testing.B) {
+	packet := []byte{0, 218, 136, 65, 0, 0, 0, 5, 0, 0, 0, 12}
+	for n := 0; n < b.N; n++ {
+		_, _, err := UnpackSGZIPHeader(packet)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
