@@ -126,3 +126,33 @@ func (jqt *JoinQueryTable) Insert(src_addr int, prev_hop int, seqno, hop_count i
 func (jqt *JoinQueryTable) Clear() {
 	jqt.hash_table = make([]JoinQuerySlot, JQ_SRC_HASH_SIZE)
 }
+
+func (jqt *JoinQueryTable) Remove(src_addr int) bool {
+	// get index
+	index := src_addr % len(jqt.hash_table)
+
+	if jqt.hash_table[index].src == src_addr {
+		if jqt.hash_table[index].next == nil {
+			jqt.hash_table[index].src = -1
+		} else {
+			jqt.hash_table[index] = *jqt.hash_table[index].next
+		}
+		return true
+	} else if jqt.hash_table[index].next == nil {
+		return false
+	} else {
+		temp := &jqt.hash_table[index]
+
+		for temp.next != nil {
+			if temp.next.src != src_addr {
+				temp = temp.next
+			} else {
+				temp.next = temp.next.next
+				return true
+			}
+		}
+	}
+
+	return false
+
+}
