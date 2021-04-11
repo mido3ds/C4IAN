@@ -32,3 +32,27 @@ func newJoinQueryTable() JoinQueryTable {
 	}
 	return jqt
 }
+
+func (jqt *JoinQueryTable) Lookup(src_addr int, seqno int, hop_count int) JoinQueryFound {
+	index := src_addr % len(jqt.hash_table)
+
+	if jqt.hash_table[index].src == src_addr &&
+		jqt.hash_table[index].seqno == seqno || jqt.hash_table[index].seqno > seqno {
+		if jqt.hash_table[index].hop_count > hop_count {
+			return FOUND_LONGER //TODO should we update to the new hop count and prev hop?
+		}
+		return FOUND
+	} else {
+		temp := jqt.hash_table[index].next
+		for temp != nil {
+			if temp.src == src_addr && (temp.seqno == seqno || temp.seqno > seqno) {
+				if jqt.hash_table[index].hop_count > hop_count {
+					return FOUND_LONGER
+				}
+				return FOUND
+			}
+			temp = temp.next
+		}
+	}
+	return NOT_FOUND
+}
