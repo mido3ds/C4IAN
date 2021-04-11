@@ -56,3 +56,21 @@ func (jqt *JoinQueryTable) Lookup(src_addr int, seqno int, hop_count int) JoinQu
 	}
 	return NOT_FOUND
 }
+
+func (jqt *JoinQueryTable) FindPrevHop(src_addr int) int {
+	index := src_addr % len(jqt.hash_table)
+
+	if jqt.hash_table[index].src == src_addr {
+		return jqt.hash_table[index].prev_hop
+	} else {
+		temp := jqt.hash_table[index].next
+		for temp != nil {
+			if temp.src == src_addr {
+				return temp.prev_hop
+			}
+			temp = temp.next
+		}
+	}
+
+	return 0 // not found
+}
