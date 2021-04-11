@@ -74,3 +74,51 @@ func (jqt *JoinQueryTable) FindPrevHop(src_addr int) int {
 
 	return 0 // not found
 }
+
+func (jqt *JoinQueryTable) Insert(src_addr int, prev_hop int, seqno, hop_count int) bool {
+	index := src_addr % len(jqt.hash_table)
+
+	if jqt.hash_table[index].src == -1 || jqt.hash_table[index].src == src_addr {
+		jqt.hash_table[index].src = src_addr
+		jqt.hash_table[index].prev_hop = prev_hop
+		jqt.hash_table[index].hop_count = hop_count
+		jqt.hash_table[index].seqno = seqno
+	} else if jqt.hash_table[index].next == nil {
+		var new_jq_slot JoinQuerySlot
+		new_jq_slot.src = src_addr
+		new_jq_slot.prev_hop = prev_hop
+		new_jq_slot.hop_count = hop_count
+		new_jq_slot.seqno = seqno
+		new_jq_slot.next = nil
+		jqt.hash_table[index].next = &new_jq_slot
+	} else {
+		temp := jqt.hash_table[index].next
+
+		if jqt.hash_table[index].next.src == src_addr {
+			jqt.hash_table[index].next.seqno = seqno
+			jqt.hash_table[index].next.prev_hop = prev_hop
+			jqt.hash_table[index].next.hop_count = hop_count
+			return true
+		}
+
+		for temp.next != nil {
+			if temp.next.src == src_addr {
+				temp.next.seqno = seqno
+				temp.next.prev_hop = prev_hop
+				temp.next.hop_count = hop_count
+				return true
+			}
+			temp = temp.next
+		}
+
+		var new_jq_slot JoinQuerySlot
+		new_jq_slot.src = src_addr
+		new_jq_slot.seqno = seqno
+		new_jq_slot.prev_hop = prev_hop
+		new_jq_slot.hop_count = hop_count
+		new_jq_slot.next = nil
+		temp.next = &new_jq_slot
+	}
+
+	return true
+}
