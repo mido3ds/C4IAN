@@ -10,4 +10,5 @@ const (
 	JOIN_QUERY_SIZE        = 16
 	JOIN_REPLY_SIZE        = 16
 	PACKET_BUFFER_SIZE     = 20
+	JQ_SRC_HASH_SIZE       = 10
 )
