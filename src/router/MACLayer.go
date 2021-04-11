@@ -10,7 +10,6 @@ import (
 type MACLayerConn struct {
 	packetConn net.PacketConn
 	source     net.HardwareAddr
-	mtu        int
 
 	// dirty optimization
 	// DON'T use one Conn for multiple readers!
@@ -30,7 +29,6 @@ func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
 	return &MACLayerConn{
 		packetConn: packetConn,
 		source:     iface.HardwareAddr,
-		mtu:        iface.MTU,
 		f:          f,
 		b:          b,
 	}, nil
