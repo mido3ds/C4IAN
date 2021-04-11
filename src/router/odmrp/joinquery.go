@@ -122,3 +122,7 @@ func (jqt *JoinQueryTable) Insert(src_addr int, prev_hop int, seqno, hop_count i
 
 	return true
 }
+
+func (jqt *JoinQueryTable) Clear() {
+	jqt.hash_table = make([]JoinQuerySlot, JQ_SRC_HASH_SIZE)
+}
