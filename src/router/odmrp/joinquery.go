@@ -1,5 +1,7 @@
 package odmrp
 
+import "fmt"
+
 type JoinQueryFound int
 
 const (
@@ -155,4 +157,37 @@ func (jqt *JoinQueryTable) Remove(src_addr int) bool {
 
 	return false
 
+}
+
+func (jqt *JoinQueryTable) Print() {
+	fmt.Printf("\nJoin Query Table\n")
+
+	for i := 0; i < len(jqt.hash_table); i++ {
+		fmt.Printf("\nJoin Query Table\n")
+
+		fmt.Printf("\n%d: ", i)
+		fmt.Printf("\nJoin Query Table\n")
+
+		if jqt.hash_table[i].src != 0 {
+			fmt.Printf("%d ", jqt.hash_table[i].src)
+			fmt.Printf(":%d ", jqt.hash_table[i].prev_hop)
+			fmt.Printf(":%d ", jqt.hash_table[i].hop_count)
+			fmt.Printf(":%d ", jqt.hash_table[i].seqno)
+
+			if jqt.hash_table[i].next != nil {
+				temp := jqt.hash_table[i].next
+
+				for temp != nil {
+					if temp.src != 0 {
+						fmt.Printf(":%d ", temp.src)
+						fmt.Printf(":%d ", temp.prev_hop)
+						fmt.Printf(":%d ", temp.hop_count)
+						fmt.Printf(":%d ", temp.seqno)
+					}
+					temp = temp.next
+				}
+			}
+		}
+	}
+	fmt.Printf("\nEnd Join Query Table\n")
 }
