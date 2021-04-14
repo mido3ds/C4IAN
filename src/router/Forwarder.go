@@ -60,38 +60,42 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			log.Fatal("failed to read from interface, err: ", err)
 		}
 
-		// decrypt and verify zid+ip headers
+		// decrypt and verify
 		pd, err := f.router.msec.NewPacketDecrypter(packet)
 		if err != nil {
 			log.Fatal("failed to build packet decrypter, err: ", err)
 		}
-		verified := pd.DecryptAndVerifyHeaders()
+		zid, verified := pd.DecryptAndVerifyZID()
+		if !verified {
+			continue
+		} // TODO: check if this is the destZoneID
+		ip, verified := pd.DecryptAndVerifyIP()
 		if !verified {
 			continue
 		}
 
-		if imDestination(f.router.ip, pd.DestIP) { // i'm destination,
+		if imDestination(f.router.ip, ip.DestIP, zid.DestZID) { // i'm destination,
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
 			}
 
-			ippacket := packet[ZIDHeaderLen:]
+			IPHeader := packet[ZIDHeaderLen:]
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(ippacket)
+			err = f.ipConn.Write(IPHeader)
 			if err != nil {
 				log.Fatal("failed to write to lo interface: ", err)
 			}
 		} else { // i'm a forwarder
 			// determine next hop
-			e, ok := f.table.Get(pd.DestIP)
+			e, ok := f.table.Get(ip.DestIP)
 			if !ok {
 				// TODO: call controller
 
 				// TODO: for now its all broadcast
 				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-				f.table.Set(pd.DestIP, e)
+				f.table.Set(ip.DestIP, e)
 			}
 
 			// hand it directly to the interface
@@ -120,23 +124,23 @@ func (f *Forwarder) ForwardFromIPLayer() {
 		case p := <-packets:
 			packet := p.Packet.Data()
 
-			ipPacket, err := ParseIPPacket(packet)
+			ip, err := ParseIPHeader(packet)
 			if err != nil {
 				log.Println("[error] failed to parse dest ip, drop it, err: ", err)
-			} else if IsRawPacket(packet) || imDestination(f.router.ip, ipPacket.destIP) {
+			} else if IsRawPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
 				p.SetVerdict(netfilter.NF_ACCEPT)
 			} else { // to out
 				// steal packet
 				p.SetVerdict(netfilter.NF_DROP)
 
 				// determine next hop
-				e, ok := f.table.Get(ipPacket.destIP)
+				e, ok := f.table.Get(ip.DestIP)
 				if !ok {
 					// TODO: call controller
 
 					// TODO: for now its all broadcast
 					e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-					f.table.Set(ipPacket.destIP, e)
+					f.table.Set(ip.DestIP, e)
 				}
 
 				// TODO: put this zone id, and zlen
@@ -168,7 +172,7 @@ func (f *Forwarder) Close() {
 	f.nfq.Close()
 }
 
-func imDestination(ip, destIP net.IP) bool {
+func imDestination(ip, destIP net.IP, destZoneID int32) bool {
 	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }

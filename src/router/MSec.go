@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"io"
-	"net"
 
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/sha3"
@@ -72,11 +71,8 @@ func (msec *MSecLayer) decrypt(in []byte) ([]byte, error) {
 }
 
 type PacketDecrypter struct {
-	reader  *cipher.StreamReader
-	out     *bytes.Buffer
-	Version byte
-	DestIP  net.IP
-	ZID     *ZIDHeader
+	reader *cipher.StreamReader
+	out    *bytes.Buffer
 }
 
 func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
@@ -94,33 +90,35 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 	}, nil
 }
 
-func (p *PacketDecrypter) DecryptAndVerifyHeaders() bool {
-	// zid
+func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
 	_, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
 	if err != nil {
-		return false
+		return nil, false
 	}
 	zid, zidValid, err := UnpackZIDHeader(p.out.Bytes())
 	if err != nil {
-		return false
+		return nil, false
 	}
 	if !zidValid {
-		return false
+		return nil, false
 	}
-	p.ZID = zid
 
-	// ip
-	_, err = io.CopyN(p.out, p.reader, 20)
+	return zid, true
+}
+
+func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
+	_, err := io.CopyN(p.out, p.reader, 20)
 	if err != nil {
-		return false
+		return nil, false
 	}
-	p.Version = byte(p.out.Bytes()[ZIDHeaderLen]) >> 4
-	if p.Version != 4 {
-		return false
+	version := byte(p.out.Bytes()[ZIDHeaderLen]) >> 4
+	if version != 4 {
+		return nil, false
 	}
-	p.DestIP = p.out.Bytes()[ZIDHeaderLen+16 : ZIDHeaderLen+20]
+	destIP := p.out.Bytes()[ZIDHeaderLen+16 : ZIDHeaderLen+20]
+	// TODO: verify checksum
 
-	return true
+	return &IPHeader{Version: version, DestIP: destIP}, true
 }
 
 func (p *PacketDecrypter) DecryptAll() ([]byte, error) {

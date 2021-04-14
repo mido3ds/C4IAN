@@ -5,9 +5,9 @@ import (
 	"net"
 )
 
-type IPPacket struct {
-	version byte
-	destIP  net.IP
+type IPHeader struct {
+	Version byte
+	DestIP  net.IP
 }
 
 var (
@@ -15,7 +15,7 @@ var (
 	errInvalidIPVersion = fmt.Errorf("invalid ip version")
 )
 
-func ParseIPPacket(buffer []byte) (*IPPacket, error) {
+func ParseIPHeader(buffer []byte) (*IPHeader, error) {
 	var ip net.IP
 	version := byte(buffer[0]) >> 4
 
@@ -33,8 +33,8 @@ func ParseIPPacket(buffer []byte) (*IPPacket, error) {
 		return nil, errInvalidIPVersion
 	}
 
-	return &IPPacket{
-		version: version,
-		destIP:  ip,
+	return &IPHeader{
+		Version: version,
+		DestIP:  ip,
 	}, nil
 }
