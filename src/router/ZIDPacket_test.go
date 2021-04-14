@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -37,9 +36,9 @@ func BenchmarkMarshalBinary(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(pm.MarshalBinary(1, 5, 12, []byte{1}))
+	header := &ZIDHeader{ZLen: 1, DestZID: 5, SrcZID: 12}
 	for n := 0; n < b.N; n++ {
-		_, err := pm.MarshalBinary(1, 5, 12, pm.buffer[:1000])
+		_, err := pm.MarshalBinary(header, pm.buffer[:1000])
 		if err != nil {
 			panic(err)
 		}
