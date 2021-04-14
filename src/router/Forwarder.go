@@ -13,6 +13,7 @@ type Forwarder struct {
 	macConn *MACLayerConn
 	ipConn  *IPLayerConn
 	nfq     *netfilter.NFQueue
+	table   *ForwardTable
 }
 
 func NewForwarder(router *Router) (*Forwarder, error) {
@@ -34,6 +35,8 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 		return nil, err
 	}
 
+	table := NewForwardTable()
+
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
@@ -41,6 +44,7 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 		macConn: macConn,
 		ipConn:  ipConn,
 		nfq:     nfq,
+		table:   table,
 	}, nil
 }
 
@@ -81,14 +85,17 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			}
 		} else { // i'm a forwarder
 			// determine next hop
-			// TODO: get zoneID of dest&src and ZLen
-			nextHopHWAddr, err := getNextHopHWAddr(&pd.DestIP)
-			if err != nil {
-				log.Fatal("failed to determine packets destination: ", err)
+			e, ok := f.table.Get(pd.DestIP)
+			if !ok {
+				// TODO: call controller
+
+				// TODO: for now its all broadcast
+				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
+				f.table.Set(pd.DestIP, e)
 			}
 
 			// hand it directly to the interface
-			err = f.macConn.Write(packet, nextHopHWAddr)
+			err = f.macConn.Write(packet, e.NextHopMAC)
 			if err != nil {
 				log.Fatal("failed to write to the interface: ", err)
 			}
@@ -123,13 +130,18 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				p.SetVerdict(netfilter.NF_DROP)
 
 				// determine next hop
-				// TODO: get zoneID of dest&src and ZLen
-				nextHopHWAddr, err := getNextHopHWAddr(&ipPacket.destIP)
-				if err != nil {
-					log.Fatal("failed to determine packets destination: ", err)
+				e, ok := f.table.Get(ipPacket.destIP)
+				if !ok {
+					// TODO: call controller
+
+					// TODO: for now its all broadcast
+					e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
+					f.table.Set(ipPacket.destIP, e)
 				}
 
-				zidPacket, err := zid.MarshalBinary(&ZIDHeader{ZLen: 1, SrcZID: 2, DestZID: 3}, packet)
+				// TODO: put this zone id, and zlen
+				// wrapp with ZID header
+				zidPacket, err := zid.MarshalBinary(&ZIDHeader{ZLen: 1, SrcZID: 2, DestZID: int32(e.DestZoneID)}, packet)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -141,7 +153,7 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				}
 
 				// hand it directly to the interface
-				err = f.macConn.Write(encryptedPacket, nextHopHWAddr)
+				err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
 				if err != nil {
 					log.Fatal("failed to write to the interface: ", err)
 				}

@@ -2,6 +2,10 @@ github.com/AkihiroSuda/go-netfilter-queue v0.0.0-20201214173403-f140eb484571 h1:
 github.com/AkihiroSuda/go-netfilter-queue v0.0.0-20201214173403-f140eb484571/go.mod h1:YGzQlV4fMhuLJYPiDSghqTdbISzAZT9O3ficmZsWJu4=
 github.com/akamensky/argparse v1.2.2 h1:P17T0ZjlUNJuWTPPJ2A5dM1wxarHgHqfYH+AZTo2xQA=
 github.com/akamensky/argparse v1.2.2/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
+github.com/cornelk/hashmap v1.0.1 h1:RXGcy29hEdLLV8T6aK4s+BAd4tq4+3Hq50N2GoG0uIg=
+github.com/cornelk/hashmap v1.0.1/go.mod h1:8wbysTUDnwJGrPZ1Iwsou3m+An6sldFrJItjRhfegCw=
+github.com/dchest/siphash v1.1.0 h1:1Rs9eTUlZLPBEvV+2sTaM8O0NWn0ppbgqS7p11aWawI=
+github.com/dchest/siphash v1.1.0/go.mod h1:q+IRvb2gOSrUnYoPqHiyHXS0FOBBOdl6tONBlVnOnt4=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
