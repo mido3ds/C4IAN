@@ -2,6 +2,8 @@
 import argparse
 import json
 import os
+import subprocess
+import sys
 from os.path import dirname, join, realpath
 from typing import List, NamedTuple
 
@@ -96,6 +98,7 @@ nodes = read_topo(args.topology)
 
 setLogLevel('info')
 
+print("*** Creating mn-wifi net")
 net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference, plot=args.plot)
 
 print("*** Creating nodes")
@@ -194,3 +197,8 @@ CLI(net)
 
 print("*** Stopping network")
 net.stop()
+
+print('*** Mininet clean')
+subprocess.check_call(['mn', '-c'],
+                      stdout=sys.stdout,
+                      stderr=subprocess.STDOUT)
