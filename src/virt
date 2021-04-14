@@ -84,6 +84,10 @@ def parse_args():
     parser.add_argument(
         '--no-cmd', help='Disable starting command-center in each node', action='store_true'
     )
+
+    parser.add_argument(
+        '--plot', help='Show plot of the topology', action='store_true'
+    )
     return parser.parse_args()
 
 
@@ -92,7 +96,7 @@ nodes = read_topo(args.topology)
 
 setLogLevel('info')
 
-net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference)
+net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference, plot=args.plot)
 
 print("*** Creating nodes")
 stations = {}
@@ -112,6 +116,13 @@ for node in nodes:
         intf=f'{node.name}-wlan0',
         **WIRELESS_CONF
     )
+
+if args.pot:
+    print('*** Plotting topology')
+    # TODO: select best (x,y) or set dynamically
+    # TODO: update with mobility
+    # TODO: make the window unfreaze
+    net.plotGraph(max_x=500, max_y=500)
 
 print("*** Starting network")
 net.build()
