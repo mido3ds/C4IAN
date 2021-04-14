@@ -36,3 +36,28 @@ func (l *DoubleLinkedList) Back() *ListElement {
 	}
 	return nil
 }
+
+func (l *DoubleLinkedList) InsertNode(n *Node, prev_element *ListElement) *ListElement {
+	return l.InsertElement(&ListElement{node: n}, prev_element)
+}
+
+func (l *DoubleLinkedList) InsertElement(element_to_insert, prev_element *ListElement) *ListElement {
+	tmp := prev_element.next
+	element_to_insert.list = l
+	element_to_insert.prev = prev_element
+	prev_element.next = element_to_insert
+	element_to_insert.next = tmp
+	tmp.prev = element_to_insert
+	l.length += 1
+	return element_to_insert
+}
+
+func (l *DoubleLinkedList) RemoveElement(e *ListElement) *ListElement {
+	e.prev.next = e.next
+	e.next.prev = e.prev
+	e.prev = nil
+	e.next = nil
+	e.list = nil
+	l.length -= 1
+	return e
+}
