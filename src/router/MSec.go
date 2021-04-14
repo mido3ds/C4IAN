@@ -95,16 +95,19 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyHeaders() bool {
-	// sgzip
+	// zid
 	_, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
 	if err != nil {
 		return false
 	}
-	sgzip, sgzipValid, err := UnpackZIDHeader(p.out.Bytes())
-	if !sgzipValid {
+	zid, zidValid, err := UnpackZIDHeader(p.out.Bytes())
+	if err != nil {
 		return false
 	}
-	p.ZID = sgzip
+	if !zidValid {
+		return false
+	}
+	p.ZID = zid
 
 	// ip
 	_, err = io.CopyN(p.out, p.reader, 20)

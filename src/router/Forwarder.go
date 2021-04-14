@@ -56,7 +56,7 @@ func (f *Forwarder) ForwardFromMACLayer() {
 			log.Fatal("failed to read from interface, err: ", err)
 		}
 
-		// decrypt and verify sgzip+ip headers
+		// decrypt and verify zid+ip headers
 		pd, err := f.router.msec.NewPacketDecrypter(packet)
 		if err != nil {
 			log.Fatal("failed to build packet decrypter, err: ", err)
@@ -99,7 +99,7 @@ func (f *Forwarder) ForwardFromMACLayer() {
 // ForwardFromIPLayer periodically forwards packets from IP to MAC
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
-	sgzip, err := NewZIDPacketMarshaler(f.router.iface.MTU)
+	zid, err := NewZIDPacketMarshaler(f.router.iface.MTU)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,13 +129,13 @@ func (f *Forwarder) ForwardFromIPLayer() {
 					log.Fatal("failed to determine packets destination: ", err)
 				}
 
-				sgzipPacket, err := sgzip.MarshalBinary(1, 2, 3, packet)
+				zidPacket, err := zid.MarshalBinary(&ZIDHeader{ZLen: 1, SrcZID: 2, DestZID: 3}, packet)
 				if err != nil {
 					log.Fatal(err)
 				}
 
 				// encrypt
-				encryptedPacket, err := f.router.msec.Encrypt(sgzipPacket)
+				encryptedPacket, err := f.router.msec.Encrypt(zidPacket)
 				if err != nil {
 					log.Fatal("failed to encrypt packet, err: ", err)
 				}

@@ -1,48 +1,51 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math/rand"
 )
 
 // "Zone IDentification (ZID)" protocol structs and functions
 
+// TODO: GPS location -> zoneID
+// TODO: translate zondIDs from zlen to another
+
 const ZIDHeaderLen = 12
 
 var (
-	errZeroZlen            = fmt.Errorf("zone len must not be 0")
-	errTooSmallSGZIPHeader = fmt.Errorf("ZID header is too small")
-	errNegativeMTU         = fmt.Errorf("MTU can't be negative")
+	errZeroZlen          = fmt.Errorf("zone len must not be 0")
+	errTooSmallZIDHeader = fmt.Errorf("ZID header is too small")
+	errNegativeMTU       = fmt.Errorf("MTU can't be negative")
 )
 
 type ZIDHeader struct {
-	Checksum        int16
-	RandomSalt      uint16
-	ZLen            byte
+	ZLen            uint16
 	DestZID, SrcZID int32
 }
 
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool, error) {
 	if len(packet) < ZIDHeaderLen {
-		return nil, false, errTooSmallSGZIPHeader
+		return nil, false, errTooSmallZIDHeader
 	}
 
-	// basicChecksum
+	// extract checksum
 	var csum int16 = int16(packet[0])<<8 | int16(packet[1])
 
-	header := &ZIDHeader{
-		Checksum:   csum,
-		RandomSalt: uint16(packet[2])<<8 | uint16(packet[3]&0b11100000),
-		ZLen:       packet[3] & 0b11111,
-		DestZID:    int32(packet[4])<<24 | int32(packet[5])<<16 | int32(packet[6])<<8 | int32(packet[7]),
-		SrcZID:     int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
-	}
+	// read the rest
+	header := &ZIDHeader{}
+	err := binary.Read(bytes.NewBuffer(packet[2:]), binary.BigEndian, header)
 
-	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), nil
+	// remove random salt from zlen
+	header.ZLen &= 0b11111
+
+	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), err
 }
 
 type ZIDPacketMarshaler struct {
-	buffer []byte
+	buffer        []byte
+	nonCSUMBuffer *bytes.Buffer
 }
 
 func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
@@ -50,32 +53,25 @@ func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
 		return nil, errNegativeMTU
 	}
 
-	return &ZIDPacketMarshaler{make([]byte, mtu-ZIDHeaderLen)}, nil
+	buffer := make([]byte, mtu-ZIDHeaderLen)
+	nonCSUMBuffer := bytes.NewBuffer(buffer[:])
+
+	return &ZIDPacketMarshaler{buffer: buffer, nonCSUMBuffer: nonCSUMBuffer}, nil
 }
 
-func (m *ZIDPacketMarshaler) MarshalBinary(zlen byte, destZID, srcZID int32, payload []byte) ([]byte, error) {
-	if zlen == 0 {
+func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([]byte, error) {
+	if header.ZLen == 0 {
 		return nil, errZeroZlen
 	}
 
-	// mix salt and zlen
-	saltedZlen := uint16(rand.Uint32())
-	saltedZlen <<= 5
-	saltedZlen |= 0b11111 & uint16(zlen)
+	// mix salt and header.ZLen
+	header.ZLen |= uint16(rand.Uint32()) << 5
 
 	// write to buffer
-	m.buffer[2] = byte(saltedZlen >> 8)
-	m.buffer[3] = byte(saltedZlen)
-
-	m.buffer[4] = byte(destZID >> 24)
-	m.buffer[5] = byte(destZID >> 16)
-	m.buffer[6] = byte(destZID >> 8)
-	m.buffer[7] = byte(destZID)
-
-	m.buffer[8] = byte(srcZID >> 24)
-	m.buffer[9] = byte(srcZID >> 16)
-	m.buffer[10] = byte(srcZID >> 8)
-	m.buffer[11] = byte(srcZID)
+	err := binary.Write(m.nonCSUMBuffer, binary.BigEndian, header)
+	if err != nil {
+		return nil, err
+	}
 
 	// basicChecksum
 	csum := basicChecksum(m.buffer[2:ZIDHeaderLen])

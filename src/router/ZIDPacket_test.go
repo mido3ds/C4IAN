@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_sgzipChecksum(t *testing.T) {
+func Test_zidChecksum(t *testing.T) {
 	tests := []struct {
 		name string
 		args []byte
@@ -25,7 +25,7 @@ func Test_sgzipChecksum(t *testing.T) {
 	}
 }
 
-func Benchmark_sgzipChecksum(b *testing.B) {
+func Benchmark_zidChecksum(b *testing.B) {
 	arr := []byte{255, 255, 255, 255, 255}
 	for n := 0; n < b.N; n++ {
 		basicChecksum(arr)
@@ -46,7 +46,7 @@ func BenchmarkMarshalBinary(b *testing.B) {
 	}
 }
 
-func BenchmarkUnpackSGZIPHeader(b *testing.B) {
+func BenchmarkUnpackZIDHeader(b *testing.B) {
 	packet := []byte{0, 218, 136, 65, 0, 0, 0, 5, 0, 0, 0, 12}
 	for n := 0; n < b.N; n++ {
 		_, _, err := UnpackZIDHeader(packet)
