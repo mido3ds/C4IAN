@@ -72,7 +72,7 @@ func (f *Forwarder) ForwardFromMACLayer() {
 				continue
 			}
 
-			ippacket := packet[SGZIPHeaderLen:]
+			ippacket := packet[ZIDHeaderLen:]
 
 			// receive message by injecting it in loopback
 			err = f.ipConn.Write(ippacket)
@@ -99,7 +99,7 @@ func (f *Forwarder) ForwardFromMACLayer() {
 // ForwardFromIPLayer periodically forwards packets from IP to MAC
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
-	sgzip, err := NewSGZIPacketMarshaler(f.router.iface.MTU)
+	sgzip, err := NewZIDPacketMarshaler(f.router.iface.MTU)
 	if err != nil {
 		log.Fatal(err)
 	}

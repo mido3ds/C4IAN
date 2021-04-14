@@ -5,32 +5,32 @@ import (
 	"math/rand"
 )
 
-// "Secure Global Zone Identification Protocol (SG-ZIP)" headers and functions
+// "Zone IDentification (ZID)" protocol structs and functions
 
-const SGZIPHeaderLen = 12
+const ZIDHeaderLen = 12
 
 var (
 	errZeroZlen            = fmt.Errorf("zone len must not be 0")
-	errTooSmallSGZIPHeader = fmt.Errorf("SGZIP header is too small")
+	errTooSmallSGZIPHeader = fmt.Errorf("ZID header is too small")
 	errNegativeMTU         = fmt.Errorf("MTU can't be negative")
 )
 
-type SGZIPHeader struct {
+type ZIDHeader struct {
 	Checksum        int16
 	RandomSalt      uint16
 	ZLen            byte
 	DestZID, SrcZID int32
 }
 
-func UnpackSGZIPHeader(packet []byte) (*SGZIPHeader, bool, error) {
-	if len(packet) < SGZIPHeaderLen {
+func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool, error) {
+	if len(packet) < ZIDHeaderLen {
 		return nil, false, errTooSmallSGZIPHeader
 	}
 
-	// sgzipChecksum
+	// basicChecksum
 	var csum int16 = int16(packet[0])<<8 | int16(packet[1])
 
-	header := &SGZIPHeader{
+	header := &ZIDHeader{
 		Checksum:   csum,
 		RandomSalt: uint16(packet[2])<<8 | uint16(packet[3]&0b11100000),
 		ZLen:       packet[3] & 0b11111,
@@ -38,22 +38,22 @@ func UnpackSGZIPHeader(packet []byte) (*SGZIPHeader, bool, error) {
 		SrcZID:     int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
 	}
 
-	return header, csum == sgzipChecksum(packet[2:SGZIPHeaderLen]), nil
+	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), nil
 }
 
-type SGZIPacketMarshaler struct {
+type ZIDPacketMarshaler struct {
 	buffer []byte
 }
 
-func NewSGZIPacketMarshaler(mtu int) (*SGZIPacketMarshaler, error) {
+func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
 	if mtu <= 0 {
 		return nil, errNegativeMTU
 	}
 
-	return &SGZIPacketMarshaler{make([]byte, mtu-SGZIPHeaderLen)}, nil
+	return &ZIDPacketMarshaler{make([]byte, mtu-ZIDHeaderLen)}, nil
 }
 
-func (m *SGZIPacketMarshaler) MarshalBinary(zlen byte, destZID, srcZID int32, payload []byte) ([]byte, error) {
+func (m *ZIDPacketMarshaler) MarshalBinary(zlen byte, destZID, srcZID int32, payload []byte) ([]byte, error) {
 	if zlen == 0 {
 		return nil, errZeroZlen
 	}
@@ -77,18 +77,18 @@ func (m *SGZIPacketMarshaler) MarshalBinary(zlen byte, destZID, srcZID int32, pa
 	m.buffer[10] = byte(srcZID >> 8)
 	m.buffer[11] = byte(srcZID)
 
-	// sgzipChecksum
-	csum := sgzipChecksum(m.buffer[2:SGZIPHeaderLen])
+	// basicChecksum
+	csum := basicChecksum(m.buffer[2:ZIDHeaderLen])
 	m.buffer[0] = byte(csum >> 8)
 	m.buffer[1] = byte(csum)
 
 	// copy payload
-	copy(m.buffer[SGZIPHeaderLen:SGZIPHeaderLen+len(payload)], payload)
+	copy(m.buffer[ZIDHeaderLen:ZIDHeaderLen+len(payload)], payload)
 
 	return m.buffer, nil
 }
 
-func sgzipChecksum(buf []byte) int16 {
+func basicChecksum(buf []byte) int16 {
 	var sum int16 = 0
 	for i := 0; i < len(buf); i++ {
 		sum += int16(buf[i])

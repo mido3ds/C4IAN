@@ -18,8 +18,8 @@ func Test_sgzipChecksum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := sgzipChecksum(tt.args); got != tt.want {
-				t.Errorf("sgzipChecksum() = %v, want %v", got, tt.want)
+			if got := basicChecksum(tt.args); got != tt.want {
+				t.Errorf("basicChecksum() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -28,12 +28,12 @@ func Test_sgzipChecksum(t *testing.T) {
 func Benchmark_sgzipChecksum(b *testing.B) {
 	arr := []byte{255, 255, 255, 255, 255}
 	for n := 0; n < b.N; n++ {
-		sgzipChecksum(arr)
+		basicChecksum(arr)
 	}
 }
 
 func BenchmarkMarshalBinary(b *testing.B) {
-	pm, err := NewSGZIPacketMarshaler(1500)
+	pm, err := NewZIDPacketMarshaler(1500)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func BenchmarkMarshalBinary(b *testing.B) {
 func BenchmarkUnpackSGZIPHeader(b *testing.B) {
 	packet := []byte{0, 218, 136, 65, 0, 0, 0, 5, 0, 0, 0, 12}
 	for n := 0; n < b.N; n++ {
-		_, _, err := UnpackSGZIPHeader(packet)
+		_, _, err := UnpackZIDHeader(packet)
 		if err != nil {
 			panic(err)
 		}

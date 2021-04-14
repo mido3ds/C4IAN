@@ -76,7 +76,7 @@ type PacketDecrypter struct {
 	out     *bytes.Buffer
 	Version byte
 	DestIP  net.IP
-	SGZIP   *SGZIPHeader
+	ZID     *ZIDHeader
 }
 
 func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
@@ -96,26 +96,26 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 
 func (p *PacketDecrypter) DecryptAndVerifyHeaders() bool {
 	// sgzip
-	_, err := io.CopyN(p.out, p.reader, SGZIPHeaderLen)
+	_, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
 	if err != nil {
 		return false
 	}
-	sgzip, sgzipValid, err := UnpackSGZIPHeader(p.out.Bytes())
+	sgzip, sgzipValid, err := UnpackZIDHeader(p.out.Bytes())
 	if !sgzipValid {
 		return false
 	}
-	p.SGZIP = sgzip
+	p.ZID = sgzip
 
 	// ip
 	_, err = io.CopyN(p.out, p.reader, 20)
 	if err != nil {
 		return false
 	}
-	p.Version = byte(p.out.Bytes()[SGZIPHeaderLen]) >> 4
+	p.Version = byte(p.out.Bytes()[ZIDHeaderLen]) >> 4
 	if p.Version != 4 {
 		return false
 	}
-	p.DestIP = p.out.Bytes()[SGZIPHeaderLen+16 : SGZIPHeaderLen+20]
+	p.DestIP = p.out.Bytes()[ZIDHeaderLen+16 : ZIDHeaderLen+20]
 
 	return true
 }
