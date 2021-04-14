@@ -117,7 +117,7 @@ for node in nodes:
         **WIRELESS_CONF
     )
 
-if args.pot:
+if args.plot:
     print('*** Plotting topology')
     # TODO: select best (x,y) or set dynamically
     # TODO: update with mobility
