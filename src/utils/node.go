@@ -24,3 +24,18 @@ func (n *Node) BestContains(id int) bool {
 	}
 	return false
 }
+
+func (n *Node) AddEdge(dest int, weight int64) {
+	if n.edges == nil {
+		n.edges = map[int]int64{}
+	}
+	n.edges[dest] = weight
+}
+
+func (n *Node) GetEdge(Destination int) (weight int64, ok bool) {
+	if n.edges == nil {
+		return 0, false
+	}
+	weight, ok = n.edges[Destination]
+	return weight, ok
+}
