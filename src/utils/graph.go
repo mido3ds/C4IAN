@@ -17,3 +17,25 @@ func (g *Graph) FillDefaults(weight int64, best_node int) {
 		g.nodes[i].weight = weight
 	}
 }
+
+func (g *Graph) InsertNode() *Node {
+	for i, node := range g.nodes {
+		if i != node.id {
+			g.nodes[i] = Node{id: i}
+			return &g.nodes[i]
+		}
+	}
+	id := len(g.nodes)
+	g.InsertNodes(Node{id: id})
+	return &g.nodes[id]
+}
+
+func (g *Graph) InsertNodes(nodes ...Node) {
+	for _, node := range nodes {
+		node.best_nodes = []int{-1}
+		if node.id >= len(g.nodes) {
+			g.nodes = append(g.nodes, make([]Node, node.id-len(g.nodes)+1)...)
+		}
+		g.nodes[node.id] = node
+	}
+}
