@@ -131,7 +131,7 @@ print()
 if not args.no_router:
     print('*** Starting routers')
     for n in nodes:
-        p = f'/var/log/C4IAN/{n.name}/router'
+        p = f'/var/log/C4IAN/{n.name}/router/'
         os.makedirs(p, exist_ok=True)
         stations[n.name].cmd(
             'daemonize',
@@ -145,7 +145,7 @@ if not args.no_router:
 else:
     print('*** Skip starting routers')
 
-if not args.no_router:
+if not args.no_unit:
     print('*** Starting units')
     for n in nodes:
         count = 0
@@ -167,7 +167,7 @@ if not args.no_router:
 else:
     print('*** Skip starting units')
 
-if not args.no_router:
+if not args.no_unit:
     print('*** Starting command centers')
     for n in nodes:
         count = 0
