@@ -61,3 +61,17 @@ func (l *DoubleLinkedList) RemoveElement(e *ListElement) *ListElement {
 	l.length -= 1
 	return e
 }
+
+func (l *DoubleLinkedList) PushFront(n *Node) *ListElement {
+	if l.root.next == nil {
+		l.Clear()
+	}
+	return l.InsertNode(n, &l.root)
+}
+
+func (l *DoubleLinkedList) PushBack(n *Node) *ListElement {
+	if l.root.next == nil {
+		l.Clear()
+	}
+	return l.InsertNode(n, l.Back())
+}
