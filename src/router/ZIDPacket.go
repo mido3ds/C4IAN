@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"math/rand"
 )
@@ -33,14 +32,13 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool, error) {
 	// extract checksum
 	var csum int16 = int16(packet[0])<<8 | int16(packet[1])
 
-	// read the rest
-	header := &ZIDHeader{}
-	err := binary.Read(bytes.NewBuffer(packet[2:]), binary.BigEndian, header)
+	header := &ZIDHeader{
+		ZLen:    uint16(packet[3]) & 0b11111,
+		DestZID: int32(packet[4])<<24 | int32(packet[5])<<16 | int32(packet[6])<<8 | int32(packet[7]),
+		SrcZID:  int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
+	}
 
-	// remove random salt from zlen
-	header.ZLen &= 0b11111
-
-	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), err
+	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), nil
 }
 
 type ZIDPacketMarshaler struct {
@@ -68,10 +66,18 @@ func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([
 	header.ZLen |= uint16(rand.Uint32()) << 5
 
 	// write to buffer
-	err := binary.Write(m.nonCSUMBuffer, binary.BigEndian, header)
-	if err != nil {
-		return nil, err
-	}
+	m.buffer[2] = byte(header.ZLen >> 8)
+	m.buffer[3] = byte(header.ZLen)
+
+	m.buffer[4] = byte(header.DestZID >> 24)
+	m.buffer[5] = byte(header.DestZID >> 16)
+	m.buffer[6] = byte(header.DestZID >> 8)
+	m.buffer[7] = byte(header.DestZID)
+
+	m.buffer[8] = byte(header.SrcZID >> 24)
+	m.buffer[9] = byte(header.SrcZID >> 16)
+	m.buffer[10] = byte(header.SrcZID >> 8)
+	m.buffer[11] = byte(header.SrcZID)
 
 	// basicChecksum
 	csum := basicChecksum(m.buffer[2:ZIDHeaderLen])
