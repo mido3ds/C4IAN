@@ -1,5 +1,9 @@
 package utils
 
+import (
+	"errors"
+)
+
 type Graph struct {
 	best         int64
 	visited_dest bool
@@ -38,4 +42,11 @@ func (g *Graph) InsertNodes(nodes ...Node) {
 		}
 		g.nodes[node.id] = node
 	}
+}
+
+func (g *Graph) GetNode(id int) (node *Node, err error) {
+	if id >= len(g.nodes) {
+		return nil, errors.New("Node is not found")
+	}
+	return &g.nodes[id], nil
 }
