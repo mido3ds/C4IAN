@@ -75,3 +75,19 @@ func (l *DoubleLinkedList) PushBack(n *Node) *ListElement {
 	}
 	return l.InsertNode(n, l.Back())
 }
+
+func (l *DoubleLinkedList) PopFront() *Node {
+	tmp := l.Front()
+	if tmp.list == l {
+		l.RemoveElement(tmp)
+	}
+	return tmp.node
+}
+
+func (l *DoubleLinkedList) PopBack() *Node {
+	tmp := l.Back()
+	if tmp.list == l {
+		l.RemoveElement(tmp)
+	}
+	return tmp.node
+}
