@@ -91,3 +91,28 @@ func (l *DoubleLinkedList) PopBack() *Node {
 	}
 	return tmp.node
 }
+
+func (l *DoubleLinkedList) PushOrdered(n *Node) *ListElement {
+	if l.root.next == nil {
+		l.Clear()
+	}
+	if l.length == 0 {
+		return l.PushFront(n)
+	}
+	back := l.Back()
+	if back.node.weight < n.weight {
+		return l.InsertNode(n, l.root.prev)
+	}
+	curr := l.Front()
+	for curr.node.weight < n.weight && curr.node.id != n.id {
+		curr = curr.next
+	}
+	if curr.node.id == n.id {
+		return curr
+	}
+	return l.InsertNode(n, curr.prev)
+}
+
+func (l *DoubleLinkedList) PopOrdered() *Node {
+	return l.PopBack()
+}
