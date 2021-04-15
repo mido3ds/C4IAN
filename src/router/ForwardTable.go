@@ -25,7 +25,7 @@ func NewForwardTable() *ForwardTable {
 
 // Get returns value associated with the given key, and whether the key existed or not
 func (f *ForwardTable) Get(destIP []byte) (*ForwardingEntry, bool) {
-	v, ok := f.m.Get(IPToUInt32(destIP))
+	v, ok := f.m.Get(IPv4ToUInt32(destIP))
 	if !ok {
 		return nil, false
 	}
@@ -36,12 +36,12 @@ func (f *ForwardTable) Set(destIP []byte, entry *ForwardingEntry) {
 	if entry == nil {
 		panic(fmt.Errorf("you can't enter nil entry"))
 	}
-	f.m.Set(IPToUInt32(destIP), entry)
+	f.m.Set(IPv4ToUInt32(destIP), entry)
 }
 
 // Del silently fails if key doesn't exist
 func (f *ForwardTable) Del(destIP []byte) {
-	f.m.Del(IPToUInt32(destIP))
+	f.m.Del(IPv4ToUInt32(destIP))
 }
 
 func (f *ForwardTable) Len() int {
