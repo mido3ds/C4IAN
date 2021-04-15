@@ -22,6 +22,7 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 
 	// get initial ip addresses
 	ip, _, err := GetMyIPs(iface)
+	ip = ip.To4()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iface ips, err: %s", err)
 	}

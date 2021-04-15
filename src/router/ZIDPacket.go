@@ -19,7 +19,8 @@ const (
 	// TODO: Add actual data/control types
 	DataPacket PacketType = iota
 	DummyControlPacket
-	SARP
+	SARPReq
+	SARPRes
 )
 
 var (

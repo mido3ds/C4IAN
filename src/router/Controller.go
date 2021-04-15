@@ -66,7 +66,11 @@ func (c *Controller) sARP() {
 	}
 }
 
-func (c *Controller) sendSARP(dst net.HardwareAddr) {
+func (c *Controller) sendSARPReq() {
+	c.sendSARP(SARPReq, ethernet.Broadcast)
+}
+
+func (c *Controller) sendSARP(packetType PacketType, dst net.HardwareAddr) {
 	payload := append([]byte(c.router.ip.To4()), []byte(c.router.iface.HardwareAddr)...)
 	log.Println("Sending sARP: ", c.router.ip.To4(), c.router.iface.HardwareAddr)
 
@@ -75,7 +79,7 @@ func (c *Controller) sendSARP(dst net.HardwareAddr) {
 		log.Fatal(err)
 	}
 
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: SARP}, payload)
+	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: packetType}, payload)
 	if err != nil {
 		log.Fatal(err)
 	}
