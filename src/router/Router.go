@@ -7,7 +7,6 @@ import (
 )
 
 type Router struct {
-	faceName string
 	iface    *net.Interface
 	ip       net.IP
 	msec     *MSecLayer
@@ -35,7 +34,6 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 	}
 
 	return &Router{
-		faceName: ifaceName,
 		iface:    iface,
 		msec:     NewMSecLayer(passphrase),
 		ip:       ip,
