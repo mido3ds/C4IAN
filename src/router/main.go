@@ -15,14 +15,14 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
 
-	ifaceName, pass, err := parseArgs()
+	ifaceName, pass, locSocket, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
 	fmt.Println("-----------------------")
 
-	router, err := NewRouter(ifaceName, pass)
+	router, err := NewRouter(ifaceName, pass, locSocket)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,15 +43,16 @@ func main() {
 	log.Println("received SIGINT, started cleaning up")
 }
 
-func parseArgs() (string, string, error) {
+func parseArgs() (string, string, string, error) {
 	parser := argparse.NewParser("router", "Sets forwarding table in linux to route packets in adhoc-network.")
 	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name."})
 	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption."})
+	locSocket := parser.String("l", "location-socket", &argparse.Options{Required: true, Help: "Path to unix domain socket to listen for location stream."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
-		return "", "", errors.New(parser.Usage(err))
+		return "", "", "", errors.New(parser.Usage(err))
 	}
 
-	return *ifaceName, *passphrase, nil
+	return *ifaceName, *passphrase, *locSocket, nil
 }
