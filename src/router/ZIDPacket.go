@@ -32,6 +32,10 @@ type ZIDHeader struct {
 	dstZID, srcZID int32
 }
 
+func (z *ZIDHeader) isControlPacket() bool {
+	return z.packetType == ControlPacket
+}
+
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	if len(packet) < ZIDHeaderLen {
 		return nil, false

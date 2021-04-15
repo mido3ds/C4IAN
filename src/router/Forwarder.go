@@ -96,7 +96,7 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan []byte) {
 			continue
 		}
 
-		if zid.packetType == ControlPacket {
+		if zid.isControlPacket() {
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
