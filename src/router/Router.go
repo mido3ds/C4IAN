@@ -56,6 +56,7 @@ func (r *Router) Start() error {
 	// start modules
 	go r.locAgent.Start()
 	go controller.ListenForControlPackets()
+	go controller.sARP()
 	go forwarder.ForwardFromIPLayer()
 	go forwarder.ForwardFromMACLayer(controller.inputChannel)
 
