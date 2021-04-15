@@ -45,3 +45,7 @@ func ipv4Checksum(b []byte) uint16 {
 	}
 	return ^uint16((sum >> 16) + sum)
 }
+
+func IPToUInt32(ip []byte) uint32 {
+	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+}
