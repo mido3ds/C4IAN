@@ -5,6 +5,7 @@ import (
 )
 
 type Controller struct {
+	router       *Router
 	macConn      *MACLayerConn
 	inputChannel chan []byte
 }
@@ -20,6 +21,7 @@ func NewController(router *Router) (*Controller, error) {
 	log.Println("initalized controller")
 
 	return &Controller{
+		router:       router,
 		macConn:      macConn,
 		inputChannel: c,
 	}, nil
