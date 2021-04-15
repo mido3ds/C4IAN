@@ -73,7 +73,7 @@ func GetMyIPs(iface *net.Interface) (net.IP, net.IP, error) {
 		} else if isIPv6(ip.String()) {
 			ip6 = ip
 		} else {
-			return nil, nil, fmt.Errorf("ip is not ip4 or ip6!")
+			return nil, nil, fmt.Errorf("ip is not ip4 or ip6")
 		}
 	}
 

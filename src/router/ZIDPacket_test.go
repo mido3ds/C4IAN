@@ -8,7 +8,7 @@ func Test_zidChecksum(t *testing.T) {
 	tests := []struct {
 		name string
 		args []byte
-		want int16
+		want uint16
 	}{
 		{"basic", []byte{1, 1, 1, 1, 1}, 5},
 		{"basic2", []byte{1, 1, 1, 2, 1}, 6},
@@ -36,7 +36,7 @@ func BenchmarkMarshalBinary(b *testing.B) {
 	if err != nil {
 		panic(err)
 	}
-	header := &ZIDHeader{ZLen: 1, DestZID: 5, SrcZID: 12}
+	header := &ZIDHeader{zLen: 1, dstZID: 5, srcZID: 12}
 	for n := 0; n < b.N; n++ {
 		_, err := pm.MarshalBinary(header, pm.buffer[:1000])
 		if err != nil {
