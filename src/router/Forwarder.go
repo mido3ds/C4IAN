@@ -75,7 +75,7 @@ func (f *Forwarder) broadcastDummy() {
 // ForwardFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
-func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan []byte) {
+func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 	log.Println("started receiving from MAC layer")
 
 	for {
@@ -102,7 +102,7 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan []byte) {
 				continue
 			}
 
-			controllerChannel <- packet
+			controllerChannel <- &ControlPacket{zidHeader: zid, payload: packet[ZIDHeaderLen:]}
 			continue
 		}
 
