@@ -7,7 +7,7 @@ import (
 
 // TODO: support parallelism and fan-out
 
-func AddIptablesRules() {
+func AddIPTablesRules() {
 	// ipv4
 	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE").Run()
 	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "--queue-num", "0")
@@ -18,7 +18,7 @@ func AddIptablesRules() {
 	log.Println("added NFQUEUE rule to OUTPUT chain in iptables")
 }
 
-func RemoveIptablesRules() {
+func RemoveIPTablesRules() {
 	// ipv4
 	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE")
 	stdoutStderr, err := cmd.CombinedOutput()

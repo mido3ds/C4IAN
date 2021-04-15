@@ -27,8 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	AddIptablesRules()
-	defer RemoveIptablesRules()
+	AddIPTablesRules()
+	defer RemoveIPTablesRules()
 
 	err = router.Start()
 	if err != nil {
