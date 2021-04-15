@@ -33,9 +33,7 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 }
 
 func (c *IPLayerConn) Write(packet []byte) error {
-	// mark as raw
-	packet[1] |= byte(1)
-
+	markPacketAsInjected(packet)
 	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
 }
 
@@ -43,8 +41,14 @@ func (c *IPLayerConn) Close() {
 	syscall.Close(c.fd4)
 }
 
-func IsRawPacket(packet []byte) bool {
-	return (packet[1] & byte(1)) == byte(1)
+// markPacketAsInjected puts a mark in a reserved bit in IPv4 header
+// so we can notice it when it comes back in netfilter-queue
+func markPacketAsInjected(b []byte) {
+	b[1] |= 1
+}
+
+func IsInjectedPacket(packet []byte) bool {
+	return packet[1]&1 == 1
 }
 
 func GetMyIPs(iface *net.Interface) (net.IP, net.IP, error) {

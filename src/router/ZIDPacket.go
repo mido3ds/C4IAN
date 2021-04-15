@@ -14,9 +14,8 @@ import (
 const ZIDHeaderLen = 12
 
 var (
-	errZeroZlen          = fmt.Errorf("zone len must not be 0")
-	errTooSmallZIDHeader = fmt.Errorf("ZID header is too small")
-	errNegativeMTU       = fmt.Errorf("MTU can't be negative")
+	errZeroZlen    = fmt.Errorf("zone len must not be 0")
+	errNegativeMTU = fmt.Errorf("MTU can't be negative")
 )
 
 type ZIDHeader struct {
@@ -24,9 +23,9 @@ type ZIDHeader struct {
 	DestZID, SrcZID int32
 }
 
-func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool, error) {
+func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	if len(packet) < ZIDHeaderLen {
-		return nil, false, errTooSmallZIDHeader
+		return nil, false
 	}
 
 	// extract checksum
@@ -38,7 +37,7 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool, error) {
 		SrcZID:  int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
 	}
 
-	return header, csum == basicChecksum(packet[2:ZIDHeaderLen]), nil
+	return header, csum == basicChecksum(packet[2:ZIDHeaderLen])
 }
 
 type ZIDPacketMarshaler struct {

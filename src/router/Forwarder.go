@@ -59,18 +59,20 @@ func (f *Forwarder) ForwardFromMACLayer() {
 		if err != nil {
 			log.Fatal("failed to read from interface, err: ", err)
 		}
+		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
 		pd, err := f.router.msec.NewPacketDecrypter(packet)
 		if err != nil {
 			log.Fatal("failed to build packet decrypter, err: ", err)
 		}
-		zid, verified := pd.DecryptAndVerifyZID()
-		if !verified {
+		zid, valid := pd.DecryptAndVerifyZID()
+		if !valid {
 			continue
-		} // TODO: check if this is the destZoneID
-		ip, verified := pd.DecryptAndVerifyIP()
-		if !verified {
+		}
+		// TODO: check if this is the destZoneID before decrypting IP header
+		ip, valid := pd.DecryptAndVerifyIP()
+		if !valid {
 			continue
 		}
 
@@ -124,15 +126,17 @@ func (f *Forwarder) ForwardFromIPLayer() {
 		case p := <-packets:
 			packet := p.Packet.Data()
 
-			ip, err := ParseIPHeader(packet)
-			if err != nil {
-				log.Println("[error] failed to parse dest ip, drop it, err: ", err)
-			} else if IsRawPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
+			// TODO: speed up by goroutine workers
+			// TODO: speed up by fanout netfilter feature
+
+			ip, valid := UnpackIPHeader(packet)
+			if !valid {
+				log.Fatal("ip header must have been valid from ip layer!")
+			}
+
+			if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
 				p.SetVerdict(netfilter.NF_ACCEPT)
 			} else { // to out
-				// steal packet
-				p.SetVerdict(netfilter.NF_DROP)
-
 				// determine next hop
 				e, ok := f.table.Get(ip.DestIP)
 				if !ok {
@@ -144,7 +148,7 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				}
 
 				// TODO: put this zone id, and zlen
-				// wrapp with ZID header
+				// add ZID header
 				zidPacket, err := zid.MarshalBinary(&ZIDHeader{ZLen: 1, SrcZID: 2, DestZID: int32(e.DestZoneID)}, packet)
 				if err != nil {
 					log.Fatal(err)
@@ -156,11 +160,14 @@ func (f *Forwarder) ForwardFromIPLayer() {
 					log.Fatal("failed to encrypt packet, err: ", err)
 				}
 
-				// hand it directly to the interface
+				// write to device driver
 				err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
 				if err != nil {
-					log.Fatal("failed to write to the interface: ", err)
+					log.Fatal("failed to write to the device driver: ", err)
 				}
+
+				// sender shall know the papcket is sent
+				p.SetVerdict(netfilter.NF_DROP)
 			}
 		}
 	}
@@ -175,9 +182,4 @@ func (f *Forwarder) Close() {
 func imDestination(ip, destIP net.IP, destZoneID int32) bool {
 	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
-}
-
-func getNextHopHWAddr(destIP *net.IP) (net.HardwareAddr, error) {
-	// TODO: lookup forwarding table for given ipaddr
-	return ethernet.Broadcast, nil
 }

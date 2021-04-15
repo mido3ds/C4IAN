@@ -48,9 +48,6 @@ func BenchmarkMarshalBinary(b *testing.B) {
 func BenchmarkUnpackZIDHeader(b *testing.B) {
 	packet := []byte{0, 218, 136, 65, 0, 0, 0, 5, 0, 0, 0, 12}
 	for n := 0; n < b.N; n++ {
-		_, _, err := UnpackZIDHeader(packet)
-		if err != nil {
-			panic(err)
-		}
+		UnpackZIDHeader(packet)
 	}
 }
