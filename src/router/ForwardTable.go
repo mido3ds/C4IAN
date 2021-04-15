@@ -26,10 +26,10 @@ func NewForwardTable() *ForwardTable {
 // Get returns value associated with the given key, and whether the key existed or not
 func (f *ForwardTable) Get(destIP []byte) (*ForwardingEntry, bool) {
 	v, ok := f.m.Get(ipToUInt32(destIP))
-	if v == nil {
+	if !ok {
 		return nil, false
 	}
-	return v.(*ForwardingEntry), ok
+	return v.(*ForwardingEntry), true
 }
 
 func (f *ForwardTable) Set(destIP []byte, entry *ForwardingEntry) {
