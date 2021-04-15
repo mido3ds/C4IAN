@@ -54,6 +54,7 @@ func (f *Forwarder) broadcastDummy() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
 	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: ControlPacket, srcZID: 2, dstZID: 3}, dummy)
 	if err != nil {
 		log.Fatal(err)

@@ -17,6 +17,7 @@ const (
 	// TODO: Add actual data/control types
 	DataPacket PacketType = iota
 	ControlPacket
+	FloodPacket
 )
 
 const ZIDHeaderLen = 12
@@ -33,7 +34,8 @@ type ZIDHeader struct {
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == ControlPacket
+	return z.packetType == ControlPacket || 
+		   z.packetType == FloodPacket
 }
 
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
