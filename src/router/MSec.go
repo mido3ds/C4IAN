@@ -95,7 +95,6 @@ func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
 	if err != nil || n != ZIDHeaderLen {
 		return nil, false
 	}
-
 	return UnpackZIDHeader(p.out.Bytes())
 }
 
