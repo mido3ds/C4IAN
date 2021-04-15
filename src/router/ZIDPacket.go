@@ -11,15 +11,16 @@ import (
 // TODO: GPS location -> zoneID
 // TODO: translate zondIDs from zlen to another
 
+const ZIDHeaderLen = 12
+
 type PacketType uint8
 
 const (
 	// TODO: Add actual data/control types
 	DataPacket PacketType = iota
-	ControlPacket
+	DummyControlPacket
+	SARP
 )
-
-const ZIDHeaderLen = 12
 
 var (
 	errZeroZlen    = fmt.Errorf("zone len must not be 0")
@@ -33,7 +34,7 @@ type ZIDHeader struct {
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == ControlPacket
+	return z.packetType == SARP || z.packetType == DummyControlPacket
 }
 
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
