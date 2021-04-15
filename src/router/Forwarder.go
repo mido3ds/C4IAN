@@ -48,10 +48,34 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 	}, nil
 }
 
+func (f *Forwarder) broadcastDummy() {
+	dummy := []byte("Dummy")
+	zid, err := NewZIDPacketMarshaler(f.router.iface.MTU)
+	if err != nil {
+		log.Fatal(err)
+	}
+	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: ControlPacket, srcZID: 2, dstZID: 3}, dummy)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	encryptedPacket, err := f.router.msec.Encrypt(packet)
+	if err != nil {
+		log.Fatal("failed to encrypt packet, err: ", err)
+	}
+
+	err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
+	if err != nil {
+		log.Fatal("failed to write to the device driver: ", err)
+	}
+
+	log.Println("Broadcasting dummy control packet..")
+}
+
 // ForwardFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
-func (f *Forwarder) ForwardFromMACLayer() {
+func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan []byte) {
 	log.Println("started receiving from MAC layer")
 
 	for {
@@ -68,15 +92,27 @@ func (f *Forwarder) ForwardFromMACLayer() {
 		}
 		zid, valid := pd.DecryptAndVerifyZID()
 		if !valid {
+			log.Println("Received a packet with invalid ZID header")
 			continue
 		}
+
+		if zid.packetType == ControlPacket {
+			packet, err := pd.DecryptAll()
+			if err != nil {
+				continue
+			}
+
+			controllerChannel <- packet
+			continue
+		}
+
 		// TODO: check if this is the destZoneID before decrypting IP header
 		ip, valid := pd.DecryptAndVerifyIP()
 		if !valid {
 			continue
 		}
 
-		if imDestination(f.router.ip, ip.DestIP, zid.DestZID) { // i'm destination,
+		if imDestination(f.router.ip, ip.DestIP, zid.dstZID) { // i'm destination,
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
@@ -149,7 +185,7 @@ func (f *Forwarder) ForwardFromIPLayer() {
 
 				// TODO: put this zone id, and zlen
 				// add ZID header
-				zidPacket, err := zid.MarshalBinary(&ZIDHeader{ZLen: 1, SrcZID: 2, DestZID: int32(e.DestZoneID)}, packet)
+				zidPacket, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}, packet)
 				if err != nil {
 					log.Fatal(err)
 				}

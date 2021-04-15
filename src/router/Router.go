@@ -45,17 +45,21 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 
 func (r *Router) Start() error {
 	// initial modules
+	controller, err := NewController(r)
+	if err != nil {
+		return fmt.Errorf("failed to initialize controller, err: %s", err)
+	}
+
 	forwarder, err := NewForwarder(r)
 	if err != nil {
 		return fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
-	// TODO: initialize controller
 
 	// start modules
 	go r.locAgent.Start()
+	go controller.ListenForControlPackets()
 	go forwarder.ForwardFromIPLayer()
-	go forwarder.ForwardFromMACLayer()
-	// TODO: start controller
+	go forwarder.ForwardFromMACLayer(controller.inputChannel)
 
 	return nil
 }
