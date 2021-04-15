@@ -91,34 +91,21 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
-	_, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
-	if err != nil {
-		return nil, false
-	}
-	zid, zidValid, err := UnpackZIDHeader(p.out.Bytes())
-	if err != nil {
-		return nil, false
-	}
-	if !zidValid {
+	n, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
+	if err != nil || n != ZIDHeaderLen {
 		return nil, false
 	}
 
-	return zid, true
+	return UnpackZIDHeader(p.out.Bytes())
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
-	_, err := io.CopyN(p.out, p.reader, 20)
-	if err != nil {
+	n, err := io.CopyN(p.out, p.reader, IPv4HeaderLen)
+	if err != nil || n != IPv4HeaderLen {
 		return nil, false
 	}
-	version := byte(p.out.Bytes()[ZIDHeaderLen]) >> 4
-	if version != 4 {
-		return nil, false
-	}
-	destIP := p.out.Bytes()[ZIDHeaderLen+16 : ZIDHeaderLen+20]
-	// TODO: verify checksum
 
-	return &IPHeader{Version: version, DestIP: destIP}, true
+	return UnpackIPHeader(p.out.Bytes()[ZIDHeaderLen:])
 }
 
 func (p *PacketDecrypter) DecryptAll() ([]byte, error) {
