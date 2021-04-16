@@ -62,8 +62,5 @@ func (r *Router) Start() error {
 	go forwarder.ForwardFromIPLayer()
 	go forwarder.ForwardFromMACLayer(controller.inputChannel)
 
-	time.Sleep(5 * time.Second)
-	controller.floodDummy()
-	
 	return nil
 }

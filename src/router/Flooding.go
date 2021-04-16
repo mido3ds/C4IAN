@@ -2,6 +2,8 @@
 package main
 
 import (
+	"net"
+	"bytes"
 	"log"
 	"unsafe"
 	"encoding/binary"
@@ -44,7 +46,8 @@ func (flooder *Flooder) Flood(msg []byte) {
 	seqBytes := (*[4]byte)(unsafe.Pointer(&flooder.seqNumber,))[:]
 	msg = append(seqBytes, msg...)
 	flooder.seqNumber++
-    
+	
+	// ADD ZID Header
 	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
 	if err != nil {
 		log.Fatal(err)
@@ -66,24 +69,53 @@ func (flooder *Flooder) Flood(msg []byte) {
 	}
 }
 
-func (flooder *Flooder) receiveFlood(packet []byte) {
-	seq := binary.LittleEndian.Uint32(packet[:4])
-	srcIP := packet[4:8]
-	tableSeq, exist := flooder.fTable.Get(srcIP)
-	if !exist || seq > tableSeq {
-		flooder.fTable.Set(srcIP, seq)
-		// encrypt the msg
-		encryptedPacket, err := flooder.router.msec.Encrypt(packet)
-		if err != nil {
-			log.Fatal("failed to encrypt packet, err: ", err)
-		}
+func (flooder *Flooder) receiveFlood(msg []byte) {
+	srcIP := msg[4:8]
+	myIP := flooder.router.ip
 
-		// reflood the msg
-		err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
-		if err != nil {
-			log.Fatal("failed to write to the device driver: ", err)
-		}
+	if bytes.Equal(srcIP , myIP) {
+		log.Println("My flooded msg returned to me")
+		return;
 	}
+
+	log.Println("I received a msg from ", net.IP(srcIP))
+
+	seq := binary.LittleEndian.Uint32(msg[:4])
+	tableSeq, exist := flooder.fTable.Get(srcIP)
+
+	log.Println("Seq Number: ", seq)
+	log.Println("Exist: ", exist)
+	log.Println("Table seq: ", tableSeq)
+
+	if exist && tableSeq <= seq {
+		return;
+	}
+
+	flooder.fTable.Set(srcIP, seq)
+
+	// ADD ZID Header
+	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}, msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// encrypt the msg
+	encryptedPacket, err := flooder.router.msec.Encrypt(packet)
+	if err != nil {
+		log.Fatal("failed to encrypt packet, err: ", err)
+	}
+
+	// reflood the msg
+	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
+	if err != nil {
+		log.Fatal("failed to write to the device driver: ", err)
+	}
+	
 }
 
 

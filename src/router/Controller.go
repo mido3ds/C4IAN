@@ -66,10 +66,14 @@ func (c *Controller) ListenForControlPackets() {
 		case SARPRes:
 			ip := net.IP(controlPacket.payload[:4])
 			mac := net.HardwareAddr(controlPacket.payload[4:10])
-			log.Println("Received sARP: ", ip, mac)
-			c.sendSARP(mac)
+			log.Println("Received sARP Response from: ", ip, mac)
+
+			e := &NeighborEntry{MAC: mac}
+			c.neighborsTable.Set(ip, e)
+			log.Println(c.neighborsTable)
 		case FloodPacket:
 			c.flooder.receiveFlood(controlPacket.payload)
+
 		}
 	}
 }
