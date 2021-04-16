@@ -75,6 +75,8 @@ type PacketDecrypter struct {
 	out    *bytes.Buffer
 }
 
+// TODO: add DecryptN, and remove DecryptAndVerify
+
 func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 	stream, err := msec.decryptStream()
 	if err != nil {

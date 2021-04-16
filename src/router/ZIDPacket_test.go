@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_zidChecksum(t *testing.T) {
+func TestBasicChecksum(t *testing.T) {
 	tests := []struct {
 		name string
 		args []byte
@@ -17,8 +17,8 @@ func Test_zidChecksum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := basicChecksum(tt.args); got != tt.want {
-				t.Errorf("basicChecksum() = %v, want %v", got, tt.want)
+			if got := BasicChecksum(tt.args); got != tt.want {
+				t.Errorf("BasicChecksum() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -27,7 +27,7 @@ func Test_zidChecksum(t *testing.T) {
 func Benchmark_zidChecksum(b *testing.B) {
 	arr := []byte{255, 255, 255, 255, 255}
 	for n := 0; n < b.N; n++ {
-		basicChecksum(arr)
+		BasicChecksum(arr)
 	}
 }
 

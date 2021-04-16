@@ -48,7 +48,7 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 
 	// extract checksum
 	csum := uint16(packet[0])<<8 | uint16(packet[1])
-	if csum != basicChecksum(packet[2:ZIDHeaderLen]) {
+	if csum != BasicChecksum(packet[2:ZIDHeaderLen]) {
 		return nil, false
 	}
 
@@ -93,8 +93,8 @@ func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([
 	m.buffer[10] = byte(header.srcZID >> 8)
 	m.buffer[11] = byte(header.srcZID)
 
-	// basicChecksum
-	csum := basicChecksum(m.buffer[2:ZIDHeaderLen])
+	// add checksum
+	csum := BasicChecksum(m.buffer[2:ZIDHeaderLen])
 	m.buffer[0] = byte(csum >> 8)
 	m.buffer[1] = byte(csum)
 
@@ -104,7 +104,7 @@ func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([
 	return m.buffer, nil
 }
 
-func basicChecksum(buf []byte) uint16 {
+func BasicChecksum(buf []byte) uint16 {
 	var sum uint16 = 0
 	for i := 0; i < len(buf); i++ {
 		sum += uint16(buf[i])

@@ -59,7 +59,7 @@ func (c *Controller) ListenForControlPackets() {
 		case SARPRes:
 			c.sARP.OnSARPRes(controlPacket.payload)
 		case FloodPacket:
-			c.flooder.ReceiveFloodMsg(controlPacket.payload)
+			c.flooder.ReceiveFloodedMsg(controlPacket.payload)
 		}
 	}
 }

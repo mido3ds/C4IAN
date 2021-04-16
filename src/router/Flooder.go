@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"log"
 	"net"
-	"unsafe"
 
 	"github.com/mdlayher/ethernet"
 )
@@ -38,13 +36,9 @@ func NewFlooder(router *Router) (*Flooder, error) {
 
 // seq (4 Bytes) + srcIP (4 Bytes) + packet
 func (flooder *Flooder) Flood(msg []byte) {
-	// append srcIP
-	srcIP := flooder.router.ip
-	msg = append(srcIP, msg...)
+	hdr := FloodHeader{SrcIP: flooder.router.ip, SeqNum: flooder.seqNumber}
+	msg = append(hdr.MarshalBinary(), msg...)
 
-	// append sequence number
-	seqBytes := (*[4]byte)(unsafe.Pointer(&flooder.seqNumber))[:]
-	msg = append(seqBytes, msg...)
 	flooder.seqNumber++
 
 	// ADD ZID Header
@@ -69,29 +63,30 @@ func (flooder *Flooder) Flood(msg []byte) {
 	}
 }
 
-func (flooder *Flooder) ReceiveFloodMsg(msg []byte) {
-	srcIP := msg[4:8]
-	myIP := flooder.router.ip
+func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
+	hdr, ok := UnpackFloodHeader(msg)
+	if !ok {
+		return
+	}
 
-	if bytes.Equal(srcIP, myIP) {
+	if bytes.Equal(hdr.SrcIP, flooder.router.ip) {
 		log.Println("My flooded msg returned to me")
 		return
 	}
 
-	log.Println("I received a msg from ", net.IP(srcIP))
+	log.Println("I received a msg from ", net.IP(hdr.SrcIP))
 
-	seq := binary.LittleEndian.Uint32(msg[:4])
-	tableSeq, exist := flooder.fTable.Get(srcIP)
+	tableSeq, exist := flooder.fTable.Get(hdr.SrcIP)
 
-	log.Println("Seq Number: ", seq)
+	log.Println("Seq Number: ", hdr.SeqNum)
 	log.Println("Exist: ", exist)
 	log.Println("Table seq: ", tableSeq)
 
-	if exist && tableSeq <= seq {
+	if exist && tableSeq <= hdr.SeqNum {
 		return
 	}
 
-	flooder.fTable.Set(srcIP, seq)
+	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
 	// ADD ZID Header
 	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
@@ -115,4 +110,49 @@ func (flooder *Flooder) ReceiveFloodMsg(msg []byte) {
 	if err != nil {
 		log.Fatal("failed to write to the device driver: ", err)
 	}
+}
+
+type FloodHeader struct {
+	// [0:2] checksum here
+	SrcIP  net.IP // [2:6]
+	SeqNum uint32 // [6:10]
+}
+
+const FloodHeaderLen = 2 + 2*4
+
+func UnpackFloodHeader(b []byte) (*FloodHeader, bool) {
+	if len(b) < FloodHeaderLen {
+		return nil, false
+	}
+
+	// extract checksum
+	csum := uint16(b[0])<<8 | uint16(b[1])
+	if csum != BasicChecksum(b[2:FloodHeaderLen]) {
+		return nil, false
+	}
+
+	return &FloodHeader{
+		SrcIP:  b[2:6],
+		SeqNum: uint32(b[6])<<24 | uint32(b[7])<<16 | uint32(b[8])<<8 | uint32(b[9]),
+	}, true
+}
+
+func (f *FloodHeader) MarshalBinary() []byte {
+	var header [FloodHeaderLen]byte
+
+	// ip
+	copy(header[2:6], f.SrcIP[:])
+
+	// seqnum
+	header[6] = byte(f.SeqNum >> 24)
+	header[7] = byte(f.SeqNum >> 16)
+	header[8] = byte(f.SeqNum >> 8)
+	header[9] = byte(f.SeqNum)
+
+	// add checksum
+	csum := BasicChecksum(header[2:FloodHeaderLen])
+	header[0] = byte(csum >> 8)
+	header[1] = byte(csum)
+
+	return header[:]
 }
