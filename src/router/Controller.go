@@ -49,7 +49,7 @@ func NewController(router *Router) (*Controller, error) {
 
 func (c *Controller) ListenForControlPackets() {
 	log.Println("Controller started listening for control packets from the forwarder")
-
+	// TODO: receive encrypted packet and packet decrypter
 	for {
 		controlPacket := <-c.inputChannel
 
