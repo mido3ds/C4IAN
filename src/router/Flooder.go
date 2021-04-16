@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net"
-
+	"fmt"
 	"github.com/mdlayher/ethernet"
 )
 
@@ -52,6 +52,10 @@ func (f *FloodHeader) MarshalBinary() []byte {
 	header[1] = byte(csum)
 
 	return header[:]
+}
+
+func (f *FloodHeader) String() string {
+	return fmt.Sprintf("received a msg flooded by:%#v, with seq=%#v", f.SrcIP.String(), f.SeqNum)
 }
 
 type Flooder struct {
@@ -109,23 +113,24 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
 	}
 
 	if bytes.Equal(hdr.SrcIP, flooder.router.ip) {
-		log.Println("My flooded msg returned to me")
+		log.Println("received my flooded msg")
 		return
 	}
 
-	log.Println("I received a msg from ", net.IP(hdr.SrcIP))
-
 	tableSeq, exist := flooder.fTable.Get(hdr.SrcIP)
 
-	log.Println("Seq Number: ", hdr.SeqNum)
-	log.Println("Exist: ", exist)
-	log.Println("Table seq: ", tableSeq)
+	log.Println(hdr)
+	log.Println("before: ",  flooder.fTable)
 
 	if exist && hdr.SeqNum <= tableSeq {
+		log.Println("this flooded msg is discarded")
 		return
 	}
 
 	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
+
+	log.Println("this flooded msg is accepted")
+	log.Println("after: ",  flooder.fTable)
 
 	// add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}

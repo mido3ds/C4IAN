@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+	"fmt"
 
 	"github.com/cornelk/hashmap"
 )
@@ -58,6 +59,16 @@ func (f *FloodingTable) Len() int {
 	return f.m.Len()
 }
 
+func (f *FloodingTable) String() string {
+	s := "&FloodingTable{"
+	for item := range f.m.Iter() {
+		s += fmt.Sprintf(" (ip=%#v,seq=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*FloodingEntry).seqNumber)
+
+	}
+	s += " }"
+	return s
+}
+
 func fireTimerHelper(srcIP []byte, f *FloodingTable) {
 	f.Del(srcIP)
 }
@@ -67,3 +78,4 @@ func fireTimer(srcIP []byte, f *FloodingTable) func() {
 		fireTimerHelper(srcIP, f)
 	}
 }
+
