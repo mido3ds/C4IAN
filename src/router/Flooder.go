@@ -69,7 +69,7 @@ func (flooder *Flooder) Flood(msg []byte) {
 	}
 }
 
-func (flooder *Flooder) receiveFlood(msg []byte) {
+func (flooder *Flooder) ReceiveFloodMsg(msg []byte) {
 	srcIP := msg[4:8]
 	myIP := flooder.router.ip
 

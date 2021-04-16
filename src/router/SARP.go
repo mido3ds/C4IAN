@@ -48,7 +48,7 @@ func (s *SARP) run() {
 	}
 }
 
-func (s *SARP) onSARPReq(payload []byte) {
+func (s *SARP) OnSARPReq(payload []byte) {
 	if !verifySARPHeader(payload) {
 		log.Println("received malformed SARP header, ignore it")
 	} else {
@@ -59,7 +59,7 @@ func (s *SARP) onSARPReq(payload []byte) {
 	}
 }
 
-func (s *SARP) onSARPRes(payload []byte) {
+func (s *SARP) OnSARPRes(payload []byte) {
 	if !verifySARPHeader(payload) {
 		log.Println("received malformed SARP header, ignore it")
 	} else {

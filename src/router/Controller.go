@@ -55,11 +55,11 @@ func (c *Controller) ListenForControlPackets() {
 
 		switch controlPacket.zidHeader.packetType {
 		case SARPReq:
-			c.sARP.onSARPReq(controlPacket.payload)
+			c.sARP.OnSARPReq(controlPacket.payload)
 		case SARPRes:
-			c.sARP.onSARPRes(controlPacket.payload)
+			c.sARP.OnSARPRes(controlPacket.payload)
 		case FloodPacket:
-			c.flooder.receiveFlood(controlPacket.payload)
+			c.flooder.ReceiveFloodMsg(controlPacket.payload)
 		}
 	}
 }
