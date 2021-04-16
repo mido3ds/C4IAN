@@ -2,13 +2,7 @@ package main
 
 import (
 	"log"
-	"net"
-	"time"
-
-	"github.com/mdlayher/ethernet"
 )
-
-const sARPDelay = 20 * time.Second
 
 type ControlPacket struct {
 	zidHeader *ZIDHeader
@@ -16,10 +10,10 @@ type ControlPacket struct {
 }
 
 type Controller struct {
-	router         *Router
-	macConn        *MACLayerConn
-	inputChannel   chan *ControlPacket
-	neighborsTable *NeighborsTable
+	router       *Router
+	macConn      *MACLayerConn
+	sARP         *SARP
+	inputChannel chan *ControlPacket
 }
 
 func NewController(router *Router) (*Controller, error) {
@@ -30,15 +24,18 @@ func NewController(router *Router) (*Controller, error) {
 
 	c := make(chan *ControlPacket)
 
-	neighborsTable := NewNeighborsTable()
+	sARP, err := NewSARP(router)
+	if err != nil {
+		log.Fatal("failed to build initiate sARP, err: ", err)
+	}
 
 	log.Println("initalized controller")
 
 	return &Controller{
-		router:         router,
-		macConn:        macConn,
-		inputChannel:   c,
-		neighborsTable: neighborsTable,
+		router:       router,
+		macConn:      macConn,
+		inputChannel: c,
+		sARP:         sARP,
 	}, nil
 }
 
@@ -50,61 +47,13 @@ func (c *Controller) ListenForControlPackets() {
 
 		switch controlPacket.zidHeader.packetType {
 		case SARPReq:
-			ip := net.IP(controlPacket.payload[:4])
-			mac := net.HardwareAddr(controlPacket.payload[4:10])
-			log.Println("Received sARP Request from: ", ip, mac)
-			c.sendSARPRes(mac)
+			c.sARP.onSRPReq(controlPacket.payload)
 		case SARPRes:
-			ip := net.IP(controlPacket.payload[:4])
-			mac := net.HardwareAddr(controlPacket.payload[4:10])
-			log.Println("Received sARP Response from: ", ip, mac)
-
-			e := &NeighborEntry{MAC: mac}
-			c.neighborsTable.Set(ip, e)
-			log.Println(c.neighborsTable)
+			c.sARP.onSRPRes(controlPacket.payload)
 		}
-
 	}
 }
 
-func (c *Controller) sARP() {
-	log.Println("Initiating sARP")
-	for {
-		c.sendSARPReq()
-
-		// TODO: Replace with scheduling if necessary
-		time.Sleep(sARPDelay)
-	}
-}
-
-func (c *Controller) sendSARPReq() {
-	log.Print("Sending sARP Request: ")
-	c.sendSARP(SARPReq, ethernet.Broadcast)
-}
-
-func (c *Controller) sendSARPRes(dst net.HardwareAddr) {
-	log.Print("Sending sARP Response: ")
-	c.sendSARP(SARPRes, dst)
-}
-
-func (c *Controller) sendSARP(packetType PacketType, dst net.HardwareAddr) {
-	payload := append(c.router.ip, (c.router.iface.HardwareAddr)...)
-	log.Println(c.router.ip, c.router.iface.HardwareAddr)
-
-	zid, err := NewZIDPacketMarshaler(c.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: packetType}, payload)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	encryptedPacket, err := c.router.msec.Encrypt(packet)
-	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
-	}
-
-	c.macConn.Write(encryptedPacket, dst)
+func (c *Controller) runSARP() {
+	c.sARP.run()
 }
