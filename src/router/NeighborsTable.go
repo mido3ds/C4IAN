@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/cornelk/hashmap"
@@ -48,8 +47,8 @@ func (f *NeighborsTable) Len() int {
 	return f.m.Len()
 }
 
-func (f *NeighborsTable) Display() {
-	for item := range f.m.Iter() {
-		log.Println(item.Key, item.Value)
-	}
-}
+// func (f *NeighborsTable) Display() {
+// 	for item := range f.m.Iter() {
+// 		log.Println(item.Key, item.Value)
+// 	}
+// }

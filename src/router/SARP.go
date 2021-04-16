@@ -35,7 +35,6 @@ func NewSARP(router *Router) (*SARP, error) {
 
 func (s *SARP) run() {
 	for {
-		s.neighborsTable.Display()
 		s.sendSARPReq()
 
 		// TODO: Replace with scheduling if necessary
