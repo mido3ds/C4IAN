@@ -48,15 +48,16 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 
 	// extract checksum
 	csum := uint16(packet[0])<<8 | uint16(packet[1])
+	if csum != basicChecksum(packet[2:ZIDHeaderLen]) {
+		return nil, false
+	}
 
-	header := &ZIDHeader{
+	return &ZIDHeader{
 		packetType: PacketType(packet[3] >> 4),
 		zLen:       uint8(packet[3] & 0b1111),
 		dstZID:     int32(packet[4])<<24 | int32(packet[5])<<16 | int32(packet[6])<<8 | int32(packet[7]),
 		srcZID:     int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
-	}
-
-	return header, csum == basicChecksum(packet[2:ZIDHeaderLen])
+	}, true
 }
 
 type ZIDPacketMarshaler struct {
