@@ -35,7 +35,7 @@ type ZIDHeader struct {
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == SARP || z.packetType == DummyControlPacket
+	return z.packetType == SARPReq || z.packetType == SARPRes || z.packetType == DummyControlPacket
 }
 
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
