@@ -15,14 +15,14 @@ type FloodingTable struct {
 
 type FloodingEntry struct {
 	seqNumber uint32
-	ageTimer *time.Timer
+	ageTimer  *time.Timer
 }
 
 func NewFloodingTable() *FloodingTable {
 	return &FloodingTable{}
 }
 
-// Get returns value associated with the given key 
+// Get returns value associated with the given key
 // and whether the key existed or not
 func (f *FloodingTable) Get(srcIP []byte) (uint32, bool) {
 	v, ok := f.m.Get(IPv4ToUInt32(srcIP))
@@ -40,12 +40,12 @@ func (f *FloodingTable) Set(srcIP []byte, seq uint32) {
 	if ok {
 		timer := v.(*FloodingEntry).ageTimer
 		timer.Stop()
-	} 
+	}
 
 	// Start new Timer
 	fireFunc := fireTimer(srcIP, f)
-	newTimer := time.AfterFunc(Age * time.Second, fireFunc)
-	entry := &FloodingEntry{ seqNumber: seq, ageTimer: newTimer }
+	newTimer := time.AfterFunc(Age*time.Second, fireFunc)
+	entry := &FloodingEntry{seqNumber: seq, ageTimer: newTimer}
 	f.m.Set(IPv4ToUInt32(srcIP), entry)
 }
 
@@ -64,6 +64,6 @@ func fireTimerHelper(srcIP []byte, f *FloodingTable) {
 
 func fireTimer(srcIP []byte, f *FloodingTable) func() {
 	return func() {
-        fireTimerHelper(srcIP, f)
-    }
+		fireTimerHelper(srcIP, f)
+	}
 }

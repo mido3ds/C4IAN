@@ -1,20 +1,20 @@
-
 package main
 
 import (
-	"net"
 	"bytes"
-	"log"
-	"unsafe"
 	"encoding/binary"
+	"log"
+	"net"
+	"unsafe"
+
 	"github.com/mdlayher/ethernet"
 )
 
 type Flooder struct {
 	seqNumber uint32
-	fTable *FloodingTable
-	router  *Router
-	macConn  *MACLayerConn
+	fTable    *FloodingTable
+	router    *Router
+	macConn   *MACLayerConn
 }
 
 func NewFlooder(router *Router) (*Flooder, error) {
@@ -30,9 +30,9 @@ func NewFlooder(router *Router) (*Flooder, error) {
 
 	return &Flooder{
 		seqNumber: 0,
-		fTable: fTable,
-		router:  router,
-		macConn: macConn,
+		fTable:    fTable,
+		router:    router,
+		macConn:   macConn,
 	}, nil
 }
 
@@ -43,10 +43,10 @@ func (flooder *Flooder) Flood(msg []byte) {
 	msg = append(srcIP, msg...)
 
 	// append sequence number
-	seqBytes := (*[4]byte)(unsafe.Pointer(&flooder.seqNumber,))[:]
+	seqBytes := (*[4]byte)(unsafe.Pointer(&flooder.seqNumber))[:]
 	msg = append(seqBytes, msg...)
 	flooder.seqNumber++
-	
+
 	// ADD ZID Header
 	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
 	if err != nil {
@@ -73,9 +73,9 @@ func (flooder *Flooder) receiveFlood(msg []byte) {
 	srcIP := msg[4:8]
 	myIP := flooder.router.ip
 
-	if bytes.Equal(srcIP , myIP) {
+	if bytes.Equal(srcIP, myIP) {
 		log.Println("My flooded msg returned to me")
-		return;
+		return
 	}
 
 	log.Println("I received a msg from ", net.IP(srcIP))
@@ -88,7 +88,7 @@ func (flooder *Flooder) receiveFlood(msg []byte) {
 	log.Println("Table seq: ", tableSeq)
 
 	if exist && tableSeq <= seq {
-		return;
+		return
 	}
 
 	flooder.fTable.Set(srcIP, seq)
@@ -115,7 +115,4 @@ func (flooder *Flooder) receiveFlood(msg []byte) {
 	if err != nil {
 		log.Fatal("failed to write to the device driver: ", err)
 	}
-	
 }
-
-

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"math/rand"
 )
@@ -30,16 +29,16 @@ var (
 )
 
 type ZIDHeader struct {
-	packetType     PacketType // Left 4 bits of the 4th byte
-	zLen           uint8      // Right 4 bits of the 4th byte
+	packetType     PacketType // Most significant 4 bits of the 4th byte
+	zLen           uint8      // Least significant 4 bits of the 4th byte
 	dstZID, srcZID int32
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
 	return z.packetType == FloodPacket ||
-		   z.packetType == SARPReq || 
-		   z.packetType == SARPRes || 
-		   z.packetType == DummyControlPacket
+		z.packetType == SARPReq ||
+		z.packetType == SARPRes ||
+		z.packetType == DummyControlPacket
 }
 
 func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
@@ -61,8 +60,7 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 }
 
 type ZIDPacketMarshaler struct {
-	buffer        []byte
-	nonCSUMBuffer *bytes.Buffer
+	buffer []byte
 }
 
 func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
@@ -71,9 +69,8 @@ func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
 	}
 
 	buffer := make([]byte, mtu-ZIDHeaderLen)
-	nonCSUMBuffer := bytes.NewBuffer(buffer[:])
 
-	return &ZIDPacketMarshaler{buffer: buffer, nonCSUMBuffer: nonCSUMBuffer}, nil
+	return &ZIDPacketMarshaler{buffer: buffer}, nil
 }
 
 func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([]byte, error) {

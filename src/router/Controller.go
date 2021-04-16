@@ -13,15 +13,14 @@ type Controller struct {
 	router       *Router
 	macConn      *MACLayerConn
 	sARP         *SARP
-	flooder		 *Flooder
+	flooder      *Flooder
 	inputChannel chan *ControlPacket
 }
 
 func (c *Controller) floodDummy() {
-	dummy:= []byte{0xAA, 0xBB}
+	dummy := []byte{0xAA, 0xBB}
 	c.flooder.Flood(dummy)
 }
-
 
 func NewController(router *Router) (*Controller, error) {
 	macConn, err := NewMACLayerConn(router.iface)
@@ -44,7 +43,7 @@ func NewController(router *Router) (*Controller, error) {
 		macConn:      macConn,
 		inputChannel: c,
 		sARP:         sARP,
-		flooder:	  flooder,
+		flooder:      flooder,
 	}, nil
 }
 
@@ -56,9 +55,9 @@ func (c *Controller) ListenForControlPackets() {
 
 		switch controlPacket.zidHeader.packetType {
 		case SARPReq:
-			c.sARP.onSRPReq(controlPacket.payload)
+			c.sARP.onSARPReq(controlPacket.payload)
 		case SARPRes:
-			c.sARP.onSRPRes(controlPacket.payload)
+			c.sARP.onSARPRes(controlPacket.payload)
 		case FloodPacket:
 			c.flooder.receiveFlood(controlPacket.payload)
 		}
