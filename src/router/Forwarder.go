@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net"
 
@@ -50,14 +51,8 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
-	zid, err := NewZIDPacketMarshaler(f.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: DummyControlPacket, srcZID: 2, dstZID: 3}, dummy)
-	if err != nil {
-		log.Fatal(err)
-	}
+	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	packet := append(zid.MarshalBinary(), dummy...)
 
 	encryptedPacket, err := f.router.msec.Encrypt(packet)
 	if err != nil {
@@ -148,11 +143,7 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 // ForwardFromIPLayer periodically forwards packets from IP to MAC
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
-	zid, err := NewZIDPacketMarshaler(f.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	buffer := bytes.NewBuffer(make([]byte, 0, f.router.iface.MTU))
 	packets := f.nfq.GetPackets()
 
 	log.Println("started receiving from IP layer")
@@ -184,14 +175,15 @@ func (f *Forwarder) ForwardFromIPLayer() {
 				}
 
 				// TODO: put this zone id, and zlen
-				// add ZID header
-				zidPacket, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}, packet)
-				if err != nil {
-					log.Fatal(err)
-				}
+				zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
+
+				// build packet
+				buffer.Reset()
+				buffer.Write(zid.MarshalBinary())
+				buffer.Write(packet)
 
 				// encrypt
-				encryptedPacket, err := f.router.msec.Encrypt(zidPacket)
+				encryptedPacket, err := f.router.msec.Encrypt(buffer.Bytes())
 				if err != nil {
 					log.Fatal("failed to encrypt packet, err: ", err)
 				}

@@ -32,16 +32,9 @@ func Benchmark_zidChecksum(b *testing.B) {
 }
 
 func BenchmarkMarshalBinary(b *testing.B) {
-	pm, err := NewZIDPacketMarshaler(1500)
-	if err != nil {
-		panic(err)
-	}
 	header := &ZIDHeader{zLen: 1, dstZID: 5, srcZID: 12}
 	for n := 0; n < b.N; n++ {
-		_, err := pm.MarshalBinary(header, pm.buffer[:1000])
-		if err != nil {
-			panic(err)
-		}
+		header.MarshalBinary()
 	}
 }
 

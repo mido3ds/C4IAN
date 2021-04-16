@@ -81,15 +81,9 @@ func (s *SARP) sendSARP(packetType PacketType, dst net.HardwareAddr) {
 	payload := append(s.router.ip, (s.router.iface.HardwareAddr)...)
 	payload = append(payload, hash(payload)...)
 
-	zid, err := NewZIDPacketMarshaler(s.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: packetType}, payload)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// add ZID Header
+	zid := &ZIDHeader{zLen: 1, packetType: packetType, srcZID: 2, dstZID: 3}
+	packet := append(zid.MarshalBinary(), payload...)
 
 	encryptedPacket, err := s.router.msec.Encrypt(packet)
 	if err != nil {

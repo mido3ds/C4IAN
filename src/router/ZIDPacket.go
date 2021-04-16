@@ -60,48 +60,33 @@ func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	}, true
 }
 
-type ZIDPacketMarshaler struct {
-	buffer []byte
-}
+func (header *ZIDHeader) MarshalBinary() []byte {
+	var buf [ZIDHeaderLen]byte
 
-func NewZIDPacketMarshaler(mtu int) (*ZIDPacketMarshaler, error) {
-	if mtu <= 0 {
-		return nil, errNegativeMTU
-	}
+	// random salt
+	buf[2] = byte(rand.Uint32())
 
-	buffer := make([]byte, mtu-ZIDHeaderLen)
+	// packet type + zlen
+	buf[3] = byte(header.packetType)<<4 | (byte(header.zLen) & 0b1111)
 
-	return &ZIDPacketMarshaler{buffer: buffer}, nil
-}
+	// destZID
+	buf[4] = byte(header.dstZID >> 24)
+	buf[5] = byte(header.dstZID >> 16)
+	buf[6] = byte(header.dstZID >> 8)
+	buf[7] = byte(header.dstZID)
 
-func (m *ZIDPacketMarshaler) MarshalBinary(header *ZIDHeader, payload []byte) ([]byte, error) {
-	if header.zLen == 0 {
-		return nil, errZeroZlen
-	}
-
-	// write to buffer
-	m.buffer[2] = byte(rand.Uint32()) // Random salt
-	m.buffer[3] = byte(header.packetType)<<4 | (byte(header.zLen) & 0b1111)
-
-	m.buffer[4] = byte(header.dstZID >> 24)
-	m.buffer[5] = byte(header.dstZID >> 16)
-	m.buffer[6] = byte(header.dstZID >> 8)
-	m.buffer[7] = byte(header.dstZID)
-
-	m.buffer[8] = byte(header.srcZID >> 24)
-	m.buffer[9] = byte(header.srcZID >> 16)
-	m.buffer[10] = byte(header.srcZID >> 8)
-	m.buffer[11] = byte(header.srcZID)
+	// srcZID
+	buf[8] = byte(header.srcZID >> 24)
+	buf[9] = byte(header.srcZID >> 16)
+	buf[10] = byte(header.srcZID >> 8)
+	buf[11] = byte(header.srcZID)
 
 	// add checksum
-	csum := BasicChecksum(m.buffer[2:ZIDHeaderLen])
-	m.buffer[0] = byte(csum >> 8)
-	m.buffer[1] = byte(csum)
+	csum := BasicChecksum(buf[2:ZIDHeaderLen])
+	buf[0] = byte(csum >> 8)
+	buf[1] = byte(csum)
 
-	// copy payload
-	copy(m.buffer[ZIDHeaderLen:ZIDHeaderLen+len(payload)], payload)
-
-	return m.buffer, nil
+	return buf[:]
 }
 
 func BasicChecksum(buf []byte) uint16 {

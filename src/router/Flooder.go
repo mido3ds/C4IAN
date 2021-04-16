@@ -41,18 +41,11 @@ func (flooder *Flooder) Flood(msg []byte) {
 
 	flooder.seqNumber++
 
-	// ADD ZID Header
-	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// add ZID Header
+	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	msg = append(zid.MarshalBinary(), msg...)
 
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}, msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	encryptedPacket, err := flooder.router.msec.Encrypt(packet)
+	encryptedPacket, err := flooder.router.msec.Encrypt(msg)
 	if err != nil {
 		log.Fatal("failed to encrypt packet, err: ", err)
 	}
@@ -88,19 +81,12 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
 
 	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
-	// ADD ZID Header
-	zid, err := NewZIDPacketMarshaler(flooder.router.iface.MTU)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	packet, err := zid.MarshalBinary(&ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}, msg)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// add ZID Header
+	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	msg = append(zid.MarshalBinary(), msg...)
 
 	// encrypt the msg
-	encryptedPacket, err := flooder.router.msec.Encrypt(packet)
+	encryptedPacket, err := flooder.router.msec.Encrypt(msg)
 	if err != nil {
 		log.Fatal("failed to encrypt packet, err: ", err)
 	}
