@@ -20,7 +20,8 @@ const (
 	DataPacket PacketType = iota
 	FloodPacket
 	DummyControlPacket
-	SARP
+	SARPReq
+	SARPRes
 )
 
 var (
