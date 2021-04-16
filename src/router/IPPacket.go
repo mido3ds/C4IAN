@@ -49,3 +49,7 @@ func ipv4Checksum(b []byte) uint16 {
 func IPv4ToUInt32(ip []byte) uint32 {
 	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
 }
+
+func UInt32ToIPv4(i uint32) net.IP {
+	return net.IPv4(byte(i>>24), byte(i>>16), byte(i>>8), byte(i))
+}

@@ -47,8 +47,12 @@ func (f *NeighborsTable) Len() int {
 	return f.m.Len()
 }
 
-// func (f *NeighborsTable) Display() {
-// 	for item := range f.m.Iter() {
-// 		log.Println(item.Key, item.Value)
-// 	}
-// }
+func (f *NeighborsTable) String() string {
+	s := "&NeighborsTable{"
+	for item := range f.m.Iter() {
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String())
+
+	}
+	s += " }"
+	return s
+}
