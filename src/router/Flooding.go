@@ -1,8 +1,11 @@
 
+package main
+
 import (
-	"net"
+	"log"
 	"unsafe"
 	"encoding/binary"
+	"github.com/mdlayher/ethernet"
 )
 
 type Flooder struct {
@@ -12,7 +15,7 @@ type Flooder struct {
 	macConn  *MACLayerConn
 }
 
-func NewFlooder(router *Router) (*Forwarder, error) {
+func NewFlooder(router *Router) (*Flooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
@@ -24,9 +27,10 @@ func NewFlooder(router *Router) (*Forwarder, error) {
 	log.Println("initalized flooder")
 
 	return &Flooder{
+		seqNumber: 0,
+		fTable: fTable,
 		router:  router,
 		macConn: macConn,
-		seqNumber: 0
 	}, nil
 }
 
@@ -63,11 +67,11 @@ func (flooder *Flooder) Flood(msg []byte) {
 }
 
 func (flooder *Flooder) receiveFlood(packet []byte) {
-	seq := packet[:4]
-	srcIP := binary.LittleEndian.Uint32(packet[4:8])
-	tableSeq := fTable.Get(srcIP)
-	if seq > tableSeq {
-		fTable.Set(srcIP, seq)
+	seq := binary.LittleEndian.Uint32(packet[:4])
+	srcIP := packet[4:8]
+	tableSeq, exist := flooder.fTable.Get(srcIP)
+	if !exist || seq > tableSeq {
+		flooder.fTable.Set(srcIP, seq)
 		// encrypt the msg
 		encryptedPacket, err := flooder.router.msec.Encrypt(packet)
 		if err != nil {

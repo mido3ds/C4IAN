@@ -18,13 +18,13 @@ type ControlPacket struct {
 type Controller struct {
 	router       *Router
 	macConn      *MACLayerConn
-	inputChannel chan []byte
+	inputChannel chan *ControlPacket
 	flooder		 *Flooder
 }
 
 func (c *Controller) floodDummy() {
 	dummy:= []byte{0xAA, 0xBB}
-	c.flooder.flood(dummy)
+	c.flooder.Flood(dummy)
 }
 
 
@@ -34,8 +34,8 @@ func NewController(router *Router) (*Controller, error) {
 		return nil, err
 	}
 
-	c := make(chan []byte)
-	flooder := NewFlooder(router)
+	c := make(chan *ControlPacket)
+	flooder, err := NewFlooder(router)
 
 	log.Println("initalized controller")
 
@@ -43,7 +43,7 @@ func NewController(router *Router) (*Controller, error) {
 		router:       router,
 		macConn:      macConn,
 		inputChannel: c,
-		flooder:	  flooder	 
+		flooder:	  flooder,	 
 	}, nil
 }
 
@@ -60,8 +60,9 @@ func (c *Controller) ListenForControlPackets() {
 			mac := net.HardwareAddr(controlPacket.payload[4:10])
 			log.Println("Received sARP: ", ip, mac)
 			c.sendSARP(mac)
+		case FloodPacket:
+			c.flooder.receiveFlood(controlPacket.payload)
 		}
-
 	}
 }
 
