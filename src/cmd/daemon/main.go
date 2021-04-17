@@ -19,7 +19,6 @@ func main() {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	fmt.Println("-----------------------")
 
 	// TODO: open store db
 	// TODO: wrap writing to db
