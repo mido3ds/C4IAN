@@ -12,15 +12,16 @@ import (
 
 func main() {
 	defer log.Println("finished cleaning up, closing")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	log.SetOutput(os.Stdout)
 
 	ifaceName, pass, locSocket, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
-	fmt.Println("-----------------------")
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
+	log.SetPrefix("[" + ifaceName + "] ")
 
 	router, err := NewRouter(ifaceName, pass, locSocket)
 	if err != nil {
