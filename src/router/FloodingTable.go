@@ -9,7 +9,7 @@ import (
 
 const Age = 60
 
-// key: 4 bytes IPv4, value: *ForwardingEntry
+// key: 4 bytes IPv4, value: *FloodingEntry
 type FloodingTable struct {
 	m hashmap.HashMap
 }
