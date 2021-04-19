@@ -1,0 +1,75 @@
+{
+    "application": {
+        "apType": "ovs",
+        "authentication": "none",
+        "dpctl": "",
+        "enableWmediumd": "0",
+        "ipBase": "10.0.0.0/8",
+        "mode": "g",
+        "netflow": {
+            "nflowAddId": "0",
+            "nflowTarget": "",
+            "nflowTimeout": "600"
+        },
+        "openFlowVersions": {
+            "ovsOf10": "1",
+            "ovsOf11": "0",
+            "ovsOf12": "0",
+            "ovsOf13": "0"
+        },
+        "passwd": "",
+        "sflow": {
+            "sflowHeader": "128",
+            "sflowPolling": "30",
+            "sflowSampling": "400",
+            "sflowTarget": ""
+        },
+        "startCLI": "0",
+        "switchType": "ovs",
+        "terminalType": "xterm"
+    },
+    "aps": [
+        {
+            "number": "1",
+            "opts": {
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u1",
+                "mode": "g",
+                "nodeNum": 1,
+                "passwd": "",
+                "range": "default",
+                "ssid": "u1-ssid",
+                "wlans": 1
+            },
+            "x": "149.0",
+            "y": "264.0"
+        },
+        {
+            "number": "2",
+            "opts": {
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u2",
+                "mode": "g",
+                "nodeNum": 2,
+                "passwd": "",
+                "range": "default",
+                "ssid": "u2-ssid",
+                "wlans": 1
+            },
+            "x": "384.0",
+            "y": "272.0"
+        }
+    ],
+    "controllers": [],
+    "hosts": [],
+    "links": [],
+    "stations": [],
+    "switches": [],
+    "version": "2"
+}

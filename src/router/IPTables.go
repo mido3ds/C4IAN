@@ -9,8 +9,8 @@ import (
 
 func AddIPTablesRules() {
 	// ipv4
-	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE").Run()
-	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "--queue-num", "0")
+	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w").Run()
+	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "-w", "--queue-num", "0")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal("couldn't add iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
@@ -20,7 +20,7 @@ func AddIPTablesRules() {
 
 func RemoveIPTablesRules() {
 	// ipv4
-	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE")
+	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal("couldn't remove iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))

@@ -113,10 +113,10 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 				continue
 			}
 
-			IPHeader := packet[ZIDHeaderLen:]
+			ippacket := packet[ZIDHeaderLen:]
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(IPHeader)
+			err = f.ipConn.Write(ippacket)
 			if err != nil {
 				log.Fatal("failed to write to lo interface: ", err)
 			}

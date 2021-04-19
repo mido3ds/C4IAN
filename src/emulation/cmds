@@ -1,0 +1,34 @@
+#!/bin/bash -e
+
+# check cmds exist
+python3 emulation/get_nodes_pid.py c 1>&2 >/dev/null || ( echo No cmds found; exit 1 )
+
+mkdir -p /var/log/caian/ /var/lib/caian/
+
+echo "cmds DBs are in /var/lib/caian/"
+
+if [[ "$1" = "-w" ]] || [[ "$1" = "--watch" ]]; then
+    WATCH=1
+    echo "running in watch mode"
+fi
+
+function cleanup() {
+    ps faux | grep emulation/watchdog | grep cmd | cut -d' ' -f6 | xargs kill -9 2>/dev/null
+}
+trap cleanup INT
+
+# copy all stdout/stderr to log
+echo "stdout+stderr is saved in /var/log/caian/cmds"
+exec &> >(tee  -a /var/log/caian/cmds)
+echo ------------------------
+
+python3 emulation/get_nodes_pid.py c | while read line; do
+    if [[ $WATCH -eq 1 ]]; then
+        ./emulation/watchdog --file ./cmd/daemon/daemon --command "nsenter $line" &
+    else
+        nsenter $line &
+    fi
+done
+
+# TODO: close routers gracefully
+wait

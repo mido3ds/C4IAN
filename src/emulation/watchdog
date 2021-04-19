@@ -1,0 +1,23 @@
+#!/usr/bin/python3
+import asyncio
+from watchgod import awatch
+import argparse
+import subprocess
+import signal
+
+
+async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--file')
+    parser.add_argument('--command')
+    args = parser.parse_args()
+
+    cmd = args.command.split()
+
+    p = subprocess.Popen(cmd)
+    async for _ in awatch(args.file):
+        p.send_signal(signal.SIGINT)
+        p = subprocess.Popen(cmd)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
