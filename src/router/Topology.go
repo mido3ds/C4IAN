@@ -49,7 +49,7 @@ func (t *Topology) Dijkstra(myIP net.IP) *hashmap.HashMap {
 		
 		nextHop := prevNode
 		// iterate till reaching one of the src neighbors
-		// or of the nodes that we have already known its nextHop
+		// or one of the nodes that we have already known its nextHop
 		for prevNode != IPv4ToUInt32(myIP) {
 			prevNodeNextHop, exist := nextHopTable.Get(prevNode.(uint32))
 			if exist {
