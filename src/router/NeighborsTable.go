@@ -11,16 +11,18 @@ import (
 // optimized for fastest read access
 // key: 4 bytes IPv4, value: *NeighborEntry
 type NeighborsTable struct {
-	m hashmap.HashMap
+	m *hashmap.HashMap
 }
 
 type NeighborEntry struct {
-	MAC net.HardwareAddr
+	MAC  net.HardwareAddr
 	cost uint32
 }
 
 func NewNeighborsTable() *NeighborsTable {
-	return &NeighborsTable{}
+	return &NeighborsTable{
+		m: &hashmap.HashMap{},
+	}
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
@@ -48,6 +50,11 @@ func (n *NeighborsTable) Len() int {
 	return n.m.Len()
 }
 
+func (n *NeighborsTable) Clear() {
+	// Create a new hashmap as the underlying hashmap lacks a clear function :)
+	n.m = &hashmap.HashMap{}
+}
+
 func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
 	for item := range n.m.Iter() {
@@ -56,4 +63,8 @@ func (n *NeighborsTable) String() string {
 	}
 	s += " }"
 	return s
+}
+
+func (n *NeighborsTable) getTableHash() []byte {
+	return Hash_SHA3([]byte(n.String()))
 }
