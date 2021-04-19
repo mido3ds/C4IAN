@@ -23,33 +23,33 @@ func NewNeighborsTable() *NeighborsTable {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (f *NeighborsTable) Get(ip net.IP) (*NeighborEntry, bool) {
-	v, ok := f.m.Get(IPv4ToUInt32(ip))
+func (n *NeighborsTable) Get(ip net.IP) (*NeighborEntry, bool) {
+	v, ok := n.m.Get(IPv4ToUInt32(ip))
 	if !ok {
 		return nil, false
 	}
 	return v.(*NeighborEntry), true
 }
 
-func (f *NeighborsTable) Set(ip net.IP, entry *NeighborEntry) {
+func (n *NeighborsTable) Set(ip net.IP, entry *NeighborEntry) {
 	if entry == nil {
 		panic(fmt.Errorf("you can't enter nil entry"))
 	}
-	f.m.Set(IPv4ToUInt32(ip), entry)
+	n.m.Set(IPv4ToUInt32(ip), entry)
 }
 
 // Del silently fails if key doesn't exist
-func (f *NeighborsTable) Del(ip net.IP) {
-	f.m.Del(IPv4ToUInt32(ip))
+func (n *NeighborsTable) Del(ip net.IP) {
+	n.m.Del(IPv4ToUInt32(ip))
 }
 
-func (f *NeighborsTable) Len() int {
-	return f.m.Len()
+func (n *NeighborsTable) Len() int {
+	return n.m.Len()
 }
 
-func (f *NeighborsTable) String() string {
+func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
-	for item := range f.m.Iter() {
+	for item := range n.m.Iter() {
 		s += fmt.Sprintf(" (ip=%#v,mac=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String())
 
 	}
