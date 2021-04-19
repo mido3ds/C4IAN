@@ -10,6 +10,8 @@ import (
 
 const Age = 60
 
+// FloodingTable is lock-free thread-safe hash table
+// optimized for fastest read access
 // key: 4 bytes IPv4, value: *FloodingEntry
 type FloodingTable struct {
 	m hashmap.HashMap

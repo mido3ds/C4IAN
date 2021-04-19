@@ -15,7 +15,6 @@ type NeighborsTable struct {
 }
 
 type NeighborEntry struct {
-	IP net.IP
 	MAC net.HardwareAddr
 	cost uint32
 }
