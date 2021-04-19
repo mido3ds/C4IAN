@@ -40,13 +40,13 @@ func NewSARP(router *Router) (*SARP, error) {
 }
 
 func (s *SARP) run() {
-	tableHash := s.neighborsTable.getTableHash()
+	tableHash := s.neighborsTable.GetTableHash()
 	for {
 		log.Println("Sending sARP request")
 		s.neighborsTable.Clear()
 		s.sendSARPReq()
 		time.Sleep(sARPHoldTime)
-		newTableHash := s.neighborsTable.getTableHash()
+		newTableHash := s.neighborsTable.GetTableHash()
 
 		if !bytes.Equal(tableHash, newTableHash) {
 			// TODO: Initiate LSR

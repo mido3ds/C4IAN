@@ -105,6 +105,6 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	return payload[:]
 }
 
-func (n *NeighborsTable) getTableHash() []byte {
+func (n *NeighborsTable) GetTableHash() []byte {
 	return Hash_SHA3([]byte(n.String()))
 }
