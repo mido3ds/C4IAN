@@ -119,18 +119,20 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
 
 	tableSeq, exist := flooder.fTable.Get(hdr.SrcIP)
 
-	log.Println(hdr)
-	log.Println("before: ",  flooder.fTable)
+	//log.Println(hdr)
+	//log.Println("before: ",  flooder.fTable)
 
 	if exist && hdr.SeqNum <= tableSeq {
-		log.Println("this flooded msg is discarded")
+		//log.Println("this flooded msg is discarded")
 		return
 	}
 
 	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
-	log.Println("this flooded msg is accepted")
-	log.Println("after: ",  flooder.fTable)
+	//log.Println("this flooded msg is accepted")
+	//log.Println("after: ",  flooder.fTable)
+
+	log.Println(hdr)
 
 	// add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
