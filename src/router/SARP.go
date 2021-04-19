@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/mdlayher/ethernet"
-	"golang.org/x/crypto/sha3"
 )
 
 const (
-	sARPDelay     = 5 * time.Second
-	hashLen       = 64 // bytes at the end
-	SARPHeaderLen = 10 // excluding the hash at the end
+	sARPHoldTime  = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
+	sARPDelay     = 5 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
+	hashLen       = 64              // bytes at the end
+	SARPHeaderLen = 10              // excluding the hash at the end
 )
 
 type SARP struct {
@@ -40,11 +40,23 @@ func NewSARP(router *Router) (*SARP, error) {
 }
 
 func (s *SARP) run() {
+	tableHash := s.neighborsTable.getTableHash()
 	for {
+		log.Println("Sending sARP request")
+		s.neighborsTable.Clear()
 		s.sendSARPReq()
+		time.Sleep(sARPHoldTime)
+		newTableHash := s.neighborsTable.getTableHash()
+
+		if !bytes.Equal(tableHash, newTableHash) {
+			// TODO: Initiate LSR
+			log.Println("Neighborhood changed, initiating LSR")
+			log.Println("New table", s.neighborsTable)
+		}
 
 		// TODO: Replace with scheduling if necessary
-		time.Sleep(sARPDelay)
+		time.Sleep(sARPDelay - sARPHoldTime)
+		tableHash = newTableHash
 	}
 }
 
@@ -79,7 +91,7 @@ func (s *SARP) sendSARPRes(dst net.HardwareAddr) {
 
 func (s *SARP) sendSARP(packetType PacketType, dst net.HardwareAddr) {
 	payload := append(s.router.ip, (s.router.iface.HardwareAddr)...)
-	payload = append(payload, hash(payload)...)
+	payload = append(payload, Hash_SHA3(payload)...)
 
 	// add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: packetType, srcZID: 2, dstZID: 3}
@@ -93,25 +105,10 @@ func (s *SARP) sendSARP(packetType PacketType, dst net.HardwareAddr) {
 	s.macConn.Write(encryptedPacket, dst)
 }
 
-func hash(b []byte) []byte {
-	h := sha3.New512()
-
-	n, err := h.Write(b)
-	if err != nil {
-		log.Fatal("failed to hash, err: ", err)
-	} else if n != len(b) {
-		log.Fatal("failed to hash")
-	}
-
-	return h.Sum(nil)
-}
-
 func verifySARPHeader(b []byte) bool {
 	if len(b) < SARPHeaderLen+hashLen {
 		return false
 	}
 
-	h := hash(b[:SARPHeaderLen])
-	h2 := b[SARPHeaderLen : SARPHeaderLen+hashLen]
-	return bytes.Compare(h, h2) == 0
+	return verifyHash_SHA3(b[:SARPHeaderLen], b[SARPHeaderLen:SARPHeaderLen+hashLen])
 }
