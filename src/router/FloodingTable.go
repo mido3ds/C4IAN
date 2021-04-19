@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 	"fmt"
+	"net"
 
 	"github.com/cornelk/hashmap"
 )
@@ -25,7 +26,7 @@ func NewFloodingTable() *FloodingTable {
 
 // Get returns value associated with the given key
 // and whether the key existed or not
-func (f *FloodingTable) Get(srcIP []byte) (uint32, bool) {
+func (f *FloodingTable) Get(srcIP net.IP) (uint32, bool) {
 	v, ok := f.m.Get(IPv4ToUInt32(srcIP))
 	if !ok {
 		return 0, false
@@ -35,7 +36,7 @@ func (f *FloodingTable) Get(srcIP []byte) (uint32, bool) {
 
 // Set the srcIP to a new sequence number
 // Restart the timer attached to that src
-func (f *FloodingTable) Set(srcIP []byte, seq uint32) {
+func (f *FloodingTable) Set(srcIP net.IP, seq uint32) {
 	v, ok := f.m.Get(IPv4ToUInt32(srcIP))
 	// Stop the previous timer if it wasn't fired
 	if ok {
@@ -51,7 +52,7 @@ func (f *FloodingTable) Set(srcIP []byte, seq uint32) {
 }
 
 // Del silently fails if key doesn't exist
-func (f *FloodingTable) Del(srcIP []byte) {
+func (f *FloodingTable) Del(srcIP net.IP) {
 	f.m.Del(IPv4ToUInt32(srcIP))
 }
 
@@ -69,11 +70,11 @@ func (f *FloodingTable) String() string {
 	return s
 }
 
-func fireTimerHelper(srcIP []byte, f *FloodingTable) {
+func fireTimerHelper(srcIP net.IP, f *FloodingTable) {
 	f.Del(srcIP)
 }
 
-func fireTimer(srcIP []byte, f *FloodingTable) func() {
+func fireTimer(srcIP net.IP, f *FloodingTable) func() {
 	return func() {
 		fireTimerHelper(srcIP, f)
 	}
