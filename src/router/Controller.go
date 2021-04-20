@@ -74,6 +74,7 @@ func (c *Controller) ListenForControlPackets() {
 
 func (c *Controller) runSARP() {
 	onNeighborhoodChange := func() {
+		c.lsr.topology.Update(c.router.ip, c.sARP.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.sARP.neighborsTable)
 	}
 	c.sARP.run(onNeighborhoodChange)
