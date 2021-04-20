@@ -23,3 +23,11 @@ func Hash_SHA3(b []byte) []byte {
 func verifyHash_SHA3(data, h []byte) bool {
 	return bytes.Equal(Hash_SHA3(data), h)
 }
+
+func BasicChecksum(buf []byte) uint16 {
+	var sum uint16 = 0
+	for i := 0; i < len(buf); i++ {
+		sum += uint16(buf[i])
+	}
+	return sum
+}

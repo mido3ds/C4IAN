@@ -88,11 +88,3 @@ func (header *ZIDHeader) MarshalBinary() []byte {
 
 	return buf[:]
 }
-
-func BasicChecksum(buf []byte) uint16 {
-	var sum uint16 = 0
-	for i := 0; i < len(buf); i++ {
-		sum += uint16(buf[i])
-	}
-	return sum
-}
