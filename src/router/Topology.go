@@ -60,7 +60,7 @@ func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 	t.g.DeleteVertex(IPv4ToUInt32(srcIP))
 
 	// add the src vertex with new edges
-	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo:  outToEdges})
+	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo: outToEdges})
 }
 
 func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {

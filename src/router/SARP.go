@@ -91,7 +91,7 @@ func (s *SARP) sendSARP(packetType PacketType, dst net.HardwareAddr) {
 	payload := append(s.router.ip, (s.router.iface.HardwareAddr)...)
 	payload = append(payload, Hash_SHA3(payload)...)
 
-	// add ZID Header
+	// Add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: packetType, srcZID: 2, dstZID: 3}
 	packet := append(zid.MarshalBinary(), payload...)
 

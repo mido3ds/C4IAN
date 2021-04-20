@@ -65,6 +65,7 @@ func (r *Router) Start() error {
 	time.AfterFunc(10*time.Second, func() {
 		controller.lsr.UpdateForwardingTable(r.ip, forwarder.table, controller.sARP.neighborsTable)
 		log.Println(forwarder.table)
+		log.Println(controller.sARP.neighborsTable)
 	})
 
 	return nil
