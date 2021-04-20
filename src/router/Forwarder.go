@@ -10,14 +10,15 @@ import (
 )
 
 type Forwarder struct {
-	router  *Router
-	macConn *MACLayerConn
-	ipConn  *IPLayerConn
-	nfq     *netfilter.NFQueue
-	table   *ForwardTable
+	router          *Router
+	macConn         *MACLayerConn
+	ipConn          *IPLayerConn
+	nfq             *netfilter.NFQueue
+	forwardingTable *ForwardTable
+	neighborsTable  *NeighborsTable
 }
 
-func NewForwarder(router *Router) (*Forwarder, error) {
+func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
@@ -36,16 +37,17 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 		return nil, err
 	}
 
-	table := NewForwardTable()
+	forwardingTable := NewForwardTable()
 
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
-		router:  router,
-		macConn: macConn,
-		ipConn:  ipConn,
-		nfq:     nfq,
-		table:   table,
+		router:          router,
+		macConn:         macConn,
+		ipConn:          ipConn,
+		nfq:             nfq,
+		forwardingTable: forwardingTable,
+		neighborsTable:  neighborsTable,
 	}, nil
 }
 
@@ -123,14 +125,10 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 		} else { // i'm a forwarder
 			IPv4DecrementTTL(packet[ZIDHeaderLen:])
 
-			// determine next hop
-			e, ok := f.table.Get(ip.DestIP)
+			e, ok := getNextHop(ip.DestIP, f.forwardingTable, f.neighborsTable)
 			if !ok {
 				// TODO: call controller
-
-				// TODO: for now its all broadcast
-				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-				f.table.Set(ip.DestIP, e)
+				continue
 			}
 
 			// hand it directly to the interface
@@ -165,14 +163,10 @@ func (f *Forwarder) ForwardFromIPLayer() {
 		if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
-			// determine next hop
-			e, ok := f.table.Get(ip.DestIP)
+			e, ok := getNextHop(ip.DestIP, f.forwardingTable, f.neighborsTable)
 			if !ok {
 				// TODO: call controller
-
-				// TODO: for now its all broadcast
-				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-				f.table.Set(ip.DestIP, e)
+				continue
 			}
 
 			// TODO: put this zone id, and zlen
@@ -210,4 +204,16 @@ func (f *Forwarder) Close() {
 func imDestination(ip, destIP net.IP, destZoneID int32) bool {
 	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
+}
+
+func getNextHop(destIP net.IP, ft *ForwardTable, nt *NeighborsTable) (*ForwardingEntry, bool) {
+	fe, ok := ft.Get(destIP)
+	if !ok {
+		ne, ok := nt.Get(destIP)
+		if !ok {
+			return nil, false
+		}
+		return &ForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: 0 /*TODO: replace with this zoneid*/}, ok
+	}
+	return fe, true
 }

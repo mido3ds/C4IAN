@@ -22,7 +22,12 @@ func UnpackIPHeader(buffer []byte) (*IPHeader, bool) {
 		if len(buffer) < IPv4HeaderLen {
 			return nil, false
 		}
-		ip = net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19])
+
+		// DONT call net.IPv4 here, as it puts the 4 bytes
+		// at the end of 16 byte array
+		// while we expect to have only 4 bytes
+		ip = []byte{buffer[16], buffer[17], buffer[18], buffer[19]}
+
 		ttl = int8(buffer[8])
 		valid = ipv4Checksum(buffer) == 0 && ttl > 0
 	} else if version == 6 {

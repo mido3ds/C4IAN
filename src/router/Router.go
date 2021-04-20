@@ -45,12 +45,17 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 
 func (r *Router) Start() error {
 	// initial modules
-	controller, err := NewController(r)
+	sARP, err := NewSARP(r)
+	if err != nil {
+		return fmt.Errorf("failed to initiate sARP, err: %s", err)
+	}
+
+	controller, err := NewController(r, sARP)
 	if err != nil {
 		return fmt.Errorf("failed to initialize controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(r)
+	forwarder, err := NewForwarder(r, sARP.neighborsTable)
 	if err != nil {
 		return fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
@@ -63,8 +68,8 @@ func (r *Router) Start() error {
 	go forwarder.ForwardFromMACLayer(controller.inputChannel)
 
 	time.AfterFunc(10*time.Second, func() {
-		controller.lsr.UpdateForwardingTable(r.ip, forwarder.table, controller.sARP.neighborsTable)
-		log.Println(forwarder.table)
+		controller.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, controller.sARP.neighborsTable)
+		log.Println(forwarder.forwardingTable)
 	})
 
 	return nil

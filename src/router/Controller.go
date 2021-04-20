@@ -23,7 +23,7 @@ func (c *Controller) floodDummy() {
 	c.flooder.Flood(dummy)
 }
 
-func NewController(router *Router) (*Controller, error) {
+func NewController(router *Router, sARP *SARP) (*Controller, error) {
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
 		return nil, err
@@ -34,11 +34,6 @@ func NewController(router *Router) (*Controller, error) {
 	flooder, err := NewFlooder(router)
 	if err != nil {
 		log.Fatal("failed to initiate flooder, err: ", err)
-	}
-
-	sARP, err := NewSARP(router)
-	if err != nil {
-		log.Fatal("failed to initiate sARP, err: ", err)
 	}
 
 	lsr := NewLSR()
