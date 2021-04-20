@@ -64,7 +64,7 @@ func (s *SARP) OnSARPReq(payload []byte) {
 	} else {
 		ip := net.IP(payload[:4])
 		mac := net.HardwareAddr(payload[4:10])
-		s.neighborsTable.Set(ip, &NeighborEntry{MAC: mac})
+		s.neighborsTable.Set(ip, &NeighborEntry{MAC: mac, cost: 1})
 		s.sendSARPRes(mac)
 	}
 }
@@ -75,7 +75,7 @@ func (s *SARP) OnSARPRes(payload []byte) {
 	} else {
 		ip := net.IP(payload[:4])
 		mac := net.HardwareAddr(payload[4:10])
-		s.neighborsTable.Set(ip, &NeighborEntry{MAC: mac})
+		s.neighborsTable.Set(ip, &NeighborEntry{MAC: mac, cost: 1})
 	}
 }
 
