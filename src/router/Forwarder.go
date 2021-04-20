@@ -51,7 +51,7 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
-	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
 	packet := append(zid.MarshalBinary(), dummy...)
 
 	encryptedPacket, err := f.router.msec.Encrypt(packet)

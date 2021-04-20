@@ -17,7 +17,7 @@ type PacketType uint8
 const (
 	// TODO: Add actual data/control types
 	DataPacket PacketType = iota
-	FloodPacket
+	LSRFloodPacket
 	DummyControlPacket
 	SARPReq
 	SARPRes
@@ -35,7 +35,7 @@ type ZIDHeader struct {
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == FloodPacket ||
+	return z.packetType == LSRFloodPacket ||
 		z.packetType == SARPReq ||
 		z.packetType == SARPRes ||
 		z.packetType == DummyControlPacket

@@ -21,7 +21,7 @@ func Benchmark_MarshalBinary(b *testing.B) {
 
 	payload := neighborsTable.MarshalBinary()
 
-	newNeighborsTable, err := UnMarshalNeighborsTable(payload)
+	newNeighborsTable, err := UnmarshalNeighborsTable(payload)
 	fmt.Println(err)
 	fmt.Println(newNeighborsTable)
 }

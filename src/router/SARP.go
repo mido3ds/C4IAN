@@ -39,7 +39,7 @@ func NewSARP(router *Router) (*SARP, error) {
 	}, nil
 }
 
-func (s *SARP) run() {
+func (s *SARP) run(onNeighborhoodUpdate func()) {
 	tableHash := s.neighborsTable.GetTableHash()
 	for {
 		log.Println("Sending sARP request")
@@ -49,9 +49,7 @@ func (s *SARP) run() {
 		newTableHash := s.neighborsTable.GetTableHash()
 
 		if !bytes.Equal(tableHash, newTableHash) {
-			// TODO: Initiate LSR
-			log.Println("Neighborhood changed, initiating LSR")
-			log.Println("New table", s.neighborsTable)
+			onNeighborhoodUpdate()
 		}
 
 		// TODO: Replace with scheduling if necessary

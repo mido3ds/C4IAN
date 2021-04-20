@@ -25,7 +25,7 @@ func NewNeighborsTable() *NeighborsTable {
 	}
 }
 
-func UnMarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
+func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	// 5 bytes for each entry => 4 bytes IP, 1 byte cost
 	if len(payload)%5 != 0 {
 		return nil, false

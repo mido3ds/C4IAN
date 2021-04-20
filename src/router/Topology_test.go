@@ -73,10 +73,9 @@ func Benchmark_Topology(b *testing.B) {
 	neighborsTable8.Set(ip7, &NeighborEntry{cost: 7})
 	topology.Update(ip8, neighborsTable8)
 
-	nextHopTable := topology.Dijkstra(ip0)
+	nextHopTable := topology.CalculateSinkTree(ip0)
 
 	for item := range nextHopTable.Iter() {
 		fmt.Println("dst:", UInt32ToIPv4(item.Key.(uint32)), " nextHop:", UInt32ToIPv4(item.Value.(uint32)))
 	}
-
 }
