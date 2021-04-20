@@ -32,11 +32,11 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 
 	// extract checksum
 	csum := uint16(payload[2])<<8 | uint16(payload[3])
-	if csum != BasicChecksum(payload[4: 4 + payloadLen]) {
+	if csum != BasicChecksum(payload[4:4+payloadLen]) {
 		return nil, false
 	}
 
-	payload = payload[4: 4 + payloadLen]
+	payload = payload[4 : 4+payloadLen]
 	neighborsTable := &NeighborsTable{m: &hashmap.HashMap{}}
 
 	start := 0
@@ -83,7 +83,7 @@ func (n *NeighborsTable) Clear() {
 func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
 	for item := range n.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v,cost=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).cost)
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v,cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).cost)
 
 	}
 	s += " }"
@@ -92,7 +92,7 @@ func (n *NeighborsTable) String() string {
 
 func (n *NeighborsTable) MarshalBinary() []byte {
 	payloadLen := n.Len() * 5
-	payload := make([]byte, payloadLen + 4)
+	payload := make([]byte, payloadLen+4)
 
 	// 0:2 => number of entries
 	payload[0] = byte(uint16(n.Len()) >> 8)
@@ -113,7 +113,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	}
 
 	// add checksum
-	csum := BasicChecksum(payload[4: 4 + payloadLen])
+	csum := BasicChecksum(payload[4 : 4+payloadLen])
 	payload[2] = byte(csum >> 8)
 	payload[3] = byte(csum)
 
