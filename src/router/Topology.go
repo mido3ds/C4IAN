@@ -15,18 +15,50 @@ func NewTopology() *Topology {
 	return &Topology{g: g}
 }
 
-func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) {
-	// if srcIP node already exist, it'll be ignored silently
-	t.g.AddVertex(IPv4ToUInt32(srcIP), nil)
+type myVertex struct {
+	id     uint32
+	outTo  map[uint32]float64
+	inFrom map[uint32]float64
+}
+
+func (vertex *myVertex) ID() goraph.ID {
+	return vertex.id
+}
+
+type myEdge struct {
+	from   uint32
+	to     uint32
+	weight float64
+}
+
+func (edge *myEdge) Get() (goraph.ID, goraph.ID, float64) {
+	return edge.from, edge.to, edge.weight
+}
+
+func (vertex *myVertex) Edges() (edges []goraph.Edge) {
+	edges = make([]goraph.Edge, len(vertex.outTo) + len(vertex.inFrom))
+	i := 0
+	for to, weight := range vertex.outTo {
+		edges[i] = &myEdge{vertex.id, to, weight}
+		i++
+	}
+	for from, weight := range vertex.inFrom {
+		edges[i] = &myEdge{from, vertex.id, weight}
+		i++
+	}
+	return
+}
+
+
+func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
+	outToEdges := make(map[uint32]float64)
 
 	for n := range srcNeighbors.m.Iter() {
-		t.g.AddVertex(n.Key.(uint32), nil)
-
-		t.g.AddEdge(IPv4ToUInt32(srcIP),
-			n.Key.(uint32),
-			float64(n.Value.(*NeighborEntry).cost),
-			nil)
+		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).cost)
 	}
+
+	t.g.DeleteVertex(IPv4ToUInt32(srcIP))
+	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo: outToEdges})
 }
 
 func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {

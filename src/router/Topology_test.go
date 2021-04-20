@@ -73,9 +73,20 @@ func Benchmark_Topology(b *testing.B) {
 	neighborsTable8.Set(ip7, &NeighborEntry{cost: 7})
 	topology.Update(ip8, neighborsTable8)
 
-	nextHopTable := topology.CalculateSinkTree(ip0)
+	parents := topology.CalculateSinkTree(ip0)
 
-	for item := range nextHopTable.Iter() {
-		fmt.Println("dst:", UInt32ToIPv4(item.Key.(uint32)), " nextHop:", UInt32ToIPv4(item.Value.(uint32)))
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
 	}
+	
+	fmt.Println("========= Try after removing some vertex ==============")
+	topology.g.DeleteVertex(IPv4ToUInt32(ip2))
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+	//fmt.Println(topology.g.GetVertex(IPv4ToUInt32(ip0)))
+
 }
