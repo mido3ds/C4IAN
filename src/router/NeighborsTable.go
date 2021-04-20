@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-	"log"
+
 	"github.com/cornelk/hashmap"
 )
 
@@ -26,18 +26,21 @@ func NewNeighborsTable() *NeighborsTable {
 }
 
 func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
-	// 5 bytes for each entry => 4 bytes IP, 1 byte cost
-	if len(payload)%5 != 0 {
-		log.Println(len(payload)%5 )
-		log.Println(payload )
+	// extract number of entries
+	numberOfEntries := uint16(payload[0])<<8 | uint16(payload[1])
+	payloadLen := numberOfEntries * 5
+
+	// extract checksum
+	csum := uint16(payload[2])<<8 | uint16(payload[3])
+	if csum != BasicChecksum(payload[4:payloadLen]) {
 		return nil, false
 	}
 
-
+	payload = payload[4:payloadLen]
 	neighborsTable := &NeighborsTable{}
 
 	start := 0
-	for i := 0; i < len(payload)/5; i++ {
+	for i := 0; i < int(numberOfEntries); i++ {
 		IP := net.IP(payload[start : start+4])
 		cost := uint8(payload[start+4])
 		neighborsTable.Set(IP, &NeighborEntry{cost: cost})
@@ -89,9 +92,13 @@ func (n *NeighborsTable) String() string {
 
 func (n *NeighborsTable) MarshalBinary() []byte {
 	payloadLen := n.Len() * 5
-	payload := make([]byte, payloadLen)
+	payload := make([]byte, payloadLen + 4)
 
-	start := 0
+	// 0:2 => number of entries
+	payload[0] = byte(uint16(n.Len()) >> 8)
+	payload[1] = byte(uint16(n.Len()))
+
+	start := 4
 	for item := range n.m.Iter() {
 		// Insert IP: 4 Bytes
 		IP := item.Key.(uint32)
@@ -104,6 +111,11 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 		payload[start+4] = byte(item.Value.(*NeighborEntry).cost)
 		start += 5
 	}
+
+	// add checksum
+	csum := BasicChecksum(payload[4:payloadLen])
+	payload[2] = byte(csum >> 8)
+	payload[3] = byte(csum)
 
 	return payload[:]
 }
