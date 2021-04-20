@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-
+	"log"
 	"github.com/cornelk/hashmap"
 )
 
@@ -28,8 +28,11 @@ func NewNeighborsTable() *NeighborsTable {
 func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	// 5 bytes for each entry => 4 bytes IP, 1 byte cost
 	if len(payload)%5 != 0 {
+		log.Println(len(payload)%5 )
+		log.Println(payload )
 		return nil, false
 	}
+
 
 	neighborsTable := &NeighborsTable{}
 

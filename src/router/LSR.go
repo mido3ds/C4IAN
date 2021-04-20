@@ -27,7 +27,10 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	lsr.topology.Update(srcIP, srcNeighborsTable)
 }
 
-func (lsr *LSR) UpdateForwardingTable(myIP net.IP, forwardingTable *ForwardTable, neighborsTable *NeighborsTable) {
+func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
+	forwardingTable *ForwardTable,
+	neighborsTable *NeighborsTable) {
+
 	forwardingTable.Clear()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(myIP)
 
@@ -52,28 +55,39 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP, forwardingTable *ForwardTable
 			continue
 		}
 
-		nextHop := parent
 		// iterate till reaching one of the src neighbors
 		// or one of the nodes that we have already known its nextHop
 
-		// TODO: Optimize by collecting nodes along a path and adding next hop for all of them together, then removing them from the map
+		// TODO: Optimize by collecting nodes along a path
+		// and adding next hop for all of them together,
+		// then removing them from the map
+		var NextHopEntry *ForwardingEntry = nil
+		var nextHopEntry *NeighborEntry = nil
+		var parentIP, nextHopIP net.IP = nil, nil
+		var exist bool = false
+		nextHop := parent
 		for parent != IPv4ToUInt32(myIP) {
-			parentIP := UInt32ToIPv4(parent.(uint32))
-			parentNextHop, exist := forwardingTable.Get(parentIP)
+			// check if the dst parent shortest path is calculated before
+			parentIP = UInt32ToIPv4(parent.(uint32))
+			NextHopEntry, exist = forwardingTable.Get(parentIP)
 			if exist {
-				forwardingTable.Set(dstIP, parentNextHop)
 				break
 			}
+			// return through the dst shortest path till reach one of the neighbors
 			nextHop = parent
 			parent = sinkTreeParents[parent]
 		}
-		nextHopIP := UInt32ToIPv4(nextHop.(uint32))
-		nextHopEntry, exists := neighborsTable.Get(nextHopIP)
-		if exists {
-			log.Panicln("Attempting to make a next hop through a non-neighbor")
+
+		if parent == IPv4ToUInt32(myIP) {
+			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
+			nextHopIP = UInt32ToIPv4(nextHop.(uint32))
+			nextHopEntry, exist = neighborsTable.Get(nextHopIP)
+			if exist {
+				log.Panicln("Attempting to make a next hop through a non-neighbor")
+			}
+			NextHopEntry = &ForwardingEntry{NextHopMAC: nextHopEntry.MAC}
 		}
-		forwardingTable.Set(dstIP, &ForwardingEntry{
-			NextHopMAC: nextHopEntry.MAC,
-		})
+
+		forwardingTable.Set(dstIP, NextHopEntry)
 	}
 }
