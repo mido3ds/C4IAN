@@ -121,6 +121,8 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 				log.Fatal("failed to write to lo interface: ", err)
 			}
 		} else { // i'm a forwarder
+			IPv4DecrementTTL(packet[ZIDHeaderLen:])
+
 			// determine next hop
 			e, ok := f.table.Get(ip.DestIP)
 			if !ok {
