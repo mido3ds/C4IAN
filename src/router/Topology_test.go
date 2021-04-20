@@ -111,3 +111,31 @@ func Benchmark_Topology(b *testing.B) {
 	//fmt.Println(topology.g.GetVertex(IPv4ToUInt32(ip0)))
 
 }
+
+func Benchmark_Topology2(b *testing.B) {
+	ip0 := net.IP([]byte{0x00, 0x00, 0x00, 0x00})
+	ip1 := net.IP([]byte{0x00, 0x00, 0x00, 0x01})
+
+	topology := NewTopology()
+
+	neighborsTable0 := NewNeighborsTable()
+	neighborsTable0.Set(ip1, &NeighborEntry{cost: 1})
+	topology.Update(ip0, neighborsTable0)
+
+	neighborsTable1 := NewNeighborsTable()
+	neighborsTable1.Set(ip0, &NeighborEntry{cost: 1})
+	topology.Update(ip1, neighborsTable1)
+
+	parents0 := topology.CalculateSinkTree(ip0)
+	fmt.Println("Src0")
+	for key, value := range parents0 {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	parents1 := topology.CalculateSinkTree(ip1)
+	fmt.Println("Src1")
+	for key, value := range parents1 {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+}
+
