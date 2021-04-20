@@ -149,54 +149,52 @@ func (f *Forwarder) ForwardFromIPLayer() {
 	log.Println("started receiving from IP layer")
 
 	for {
-		select {
-		case p := <-packets:
-			packet := p.Packet.Data()
+		p := <-packets
+		packet := p.Packet.Data()
 
-			// TODO: speed up by goroutine workers
-			// TODO: speed up by fanout netfilter feature
+		// TODO: speed up by goroutine workers
+		// TODO: speed up by fanout netfilter feature
 
-			ip, valid := UnpackIPHeader(packet)
-			if !valid {
-				log.Fatal("ip header must have been valid from ip layer!")
+		ip, valid := UnpackIPHeader(packet)
+		if !valid {
+			log.Fatal("ip header must have been valid from ip layer!")
+		}
+
+		if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
+			p.SetVerdict(netfilter.NF_ACCEPT)
+		} else { // to out
+			// determine next hop
+			e, ok := f.table.Get(ip.DestIP)
+			if !ok {
+				// TODO: call controller
+
+				// TODO: for now its all broadcast
+				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
+				f.table.Set(ip.DestIP, e)
 			}
 
-			if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
-				p.SetVerdict(netfilter.NF_ACCEPT)
-			} else { // to out
-				// determine next hop
-				e, ok := f.table.Get(ip.DestIP)
-				if !ok {
-					// TODO: call controller
+			// TODO: put this zone id, and zlen
+			zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
 
-					// TODO: for now its all broadcast
-					e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-					f.table.Set(ip.DestIP, e)
-				}
+			// build packet
+			buffer.Reset()
+			buffer.Write(zid.MarshalBinary())
+			buffer.Write(packet)
 
-				// TODO: put this zone id, and zlen
-				zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
-
-				// build packet
-				buffer.Reset()
-				buffer.Write(zid.MarshalBinary())
-				buffer.Write(packet)
-
-				// encrypt
-				encryptedPacket, err := f.router.msec.Encrypt(buffer.Bytes())
-				if err != nil {
-					log.Fatal("failed to encrypt packet, err: ", err)
-				}
-
-				// write to device driver
-				err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
-				if err != nil {
-					log.Fatal("failed to write to the device driver: ", err)
-				}
-
-				// sender shall know the papcket is sent
-				p.SetVerdict(netfilter.NF_DROP)
+			// encrypt
+			encryptedPacket, err := f.router.msec.Encrypt(buffer.Bytes())
+			if err != nil {
+				log.Fatal("failed to encrypt packet, err: ", err)
 			}
+
+			// write to device driver
+			err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
+			if err != nil {
+				log.Fatal("failed to write to the device driver: ", err)
+			}
+
+			// sender shall know the papcket is sent
+			p.SetVerdict(netfilter.NF_DROP)
 		}
 	}
 }
