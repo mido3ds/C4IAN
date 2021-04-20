@@ -15,6 +15,12 @@ github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 h1:lez6TS6aAau+8
 github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7/go.mod h1:U6ZQobyTjI/tJyq2HG+i/dfSoFUt8/aZCM+GKtmFk/Y=
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18 h1:zwOa3e/13D6veNIz6zzuqrd3eZEMF0dzD0AQWKcYSs4=
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
+github.com/starwander/GoFibonacciHeap v0.0.0-20190508061137-ba2e4f01000a h1:HxQEVn2dC2DyalPmsBVsTRsB05UpBmbgZV2a939iEwE=
+github.com/starwander/GoFibonacciHeap v0.0.0-20190508061137-ba2e4f01000a/go.mod h1:0UZshEHv45sVxpYdRE55cbIVuvbXD3+liaXyrgm1Mr4=
+github.com/starwander/goraph v0.0.0-20200325033650-cb8f0beb44cc h1:CHuDfhywyoOu6GFv3IxVeAJJ3whMnsYU9swL4uvg7Fk=
+github.com/starwander/goraph v0.0.0-20200325033650-cb8f0beb44cc/go.mod h1:7Ko4ajehhDsNJw7OCwtfca5XqfCzo+ayX+v8d1tgwiw=
+github.com/yourbasic/graph v0.0.0-20170921192928-40eb135c0b26 h1:4u7nCRnWizT8R6xOP7cGaq+Ov0oBGkKMsLWZKiwDFas=
+github.com/yourbasic/graph v0.0.0-20170921192928-40eb135c0b26/go.mod h1:Rfzr+sqaDreiCaoQbFCu3sTXxeFq/9kXRuyOoSlGQHE=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 h1:hb9wdF1z5waM+dSIICn1l0DkLVDT3hqhhQsDNUmHPRE=

@@ -11,7 +11,7 @@ import (
 // optimized for fastest read access
 // key: 4 bytes IPv4, value: *ForwardingEntry
 type ForwardTable struct {
-	m hashmap.HashMap
+	m *hashmap.HashMap
 }
 
 type ForwardingEntry struct {
@@ -20,7 +20,9 @@ type ForwardingEntry struct {
 }
 
 func NewForwardTable() *ForwardTable {
-	return &ForwardTable{}
+	return &ForwardTable{
+		m: &hashmap.HashMap{},
+	}
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
@@ -46,4 +48,19 @@ func (f *ForwardTable) Del(destIP net.IP) {
 
 func (f *ForwardTable) Len() int {
 	return f.m.Len()
+}
+
+func (f *ForwardTable) Clear() {
+	// Create a new hashmap as the underlying hashmap lacks a clear function :)
+	f.m = &hashmap.HashMap{}
+}
+
+func (f *ForwardTable) String() string {
+	s := "&ForwardTable{"
+	for item := range f.m.Iter() {
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*ForwardingEntry).NextHopMAC.String())
+
+	}
+	s += " }"
+	return s
 }

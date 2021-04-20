@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 type Router struct {
@@ -60,6 +61,11 @@ func (r *Router) Start() error {
 	go controller.runSARP()
 	go forwarder.ForwardFromIPLayer()
 	go forwarder.ForwardFromMACLayer(controller.inputChannel)
+
+	time.AfterFunc(10*time.Second, func() {
+		controller.lsr.UpdateForwardingTable(r.ip, forwarder.table, controller.sARP.neighborsTable)
+		log.Println(forwarder.table)
+	})
 
 	return nil
 }

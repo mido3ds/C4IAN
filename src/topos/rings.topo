@@ -1,0 +1,480 @@
+{
+    "application": {
+        "apType": "ovs",
+        "authentication": "none",
+        "dpctl": "",
+        "enableWmediumd": "0",
+        "ipBase": "10.0.0.0/8",
+        "mode": "g",
+        "netflow": {
+            "nflowAddId": "0",
+            "nflowTarget": "",
+            "nflowTimeout": "600"
+        },
+        "openFlowVersions": {
+            "ovsOf10": "1",
+            "ovsOf11": "0",
+            "ovsOf12": "0",
+            "ovsOf13": "0"
+        },
+        "passwd": "",
+        "sflow": {
+            "sflowHeader": "128",
+            "sflowPolling": "30",
+            "sflowSampling": "400",
+            "sflowTarget": ""
+        },
+        "startCLI": "0",
+        "switchType": "ovs",
+        "terminalType": "xterm"
+    },
+    "aps": [
+        {
+            "number": "1",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u1",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 1,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u1-ssid",
+                "wlans": 1
+            },
+            "x": "936.0",
+            "y": "458.0"
+        },
+        {
+            "number": "2",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u2",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 2,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u2-ssid",
+                "wlans": 1
+            },
+            "x": "462.0",
+            "y": "272.0"
+        },
+        {
+            "number": "3",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u3",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 3,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u3-ssid",
+                "wlans": 1
+            },
+            "x": "1092.0",
+            "y": "284.0"
+        },
+        {
+            "number": "4",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u4",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 4,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u4-ssid",
+                "wlans": 1
+            },
+            "x": "459.0",
+            "y": "446.0"
+        },
+        {
+            "number": "5",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u5",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 5,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u5-ssid",
+                "wlans": 1
+            },
+            "x": "781.0",
+            "y": "107.0"
+        },
+        {
+            "number": "6",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u6",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 6,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u6-ssid",
+                "wlans": 1
+            },
+            "x": "778.0",
+            "y": "450.0"
+        },
+        {
+            "number": "7",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u7",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 7,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u7-ssid",
+                "wlans": 1
+            },
+            "x": "937.0",
+            "y": "279.0"
+        },
+        {
+            "number": "8",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u8",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 8,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u8-ssid",
+                "wlans": 1
+            },
+            "x": "452.0",
+            "y": "119.0"
+        },
+        {
+            "number": "9",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u9",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 9,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u9-ssid",
+                "wlans": 1
+            },
+            "x": "623.0",
+            "y": "118.0"
+        },
+        {
+            "number": "10",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u10",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 10,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u10-ssid",
+                "wlans": 1
+            },
+            "x": "934.0",
+            "y": "120.0"
+        },
+        {
+            "number": "11",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u11",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 11,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u11-ssid",
+                "wlans": 1
+            },
+            "x": "1092.0",
+            "y": "124.0"
+        },
+        {
+            "number": "12",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u12",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 12,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u12-ssid",
+                "wlans": 1
+            },
+            "x": "618.0",
+            "y": "270.0"
+        },
+        {
+            "number": "13",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u13",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 13,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u13-ssid",
+                "wlans": 1
+            },
+            "x": "610.0",
+            "y": "450.0"
+        },
+        {
+            "number": "14",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u14",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 14,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u14-ssid",
+                "wlans": 1
+            },
+            "x": "289.0",
+            "y": "439.0"
+        },
+        {
+            "number": "15",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u15",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 15,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u15-ssid",
+                "wlans": 1
+            },
+            "x": "119.0",
+            "y": "440.0"
+        },
+        {
+            "number": "16",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u16",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 16,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u16-ssid",
+                "wlans": 1
+            },
+            "x": "774.0",
+            "y": "279.0"
+        },
+        {
+            "number": "17",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u17",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 17,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u17-ssid",
+                "wlans": 1
+            },
+            "x": "119.0",
+            "y": "283.0"
+        },
+        {
+            "number": "18",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u18",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 18,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u18-ssid",
+                "wlans": 1
+            },
+            "x": "123.0",
+            "y": "119.0"
+        },
+        {
+            "number": "19",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u19",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 19,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u19-ssid",
+                "wlans": 1
+            },
+            "x": "287.0",
+            "y": "116.0"
+        },
+        {
+            "number": "20",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u20",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 20,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u20-ssid",
+                "wlans": 1
+            },
+            "x": "285.0",
+            "y": "271.0"
+        },
+        {
+            "number": "24",
+            "opts": {
+                "apIP": "",
+                "apType": "default",
+                "authentication": "none",
+                "channel": "1",
+                "controllers": [],
+                "hostname": "u24",
+                "mode": "g",
+                "netflow": "0",
+                "nodeNum": 24,
+                "passwd": "",
+                "range": "100",
+                "sflow": "0",
+                "ssid": "u24-ssid",
+                "wlans": 1
+            },
+            "x": "1102.0",
+            "y": "447.0"
+        }
+    ],
+    "controllers": [],
+    "hosts": [],
+    "links": [],
+    "stations": [],
+    "switches": [],
+    "version": "2"
+}
