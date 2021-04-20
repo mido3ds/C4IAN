@@ -32,12 +32,12 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 
 	// extract checksum
 	csum := uint16(payload[2])<<8 | uint16(payload[3])
-	if csum != BasicChecksum(payload[4:payloadLen]) {
+	if csum != BasicChecksum(payload[4: 4 + payloadLen]) {
 		return nil, false
 	}
 
-	payload = payload[4:payloadLen]
-	neighborsTable := &NeighborsTable{}
+	payload = payload[4: 4 + payloadLen]
+	neighborsTable := &NeighborsTable{m: &hashmap.HashMap{}}
 
 	start := 0
 	for i := 0; i < int(numberOfEntries); i++ {
@@ -113,7 +113,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	}
 
 	// add checksum
-	csum := BasicChecksum(payload[4:payloadLen])
+	csum := BasicChecksum(payload[4: 4 + payloadLen])
 	payload[2] = byte(csum >> 8)
 	payload[3] = byte(csum)
 

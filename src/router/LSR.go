@@ -24,6 +24,7 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 		log.Println("Corrupted LSR packet received")
 		return
 	}
+	
 	lsr.topology.Update(srcIP, srcNeighborsTable)
 }
 
