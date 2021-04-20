@@ -22,6 +22,7 @@ PROPAGATION_MODEL = {
     'model': 'logDistance',
     'exp': 4,
 }
+DEFAULT_RANGE = 100
 
 
 class Position(NamedTuple):
@@ -36,6 +37,7 @@ class Position(NamedTuple):
 class Node(NamedTuple):
     name: str
     position: Position
+    range: float
 
 
 def read_topo(path_to_json: str) -> List[Node]:
@@ -44,13 +46,20 @@ def read_topo(path_to_json: str) -> List[Node]:
 
     def cast(i): return int(float(i))
 
+    def read_range(r):
+        if r == 'default':
+            return DEFAULT_RANGE
+        return float(r)
+
     return [
         Node(unit['opts']['hostname'],
-             Position(cast(unit['x']), cast(unit['y']), 0))
+             Position(cast(unit['x']), cast(unit['y']), 0),
+             read_range(unit['opts']['range']))
         for unit in topo['aps']
     ] + [
         Node(cmd['opts']['hostname'],
-             Position(cast(cmd['x']), cast(cmd['y']), 0))
+             Position(cast(cmd['x']), cast(cmd['y']), 0),
+             read_range(cmd['opts']['range']))
         for cmd in topo['stations']
     ]
 
@@ -83,7 +92,7 @@ print("*** Creating nodes")
 stations = {}
 for node in nodes:
     stations[node.name] = net.addStation(
-        node.name, position=str(node.position)
+        node.name, position=str(node.position), range=node.range
     )
 
 print("*** Configuring wifi nodes")
