@@ -78,9 +78,30 @@ func Benchmark_Topology(b *testing.B) {
 	for key, value := range parents {
 		fmt.Println("dst:", key, "prev:", value)
 	}
-	
+
 	fmt.Println("========= Try after removing some vertex ==============")
 	topology.g.DeleteVertex(IPv4ToUInt32(ip2))
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	fmt.Println("========= Try adding the same vertex but with no edges ==============")
+	neighborsTable_ := NewNeighborsTable()
+	topology.Update(ip2, neighborsTable_)
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	fmt.Println("========= Try make this node unreachable from 0 ==============")
+	neighborsTable1_ := NewNeighborsTable()
+	neighborsTable1.Set(ip7, &NeighborEntry{cost: 11})
+	topology.Update(ip1, neighborsTable1_)
 
 	parents = topology.CalculateSinkTree(ip0)
 

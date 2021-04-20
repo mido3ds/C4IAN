@@ -36,7 +36,7 @@ func (edge *myEdge) Get() (goraph.ID, goraph.ID, float64) {
 }
 
 func (vertex *myVertex) Edges() (edges []goraph.Edge) {
-	edges = make([]goraph.Edge, len(vertex.outTo) + len(vertex.inFrom))
+	edges = make([]goraph.Edge, len(vertex.outTo)+len(vertex.inFrom))
 	i := 0
 	for to, weight := range vertex.outTo {
 		edges[i] = &myEdge{vertex.id, to, weight}
@@ -49,7 +49,6 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 	return
 }
 
-
 func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 	outToEdges := make(map[uint32]float64)
 
@@ -57,8 +56,11 @@ func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).cost)
 	}
 
+	// remove the src vertex
 	t.g.DeleteVertex(IPv4ToUInt32(srcIP))
-	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo: outToEdges})
+
+	// add the src vertex with new edges
+	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo:  outToEdges})
 }
 
 func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
