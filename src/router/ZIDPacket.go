@@ -10,7 +10,13 @@ import (
 // TODO: GPS location -> zoneID
 // TODO: translate zondIDs from zlen to another
 
-const ZIDHeaderLen = 12
+const (
+	ZIDHeaderLen = 12
+
+	// Make use of an unassigned EtherType to differentiate between MSec traffic and other traffic
+	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
+	ZIDEtherType = 0x7031
+)
 
 type PacketType uint8
 

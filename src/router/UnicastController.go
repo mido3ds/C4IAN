@@ -24,7 +24,7 @@ func (c *UnicastController) floodDummy() {
 }
 
 func NewUnicastController(router *Router, sARP *SARP) (*UnicastController, error) {
-	macConn, err := NewMACLayerConn(router.iface)
+	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}

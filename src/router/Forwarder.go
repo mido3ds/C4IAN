@@ -19,7 +19,7 @@ type Forwarder struct {
 
 func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, error) {
 	// connect to mac layer
-	macConn, err := NewMACLayerConn(router.iface)
+	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}

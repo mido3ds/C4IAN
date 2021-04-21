@@ -14,10 +14,6 @@ type MSecLayer struct {
 	key []byte
 }
 
-// Make use of an unassigned EtherType to differentiate between MSec traffic and other traffic
-// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-const ZIDEtherType = 0x7031
-
 func NewMSecLayer(pass string) *MSecLayer {
 	return &MSecLayer{
 		key: pbkdf2.Key([]byte(pass), []byte("MEN3EM-VERY-RANDOM-AND-SECRET-SALT"), 4096, 32, sha3.New256),

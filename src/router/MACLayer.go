@@ -17,9 +17,8 @@ type MACLayerConn struct {
 	b []byte
 }
 
-func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
-	// TODO: don't hard code ether type
-	packetConn, err := raw.ListenPacket(iface, ZIDEtherType, nil)
+func NewMACLayerConn(iface *net.Interface, etherType uint16) (*MACLayerConn, error) {
+	packetConn, err := raw.ListenPacket(iface, etherType, nil)
 	if err != nil {
 		return nil, err
 	}

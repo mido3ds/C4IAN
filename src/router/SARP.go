@@ -25,7 +25,9 @@ type SARP struct {
 }
 
 func NewSARP(router *Router) (*SARP, error) {
-	macConn, err := NewMACLayerConn(router.iface)
+	// TODO: we don't need to wrap with ZID headers, make new ethertype for sARP
+	// remove ZID from sarp
+	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}
