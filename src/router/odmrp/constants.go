@@ -19,6 +19,10 @@ const (
 	CACHE_SIZE                  = 500
 	HASH_SIZE                   = 20
 	ARP_TIMEOUT                 = 30e-3
+	MAX_NUM_RET                 = 3 // max number of rrep retransmissions
+	INF_NUM_RET                 = 100
+	PACK_TIMEOUT                = 0.035 // passive ack timeout
+	JQ_REFRESH_INTERVAL         = 3     // interval between join query floods
 )
 
 /*	ARP_TIMEOUT
