@@ -97,7 +97,7 @@ func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
 	if err != nil || n != ZIDHeaderLen {
 		return nil, false
 	}
-	return UnpackZIDHeader(p.out.Bytes())
+	return UnmarshalZIDHeader(p.out.Bytes())
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
@@ -106,7 +106,7 @@ func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
 		return nil, false
 	}
 
-	return UnpackIPHeader(p.out.Bytes()[ZIDHeaderLen:])
+	return UnmarshalIPHeader(p.out.Bytes()[ZIDHeaderLen:])
 }
 
 func (p *PacketDecrypter) DecryptAll() ([]byte, error) {

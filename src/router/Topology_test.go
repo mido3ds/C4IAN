@@ -138,4 +138,3 @@ func Benchmark_Topology2(b *testing.B) {
 		fmt.Println("dst:", key, "prev:", value)
 	}
 }
-

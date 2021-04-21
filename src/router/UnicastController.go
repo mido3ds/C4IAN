@@ -4,32 +4,32 @@ import (
 	"log"
 )
 
-type ControlPacket struct {
+type UnicastControlPacket struct {
 	zidHeader *ZIDHeader
 	payload   []byte
 }
 
-type Controller struct {
+type UnicastController struct {
 	router       *Router
 	macConn      *MACLayerConn
 	sARP         *SARP
 	flooder      *Flooder
 	lsr          *LSR
-	inputChannel chan *ControlPacket
+	inputChannel chan *UnicastControlPacket
 }
 
-func (c *Controller) floodDummy() {
+func (c *UnicastController) floodDummy() {
 	dummy := []byte("Dummy")
 	c.flooder.Flood(dummy)
 }
 
-func NewController(router *Router, sARP *SARP) (*Controller, error) {
+func NewUnicastController(router *Router, sARP *SARP) (*UnicastController, error) {
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
 		return nil, err
 	}
 
-	c := make(chan *ControlPacket)
+	c := make(chan *UnicastControlPacket)
 
 	flooder, err := NewFlooder(router)
 	if err != nil {
@@ -40,7 +40,7 @@ func NewController(router *Router, sARP *SARP) (*Controller, error) {
 
 	log.Println("initalized controller")
 
-	return &Controller{
+	return &UnicastController{
 		router:       router,
 		macConn:      macConn,
 		inputChannel: c,
@@ -50,8 +50,8 @@ func NewController(router *Router, sARP *SARP) (*Controller, error) {
 	}, nil
 }
 
-func (c *Controller) ListenForControlPackets() {
-	log.Println("Controller started listening for control packets from the forwarder")
+func (c *UnicastController) ListenForControlPackets() {
+	log.Println("UnicastController started listening for control packets from the forwarder")
 	// TODO: receive encrypted packet and packet decrypter
 	for {
 		controlPacket := <-c.inputChannel
@@ -67,7 +67,7 @@ func (c *Controller) ListenForControlPackets() {
 	}
 }
 
-func (c *Controller) runSARP() {
+func (c *UnicastController) runSARP() {
 	onNeighborhoodChange := func() {
 		c.lsr.topology.Update(c.router.ip, c.sARP.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.sARP.neighborsTable)

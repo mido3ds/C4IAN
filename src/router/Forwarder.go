@@ -13,8 +13,7 @@ type Forwarder struct {
 	router          *Router
 	macConn         *MACLayerConn
 	ipConn          *IPLayerConn
-	nfq             *netfilter.NFQueue
-	forwardingTable *ForwardTable
+	forwardingTable *UniForwardTable
 	neighborsTable  *NeighborsTable
 }
 
@@ -31,13 +30,7 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 		return nil, err
 	}
 
-	// get packets from netfilter queue
-	nfq, err := netfilter.NewNFQueue(0, 200, netfilter.NF_DEFAULT_PACKET_SIZE)
-	if err != nil {
-		return nil, err
-	}
-
-	forwardingTable := NewForwardTable()
+	forwardingTable := NewUniForwardTable()
 
 	log.Println("initalized forwarder")
 
@@ -45,7 +38,6 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 		router:          router,
 		macConn:         macConn,
 		ipConn:          ipConn,
-		nfq:             nfq,
 		forwardingTable: forwardingTable,
 		neighborsTable:  neighborsTable,
 	}, nil
@@ -72,7 +64,7 @@ func (f *Forwarder) broadcastDummy() {
 // ForwardFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
-func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
+func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *UnicastControlPacket) {
 	log.Println("started receiving from MAC layer")
 
 	for {
@@ -99,7 +91,7 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 				continue
 			}
 
-			controllerChannel <- &ControlPacket{zidHeader: zid, payload: packet[ZIDHeaderLen:]}
+			controllerChannel <- &UnicastControlPacket{zidHeader: zid, payload: packet[ZIDHeaderLen:]}
 			continue
 		}
 
@@ -144,18 +136,17 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
 	buffer := bytes.NewBuffer(make([]byte, 0, f.router.iface.MTU))
-	packets := f.nfq.GetPackets()
 
 	log.Println("started receiving from IP layer")
 
 	for {
-		p := <-packets
+		p := f.ipConn.Read()
 		packet := p.Packet.Data()
 
 		// TODO: speed up by goroutine workers
 		// TODO: speed up by fanout netfilter feature
 
-		ip, valid := UnpackIPHeader(packet)
+		ip, valid := UnmarshalIPHeader(packet)
 		if !valid {
 			log.Fatal("ip header must have been valid from ip layer!")
 		}
@@ -198,7 +189,6 @@ func (f *Forwarder) ForwardFromIPLayer() {
 func (f *Forwarder) Close() {
 	f.macConn.Close()
 	f.ipConn.Close()
-	f.nfq.Close()
 }
 
 func imDestination(ip, destIP net.IP, destZoneID int32) bool {
@@ -206,14 +196,14 @@ func imDestination(ip, destIP net.IP, destZoneID int32) bool {
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }
 
-func getNextHop(destIP net.IP, ft *ForwardTable, nt *NeighborsTable) (*ForwardingEntry, bool) {
+func getNextHop(destIP net.IP, ft *UniForwardTable, nt *NeighborsTable) (*UniForwardingEntry, bool) {
 	fe, ok := ft.Get(destIP)
 	if !ok {
 		ne, ok := nt.Get(destIP)
 		if !ok {
 			return nil, false
 		}
-		return &ForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: 0 /*TODO: replace with this zoneid*/}, ok
+		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: 0 /*TODO: replace with this zoneid*/}, ok
 	}
 	return fe, true
 }

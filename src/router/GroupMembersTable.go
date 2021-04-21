@@ -9,7 +9,6 @@ import (
 )
 
 type GroupMembersEntry struct {
-	grpIP net.IP
 	dests []net.IP
 }
 
@@ -56,7 +55,7 @@ func (f *GroupMembersTable) Set(grpIP net.IP, dests []net.IP) {
 			panic(fmt.Errorf("Wrong Group IP Is Not Global Unicast IP"))
 		}
 	}
-	entry := &GroupMembersEntry{grpIP: grpIP, dests: dests}
+	entry := &GroupMembersEntry{dests: dests}
 	f.m.Set(IPv4ToUInt32(grpIP), entry)
 }
 
