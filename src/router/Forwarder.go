@@ -43,6 +43,11 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 	}, nil
 }
 
+func (f *Forwarder) Start(inputChannel chan *UnicastControlPacket) {
+	go f.ForwardFromIPLayer()
+	go f.ForwardFromMACLayer(inputChannel)
+}
+
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
 	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}

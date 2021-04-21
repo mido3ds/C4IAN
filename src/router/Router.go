@@ -62,10 +62,8 @@ func (r *Router) Start() error {
 
 	// start modules
 	go r.locAgent.Start()
-	go unicCont.ListenForControlPackets() // TODO: move to unicCont.Start()
-	go unicCont.runSARP()
-	go forwarder.ForwardFromIPLayer() // TODO: move to forwarder.Start()
-	go forwarder.ForwardFromMACLayer(unicCont.inputChannel)
+	go unicCont.Start()
+	go forwarder.Start(unicCont.inputChannel)
 
 	time.AfterFunc(10*time.Second, func() {
 		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, unicCont.sARP.neighborsTable)
