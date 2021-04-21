@@ -19,8 +19,7 @@ type MACLayerConn struct {
 
 func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
 	// TODO: don't hard code ether type
-	// TODO: MSecEtherType -> ZIDEtherType
-	packetConn, err := raw.ListenPacket(iface, MSecEtherType, nil)
+	packetConn, err := raw.ListenPacket(iface, ZIDEtherType, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
 	f := &ethernet.Frame{
 		Destination: dest,
 		Source:      c.source,
-		EtherType:   MSecEtherType,
+		EtherType:   ZIDEtherType,
 		Payload:     packet,
 	}
 

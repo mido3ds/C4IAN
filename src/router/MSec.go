@@ -16,7 +16,7 @@ type MSecLayer struct {
 
 // Make use of an unassigned EtherType to differentiate between MSec traffic and other traffic
 // https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-const MSecEtherType = 0x7031
+const ZIDEtherType = 0x7031
 
 func NewMSecLayer(pass string) *MSecLayer {
 	return &MSecLayer{
