@@ -50,9 +50,9 @@ func (r *Router) Start() error {
 		return fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	controller, err := NewController(r, sARP)
+	unicCont, err := NewUnicastController(r, sARP)
 	if err != nil {
-		return fmt.Errorf("failed to initialize controller, err: %s", err)
+		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
 	forwarder, err := NewForwarder(r, sARP.neighborsTable)
@@ -62,13 +62,13 @@ func (r *Router) Start() error {
 
 	// start modules
 	go r.locAgent.Start()
-	go controller.ListenForControlPackets()
-	go controller.runSARP()
-	go forwarder.ForwardFromIPLayer()
-	go forwarder.ForwardFromMACLayer(controller.inputChannel)
+	go unicCont.ListenForControlPackets() // TODO: move to unicCont.Start()
+	go unicCont.runSARP()
+	go forwarder.ForwardFromIPLayer() // TODO: move to forwarder.Start()
+	go forwarder.ForwardFromMACLayer(unicCont.inputChannel)
 
 	time.AfterFunc(10*time.Second, func() {
-		controller.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, controller.sARP.neighborsTable)
+		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, unicCont.sARP.neighborsTable)
 		log.Println(forwarder.forwardingTable)
 	})
 

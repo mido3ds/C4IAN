@@ -22,7 +22,7 @@ var (
 type IPLayerConn struct {
 	fd4 int
 }
-
+// TODO: put netfilter queue here in Read
 func NewIPLayerConn() (*IPLayerConn, error) {
 	fd4, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_RAW)
 	if err != nil {

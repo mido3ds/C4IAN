@@ -17,7 +17,9 @@ const (
 )
 
 type SARP struct {
-	router         *Router
+	ip             net.IP
+	mac            net.HardwareAddr
+	msec           *MSecLayer
 	macConn        *MACLayerConn
 	neighborsTable *NeighborsTable
 }
@@ -33,7 +35,9 @@ func NewSARP(router *Router) (*SARP, error) {
 	log.Println("initalized sARP")
 
 	return &SARP{
-		router:         router,
+		ip:             router.ip,
+		mac:            router.iface.HardwareAddr,
+		msec:           router.msec,
 		macConn:        macConn,
 		neighborsTable: neighborsTable,
 	}, nil
@@ -88,14 +92,14 @@ func (s *SARP) sendSARPRes(dst net.HardwareAddr) {
 }
 
 func (s *SARP) sendSARP(packetType PacketType, dst net.HardwareAddr) {
-	payload := append(s.router.ip, (s.router.iface.HardwareAddr)...)
+	payload := append(s.ip, s.mac...)
 	payload = append(payload, Hash_SHA3(payload)...)
 
 	// Add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: packetType, srcZID: 2, dstZID: 3}
 	packet := append(zid.MarshalBinary(), payload...)
 
-	encryptedPacket, err := s.router.msec.Encrypt(packet)
+	encryptedPacket, err := s.msec.Encrypt(packet)
 	if err != nil {
 		log.Fatal("failed to encrypt packet, err: ", err)
 	}

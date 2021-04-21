@@ -18,6 +18,8 @@ type MACLayerConn struct {
 }
 
 func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
+	// TODO: don't hard code ether type
+	// TODO: MSecEtherType -> ZIDEtherType
 	packetConn, err := raw.ListenPacket(iface, MSecEtherType, nil)
 	if err != nil {
 		return nil, err

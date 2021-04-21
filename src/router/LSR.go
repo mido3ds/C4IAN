@@ -30,7 +30,7 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 }
 
 func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
-	forwardingTable *ForwardTable,
+	forwardingTable *UniForwardTable,
 	neighborsTable *NeighborsTable) {
 
 	forwardingTable.Clear()
@@ -77,7 +77,7 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 			if !exists {
 				log.Panicln("Attempting to make a next hop through a non-neighbor")
 			}
-			forwardingTable.Set(dstIP, &ForwardingEntry{NextHopMAC: neighborEntry.MAC})
+			forwardingTable.Set(dstIP, &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
 		}
 	}
 }
