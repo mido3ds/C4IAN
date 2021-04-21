@@ -50,6 +50,11 @@ func NewUnicastController(router *Router, sARP *SARP) (*UnicastController, error
 	}, nil
 }
 
+func (c *UnicastController) Start() {
+	go c.ListenForControlPackets()
+	go c.runSARP()
+}
+
 func (c *UnicastController) ListenForControlPackets() {
 	log.Println("UnicastController started listening for control packets from the forwarder")
 	// TODO: receive encrypted packet and packet decrypter
