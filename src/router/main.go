@@ -50,7 +50,7 @@ func parseArgs() (string, string, string, string, error) {
 	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name."})
 	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption."})
 	locSocket := parser.String("l", "location-socket", &argparse.Options{Required: true, Help: "Path to unix domain socket to listen for location stream."})
-	mgrpFile := parser.String("mg", "mgroups-file", &argparse.Options{Required: false, Help: "Path to mutlicast group member table file."})
+	mgrpFile := parser.String("g", "mgroups-file", &argparse.Options{Required: false, Help: "Path to mutlicast group member table file."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
