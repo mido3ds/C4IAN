@@ -14,27 +14,29 @@ type Controller struct {
 	macConn      *MACLayerConn
 	sARP         *SARP
 	flooder      *Flooder
+	lsr          *LSR
 	inputChannel chan *ControlPacket
 }
 
 func (c *Controller) floodDummy() {
-	dummy := []byte{0xAA, 0xBB}
+	dummy := []byte("Dummy")
 	c.flooder.Flood(dummy)
 }
 
-func NewController(router *Router) (*Controller, error) {
+func NewController(router *Router, sARP *SARP) (*Controller, error) {
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
 		return nil, err
 	}
 
 	c := make(chan *ControlPacket)
-	flooder, err := NewFlooder(router)
 
-	sARP, err := NewSARP(router)
+	flooder, err := NewFlooder(router)
 	if err != nil {
-		log.Fatal("failed to build initiate sARP, err: ", err)
+		log.Fatal("failed to initiate flooder, err: ", err)
 	}
+
+	lsr := NewLSR()
 
 	log.Println("initalized controller")
 
@@ -44,6 +46,7 @@ func NewController(router *Router) (*Controller, error) {
 		inputChannel: c,
 		sARP:         sARP,
 		flooder:      flooder,
+		lsr:          lsr,
 	}, nil
 }
 
@@ -58,12 +61,16 @@ func (c *Controller) ListenForControlPackets() {
 			c.sARP.OnSARPReq(controlPacket.payload)
 		case SARPRes:
 			c.sARP.OnSARPRes(controlPacket.payload)
-		case FloodPacket:
-			c.flooder.ReceiveFloodedMsg(controlPacket.payload)
+		case LSRFloodPacket:
+			c.flooder.ReceiveFloodedMsg(controlPacket.payload, c.lsr.HandleLSRPacket)
 		}
 	}
 }
 
 func (c *Controller) runSARP() {
-	c.sARP.run()
+	onNeighborhoodChange := func() {
+		c.lsr.topology.Update(c.router.ip, c.sARP.neighborsTable)
+		c.lsr.SendLSRPacket(c.flooder, c.sARP.neighborsTable)
+	}
+	c.sARP.run(onNeighborhoodChange)
 }

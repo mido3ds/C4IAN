@@ -22,6 +22,7 @@ PROPAGATION_MODEL = {
     'model': 'logDistance',
     'exp': 4,
 }
+DEFAULT_RANGE = 116
 
 
 class Position(NamedTuple):
@@ -83,7 +84,7 @@ print("*** Creating nodes")
 stations = {}
 for node in nodes:
     stations[node.name] = net.addStation(
-        node.name, position=str(node.position)
+        node.name, position=str(node.position), range=DEFAULT_RANGE
     )
 
 print("*** Configuring wifi nodes")

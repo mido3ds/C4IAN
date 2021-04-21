@@ -17,7 +17,7 @@ type PacketType uint8
 const (
 	// TODO: Add actual data/control types
 	DataPacket PacketType = iota
-	FloodPacket
+	LSRFloodPacket
 	DummyControlPacket
 	SARPReq
 	SARPRes
@@ -35,7 +35,7 @@ type ZIDHeader struct {
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == FloodPacket ||
+	return z.packetType == LSRFloodPacket ||
 		z.packetType == SARPReq ||
 		z.packetType == SARPRes ||
 		z.packetType == DummyControlPacket
@@ -87,12 +87,4 @@ func (header *ZIDHeader) MarshalBinary() []byte {
 	buf[1] = byte(csum)
 
 	return buf[:]
-}
-
-func BasicChecksum(buf []byte) uint16 {
-	var sum uint16 = 0
-	for i := 0; i < len(buf); i++ {
-		sum += uint16(buf[i])
-	}
-	return sum
 }

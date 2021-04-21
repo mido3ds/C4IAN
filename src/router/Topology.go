@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/starwander/goraph"
-	"github.com/cornelk/hashmap"
 )
 
 type Topology struct {
@@ -16,52 +15,55 @@ func NewTopology() *Topology {
 	return &Topology{g: g}
 }
 
-func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) {
-	// if srcIP node already exist, it'll be ignored silently
-	t.g.AddVertex(IPv4ToUInt32(srcIP), nil)
-	
-	for n := range srcNeighbors.m.Iter() {
-		t.g.AddVertex(n.Key.(uint32), nil)
-
-		t.g.AddEdge(IPv4ToUInt32(srcIP),
-					n.Key.(uint32),
-					float64(n.Value.(*NeighborEntry).cost), 
-					nil)
-	}
+type myVertex struct {
+	id     uint32
+	outTo  map[uint32]float64
+	inFrom map[uint32]float64
 }
 
-func (t *Topology) Dijkstra(myIP net.IP) *hashmap.HashMap {
-	nextHopTable := &hashmap.HashMap{}
-	
-	_, prev, _ := t.g.Dijkstra(IPv4ToUInt32(myIP))
+func (vertex *myVertex) ID() goraph.ID {
+	return vertex.id
+}
 
-	for dst, prevNode := range prev {
-		// dst is the same as the src node
-		if dst == IPv4ToUInt32(myIP) {
-			continue
-		}
+type myEdge struct {
+	from   uint32
+	to     uint32
+	weight float64
+}
 
-		// dst is one of the src neighbors
-		if prevNode == IPv4ToUInt32(myIP) {
-			nextHopTable.Set(dst.(uint32), dst.(uint32))
-			continue
-		}
-		
-		nextHop := prevNode
-		// iterate till reaching one of the src neighbors
-		// or of the nodes that we have already known its nextHop
-		for prevNode != IPv4ToUInt32(myIP) {
-			prevNodeNextHop, exist := nextHopTable.Get(prevNode.(uint32))
-			if exist {
-				nextHop = prevNodeNextHop 
-				break
-			}
-			nextHop = prevNode
-			prevNode = prev[prevNode]
-		}
+func (edge *myEdge) Get() (goraph.ID, goraph.ID, float64) {
+	return edge.from, edge.to, edge.weight
+}
 
-		nextHopTable.Set(dst.(uint32), nextHop.(uint32))
+func (vertex *myVertex) Edges() (edges []goraph.Edge) {
+	edges = make([]goraph.Edge, len(vertex.outTo)+len(vertex.inFrom))
+	i := 0
+	for to, weight := range vertex.outTo {
+		edges[i] = &myEdge{vertex.id, to, weight}
+		i++
+	}
+	for from, weight := range vertex.inFrom {
+		edges[i] = &myEdge{from, vertex.id, weight}
+		i++
+	}
+	return
+}
+
+func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
+	outToEdges := make(map[uint32]float64)
+
+	for n := range srcNeighbors.m.Iter() {
+		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).cost)
 	}
 
-	return nextHopTable
+	// remove the src vertex
+	t.g.DeleteVertex(IPv4ToUInt32(srcIP))
+
+	// add the src vertex with new edges
+	return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo: outToEdges})
+}
+
+func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
+	_, parents, _ := t.g.Dijkstra(IPv4ToUInt32(myIP))
+	return parents
 }

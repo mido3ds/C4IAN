@@ -10,14 +10,15 @@ import (
 )
 
 type Forwarder struct {
-	router  *Router
-	macConn *MACLayerConn
-	ipConn  *IPLayerConn
-	nfq     *netfilter.NFQueue
-	table   *ForwardTable
+	router          *Router
+	macConn         *MACLayerConn
+	ipConn          *IPLayerConn
+	nfq             *netfilter.NFQueue
+	forwardingTable *ForwardTable
+	neighborsTable  *NeighborsTable
 }
 
-func NewForwarder(router *Router) (*Forwarder, error) {
+func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface)
 	if err != nil {
@@ -36,22 +37,23 @@ func NewForwarder(router *Router) (*Forwarder, error) {
 		return nil, err
 	}
 
-	table := NewForwardTable()
+	forwardingTable := NewForwardTable()
 
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
-		router:  router,
-		macConn: macConn,
-		ipConn:  ipConn,
-		nfq:     nfq,
-		table:   table,
+		router:          router,
+		macConn:         macConn,
+		ipConn:          ipConn,
+		nfq:             nfq,
+		forwardingTable: forwardingTable,
+		neighborsTable:  neighborsTable,
 	}, nil
 }
 
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
-	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
 	packet := append(zid.MarshalBinary(), dummy...)
 
 	encryptedPacket, err := f.router.msec.Encrypt(packet)
@@ -121,14 +123,12 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *ControlPacket) {
 				log.Fatal("failed to write to lo interface: ", err)
 			}
 		} else { // i'm a forwarder
-			// determine next hop
-			e, ok := f.table.Get(ip.DestIP)
+			IPv4DecrementTTL(packet[ZIDHeaderLen:])
+
+			e, ok := getNextHop(ip.DestIP, f.forwardingTable, f.neighborsTable)
 			if !ok {
 				// TODO: call controller
-
-				// TODO: for now its all broadcast
-				e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-				f.table.Set(ip.DestIP, e)
+				continue
 			}
 
 			// hand it directly to the interface
@@ -149,54 +149,48 @@ func (f *Forwarder) ForwardFromIPLayer() {
 	log.Println("started receiving from IP layer")
 
 	for {
-		select {
-		case p := <-packets:
-			packet := p.Packet.Data()
+		p := <-packets
+		packet := p.Packet.Data()
 
-			// TODO: speed up by goroutine workers
-			// TODO: speed up by fanout netfilter feature
+		// TODO: speed up by goroutine workers
+		// TODO: speed up by fanout netfilter feature
 
-			ip, valid := UnpackIPHeader(packet)
-			if !valid {
-				log.Fatal("ip header must have been valid from ip layer!")
+		ip, valid := UnpackIPHeader(packet)
+		if !valid {
+			log.Fatal("ip header must have been valid from ip layer!")
+		}
+
+		if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
+			p.SetVerdict(netfilter.NF_ACCEPT)
+		} else { // to out
+			e, ok := getNextHop(ip.DestIP, f.forwardingTable, f.neighborsTable)
+			if !ok {
+				// TODO: call controller
+				continue
 			}
 
-			if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
-				p.SetVerdict(netfilter.NF_ACCEPT)
-			} else { // to out
-				// determine next hop
-				e, ok := f.table.Get(ip.DestIP)
-				if !ok {
-					// TODO: call controller
+			// TODO: put this zone id, and zlen
+			zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
 
-					// TODO: for now its all broadcast
-					e = &ForwardingEntry{NextHopMAC: ethernet.Broadcast}
-					f.table.Set(ip.DestIP, e)
-				}
+			// build packet
+			buffer.Reset()
+			buffer.Write(zid.MarshalBinary())
+			buffer.Write(packet)
 
-				// TODO: put this zone id, and zlen
-				zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
-
-				// build packet
-				buffer.Reset()
-				buffer.Write(zid.MarshalBinary())
-				buffer.Write(packet)
-
-				// encrypt
-				encryptedPacket, err := f.router.msec.Encrypt(buffer.Bytes())
-				if err != nil {
-					log.Fatal("failed to encrypt packet, err: ", err)
-				}
-
-				// write to device driver
-				err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
-				if err != nil {
-					log.Fatal("failed to write to the device driver: ", err)
-				}
-
-				// sender shall know the papcket is sent
-				p.SetVerdict(netfilter.NF_DROP)
+			// encrypt
+			encryptedPacket, err := f.router.msec.Encrypt(buffer.Bytes())
+			if err != nil {
+				log.Fatal("failed to encrypt packet, err: ", err)
 			}
+
+			// write to device driver
+			err = f.macConn.Write(encryptedPacket, e.NextHopMAC)
+			if err != nil {
+				log.Fatal("failed to write to the device driver: ", err)
+			}
+
+			// sender shall know the papcket is sent
+			p.SetVerdict(netfilter.NF_DROP)
 		}
 	}
 }
@@ -210,4 +204,16 @@ func (f *Forwarder) Close() {
 func imDestination(ip, destIP net.IP, destZoneID int32) bool {
 	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
+}
+
+func getNextHop(destIP net.IP, ft *ForwardTable, nt *NeighborsTable) (*ForwardingEntry, bool) {
+	fe, ok := ft.Get(destIP)
+	if !ok {
+		ne, ok := nt.Get(destIP)
+		if !ok {
+			return nil, false
+		}
+		return &ForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: 0 /*TODO: replace with this zoneid*/}, ok
+	}
+	return fe, true
 }

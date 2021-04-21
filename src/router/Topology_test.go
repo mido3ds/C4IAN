@@ -73,10 +73,69 @@ func Benchmark_Topology(b *testing.B) {
 	neighborsTable8.Set(ip7, &NeighborEntry{cost: 7})
 	topology.Update(ip8, neighborsTable8)
 
-	nextHopTable := topology.Dijkstra(ip0)
+	parents := topology.CalculateSinkTree(ip0)
 
-	for item := range nextHopTable.Iter() {
-		fmt.Println("dst:", UInt32ToIPv4(item.Key.(uint32)), " nextHop:", UInt32ToIPv4(item.Value.(uint32)))
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
 	}
 
+	fmt.Println("========= Try after removing some vertex ==============")
+	topology.g.DeleteVertex(IPv4ToUInt32(ip2))
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	fmt.Println("========= Try adding the same vertex but with no edges ==============")
+	neighborsTable_ := NewNeighborsTable()
+	topology.Update(ip2, neighborsTable_)
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	fmt.Println("========= Try make this node unreachable from 0 ==============")
+	neighborsTable1_ := NewNeighborsTable()
+	neighborsTable1.Set(ip7, &NeighborEntry{cost: 11})
+	topology.Update(ip1, neighborsTable1_)
+
+	parents = topology.CalculateSinkTree(ip0)
+
+	for key, value := range parents {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+	//fmt.Println(topology.g.GetVertex(IPv4ToUInt32(ip0)))
+
 }
+
+func Benchmark_Topology2(b *testing.B) {
+	ip0 := net.IP([]byte{0x00, 0x00, 0x00, 0x00})
+	ip1 := net.IP([]byte{0x00, 0x00, 0x00, 0x01})
+
+	topology := NewTopology()
+
+	neighborsTable0 := NewNeighborsTable()
+	neighborsTable0.Set(ip1, &NeighborEntry{cost: 1})
+	topology.Update(ip0, neighborsTable0)
+
+	neighborsTable1 := NewNeighborsTable()
+	neighborsTable1.Set(ip0, &NeighborEntry{cost: 1})
+	topology.Update(ip1, neighborsTable1)
+
+	parents0 := topology.CalculateSinkTree(ip0)
+	fmt.Println("Src0")
+	for key, value := range parents0 {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+
+	parents1 := topology.CalculateSinkTree(ip1)
+	fmt.Println("Src1")
+	for key, value := range parents1 {
+		fmt.Println("dst:", key, "prev:", value)
+	}
+}
+

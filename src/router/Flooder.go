@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"log"
 	"net"
-	"fmt"
+
 	"github.com/mdlayher/ethernet"
 )
-
 
 type FloodHeader struct {
 	// [0:2] checksum here
@@ -17,21 +16,21 @@ type FloodHeader struct {
 
 const FloodHeaderLen = 2 + 2*4
 
-func UnpackFloodHeader(b []byte) (*FloodHeader, bool) {
+func UnpackFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
 	if len(b) < FloodHeaderLen {
-		return nil, false
+		return nil, nil, false
 	}
 
 	// extract checksum
 	csum := uint16(b[0])<<8 | uint16(b[1])
 	if csum != BasicChecksum(b[2:FloodHeaderLen]) {
-		return nil, false
+		return nil, nil, false
 	}
 
 	return &FloodHeader{
 		SrcIP:  b[2:6],
 		SeqNum: uint32(b[6])<<24 | uint32(b[7])<<16 | uint32(b[8])<<8 | uint32(b[9]),
-	}, true
+	}, b[FloodHeaderLen:], true
 }
 
 func (f *FloodHeader) MarshalBinary() []byte {
@@ -65,7 +64,6 @@ type Flooder struct {
 	macConn   *MACLayerConn
 }
 
-
 func NewFlooder(router *Router) (*Flooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface)
@@ -92,7 +90,7 @@ func (flooder *Flooder) Flood(msg []byte) {
 	flooder.seqNumber++
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	encryptedPacket, err := flooder.router.msec.Encrypt(msg)
@@ -106,36 +104,31 @@ func (flooder *Flooder) Flood(msg []byte) {
 	}
 }
 
-func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
-	hdr, ok := UnpackFloodHeader(msg)
+func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+	hdr, payload, ok := UnpackFloodedPacket(msg)
 	if !ok {
 		return
 	}
 
-	if bytes.Equal(hdr.SrcIP, flooder.router.ip) {
-		log.Println("received my flooded msg")
+	if net.IP.Equal(hdr.SrcIP, flooder.router.ip) {
 		return
 	}
 
 	tableSeq, exist := flooder.fTable.Get(hdr.SrcIP)
 
-	//log.Println(hdr)
-	//log.Println("before: ",  flooder.fTable)
-
 	if exist && hdr.SeqNum <= tableSeq {
-		//log.Println("this flooded msg is discarded")
 		return
 	}
 
 	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
-	//log.Println("this flooded msg is accepted")
-	//log.Println("after: ",  flooder.fTable)
+	// Call the payload processor in a separate goroutine to avoid delays during flooding
+	go payloadProcessor(hdr.SrcIP, payload)
 
 	log.Println(hdr)
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: FloodPacket, srcZID: 2, dstZID: 3}
+	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// encrypt the msg
@@ -150,4 +143,3 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte) {
 		log.Fatal("failed to write to the device driver: ", err)
 	}
 }
-
