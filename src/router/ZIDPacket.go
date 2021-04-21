@@ -41,7 +41,7 @@ func (z *ZIDHeader) isControlPacket() bool {
 		z.packetType == DummyControlPacket
 }
 
-func UnpackZIDHeader(packet []byte) (*ZIDHeader, bool) {
+func UnmarshalZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	if len(packet) < ZIDHeaderLen {
 		return nil, false
 	}

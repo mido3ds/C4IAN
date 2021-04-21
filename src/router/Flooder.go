@@ -16,7 +16,7 @@ type FloodHeader struct {
 
 const FloodHeaderLen = 2 + 2*4
 
-func UnpackFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
+func UnmarshalFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
 	if len(b) < FloodHeaderLen {
 		return nil, nil, false
 	}
@@ -107,7 +107,7 @@ func (flooder *Flooder) Flood(msg []byte) {
 }
 
 func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
-	hdr, payload, ok := UnpackFloodedPacket(msg)
+	hdr, payload, ok := UnmarshalFloodedPacket(msg)
 	if !ok {
 		return
 	}

@@ -155,7 +155,7 @@ func (f *Forwarder) ForwardFromIPLayer() {
 		// TODO: speed up by goroutine workers
 		// TODO: speed up by fanout netfilter feature
 
-		ip, valid := UnpackIPHeader(packet)
+		ip, valid := UnmarshalIPHeader(packet)
 		if !valid {
 			log.Fatal("ip header must have been valid from ip layer!")
 		}
