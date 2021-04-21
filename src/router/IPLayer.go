@@ -5,6 +5,8 @@ import (
 	"net"
 	"strings"
 	"syscall"
+
+	"github.com/AkihiroSuda/go-netfilter-queue"
 )
 
 var (
@@ -20,16 +22,28 @@ var (
 )
 
 type IPLayerConn struct {
-	fd4 int
+	fd4     int
+	nfq     *netfilter.NFQueue
+	packets <-chan netfilter.NFPacket
 }
-// TODO: put netfilter queue here in Read
+
 func NewIPLayerConn() (*IPLayerConn, error) {
 	fd4, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_RAW)
 	if err != nil {
 		return nil, err
 	}
 
-	return &IPLayerConn{fd4: fd4}, nil
+	// get packets from netfilter queue
+	nfq, err := netfilter.NewNFQueue(0, 200, netfilter.NF_DEFAULT_PACKET_SIZE)
+	if err != nil {
+		return nil, err
+	}
+	packets := nfq.GetPackets()
+
+	return &IPLayerConn{fd4: fd4,
+		nfq:     nfq,
+		packets: packets,
+	}, nil
 }
 
 func (c *IPLayerConn) Write(packet []byte) error {
@@ -37,8 +51,13 @@ func (c *IPLayerConn) Write(packet []byte) error {
 	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
 }
 
+func (c *IPLayerConn) Read() netfilter.NFPacket {
+	return <-c.packets
+}
+
 func (c *IPLayerConn) Close() {
 	syscall.Close(c.fd4)
+	c.nfq.Close()
 }
 
 // markPacketAsInjected puts a mark in a reserved bit in IPv4 header

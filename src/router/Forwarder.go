@@ -13,7 +13,6 @@ type Forwarder struct {
 	router          *Router
 	macConn         *MACLayerConn
 	ipConn          *IPLayerConn
-	nfq             *netfilter.NFQueue
 	forwardingTable *UniForwardTable
 	neighborsTable  *NeighborsTable
 }
@@ -31,12 +30,6 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 		return nil, err
 	}
 
-	// get packets from netfilter queue
-	nfq, err := netfilter.NewNFQueue(0, 200, netfilter.NF_DEFAULT_PACKET_SIZE)
-	if err != nil {
-		return nil, err
-	}
-
 	forwardingTable := NewUniForwardTable()
 
 	log.Println("initalized forwarder")
@@ -45,7 +38,6 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 		router:          router,
 		macConn:         macConn,
 		ipConn:          ipConn,
-		nfq:             nfq,
 		forwardingTable: forwardingTable,
 		neighborsTable:  neighborsTable,
 	}, nil
@@ -144,12 +136,11 @@ func (f *Forwarder) ForwardFromMACLayer(controllerChannel chan *UnicastControlPa
 // after encrypting them and determining their destination
 func (f *Forwarder) ForwardFromIPLayer() {
 	buffer := bytes.NewBuffer(make([]byte, 0, f.router.iface.MTU))
-	packets := f.nfq.GetPackets()
 
 	log.Println("started receiving from IP layer")
 
 	for {
-		p := <-packets
+		p := f.ipConn.Read()
 		packet := p.Packet.Data()
 
 		// TODO: speed up by goroutine workers
@@ -198,7 +189,6 @@ func (f *Forwarder) ForwardFromIPLayer() {
 func (f *Forwarder) Close() {
 	f.macConn.Close()
 	f.ipConn.Close()
-	f.nfq.Close()
 }
 
 func imDestination(ip, destIP net.IP, destZoneID int32) bool {
