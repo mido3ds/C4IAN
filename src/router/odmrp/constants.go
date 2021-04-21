@@ -23,6 +23,7 @@ const (
 	INF_NUM_RET                 = 100
 	PACK_TIMEOUT                = 0.035 // passive ack timeout
 	JQ_REFRESH_INTERVAL         = 3     // interval between join query floods
+	MAX_NUM_GROUPS              = 200
 )
 
 /*	ARP_TIMEOUT

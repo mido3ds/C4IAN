@@ -112,6 +112,6 @@ func (ag *ODMRPAgent) AddJoinReplyPacket(pkt *Packet, mcast_grp int, out_time Ti
 	ag.jr_packets[new_index].out_time = out_time
 }
 
-func (ag *ODMRPAgent) McastAddress(dest int) bool {
+func (ag *ODMRPAgent) McastAddress(odmrpaddr_t dest) bool {
 	return dest > ag.mcast_base_address_
 }
