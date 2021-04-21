@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -14,6 +15,35 @@ type GroupMembersEntry struct {
 
 type GroupMembersTable struct {
 	m hashmap.HashMap
+}
+
+// json string to GroupMembersTable
+func NewGroupMembersTable(j string) *GroupMembersTable {
+	var grpTable GroupMembersTable
+	var reading map[string][]string
+	err := json.Unmarshal([]byte(j), &reading)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	dests := []net.IP{}
+	for key, value := range reading {
+		grpIP := net.ParseIP(key)
+		if grpIP == nil {
+			fmt.Println("error")
+		}
+		if grpIP != nil {
+			for _, dest := range value {
+				destIP := net.ParseIP(dest)
+				if destIP != nil {
+					dests = append(dests, destIP)
+				}
+			}
+			grpTable.Set(grpIP, dests)
+		}
+		dests = []net.IP{} // clear dests array
+	}
+	return &grpTable
 }
 
 // Set the grpIP to a new destinations group
