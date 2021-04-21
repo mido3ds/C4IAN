@@ -32,6 +32,11 @@ func newPacket() Packet {
 	return p
 }
 
+func (p *Packet) Copy() *Packet {
+	new_packet := *p
+	return &new_packet
+}
+
 func (ip IP) getIpType() Cast {
 	is_matched, err := regexp.MatchString(MULTICAST_PATTERN, ip.ToString())
 	if err != nil {
