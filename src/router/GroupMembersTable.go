@@ -23,8 +23,7 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 	var reading map[string][]string
 	err := json.Unmarshal([]byte(j), &reading)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		panic(fmt.Errorf("Wrong Group Member table json format"))
 	}
 	dests := []net.IP{}
 	for key, value := range reading {
@@ -48,6 +47,14 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 
 // Set the grpIP to a new destinations group
 func (f *GroupMembersTable) Set(grpIP net.IP, dests []net.IP) {
+	if !grpIP.IsMulticast() {
+		panic(fmt.Errorf("Wrong Group ip is not multicast ip"))
+	}
+	for _, dest := range dests {
+		if !dest.IsGlobalUnicast() {
+			panic(fmt.Errorf("Wrong Group ip is not multicast ip"))
+		}
+	}
 	entry := &GroupMembersEntry{grpIP: grpIP, dests: dests}
 	f.m.Set(IPv4ToUInt32(grpIP), entry)
 }
