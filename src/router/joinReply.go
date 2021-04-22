@@ -54,7 +54,7 @@ func (j *JoinReply) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// UnmarshalJoinQuery returns false if packet is invalid or TTL < 0
+// UnmarshalJoinReply returns false if packet is invalid
 func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	extraBytes := 5
 	seqNoSize := 8
