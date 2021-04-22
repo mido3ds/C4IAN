@@ -5,12 +5,10 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 )
 
 type LocationAgent struct {
-	locMutex sync.Mutex
-	listener net.Listener
+	conn     *net.UnixConn
 	location Location
 }
 
@@ -21,44 +19,38 @@ func NewLocationAgent(locSocket string) (*LocationAgent, error) {
 		return nil, err
 	}
 
-	// create loc socket file
-	l, err := net.Listen("unix", locSocket)
+	adr, err := net.ResolveUnixAddr("unixgram", locSocket)
 	if err != nil {
 		return nil, err
 	}
 
-	return &LocationAgent{listener: l}, nil
+	// create loc socket file
+	l, err := net.ListenUnixgram("unixgram", adr)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("initailized location agent, sock=", locSocket)
+
+	return &LocationAgent{conn: l}, nil
 }
 
 func (a *LocationAgent) Start() {
+	log.Println("started location agent")
+
+	d := json.NewDecoder(a.conn)
+
 	for {
-		conn, err := a.listener.Accept()
+		var loc Location
+		err := d.Decode(&loc)
 		if err != nil {
-			log.Fatal("can't accept connections to unix socket, err: ", err)
+			continue
 		}
-		log.Println("Location provider connected")
 
-		d := json.NewDecoder(conn)
-
-		for {
-			var loc Location
-			err = d.Decode(&loc)
-			if err != nil {
-				log.Println("Location provider disconnected")
-				break
-			}
-
-			a.locMutex.Lock()
-			defer a.locMutex.Unlock()
-			a.location = loc
-		}
+		a.location = loc
+		// TODO: calculate zone id
+		// TODO: send signal of zone id change, if changed
 	}
-}
-
-func (a *LocationAgent) Location() Location {
-	a.locMutex.Lock()
-	defer a.locMutex.Unlock()
-	return a.location
 }
 
 // Location is gps position
