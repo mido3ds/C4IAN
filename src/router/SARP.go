@@ -42,7 +42,7 @@ func NewSARP(router *Router) (*SARP, error) {
 func (s *SARP) run(onNeighborhoodUpdate func()) {
 	tableHash := s.neighborsTable.GetTableHash()
 	for {
-		log.Println("Sending sARP request")
+		//log.Println("Sending sARP request")
 		s.neighborsTable.Clear()
 		s.sendSARPReq()
 		time.Sleep(sARPHoldTime)

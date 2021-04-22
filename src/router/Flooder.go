@@ -125,7 +125,7 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
 	go payloadProcessor(hdr.SrcIP, payload)
 
-	log.Println(hdr)
+	//log.Println(hdr)
 
 	// add ZID Header
 	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}

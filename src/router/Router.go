@@ -67,6 +67,10 @@ func (r *Router) Start() error {
 	go forwarder.ForwardFromIPLayer()
 	go forwarder.ForwardFromMACLayer(controller.inputChannel)
 
+	time.AfterFunc(6*time.Second, func() {
+		log.Println(controller.sARP.neighborsTable)
+	})
+
 	time.AfterFunc(10*time.Second, func() {
 		controller.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, controller.sARP.neighborsTable)
 		log.Println(forwarder.forwardingTable)
