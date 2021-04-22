@@ -56,6 +56,11 @@ func (r *Router) Start() error {
 		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
+	multicCont, err := NewMulticastController(r)
+	if err != nil {
+		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
+	}
+
 	forwarder, err := NewForwarder(r, sARP.neighborsTable)
 	if err != nil {
 		return fmt.Errorf("failed to initialize forwarder, err: %s", err)
@@ -68,6 +73,7 @@ func (r *Router) Start() error {
 	go sARP.Start()
 	go r.locAgent.Start()
 	go unicCont.Start(forwarder.uniForwTable)
+	go multicCont.Start(forwarder.multiForwTable)
 	go forwarder.Start(unicCont.inputChannel)
 
 	return nil

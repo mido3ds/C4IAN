@@ -32,7 +32,7 @@ func (c *MulticastController) floodDummy() {
 	c.flooder.Flood(dummy)
 }
 
-func NewMulticastController(router *Router, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool) (*MulticastController, error) {
+func NewMulticastController(router *Router) (*MulticastController, error) {
 	macConn, err := NewMACLayerConn(router.iface, uint16(ethernet.EtherTypeIPv4))
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func NewMulticastController(router *Router, neighborsTable *NeighborsTable, neig
 	}, nil
 }
 
-func (c *MulticastController) Start(ft *UniForwardTable) {
+func (c *MulticastController) Start(ft *MultiForwardTable) {
 	go c.ListenForControlPackets()
 
 	time.AfterFunc(10*time.Second, func() {
