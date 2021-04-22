@@ -11,8 +11,6 @@ const (
 	bitsInByte      = 8
 )
 
-const ()
-
 type JoinQuery struct {
 	SeqNo uint64
 	TTL   int8
