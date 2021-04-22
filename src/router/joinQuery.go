@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net"
 )
 
@@ -63,7 +64,7 @@ func (j *JoinQuery) MarshalBinary() []byte {
 }
 
 // UnmarshalJoinQuery returns false if packet is invalid or TTL < 0
-func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
+func UnmarshalJoinQuery(b []byte) (*JoinQuery, error) {
 	lenOfDests := uint16(b[0])<<bitsInByte | uint16(b[1])
 	destsSize := destIPSize * lenOfDests
 	totalSize := seqNoSize + ttlSize + srcIPSize + grpIPSize + destsSize
@@ -77,13 +78,13 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	jq.TTL = int8(b[start])
 	start = +ttlSize
 	if jq.TTL <= 0 {
-		return nil, false
+		return nil, errors.New("TTL lessthan or equal zero")
 	}
 	// extract checksum
 	csum := uint16(b[2])<<bitsInByte | uint16(b[3])
 	// if invalid packet
 	if csum != BasicChecksum(b[extraBytes:totalSize+extraBytes]) {
-		return nil, false
+		return nil, errors.New("Wrong Checksum")
 	}
 	jq.SrcIP = net.IP(b[start : start+srcIPSize])
 	start += srcIPSize
@@ -96,5 +97,5 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 		start += destIPSize
 	}
 
-	return &jq, true
+	return &jq, nil
 }
