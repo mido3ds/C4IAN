@@ -16,7 +16,7 @@ type FloodHeader struct {
 
 const FloodHeaderLen = 2 + 2*4
 
-func UnpackFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
+func UnmarshalFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
 	if len(b) < FloodHeaderLen {
 		return nil, nil, false
 	}
@@ -60,13 +60,14 @@ func (f *FloodHeader) String() string {
 type Flooder struct {
 	seqNumber uint32
 	fTable    *FloodingTable
-	router    *Router
 	macConn   *MACLayerConn
+	ip        net.IP
+	msec      *MSecLayer
 }
 
 func NewFlooder(router *Router) (*Flooder, error) {
 	// connect to mac layer
-	macConn, err := NewMACLayerConn(router.iface)
+	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +79,14 @@ func NewFlooder(router *Router) (*Flooder, error) {
 	return &Flooder{
 		seqNumber: 0,
 		fTable:    fTable,
-		router:    router,
 		macConn:   macConn,
+		ip:        router.ip,
+		msec:      router.msec,
 	}, nil
 }
 
 func (flooder *Flooder) Flood(msg []byte) {
-	hdr := FloodHeader{SrcIP: flooder.router.ip, SeqNum: flooder.seqNumber}
+	hdr := FloodHeader{SrcIP: flooder.ip, SeqNum: flooder.seqNumber}
 	msg = append(hdr.MarshalBinary(), msg...)
 
 	flooder.seqNumber++
@@ -93,7 +95,7 @@ func (flooder *Flooder) Flood(msg []byte) {
 	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	encryptedPacket, err := flooder.router.msec.Encrypt(msg)
+	encryptedPacket, err := flooder.msec.Encrypt(msg)
 	if err != nil {
 		log.Fatal("failed to encrypt packet, err: ", err)
 	}
@@ -105,12 +107,12 @@ func (flooder *Flooder) Flood(msg []byte) {
 }
 
 func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
-	hdr, payload, ok := UnpackFloodedPacket(msg)
+	hdr, payload, ok := UnmarshalFloodedPacket(msg)
 	if !ok {
 		return
 	}
 
-	if net.IP.Equal(hdr.SrcIP, flooder.router.ip) {
+	if net.IP.Equal(hdr.SrcIP, flooder.ip) {
 		return
 	}
 
@@ -132,7 +134,7 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// encrypt the msg
-	encryptedPacket, err := flooder.router.msec.Encrypt(msg)
+	encryptedPacket, err := flooder.msec.Encrypt(msg)
 	if err != nil {
 		log.Fatal("failed to encrypt packet, err: ", err)
 	}

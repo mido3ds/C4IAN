@@ -10,9 +10,12 @@ type IPHeader struct {
 	TTL     int8
 }
 
-const IPv4HeaderLen = 20
+const (
+	IPv4HeaderLen = 20
+	IPv4EtherType = 0x0800
+)
 
-func UnpackIPHeader(buffer []byte) (*IPHeader, bool) {
+func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 	var ip net.IP
 	version := byte(buffer[0]) >> 4
 	var ttl int8

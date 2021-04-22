@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/cornelk/hashmap"
 )
@@ -81,4 +81,3 @@ func fireTimer(srcIP net.IP, f *FloodingTable) func() {
 		fireTimerHelper(srcIP, f)
 	}
 }
-

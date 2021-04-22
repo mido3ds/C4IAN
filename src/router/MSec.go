@@ -14,10 +14,6 @@ type MSecLayer struct {
 	key []byte
 }
 
-// Make use of an unassigned EtherType to differentiate between MSec traffic and other traffic
-// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-const MSecEtherType = 0x7031
-
 func NewMSecLayer(pass string) *MSecLayer {
 	return &MSecLayer{
 		key: pbkdf2.Key([]byte(pass), []byte("MEN3EM-VERY-RANDOM-AND-SECRET-SALT"), 4096, 32, sha3.New256),
@@ -54,7 +50,7 @@ func (msec *MSecLayer) decryptStream() (cipher.Stream, error) {
 	return cipher.NewOFB(block, iv[:]), nil
 }
 
-func (msec *MSecLayer) decrypt(in []byte) ([]byte, error) {
+func (msec *MSecLayer) Decrypt(in []byte) ([]byte, error) {
 	stream, err := msec.decryptStream()
 	if err != nil {
 		return nil, err
@@ -97,7 +93,8 @@ func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
 	if err != nil || n != ZIDHeaderLen {
 		return nil, false
 	}
-	return UnpackZIDHeader(p.out.Bytes())
+	b := p.out.Bytes()
+	return UnmarshalZIDHeader(b[len(b)-ZIDHeaderLen:])
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
@@ -105,8 +102,8 @@ func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
 	if err != nil || n != IPv4HeaderLen {
 		return nil, false
 	}
-
-	return UnpackIPHeader(p.out.Bytes()[ZIDHeaderLen:])
+	b := p.out.Bytes()
+	return UnmarshalIPHeader(b[len(b)-IPv4HeaderLen:])
 }
 
 func (p *PacketDecrypter) DecryptAll() ([]byte, error) {

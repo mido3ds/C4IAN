@@ -10,6 +10,7 @@ import (
 type MACLayerConn struct {
 	packetConn net.PacketConn
 	source     net.HardwareAddr
+	etherType  ethernet.EtherType
 
 	// dirty optimization
 	// DON'T use one Conn for multiple readers!
@@ -17,8 +18,8 @@ type MACLayerConn struct {
 	b []byte
 }
 
-func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
-	packetConn, err := raw.ListenPacket(iface, MSecEtherType, nil)
+func NewMACLayerConn(iface *net.Interface, etherType uint16) (*MACLayerConn, error) {
+	packetConn, err := raw.ListenPacket(iface, etherType, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +32,7 @@ func NewMACLayerConn(iface *net.Interface) (*MACLayerConn, error) {
 		source:     iface.HardwareAddr,
 		f:          f,
 		b:          b,
+		etherType:  ethernet.EtherType(etherType),
 	}, nil
 }
 
@@ -38,7 +40,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
 	f := &ethernet.Frame{
 		Destination: dest,
 		Source:      c.source,
-		EtherType:   MSecEtherType,
+		EtherType:   c.etherType,
 		Payload:     packet,
 	}
 

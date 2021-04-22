@@ -45,14 +45,15 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 
 func (r *Router) Start() error {
 	// initial modules
-	sARP, err := NewSARP(r)
+	neighborhoodUpdateSignal := make(chan bool)
+	sARP, err := NewSARPController(r, neighborhoodUpdateSignal)
 	if err != nil {
 		return fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	controller, err := NewController(r, sARP)
+	unicCont, err := NewUnicastController(r, sARP.neighborsTable, neighborhoodUpdateSignal)
 	if err != nil {
-		return fmt.Errorf("failed to initialize controller, err: %s", err)
+		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
 	forwarder, err := NewForwarder(r, sARP.neighborsTable)
@@ -61,19 +62,18 @@ func (r *Router) Start() error {
 	}
 
 	// start modules
+	go sARP.Start()
 	go r.locAgent.Start()
-	go controller.ListenForControlPackets()
-	go controller.runSARP()
-	go forwarder.ForwardFromIPLayer()
-	go forwarder.ForwardFromMACLayer(controller.inputChannel)
+	go unicCont.Start()
+	go forwarder.Start(unicCont.inputChannel)
 
 	time.AfterFunc(6*time.Second, func() {
 		log.Println(controller.sARP.neighborsTable)
 	})
 
 	time.AfterFunc(10*time.Second, func() {
-		controller.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, controller.sARP.neighborsTable)
-		log.Println(forwarder.forwardingTable)
+		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.uniForwTable, sARP.neighborsTable)
+		log.Println(forwarder.uniForwTable)
 	})
 
 	return nil
