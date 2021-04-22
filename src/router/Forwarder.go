@@ -54,9 +54,9 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 	}, nil
 }
 
-func (f *Forwarder) Start(inputChannel chan *UnicastControlPacket) {
+func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
 	go f.forwardFromIPLayer()
-	go f.forwardZIDFromMACLayer(inputChannel)
+	go f.forwardZIDFromMACLayer(controllerChannel)
 	go f.forwardIPFromMACLayer()
 }
 
