@@ -76,7 +76,7 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	}
 	jq.TTL = int8(b[start])
 	start += ttlSize
-	if jq.TTL <= 0 {
+	if jq.TTL < 0 {
 		return nil, false
 	}
 	// extract checksum
