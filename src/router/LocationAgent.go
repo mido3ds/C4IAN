@@ -8,11 +8,15 @@ import (
 )
 
 type LocationAgent struct {
-	conn     *net.UnixConn
-	location Location
+	conn      *net.UnixConn
+	zlen      byte
+	listeners []func(ZoneID)
+
+	// don't read it, carries garbage at beginning, use AddListener to be notifies when it gets a correct value
+	lastZoneID ZoneID
 }
 
-func NewLocationAgent(locSocket string) (*LocationAgent, error) {
+func NewLocationAgent(locSocket string, zlen byte) (*LocationAgent, error) {
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
 	if err != nil {
@@ -32,7 +36,11 @@ func NewLocationAgent(locSocket string) (*LocationAgent, error) {
 
 	log.Println("initailized location agent, sock=", locSocket)
 
-	return &LocationAgent{conn: l}, nil
+	return &LocationAgent{
+		conn:      l,
+		zlen:      zlen,
+		listeners: make([]func(ZoneID), 0),
+	}, nil
 }
 
 func (a *LocationAgent) Start() {
@@ -41,21 +49,28 @@ func (a *LocationAgent) Start() {
 	d := json.NewDecoder(a.conn)
 
 	for {
-		var loc Location
+		var loc GPSLocation
 		err := d.Decode(&loc)
 		if err != nil {
 			continue
 		}
 
-		a.location = loc
-		// TODO: calculate zone id
-		// TODO: send signal of zone id change, if changed
+		id := NewZoneID(loc, a.zlen)
+		if id != a.lastZoneID {
+			a.lastZoneID = id
+
+			go func() {
+				// call listeners
+				for _, f := range a.listeners {
+					f(id)
+				}
+			}()
+		}
 	}
 }
 
-// Location is gps position
-// where Lat and Lon are in degrees
-type Location struct {
-	Lat float64 `json:"lat"`
-	Lon float64 `json:"lon"`
+// AddListener appends a function to the list of functions
+// that will be called when zoneid changes
+func (a *LocationAgent) AddListener(f func(ZoneID)) {
+	a.listeners = append(a.listeners, f)
 }

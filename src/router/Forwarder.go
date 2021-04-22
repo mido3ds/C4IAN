@@ -10,6 +10,7 @@ import (
 )
 
 type Forwarder struct {
+	zoneID         ZoneID
 	router         *Router
 	zidMacConn     *MACLayerConn
 	ipMacConn      *MACLayerConn
@@ -27,7 +28,7 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 	}
 
 	// connect to mac layer for multicast IP packets
-	ipMacConn, err := NewMACLayerConn(router.iface, IPv4EtherType)
+	ipMacConn, err := NewMACLayerConn(router.iface, uint16(ethernet.EtherTypeIPv4))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
 
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
-	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
+	zid := &ZIDHeader{ZLen: f.router.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
 	packet := append(zid.MarshalBinary(), dummy...)
 
 	encryptedPacket, err := f.router.msec.Encrypt(packet)
@@ -118,7 +119,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 			continue
 		}
 
-		if imDestination(f.router.ip, ip.DestIP, zid.dstZID) { // i'm destination,
+		if imDestination(f.router.ip, ip.DestIP, zid.DstZID) { // i'm destination,
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
@@ -134,7 +135,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		} else { // i'm a forwarder
 			IPv4DecrementTTL(packet[ZIDHeaderLen:])
 
-			e, ok := getNextHop(ip.DestIP, f.uniForwTable, f.neighborsTable)
+			e, ok := getNextHop(ip.DestIP, f.uniForwTable, f.neighborsTable, f.zoneID)
 			if !ok {
 				// TODO: call controller
 				continue
@@ -239,14 +240,13 @@ func (f *Forwarder) forwardFromIPLayer() {
 }
 
 func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
-	e, ok := getNextHop(destIP, f.uniForwTable, f.neighborsTable)
+	e, ok := getNextHop(destIP, f.uniForwTable, f.neighborsTable, f.zoneID)
 	if !ok {
 		// TODO: call controller
 		return
 	}
 
-	// TODO: put this zone id, and zlen
-	zid := &ZIDHeader{zLen: 1, packetType: DataPacket, srcZID: 2, dstZID: int32(e.DestZoneID)}
+	zid := &ZIDHeader{ZLen: f.router.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: e.DestZoneID}
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.router.iface.MTU))
@@ -303,12 +303,16 @@ func (f *Forwarder) sendBroadcast(packet []byte) {
 	}
 }
 
+func (f *Forwarder) OnZoneIDChanged(z ZoneID) {
+	f.zoneID = z
+}
+
 func (f *Forwarder) Close() {
 	f.zidMacConn.Close()
 	f.ipConn.Close()
 }
 
-func imDestination(ip, destIP net.IP, destZoneID int32) bool {
+func imDestination(ip, destIP net.IP, destZoneID ZoneID) bool {
 	// TODO: use destZID with the ip
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }
@@ -318,14 +322,14 @@ func imInMulticastGrp(destGrpIP net.IP) bool {
 	return false
 }
 
-func getNextHop(destIP net.IP, ft *UniForwardTable, nt *NeighborsTable) (*UniForwardingEntry, bool) {
+func getNextHop(destIP net.IP, ft *UniForwardTable, nt *NeighborsTable, zoneID ZoneID) (*UniForwardingEntry, bool) {
 	fe, ok := ft.Get(destIP)
 	if !ok {
 		ne, ok := nt.Get(destIP)
 		if !ok {
 			return nil, false
 		}
-		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: 0 /*TODO: replace with this zoneid*/}, ok
+		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: zoneID}, true
 	}
 	return fe, true
 }
