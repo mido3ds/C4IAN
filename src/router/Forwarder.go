@@ -196,7 +196,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 		// write to device driver
 		for i := 0; i < len(es.NextHopMACs); i++ {
-			err = f.zidMacConn.Write(packet, es.NextHopMACs[i])
+			err = f.ipMacConn.Write(packet, es.NextHopMACs[i])
 			if err != nil {
 				log.Fatal("failed to write to the device driver: ", err)
 			}
