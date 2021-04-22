@@ -21,10 +21,11 @@ type MulticastControlPacket struct {
 }
 
 type MulticastController struct {
-	router       *Router
-	macConn      *MACLayerConn
-	flooder      *Flooder
-	inputChannel chan *MulticastControlPacket
+	router          *Router
+	macConn         *MACLayerConn
+	grpMembersTable *GroupMembersTable
+	flooder         *Flooder
+	inputChannel    chan *MulticastControlPacket
 }
 
 func (c *MulticastController) floodDummy() {
@@ -32,7 +33,7 @@ func (c *MulticastController) floodDummy() {
 	c.flooder.Flood(dummy)
 }
 
-func NewMulticastController(router *Router) (*MulticastController, error) {
+func NewMulticastController(router *Router, mgroupContent string) (*MulticastController, error) {
 	macConn, err := NewMACLayerConn(router.iface, uint16(ethernet.EtherTypeIPv4))
 	if err != nil {
 		return nil, err
@@ -48,10 +49,11 @@ func NewMulticastController(router *Router) (*MulticastController, error) {
 	log.Println("initalized Multicast controller")
 
 	return &MulticastController{
-		router:       router,
-		macConn:      macConn,
-		inputChannel: c,
-		flooder:      flooder,
+		router:          router,
+		macConn:         macConn,
+		grpMembersTable: NewGroupMembersTable(mgroupContent),
+		inputChannel:    c,
+		flooder:         flooder,
 	}, nil
 }
 

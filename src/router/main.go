@@ -34,7 +34,8 @@ func main() {
 	AddIPTablesRules()
 	defer RemoveIPTablesRules()
 
-	err = router.Start()
+	mgrpContent := ReadJsonFile(args.mgrpFilePath)
+	err = router.Start(mgrpContent)
 	if err != nil {
 		panic(err)
 	}

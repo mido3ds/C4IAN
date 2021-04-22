@@ -44,7 +44,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte) (*Router, err
 	}, nil
 }
 
-func (r *Router) Start() error {
+func (r *Router) Start(mgrpContent string) error {
 	// initialize modules
 	sARP, err := NewSARPController(r)
 	if err != nil {
@@ -56,7 +56,7 @@ func (r *Router) Start() error {
 		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	multicCont, err := NewMulticastController(r)
+	multicCont, err := NewMulticastController(r, mgrpContent)
 	if err != nil {
 		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
