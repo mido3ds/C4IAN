@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 )
 
 type Router struct {
@@ -44,14 +43,13 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 }
 
 func (r *Router) Start() error {
-	// initial modules
-	neighborhoodUpdateSignal := make(chan bool)
-	sARP, err := NewSARPController(r, neighborhoodUpdateSignal)
+	// initialize modules
+	sARP, err := NewSARPController(r)
 	if err != nil {
 		return fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	unicCont, err := NewUnicastController(r, sARP.neighborsTable, neighborhoodUpdateSignal)
+	unicCont, err := NewUnicastController(r, sARP.neighborsTable, sARP.neighborhoodUpdateSignal)
 	if err != nil {
 		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -64,17 +62,8 @@ func (r *Router) Start() error {
 	// start modules
 	go sARP.Start()
 	go r.locAgent.Start()
-	go unicCont.Start()
+	go unicCont.Start(forwarder.uniForwTable)
 	go forwarder.Start(unicCont.inputChannel)
-
-	time.AfterFunc(6*time.Second, func() {
-		log.Println(controller.sARP.neighborsTable)
-	})
-
-	time.AfterFunc(10*time.Second, func() {
-		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.uniForwTable, sARP.neighborsTable)
-		log.Println(forwarder.uniForwTable)
-	})
 
 	return nil
 }

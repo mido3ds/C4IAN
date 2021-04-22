@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 type UnicastControlPacket struct {
@@ -52,9 +53,14 @@ func NewUnicastController(router *Router, neighborsTable *NeighborsTable, neighb
 	}, nil
 }
 
-func (c *UnicastController) Start() {
+func (c *UnicastController) Start(ft *UniForwardTable) {
 	go c.ListenForControlPackets()
 	go c.listenNeighChanges()
+
+	time.AfterFunc(10*time.Second, func() {
+		c.lsr.UpdateForwardingTable(c.router.ip, ft, c.neighborsTable)
+		log.Println(ft)
+	})
 }
 
 func (c *UnicastController) ListenForControlPackets() {

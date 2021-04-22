@@ -31,7 +31,7 @@ type SARPController struct {
 	encryptedHdr             []byte
 }
 
-func NewSARPController(router *Router, neighborhoodUpdateSignal chan bool) (*SARPController, error) {
+func NewSARPController(router *Router) (*SARPController, error) {
 	reqMacConn, err := NewMACLayerConn(router.iface, sARPReqEtherType)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func NewSARPController(router *Router, neighborhoodUpdateSignal chan bool) (*SAR
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
 		neighborsTable:           neighborsTable,
-		neighborhoodUpdateSignal: neighborhoodUpdateSignal,
+		neighborhoodUpdateSignal: make(chan bool),
 		encryptedHdr:             encryptedHdr,
 	}, nil
 }
