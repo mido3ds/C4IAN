@@ -62,8 +62,8 @@ func (a *LocationAgent) Location() Location {
 }
 
 // Location is gps position
+// where Lat and Lon are in degrees
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
-	Z   float64 `json:"z"`
 }

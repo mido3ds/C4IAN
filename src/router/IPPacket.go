@@ -10,7 +10,10 @@ type IPHeader struct {
 	TTL     int8
 }
 
-const IPv4HeaderLen = 20
+const (
+	IPv4HeaderLen = 20
+	IPv4EtherType = 0x0800
+)
 
 func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 	var ip net.IP

@@ -10,7 +10,13 @@ import (
 // TODO: GPS location -> zoneID
 // TODO: translate zondIDs from zlen to another
 
-const ZIDHeaderLen = 12
+const (
+	ZIDHeaderLen = 12
+
+	// Make use of an unassigned EtherType to differentiate between ZID traffic and other traffic
+	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
+	ZIDEtherType = 0x7031
+)
 
 type PacketType uint8
 
@@ -19,8 +25,6 @@ const (
 	DataPacket PacketType = iota
 	LSRFloodPacket
 	DummyControlPacket
-	SARPReq
-	SARPRes
 )
 
 var (
@@ -36,8 +40,6 @@ type ZIDHeader struct {
 
 func (z *ZIDHeader) isControlPacket() bool {
 	return z.packetType == LSRFloodPacket ||
-		z.packetType == SARPReq ||
-		z.packetType == SARPRes ||
 		z.packetType == DummyControlPacket
 }
 
