@@ -18,9 +18,9 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
 
 	payload := jq.MarshalBinary()
-	newJq, err := UnmarshalJoinQuery(payload)
+	newJq, ok := UnmarshalJoinQuery(payload)
 
-	if err != nil {
+	if !ok {
 		t.Errorf("Unmarshal should return no erros")
 	}
 	if len(jq.Dests) != len(newJq.Dests) {
@@ -58,9 +58,9 @@ func TestJoinQueryTtlLessThanZero(t *testing.T) {
 	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
 
 	payload := jq.MarshalBinary()
-	newJq, err := UnmarshalJoinQuery(payload)
+	newJq, ok := UnmarshalJoinQuery(payload)
 
-	if !(err != nil && newJq == nil) {
+	if !(!ok && newJq == nil) {
 		t.Errorf("Unmarshal should have erros")
 	}
 }
