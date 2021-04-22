@@ -62,7 +62,9 @@ type Flooder struct {
 	fTable    *FloodingTable
 	macConn   *MACLayerConn
 	ip        net.IP
+	zoneID    ZoneID
 	msec      *MSecLayer
+	zlen      byte
 }
 
 func NewFlooder(router *Router) (*Flooder, error) {
@@ -82,6 +84,7 @@ func NewFlooder(router *Router) (*Flooder, error) {
 		macConn:   macConn,
 		ip:        router.ip,
 		msec:      router.msec,
+		zlen:      router.zlen,
 	}, nil
 }
 
@@ -92,7 +95,8 @@ func (flooder *Flooder) Flood(msg []byte) {
 	flooder.seqNumber++
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
+	// TODO: what should be the destZID?
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	encryptedPacket, err := flooder.msec.Encrypt(msg)
@@ -130,7 +134,8 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	log.Println(hdr)
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
+	// TODO: what should be the destZID?
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// encrypt the msg
@@ -144,4 +149,8 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	if err != nil {
 		log.Fatal("failed to write to the device driver: ", err)
 	}
+}
+
+func (f *Flooder) OnZoneIDChanged(z ZoneID) {
+	f.zoneID = z
 }

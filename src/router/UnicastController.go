@@ -69,7 +69,7 @@ func (c *UnicastController) ListenForControlPackets() {
 	for {
 		controlPacket := <-c.inputChannel
 
-		switch controlPacket.zidHeader.packetType {
+		switch controlPacket.zidHeader.PacketType {
 		case LSRFloodPacket:
 			c.flooder.ReceiveFloodedMsg(controlPacket.payload, c.lsr.HandleLSRPacket)
 		}
@@ -82,4 +82,8 @@ func (c *UnicastController) listenNeighChanges() {
 		c.lsr.topology.Update(c.router.ip, c.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.neighborsTable)
 	}
+}
+
+func (c *UnicastController) OnZoneIDChanged(z ZoneID) {
+	c.flooder.OnZoneIDChanged(z)
 }

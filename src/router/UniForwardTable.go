@@ -16,7 +16,7 @@ type UniForwardTable struct {
 
 type UniForwardingEntry struct {
 	NextHopMAC net.HardwareAddr
-	DestZoneID uint32
+	DestZoneID ZoneID
 }
 
 func NewUniForwardTable() *UniForwardTable {

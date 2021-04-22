@@ -28,19 +28,18 @@ const (
 )
 
 var (
-	errZeroZlen    = fmt.Errorf("zone len must not be 0")
 	errNegativeMTU = fmt.Errorf("MTU can't be negative")
 )
 
 type ZIDHeader struct {
-	packetType     PacketType // Most significant 4 bits of the 4th byte
-	zLen           uint8      // Least significant 4 bits of the 4th byte
-	dstZID, srcZID int32
+	PacketType     PacketType // Most significant 4 bits of the 4th byte
+	ZLen           uint8      // Least significant 4 bits of the 4th byte
+	DstZID, SrcZID ZoneID
 }
 
 func (z *ZIDHeader) isControlPacket() bool {
-	return z.packetType == LSRFloodPacket ||
-		z.packetType == DummyControlPacket
+	return z.PacketType == LSRFloodPacket ||
+		z.PacketType == DummyControlPacket
 }
 
 func UnmarshalZIDHeader(packet []byte) (*ZIDHeader, bool) {
@@ -55,10 +54,10 @@ func UnmarshalZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	}
 
 	return &ZIDHeader{
-		packetType: PacketType(packet[3] >> 4),
-		zLen:       uint8(packet[3] & 0b1111),
-		dstZID:     int32(packet[4])<<24 | int32(packet[5])<<16 | int32(packet[6])<<8 | int32(packet[7]),
-		srcZID:     int32(packet[8])<<24 | int32(packet[9])<<16 | int32(packet[10])<<8 | int32(packet[11]),
+		PacketType: PacketType(packet[3] >> 4),
+		ZLen:       uint8(packet[3] & 0b1111),
+		DstZID:     ZoneID(uint32(packet[4])<<24 | uint32(packet[5])<<16 | uint32(packet[6])<<8 | uint32(packet[7])),
+		SrcZID:     ZoneID(uint32(packet[8])<<24 | uint32(packet[9])<<16 | uint32(packet[10])<<8 | uint32(packet[11])),
 	}, true
 }
 
@@ -69,19 +68,19 @@ func (header *ZIDHeader) MarshalBinary() []byte {
 	buf[2] = byte(rand.Uint32())
 
 	// packet type + zlen
-	buf[3] = byte(header.packetType)<<4 | (byte(header.zLen) & 0b1111)
+	buf[3] = byte(header.PacketType)<<4 | (byte(header.ZLen) & 0b1111)
 
 	// destZID
-	buf[4] = byte(header.dstZID >> 24)
-	buf[5] = byte(header.dstZID >> 16)
-	buf[6] = byte(header.dstZID >> 8)
-	buf[7] = byte(header.dstZID)
+	buf[4] = byte(header.DstZID >> 24)
+	buf[5] = byte(header.DstZID >> 16)
+	buf[6] = byte(header.DstZID >> 8)
+	buf[7] = byte(header.DstZID)
 
-	// srcZID
-	buf[8] = byte(header.srcZID >> 24)
-	buf[9] = byte(header.srcZID >> 16)
-	buf[10] = byte(header.srcZID >> 8)
-	buf[11] = byte(header.srcZID)
+	// SrcZID
+	buf[8] = byte(header.SrcZID >> 24)
+	buf[9] = byte(header.SrcZID >> 16)
+	buf[10] = byte(header.SrcZID >> 8)
+	buf[11] = byte(header.SrcZID)
 
 	// add checksum
 	csum := BasicChecksum(buf[2:ZIDHeaderLen])

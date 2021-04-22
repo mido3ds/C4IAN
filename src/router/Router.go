@@ -9,11 +9,12 @@ import (
 type Router struct {
 	iface    *net.Interface
 	ip       net.IP
+	zlen     byte
 	msec     *MSecLayer
 	locAgent *LocationAgent
 }
 
-func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
+func NewRouter(ifaceName, passphrase, locSocket string, zlen byte) (*Router, error) {
 	// get interface
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
@@ -29,7 +30,7 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 	log.Println("iface ipv4: ", ip)
 
 	// location agent
-	loc, err := NewLocationAgent(locSocket)
+	loc, err := NewLocationAgent(locSocket, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize location agent, err: %s", err)
 	}
@@ -38,6 +39,7 @@ func NewRouter(ifaceName, passphrase, locSocket string) (*Router, error) {
 		iface:    iface,
 		msec:     NewMSecLayer(passphrase),
 		ip:       ip,
+		zlen:     zlen,
 		locAgent: loc,
 	}, nil
 }
@@ -58,6 +60,9 @@ func (r *Router) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
+
+	r.locAgent.AddListener(forwarder.OnZoneIDChanged)
+	r.locAgent.AddListener(unicCont.OnZoneIDChanged)
 
 	// start modules
 	go sARP.Start()
