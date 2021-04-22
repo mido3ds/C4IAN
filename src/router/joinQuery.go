@@ -76,7 +76,7 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, error) {
 		start++
 	}
 	jq.TTL = int8(b[start])
-	start = +ttlSize
+	start += ttlSize
 	if jq.TTL <= 0 {
 		return nil, errors.New("TTL lessthan or equal zero")
 	}

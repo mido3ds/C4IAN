@@ -33,7 +33,10 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 		t.Errorf("TTL are not equal")
 	}
 	if !net.IP.Equal(jq.SrcIP, newJq.SrcIP) {
-		t.Errorf("ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
+		t.Errorf("src ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
+	}
+	if !net.IP.Equal(jq.GrpIP, newJq.GrpIP) {
+		t.Errorf("grp ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
 	}
 	for i := 0; i < len(jq.Dests); i++ {
 		if !net.IP.Equal(jq.Dests[i], newJq.Dests[i]) {
