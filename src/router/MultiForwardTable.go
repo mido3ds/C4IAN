@@ -15,7 +15,7 @@ type MultiForwardTable struct {
 }
 
 type MultiForwardingEntry struct {
-	NextHopMAC net.HardwareAddr
+	NextHopMACs []net.HardwareAddr
 }
 
 func NewMultiForwardTable() *MultiForwardTable {
@@ -61,7 +61,7 @@ func (f *MultiForwardTable) Clear() {
 func (f *MultiForwardTable) String() string {
 	s := "&MultiForwardTable{"
 	for item := range f.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*MultiForwardingEntry).NextHopMAC.String())
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*MultiForwardingEntry).NextHopMACs)
 	}
 	s += " }"
 

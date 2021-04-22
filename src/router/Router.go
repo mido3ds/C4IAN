@@ -66,8 +66,8 @@ func (r *Router) Start() error {
 	go forwarder.Start(unicCont.inputChannel)
 
 	time.AfterFunc(10*time.Second, func() {
-		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.forwardingTable, unicCont.sARP.neighborsTable)
-		log.Println(forwarder.forwardingTable)
+		unicCont.lsr.UpdateForwardingTable(r.ip, forwarder.uniForwTable, unicCont.sARP.neighborsTable)
+		log.Println(forwarder.uniForwTable)
 	})
 
 	return nil
