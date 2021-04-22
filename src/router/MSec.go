@@ -50,7 +50,7 @@ func (msec *MSecLayer) decryptStream() (cipher.Stream, error) {
 	return cipher.NewOFB(block, iv[:]), nil
 }
 
-func (msec *MSecLayer) decrypt(in []byte) ([]byte, error) {
+func (msec *MSecLayer) Decrypt(in []byte) ([]byte, error) {
 	stream, err := msec.decryptStream()
 	if err != nil {
 		return nil, err
