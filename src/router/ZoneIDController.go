@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type LocationAgent struct {
+type ZoneIDController struct {
 	conn      *net.UnixConn
 	zlen      byte
 	listeners []func(ZoneID)
@@ -16,7 +16,7 @@ type LocationAgent struct {
 	lastZoneID ZoneID
 }
 
-func NewLocationAgent(locSocket string, zlen byte) (*LocationAgent, error) {
+func NewZoneIDController(locSocket string, zlen byte) (*ZoneIDController, error) {
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
 	if err != nil {
@@ -34,17 +34,17 @@ func NewLocationAgent(locSocket string, zlen byte) (*LocationAgent, error) {
 		return nil, err
 	}
 
-	log.Println("initailized location agent, sock=", locSocket)
+	log.Println("initailized ZoneIDController, sock=", locSocket)
 
-	return &LocationAgent{
+	return &ZoneIDController{
 		conn:      l,
 		zlen:      zlen,
 		listeners: make([]func(ZoneID), 0),
 	}, nil
 }
 
-func (a *LocationAgent) Start() {
-	log.Println("started location agent")
+func (a *ZoneIDController) Start() {
+	log.Println("started ZoneIDController")
 
 	d := json.NewDecoder(a.conn)
 
@@ -71,6 +71,6 @@ func (a *LocationAgent) Start() {
 
 // AddListener appends a function to the list of functions
 // that will be called when zoneid changes
-func (a *LocationAgent) AddListener(f func(ZoneID)) {
+func (a *ZoneIDController) AddListener(f func(ZoneID)) {
 	a.listeners = append(a.listeners, f)
 }

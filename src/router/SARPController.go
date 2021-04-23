@@ -31,25 +31,25 @@ type SARPController struct {
 	encryptedHdr             []byte
 }
 
-func NewSARPController(router *Router) (*SARPController, error) {
-	reqMacConn, err := NewMACLayerConn(router.iface, sARPReqEtherType)
+func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPController, error) {
+	reqMacConn, err := NewMACLayerConn(iface, sARPReqEtherType)
 	if err != nil {
 		return nil, err
 	}
-	resMacConn, err := NewMACLayerConn(router.iface, sARPResEtherType)
+	resMacConn, err := NewMACLayerConn(iface, sARPResEtherType)
 	if err != nil {
 		return nil, err
 	}
 
 	neighborsTable := NewNeighborsTable()
 
-	header := &SARPHeader{router.ip, router.iface.HardwareAddr}
-	encryptedHdr := router.msec.Encrypt(header.MarshalBinary())
+	header := &SARPHeader{ip, iface.HardwareAddr}
+	encryptedHdr := msec.Encrypt(header.MarshalBinary())
 
 	log.Println("initalized sARP controller")
 
 	return &SARPController{
-		msec:                     router.msec,
+		msec:                     msec,
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
 		neighborsTable:           neighborsTable,
@@ -134,7 +134,7 @@ func (s *SARPHeader) MarshalBinary() []byte {
 
 	buf.Write(s.ip[:net.IPv4len])
 	buf.Write(s.mac)
-	buf.Write(Hash_SHA3(buf.Bytes()[:sARPHeaderLen]))
+	buf.Write(HashSHA3(buf.Bytes()[:sARPHeaderLen]))
 
 	return buf.Bytes()
 }
@@ -144,5 +144,5 @@ func verifySARPHeader(b []byte) bool {
 		return false
 	}
 
-	return verifyHash_SHA3(b[:sARPHeaderLen], b[sARPHeaderLen:sARPTotalLen])
+	return VerifySHA3Hash(b[:sARPHeaderLen], b[sARPHeaderLen:sARPTotalLen])
 }

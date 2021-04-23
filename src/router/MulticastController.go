@@ -1,8 +1,11 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net"
+	"os"
+	"time"
 
 	"github.com/mdlayher/ethernet"
 )
@@ -20,21 +23,29 @@ type MulticastController struct {
 	jrConn       *MACLayerConn
 }
 
-func NewMulticastController(router *Router, mgroupContent string) (*MulticastController, error) {
-	queryFlooder, err := NewGlobalFlooder(router.ip, router.iface, joinQueryEtherType, router.msec)
+func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
+	queryFlooder, err := NewGlobalFlooder(ip, iface, joinQueryEtherType, msec)
 	if err != nil {
 		log.Panic("failed to initiate query flooder, err: ", err)
 	}
 
-	jrConn, err := NewMACLayerConn(router.iface, joinReplyEtherType)
+	jrConn, err := NewMACLayerConn(iface, joinReplyEtherType)
 	if err != nil {
 		log.Panic("failed to initiate mac conn, err: ", err)
+	}
+
+	// read mgroup
+	var mgrpContent string
+	if os.Getenv("MTEST") == "1" {
+		mgrpContent = startMCastTestMode()
+	} else {
+		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
 
 	log.Println("initalized multicast controller")
 
 	return &MulticastController{
-		gmTable:      NewGroupMembersTable(mgroupContent),
+		gmTable:      NewGroupMembersTable(mgrpContent),
 		queryFlooder: queryFlooder,
 		jrConn:       jrConn,
 	}, nil
@@ -81,4 +92,47 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 		// TODO: store msg
 		// TODO: resend to next hop, unless im source
 	}
+}
+
+func startMCastTestMode() string {
+	log.Print("start in multicast test mode, assuming im working in rings.topo")
+	address := "224.0.2.1"
+	go startSendingMCastMsgs(7, address)
+
+	// return groups members table json
+	return "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
+}
+
+func startSendingMCastMsgs(secs int, address string) {
+	log.Println("started sending multicast dgrams to ", address)
+
+	raddr, err := net.ResolveUDPAddr("udp", address+":8080")
+	if err != nil {
+		log.Panic(err)
+	}
+	conn, err := net.DialUDP("udp", nil, raddr)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer conn.Close()
+
+	for {
+		_, err := conn.Write([]byte("hello world message"))
+		if err != nil {
+			log.Panic(err)
+		}
+
+		time.Sleep(time.Duration(secs) * time.Second)
+	}
+}
+
+func readOptionalJsonFile(path string) string {
+	if path != "" {
+		content, err := ioutil.ReadFile(path)
+		if err != nil {
+			log.Panic(err)
+		}
+		return string(content)
+	}
+	return "{}"
 }

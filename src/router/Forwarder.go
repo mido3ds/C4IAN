@@ -10,8 +10,11 @@ import (
 )
 
 type Forwarder struct {
+	iface          *net.Interface
+	msec           *MSecLayer
+	ip             net.IP
+	zlen           byte
 	zoneID         ZoneID
-	router         *Router
 	zidMacConn     *MACLayerConn
 	ipMacConn      *MACLayerConn
 	ipConn         *IPLayerConn
@@ -23,16 +26,17 @@ type Forwarder struct {
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
 }
 
-func NewForwarder(router *Router, neighborsTable *NeighborsTable,
+func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
+	neighborsTable *NeighborsTable,
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
-	zidMacConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
+	zidMacConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}
 
 	// connect to mac layer for multicast IP packets
-	ipMacConn, err := NewMACLayerConn(router.iface, ethernet.EtherTypeIPv4)
+	ipMacConn, err := NewMACLayerConn(iface, ethernet.EtherTypeIPv4)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +53,10 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable,
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
-		router:              router,
+		iface:               iface,
+		msec:                msec,
+		ip:                  ip,
+		zlen:                zlen,
 		zidMacConn:          zidMacConn,
 		ipMacConn:           ipMacConn,
 		ipConn:              ipConn,
@@ -68,10 +75,10 @@ func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
 
 func (f *Forwarder) broadcastDummy() {
 	dummy := []byte("Dummy")
-	zid := &ZIDHeader{ZLen: f.router.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
+	zid := &ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
 	packet := append(zid.MarshalBinary(), dummy...)
 
-	f.zidMacConn.Write(f.router.msec.Encrypt(packet), ethernet.Broadcast)
+	f.zidMacConn.Write(f.msec.Encrypt(packet), ethernet.Broadcast)
 
 	log.Println("Broadcasting dummy control packet..")
 }
@@ -87,7 +94,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
-		pd := f.router.msec.NewPacketDecrypter(packet)
+		pd := f.msec.NewPacketDecrypter(packet)
 		zid, valid := pd.DecryptAndVerifyZID()
 		if !valid {
 			log.Println("Received a packet with invalid ZID header")
@@ -110,7 +117,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 			continue
 		}
 
-		if imDestination(f.router.ip, ip.DestIP, zid.DstZID) { // i'm destination,
+		if imDestination(f.ip, ip.DestIP, zid.DstZID) { // i'm destination,
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue
@@ -149,7 +156,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
-		pd := f.router.msec.NewPacketDecrypter(packet)
+		pd := f.msec.NewPacketDecrypter(packet)
 		ip, valid := pd.DecryptAndVerifyIP()
 		if !valid {
 			continue
@@ -201,7 +208,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 			log.Panic("ip header must have been valid from ip layer!")
 		}
 
-		if IsInjectedPacket(packet) || imDestination(f.router.ip, ip.DestIP, 0) {
+		if IsInjectedPacket(packet) || imDestination(f.ip, ip.DestIP, 0) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
 			if ip.DestIP.IsGlobalUnicast() {
@@ -225,15 +232,15 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 		return
 	}
 
-	zid := &ZIDHeader{ZLen: f.router.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: e.DestZoneID}
+	zid := &ZIDHeader{ZLen: f.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: e.DestZoneID}
 
 	// build packet
-	buffer := bytes.NewBuffer(make([]byte, 0, f.router.iface.MTU))
+	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
 	buffer.Write(zid.MarshalBinary())
 	buffer.Write(packet)
 
 	// encrypt
-	encryptedPacket := f.router.msec.Encrypt(buffer.Bytes())
+	encryptedPacket := f.msec.Encrypt(buffer.Bytes())
 
 	// write to device driver
 	f.zidMacConn.Write(encryptedPacket, e.NextHopMAC)
@@ -249,7 +256,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	}
 
 	// encrypt
-	encryptedPacket := f.router.msec.Encrypt(packet)
+	encryptedPacket := f.msec.Encrypt(packet)
 
 	// write to device driver
 	for i := 0; i < len(es.NextHopMACs); i++ {
@@ -260,7 +267,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 func (f *Forwarder) sendBroadcast(packet []byte) {
 	// write to device driver
 	// TODO: for now ethernet broadcast
-	f.zidMacConn.Write(f.router.msec.Encrypt(packet), ethernet.Broadcast)
+	f.zidMacConn.Write(f.msec.Encrypt(packet), ethernet.Broadcast)
 }
 
 func (f *Forwarder) OnZoneIDChanged(z ZoneID) {

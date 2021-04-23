@@ -121,5 +121,5 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 }
 
 func (n *NeighborsTable) GetTableHash() []byte {
-	return Hash_SHA3([]byte(n.String()))
+	return HashSHA3([]byte(n.String()))
 }

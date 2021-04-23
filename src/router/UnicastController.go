@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"time"
 )
 
@@ -11,7 +13,7 @@ type UnicastControlPacket struct {
 }
 
 type UnicastController struct {
-	router                   *Router
+	ip                       net.IP
 	macConn                  *MACLayerConn
 	flooder                  *ZoneFlooder
 	lsr                      *LSR
@@ -25,17 +27,17 @@ func (c *UnicastController) floodDummy() {
 	c.flooder.Flood(dummy)
 }
 
-func NewUnicastController(router *Router, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool) (*UnicastController, error) {
-	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
+func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
+	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}
 
 	c := make(chan *UnicastControlPacket)
 
-	flooder, err := NewZoneFlooder(router)
+	flooder, err := NewZoneFlooder(iface, ip, msec, zlen)
 	if err != nil {
-		log.Panic("failed to initiate flooder, err: ", err)
+		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
 	}
 
 	lsr := NewLSR()
@@ -43,8 +45,8 @@ func NewUnicastController(router *Router, neighborsTable *NeighborsTable, neighb
 	log.Println("initalized controller")
 
 	return &UnicastController{
-		router:                   router,
 		macConn:                  macConn,
+		ip:                       ip,
 		inputChannel:             c,
 		flooder:                  flooder,
 		lsr:                      lsr,
@@ -58,7 +60,7 @@ func (c *UnicastController) Start(ft *UniForwardTable) {
 	go c.listenNeighChanges()
 
 	time.AfterFunc(10*time.Second, func() {
-		c.lsr.UpdateForwardingTable(c.router.ip, ft, c.neighborsTable)
+		c.lsr.UpdateForwardingTable(c.ip, ft, c.neighborsTable)
 		log.Println(ft)
 	})
 }
@@ -79,7 +81,7 @@ func (c *UnicastController) ListenForControlPackets() {
 func (c *UnicastController) listenNeighChanges() {
 	for {
 		<-c.neighborhoodUpdateSignal
-		c.lsr.topology.Update(c.router.ip, c.neighborsTable)
+		c.lsr.topology.Update(c.ip, c.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.neighborsTable)
 	}
 }

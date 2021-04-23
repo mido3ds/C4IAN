@@ -3,12 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/akamensky/argparse"
 )
@@ -27,26 +24,13 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetPrefix("[" + args.ifaceName + "] ")
 
-	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen)
+	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen, args.mgrpFilePath)
 	if err != nil {
 		log.Panic(err)
 	}
+	defer router.Close()
 
-	AddIPTablesRules()
-	defer RemoveIPTablesRules()
-
-	var mgrpContent string
-	if os.Getenv("MTEST") == "1" {
-		log.Print("start in multicast test mode, assuming im working in rings.topo")
-		address := "224.0.2.1"
-		mgrpContent = getMulticastTestGroup(address)
-		go startSendingMCastMsgs(7, address)
-	} else {
-		mgrpContent = readOptionalJsonFile(args.mgrpFilePath)
-	}
-
-	err = router.Start(mgrpContent)
-	if err != nil {
+	if err = router.Start(); err != nil {
 		log.Panic(err)
 	}
 
@@ -96,46 +80,7 @@ func parseArgs() (*Args, error) {
 	}, nil
 }
 
-func readOptionalJsonFile(path string) string {
-	if path != "" {
-		content, err := ioutil.ReadFile(path)
-		if err != nil {
-			log.Panic(err)
-		}
-		return string(content)
-	}
-	return "{}"
-}
-
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
-}
-
-func getMulticastTestGroup(address string) string {
-
-	return "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
-}
-
-func startSendingMCastMsgs(secs int, address string) {
-	log.Println("started sending multicast dgrams to ", address)
-
-	raddr, err := net.ResolveUDPAddr("udp", address+":8080")
-	if err != nil {
-		log.Panic(err)
-	}
-	conn, err := net.DialUDP("udp", nil, raddr)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer conn.Close()
-
-	for {
-		_, err := conn.Write([]byte("hello world message"))
-		if err != nil {
-			log.Panic(err)
-		}
-
-		time.Sleep(time.Duration(secs) * time.Second)
-	}
 }

@@ -67,9 +67,9 @@ type ZoneFlooder struct {
 	zlen      byte
 }
 
-func NewZoneFlooder(router *Router) (*ZoneFlooder, error) {
+func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte) (*ZoneFlooder, error) {
 	// connect to mac layer
-	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
+	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +82,9 @@ func NewZoneFlooder(router *Router) (*ZoneFlooder, error) {
 		seqNumber: 0,
 		fTable:    fTable,
 		macConn:   macConn,
-		ip:        router.ip,
-		msec:      router.msec,
-		zlen:      router.zlen,
+		ip:        ip,
+		msec:      msec,
+		zlen:      zlen,
 	}, nil
 }
 
