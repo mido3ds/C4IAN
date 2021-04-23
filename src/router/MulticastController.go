@@ -24,7 +24,7 @@ type MulticastController struct {
 	router          *Router
 	macConn         *MACLayerConn
 	grpMembersTable *GroupMembersTable
-	flooder         *Flooder
+	flooder         *ZoneFlooder
 	inputChannel    chan *MulticastControlPacket
 }
 
@@ -41,7 +41,7 @@ func NewMulticastController(router *Router, mgroupContent string) (*MulticastCon
 
 	c := make(chan *MulticastControlPacket)
 
-	flooder, err := NewFlooder(router)
+	flooder, err := NewZoneFlooder(router)
 	if err != nil {
 		log.Fatal("failed to initiate flooder, err: ", err)
 	}

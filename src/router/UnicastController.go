@@ -13,7 +13,7 @@ type UnicastControlPacket struct {
 type UnicastController struct {
 	router                   *Router
 	macConn                  *MACLayerConn
-	flooder                  *Flooder
+	flooder                  *ZoneFlooder
 	lsr                      *LSR
 	inputChannel             chan *UnicastControlPacket
 	neighborhoodUpdateSignal chan bool
@@ -33,7 +33,7 @@ func NewUnicastController(router *Router, neighborsTable *NeighborsTable, neighb
 
 	c := make(chan *UnicastControlPacket)
 
-	flooder, err := NewFlooder(router)
+	flooder, err := NewZoneFlooder(router)
 	if err != nil {
 		log.Fatal("failed to initiate flooder, err: ", err)
 	}

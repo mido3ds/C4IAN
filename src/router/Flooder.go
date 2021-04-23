@@ -57,7 +57,7 @@ func (f *FloodHeader) String() string {
 	return fmt.Sprintf("received a msg flooded by:%#v, with seq=%#v", f.SrcIP.String(), f.SeqNum)
 }
 
-type Flooder struct {
+type ZoneFlooder struct {
 	seqNumber uint32
 	fTable    *FloodingTable
 	macConn   *MACLayerConn
@@ -67,7 +67,7 @@ type Flooder struct {
 	zlen      byte
 }
 
-func NewFlooder(router *Router) (*Flooder, error) {
+func NewZoneFlooder(router *Router) (*ZoneFlooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
@@ -78,7 +78,7 @@ func NewFlooder(router *Router) (*Flooder, error) {
 
 	log.Println("initalized flooder")
 
-	return &Flooder{
+	return &ZoneFlooder{
 		seqNumber: 0,
 		fTable:    fTable,
 		macConn:   macConn,
@@ -88,7 +88,7 @@ func NewFlooder(router *Router) (*Flooder, error) {
 	}, nil
 }
 
-func (flooder *Flooder) Flood(msg []byte) {
+func (flooder *ZoneFlooder) Flood(msg []byte) {
 	hdr := FloodHeader{SrcIP: flooder.ip, SeqNum: flooder.seqNumber}
 	msg = append(hdr.MarshalBinary(), msg...)
 
@@ -110,7 +110,7 @@ func (flooder *Flooder) Flood(msg []byte) {
 	}
 }
 
-func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
 	hdr, payload, ok := UnmarshalFloodedPacket(msg)
 	if !ok {
 		return
@@ -151,6 +151,6 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	}
 }
 
-func (f *Flooder) OnZoneIDChanged(z ZoneID) {
+func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
 	f.zoneID = z
 }
