@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os/exec"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/kernel"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
@@ -30,9 +30,9 @@ type Router struct {
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
 	// tell linux im a router
-	addIPTablesRule()
-	if err := registerGateway(); err != nil {
-		deleteIPTablesRule()
+	AddIPTablesRule()
+	if err := RegisterGateway(); err != nil {
+		DeleteIPTablesRule()
 		return nil, err
 	}
 
@@ -112,47 +112,6 @@ func (r *Router) Close() {
 	// r.zidAgent.Close() TODO
 	// r.FlushListeners() TODO
 
-	unregisterGateway()
-	deleteIPTablesRule()
-}
-
-// TODO: support parallelism and fan-out
-
-func addIPTablesRule() {
-	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w").Run()
-	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "-w", "--queue-num", "0")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't add iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("added NFQUEUE rule to OUTPUT chain in iptables")
-}
-
-func deleteIPTablesRule() {
-	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't remove iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("remove NFQUEUE rule to OUTPUT chain in iptables")
-}
-
-func registerGateway() error {
-	exec.Command("route", "del", "default", "gw", "localhost").Run()
-	cmd := exec.Command("route", "add", "default", "gw", "localhost")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("couldn't add default gateway, err: %#v, stderr: %#v", err, string(stdoutStderr))
-	}
-	log.Println("added default gateway")
-	return nil
-}
-
-func unregisterGateway() {
-	cmd := exec.Command("route", "del", "default", "gw", "localhost")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't remove default gateway, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("remove default gateway")
+	UnregisterGateway()
+	DeleteIPTablesRule()
 }
