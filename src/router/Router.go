@@ -6,7 +6,7 @@ import (
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
-	. "github.com/mido3ds/C4IAN/src/router/kernel"
+	"github.com/mido3ds/C4IAN/src/router/kernel"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
@@ -30,9 +30,9 @@ type Router struct {
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
 	// tell linux im a router
-	AddIPTablesRule()
-	if err := RegisterGateway(); err != nil {
-		DeleteIPTablesRule()
+	kernel.AddIPTablesRule()
+	if err := kernel.RegisterGateway(); err != nil {
+		kernel.DeleteIPTablesRule()
 		return nil, err
 	}
 
@@ -112,6 +112,6 @@ func (r *Router) Close() {
 	// r.zidAgent.Close() TODO
 	// r.FlushListeners() TODO
 
-	UnregisterGateway()
-	DeleteIPTablesRule()
+	kernel.UnregisterGateway()
+	kernel.DeleteIPTablesRule()
 }
