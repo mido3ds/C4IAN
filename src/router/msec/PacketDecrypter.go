@@ -46,11 +46,12 @@ func (p *PacketDecrypter) DecryptN(n int) []byte {
 	return b[len(b)-n:]
 }
 
-func (p *PacketDecrypter) DecryptAll() ([]byte, error) {
+// DecryptAll decrypts the rest of the packet and returns all decrypted bytes
+func (p *PacketDecrypter) DecryptAll() []byte {
 	_, err := io.Copy(p.out, p.reader)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to decrypt all of the packet, err: ", err)
 	}
 
-	return p.out.Bytes(), nil
+	return p.out.Bytes()
 }
