@@ -79,7 +79,7 @@ func (c *UnicastController) ListenForControlPackets() {
 
 		switch controlPacket.zidHeader.PacketType {
 		case LSRFloodPacket:
-			c.flooder.ReceiveFloodedMsg(controlPacket.payload, c.lsr.HandleLSRPacket)
+			c.flooder.ReceiveFloodedMsg(controlPacket.zidHeader, controlPacket.payload, c.lsr.HandleLSRPacket)
 		}
 	}
 }

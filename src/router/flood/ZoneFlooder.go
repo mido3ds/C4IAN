@@ -55,7 +55,14 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
 }
 
-func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+func (flooder *ZoneFlooder) ReceiveFloodedMsg(msgZidHeader *ZIDHeader, msg []byte, payloadProcessor func(net.IP, []byte)) {
+	myZone := &Zone{ID: flooder.zoneID, Len: flooder.zlen}
+	srcZone := &Zone{ID: msgZidHeader.SrcZID, Len: msgZidHeader.ZLen}
+
+	if !myZone.InZone(srcZone) {
+		return
+	}
+	
 	hdr, payload, ok := UnmarshalFloodedPacket(msg)
 	if !ok {
 		return
