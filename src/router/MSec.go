@@ -72,8 +72,6 @@ type PacketDecrypter struct {
 	out    *bytes.Buffer
 }
 
-// TODO: add DecryptN, and remove DecryptAndVerify
-
 func (msec *MSecLayer) NewPacketDecrypter(in []byte) *PacketDecrypter {
 	stream, err := msec.decryptStream()
 	if err != nil {
@@ -89,22 +87,23 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) *PacketDecrypter {
 	}
 }
 
-func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
-	n, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
-	if err != nil || n != ZIDHeaderLen {
-		return nil, false
+// DecryptN returns last N decrypted bytes of the packet
+// advances the buffer index by N bytes, so next call will decrypt the next bytes
+func (p *PacketDecrypter) DecryptN(n int) []byte {
+	if n <= 0 {
+		log.Panic("packet decrypter: n must be positive")
 	}
-	b := p.out.Bytes()
-	return UnmarshalZIDHeader(b[len(b)-ZIDHeaderLen:])
-}
 
-func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
-	n, err := io.CopyN(p.out, p.reader, IPv4HeaderLen)
-	if err != nil || n != IPv4HeaderLen {
-		return nil, false
+	n2, err := io.CopyN(p.out, p.reader, int64(n))
+	if int64(n) != n2 {
+		log.Panic("packet decrypter failed to decrypt n bytes")
 	}
+	if err != nil {
+		log.Panic("packet decrypter err:", err)
+	}
+
 	b := p.out.Bytes()
-	return UnmarshalIPHeader(b[len(b)-IPv4HeaderLen:])
+	return b[len(b)-n:]
 }
 
 func (p *PacketDecrypter) DecryptAll() ([]byte, error) {
