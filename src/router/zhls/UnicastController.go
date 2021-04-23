@@ -57,7 +57,7 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 }
 
 func (c *UnicastController) Start(ft *UniForwardTable) {
-	go c.ListenForControlPackets()
+	go c.listenForControlPackets()
 	go c.listenNeighChanges()
 
 	time.AfterFunc(10*time.Second, func() {
@@ -66,7 +66,7 @@ func (c *UnicastController) Start(ft *UniForwardTable) {
 	})
 }
 
-func (c *UnicastController) ListenForControlPackets() {
+func (c *UnicastController) listenForControlPackets() {
 	log.Println("UnicastController started listening for control packets from the forwarder")
 	// TODO: receive encrypted packet and packet decrypter
 	for {
