@@ -31,11 +31,7 @@ func main() {
 	defer router.Close()
 	router.Start()
 
-	// wait for SIGINT
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-
+	waitSIGINT()
 	log.Println("received SIGINT, started cleaning up")
 }
 
@@ -80,4 +76,10 @@ func parseArgs() (*Args, error) {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+func waitSIGINT() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
 }
