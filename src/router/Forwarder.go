@@ -10,7 +10,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zid"
+	. "github.com/mido3ds/C4IAN/src/router/zhls"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type Forwarder struct {
@@ -96,12 +97,8 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		}
 
 		if zid.IsControlPacket() {
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
-			controllerChannel <- &UnicastControlPacket{zidHeader: zid, payload: packet[ZIDHeaderLen:]}
+			packet := pd.DecryptAll()
+			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: packet[ZIDHeaderLen:]}
 			continue
 		}
 
@@ -112,15 +109,10 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		}
 
 		if imDestination(f.ip, ip.DestIP, zid.DstZID) { // i'm destination,
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
-			ippacket := packet[ZIDHeaderLen:]
+			ippacket := pd.DecryptAll()[ZIDHeaderLen:]
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(ippacket)
+			err := f.ipConn.Write(ippacket)
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
@@ -157,13 +149,8 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		}
 
 		if imInMulticastGrp(ip.DestIP) { // i'm destination,
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(packet)
+			err := f.ipConn.Write(pd.DecryptAll())
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}

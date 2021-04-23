@@ -1,4 +1,4 @@
-package main
+package odmrp
 
 import (
 	"io/ioutil"
@@ -10,7 +10,6 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
-	. "github.com/mido3ds/C4IAN/src/router/odmrp"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 

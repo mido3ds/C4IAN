@@ -8,7 +8,9 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
-	. "github.com/mido3ds/C4IAN/src/router/zid"
+	. "github.com/mido3ds/C4IAN/src/router/odmrp"
+	. "github.com/mido3ds/C4IAN/src/router/zhls"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type Router struct {
@@ -98,7 +100,7 @@ func (r *Router) Start() {
 	go r.sarpCont.Start()
 	go r.unicCont.Start(r.forwarder.uniForwTable)
 	go r.multCont.Start(r.forwarder.multiForwTable)
-	go r.forwarder.Start(r.unicCont.inputChannel)
+	go r.forwarder.Start(r.unicCont.InputChannel)
 }
 
 func (r *Router) Close() {

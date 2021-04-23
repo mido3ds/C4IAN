@@ -7,7 +7,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zid"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type ZoneFlooder struct {
@@ -56,7 +56,7 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 }
 
 func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
-	hdr, payload, ok := UnmarshalFloodedPacket(msg)
+	hdr, payload, ok := UnmarshalFloodedHeader(msg)
 	if !ok {
 		return
 	}

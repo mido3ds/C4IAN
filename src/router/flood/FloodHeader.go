@@ -15,7 +15,7 @@ type FloodHeader struct {
 
 const FloodHeaderLen = 2 + 2*4
 
-func UnmarshalFloodedPacket(b []byte) (*FloodHeader, []byte, bool) {
+func UnmarshalFloodedHeader(b []byte) (*FloodHeader, []byte, bool) {
 	if len(b) < FloodHeaderLen {
 		return nil, nil, false
 	}
