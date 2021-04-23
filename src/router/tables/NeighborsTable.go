@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
@@ -18,7 +19,7 @@ type NeighborsTable struct {
 
 type NeighborEntry struct {
 	MAC  net.HardwareAddr
-	cost uint8
+	Cost uint8
 }
 
 func NewNeighborsTable() *NeighborsTable {
@@ -45,7 +46,7 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	for i := 0; i < int(numberOfEntries); i++ {
 		IP := net.IP(payload[start : start+4])
 		cost := uint8(payload[start+4])
-		neighborsTable.Set(IP, &NeighborEntry{cost: cost})
+		neighborsTable.Set(IP, &NeighborEntry{Cost: cost})
 		start += 5
 	}
 
@@ -85,7 +86,7 @@ func (n *NeighborsTable) Clear() {
 func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
 	for item := range n.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v,cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).cost)
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v,Cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
 	}
 	s += " }"
 	return s
@@ -109,7 +110,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 		payload[start+3] = byte(IP)
 
 		// Insert cost: 1 byte
-		payload[start+4] = byte(item.Value.(*NeighborEntry).cost)
+		payload[start+4] = byte(item.Value.(*NeighborEntry).Cost)
 		start += 5
 	}
 

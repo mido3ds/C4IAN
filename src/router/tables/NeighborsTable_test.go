@@ -1,10 +1,12 @@
-package main
+package tables
 
 import (
 	"fmt"
 	"net"
 	"testing"
 )
+
+// TODO: those are not benchmarks, turn them into tests using testing.T
 
 func Benchmark_MarshalBinary(b *testing.B) {
 	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
@@ -14,10 +16,10 @@ func Benchmark_MarshalBinary(b *testing.B) {
 
 	neighborsTable := NewNeighborsTable()
 
-	neighborsTable.Set(ip0, &NeighborEntry{cost: 1})
-	neighborsTable.Set(ip1, &NeighborEntry{cost: 2})
-	neighborsTable.Set(ip2, &NeighborEntry{cost: 3})
-	neighborsTable.Set(ip4, &NeighborEntry{cost: 4})
+	neighborsTable.Set(ip0, &NeighborEntry{Cost: 1})
+	neighborsTable.Set(ip1, &NeighborEntry{Cost: 2})
+	neighborsTable.Set(ip2, &NeighborEntry{Cost: 3})
+	neighborsTable.Set(ip4, &NeighborEntry{Cost: 4})
 
 	payload := neighborsTable.MarshalBinary()
 

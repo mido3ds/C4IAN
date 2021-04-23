@@ -8,6 +8,7 @@ import (
 
 	"github.com/mdlayher/ethernet"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
 const (
@@ -93,7 +94,7 @@ func (s *SARPController) recvRequests() {
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
-			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
+			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, Cost: 1})
 
 			// unicast response
 			s.resMacConn.Write(s.encryptedHdr, header.mac)
@@ -108,7 +109,7 @@ func (s *SARPController) recvResponses() {
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
-			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
+			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, Cost: 1})
 		}
 	}
 }

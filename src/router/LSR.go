@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 	"github.com/starwander/goraph"
 )
 

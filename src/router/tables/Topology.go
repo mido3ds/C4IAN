@@ -1,8 +1,9 @@
-package main
+package tables
 
 import (
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/starwander/goraph"
 )
 
@@ -53,7 +54,7 @@ func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 	outToEdges := make(map[uint32]float64)
 
 	for n := range srcNeighbors.m.Iter() {
-		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).cost)
+		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).Cost)
 	}
 
 	// remove the src vertex

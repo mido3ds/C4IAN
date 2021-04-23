@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 // UniForwardTable is lock-free thread-safe hash table
@@ -17,7 +18,7 @@ type UniForwardTable struct {
 
 type UniForwardingEntry struct {
 	NextHopMAC net.HardwareAddr
-	DestZoneID ZoneID
+	DestZoneID uint32 // TODO: use ZoneID
 }
 
 func NewUniForwardTable() *UniForwardTable {

@@ -7,7 +7,9 @@ import (
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
 	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
 type Forwarder struct {
@@ -233,7 +235,7 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 		return
 	}
 
-	zid := &ZIDHeader{ZLen: f.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: e.DestZoneID}
+	zid := &ZIDHeader{ZLen: f.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: ZoneID(e.DestZoneID)}
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
@@ -297,7 +299,7 @@ func getNextHop(destIP net.IP, ft *UniForwardTable, nt *NeighborsTable, zoneID Z
 		if !ok {
 			return nil, false
 		}
-		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: zoneID}, true
+		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: uint32(zoneID)}, true
 	}
 	return fe, true
 }
