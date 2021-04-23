@@ -104,8 +104,16 @@ func (r *Router) Start() {
 }
 
 func (r *Router) Close() {
-	delIptablesRule()
+	r.forwarder.Close()
+	// r.multCont.Close() TODO
+	// r.unicCont.Close() TODO
+	// r.sarpCont.Close() TODO
+
+	// r.zidAgent.Close() TODO
+	// r.FlushListeners() TODO
+
 	unregisterGateway()
+	delIptablesRule()
 }
 
 // TODO: support parallelism and fan-out

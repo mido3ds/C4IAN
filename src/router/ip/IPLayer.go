@@ -2,6 +2,7 @@ package ip
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"syscall"
@@ -25,6 +26,10 @@ type IPLayerConn struct {
 	fd4     int
 	nfq     *netfilter.NFQueue
 	packets <-chan netfilter.NFPacket
+
+	// when set to true, i know that the conn closed manually
+	// not for an error
+	closed bool
 }
 
 func NewIPLayerConn() (*IPLayerConn, error) {
@@ -48,7 +53,13 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 
 func (c *IPLayerConn) Write(packet []byte) error {
 	markPacketAsInjected(packet)
-	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
+
+	err := syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
+	if err != nil && c.closed {
+		log.Println("raw socket closed gracefully while writing to it, no panic")
+		err = nil
+	}
+	return err
 }
 
 func (c *IPLayerConn) Read() netfilter.NFPacket {
@@ -56,6 +67,7 @@ func (c *IPLayerConn) Read() netfilter.NFPacket {
 }
 
 func (c *IPLayerConn) Close() {
+	c.closed = true
 	syscall.Close(c.fd4)
 	c.nfq.Close()
 }
