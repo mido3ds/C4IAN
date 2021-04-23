@@ -12,9 +12,9 @@ func Hash_SHA3(b []byte) []byte {
 
 	n, err := h.Write(b)
 	if err != nil {
-		log.Fatal("failed to hash, err: ", err)
+		log.Panic("failed to hash, err: ", err)
 	} else if n != len(b) {
-		log.Fatal("failed to hash")
+		log.Panic("failed to hash")
 	}
 
 	return h.Sum(nil)

@@ -11,30 +11,32 @@ import (
 	"github.com/akamensky/argparse"
 )
 
-func main() {
-	defer log.Println("finished cleaning up, closing")
+const DefaultZLen = 12
 
-	ifaceName, pass, locSocket, _, err := parseArgs()
+func main() {
+	args, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
+	defer log.Println("finished cleaning up, closing")
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
-	log.SetPrefix("[" + ifaceName + "] ")
+	log.SetPrefix("[" + args.ifaceName + "] ")
 
-	router, err := NewRouter(ifaceName, pass, locSocket)
+	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	AddIPTablesRules()
 	defer RemoveIPTablesRules()
 
-	err = router.Start()
+	mgrpContent := ReadJsonFile(args.mgrpFilePath)
+	err = router.Start(mgrpContent)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	// wait for SIGINT
@@ -45,28 +47,56 @@ func main() {
 	log.Println("received SIGINT, started cleaning up")
 }
 
-func parseArgs() (string, string, string, string, error) {
+type Args struct {
+	ifaceName    string
+	passphrase   string
+	locSocket    string
+	mgrpFilePath string
+	zlen         byte
+}
+
+func parseArgs() (*Args, error) {
 	parser := argparse.NewParser("router", "Sets forwarding table in linux to route packets in adhoc-network.")
 	ifaceName := parser.String("i", "iface", &argparse.Options{Required: true, Help: "Interface name."})
 	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption."})
 	locSocket := parser.String("l", "location-socket", &argparse.Options{Required: true, Help: "Path to unix domain socket to listen for location stream."})
 	mgrpFile := parser.String("g", "mgroups-file", &argparse.Options{Required: false, Help: "Path to mutlicast group member table file."})
+	zlen := parser.Int("", "zlen", &argparse.Options{Required: false, Default: DefaultZLen, Help: "ZLen value to determine zone area, must be between 0 and 16 inclusive."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
-		return "", "", "", "", errors.New(parser.Usage(err))
+		return nil, errors.New(parser.Usage(err))
 	}
 
-	return *ifaceName, *passphrase, *locSocket, *mgrpFile, nil
+	if *zlen < 0 || *zlen > 16 {
+		return nil, errors.New(parser.Usage("ZLen must be between 0 and 16 inclusive"))
+	}
+
+	if *mgrpFile != "" && !fileExists(*mgrpFile) {
+		return nil, errors.New(parser.Usage("mgroups-file doesn't exist"))
+	}
+
+	return &Args{
+		ifaceName:    *ifaceName,
+		passphrase:   *passphrase,
+		locSocket:    *locSocket,
+		mgrpFilePath: *mgrpFile,
+		zlen:         byte(*zlen),
+	}, nil
 }
 
 func ReadJsonFile(path string) string {
 	if path != "" {
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		return string(content)
 	}
 	return "{}"
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }

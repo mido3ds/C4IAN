@@ -44,10 +44,7 @@ func NewSARPController(router *Router) (*SARPController, error) {
 	neighborsTable := NewNeighborsTable()
 
 	header := &SARPHeader{router.ip, router.iface.HardwareAddr}
-	encryptedHdr, err := router.msec.Encrypt(header.MarshalBinary())
-	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
-	}
+	encryptedHdr := router.msec.Encrypt(header.MarshalBinary())
 
 	log.Println("initalized sARP controller")
 
@@ -74,9 +71,7 @@ func (s *SARPController) sendMsgs() {
 		s.neighborsTable.Clear()
 
 		// broadcast request
-		if err := s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast); err != nil {
-			log.Fatal("failed to write to device driver, err: ", err)
-		}
+		s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast)
 
 		time.Sleep(sARPHoldTime)
 		newTableHash := s.neighborsTable.GetTableHash()
@@ -93,39 +88,23 @@ func (s *SARPController) sendMsgs() {
 
 func (s *SARPController) recvRequests() {
 	for {
-		packet, err := s.reqMacConn.Read()
-		if err != nil {
-			log.Fatal("couldn't read from device driver, err: ", err)
-		}
-
-		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
-		if err != nil {
-			log.Fatal("couldn't decrypt msg, err: ", err)
-		}
+		packet := s.reqMacConn.Read()
+		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
 			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
 
 			// unicast response
-			if err := s.resMacConn.Write(s.encryptedHdr, header.mac); err != nil {
-				log.Fatal("failed to write to device driver, err: ", err)
-			}
+			s.resMacConn.Write(s.encryptedHdr, header.mac)
 		}
 	}
 }
 
 func (s *SARPController) recvResponses() {
 	for {
-		packet, err := s.resMacConn.Read()
-		if err != nil {
-			log.Fatal("couldn't read from device driver, err: ", err)
-		}
-
-		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
-		if err != nil {
-			log.Fatal("couldn't decrypt msg, err: ", err)
-		}
+		packet := s.resMacConn.Read()
+		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it

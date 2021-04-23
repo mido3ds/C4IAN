@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"io"
+	"log"
 
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/sha3"
@@ -20,11 +21,11 @@ func NewMSecLayer(pass string) *MSecLayer {
 	}
 }
 
-func (msec *MSecLayer) Encrypt(in []byte) ([]byte, error) {
+func (msec *MSecLayer) Encrypt(in []byte) []byte {
 	bReader := bytes.NewBuffer(in)
 	block, err := aes.NewCipher(msec.key)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to encrypt, err: ", err)
 	}
 
 	var iv [aes.BlockSize]byte
@@ -34,10 +35,10 @@ func (msec *MSecLayer) Encrypt(in []byte) ([]byte, error) {
 
 	writer := &cipher.StreamWriter{S: stream, W: &out}
 	if _, err := io.Copy(writer, bReader); err != nil {
-		return nil, err
+		log.Panic("failed to encrypt, err: ", err)
 	}
 
-	return out.Bytes(), nil
+	return out.Bytes()
 }
 
 func (msec *MSecLayer) decryptStream() (cipher.Stream, error) {
@@ -50,20 +51,20 @@ func (msec *MSecLayer) decryptStream() (cipher.Stream, error) {
 	return cipher.NewOFB(block, iv[:]), nil
 }
 
-func (msec *MSecLayer) Decrypt(in []byte) ([]byte, error) {
+func (msec *MSecLayer) Decrypt(in []byte) []byte {
 	stream, err := msec.decryptStream()
 	if err != nil {
-		return nil, err
+		log.Panic("failed to decrypt msg, err: ", err)
 	}
 
 	var out bytes.Buffer
 
 	reader := &cipher.StreamReader{S: stream, R: bytes.NewBuffer(in)}
 	if _, err := io.Copy(&out, reader); err != nil {
-		return nil, err
+		log.Panic("failed to decrypt msg, err: ", err)
 	}
 
-	return out.Bytes(), nil
+	return out.Bytes()
 }
 
 type PacketDecrypter struct {
@@ -73,10 +74,10 @@ type PacketDecrypter struct {
 
 // TODO: add DecryptN, and remove DecryptAndVerify
 
-func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
+func (msec *MSecLayer) NewPacketDecrypter(in []byte) *PacketDecrypter {
 	stream, err := msec.decryptStream()
 	if err != nil {
-		return nil, err
+		log.Panic("failed to build packet decrypter, err: ", err)
 	}
 
 	out := new(bytes.Buffer)
@@ -85,7 +86,7 @@ func (msec *MSecLayer) NewPacketDecrypter(in []byte) (*PacketDecrypter, error) {
 	return &PacketDecrypter{
 		reader: reader,
 		out:    out,
-	}, nil
+	}
 }
 
 func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {

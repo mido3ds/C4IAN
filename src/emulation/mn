@@ -3,6 +3,8 @@ import argparse
 import json
 import subprocess
 import sys
+import threading
+import time
 from typing import List, NamedTuple
 
 from mininet.log import setLogLevel
@@ -10,6 +12,8 @@ from mn_wifi.cli import CLI
 from mn_wifi.link import adhoc, wmediumd
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+
+import location as loc
 
 WIRELESS_CONF = {
     'cls': adhoc,
@@ -37,6 +41,9 @@ class Position(NamedTuple):
 class Node(NamedTuple):
     name: str
     position: Position
+
+    def get_sock(self):
+        return f'/tmp/{self.name}.router.locsock'
 
 
 def read_topo(path_to_json: str) -> List[Node]:
@@ -70,6 +77,16 @@ def parse_args():
         '-d', '--debug', help='Print debug level logs', action='store_true'
     )
     return parser.parse_args()
+
+
+def nodes_locations_thread(stations, nodes):
+    while True:
+        for node in nodes:
+            sock = node.get_sock()
+            x, y, _ = stations[node.name].getxyz()
+            lon, lat = loc.to_gps_coords(x, y)
+            loc.send_location(sock, lon, lat)
+        time.sleep(2)
 
 
 args = parse_args()
@@ -109,6 +126,10 @@ if args.plot:
 print("*** Starting network")
 net.build()
 print()
+
+print('*** Starting to send nodes locations')
+threading.Thread(target=nodes_locations_thread, args=(
+    stations, nodes), daemon=True).start()
 
 print("*** Running CLI")
 CLI(net)

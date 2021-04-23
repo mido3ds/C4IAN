@@ -32,7 +32,7 @@ func Benchmark_zidChecksum(b *testing.B) {
 }
 
 func BenchmarkMarshalBinary(b *testing.B) {
-	header := &ZIDHeader{zLen: 1, dstZID: 5, srcZID: 12}
+	header := &ZIDHeader{ZLen: 1, DstZID: 5, SrcZID: 12}
 	for n := 0; n < b.N; n++ {
 		header.MarshalBinary()
 	}

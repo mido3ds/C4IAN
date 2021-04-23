@@ -16,7 +16,7 @@ func NewLSR() *LSR {
 	return &LSR{topology: t}
 }
 
-func (lsr *LSR) SendLSRPacket(flooder *Flooder, neighborsTable *NeighborsTable) {
+func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 

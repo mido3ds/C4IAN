@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/cornelk/hashmap"
@@ -22,7 +23,7 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 	var reading map[string][]string
 	err := json.Unmarshal([]byte(j), &reading)
 	if err != nil {
-		panic(fmt.Errorf("Wrong Group Member Table Json Format"))
+		log.Panic("Wrong Group Member Table Json Format")
 	}
 	dests := []net.IP{}
 	for key, value := range reading {
@@ -33,12 +34,12 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 				if destIP != nil {
 					dests = append(dests, destIP)
 				} else {
-					panic(fmt.Errorf("Wrong Unicast IP Address: %#v", dest))
+					log.Panicf("Wrong Unicast IP Address: %#v", dest)
 				}
 			}
 			grpTable.Set(grpIP, dests)
 		} else {
-			panic(fmt.Errorf("Wrong Multicast IP Address: %#v", key))
+			log.Panicf("Wrong Multicast IP Address: %#v", key)
 		}
 		dests = []net.IP{} // clear dests array
 	}
@@ -48,11 +49,11 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 // Set the grpIP to a new destinations group
 func (f *GroupMembersTable) Set(grpIP net.IP, dests []net.IP) {
 	if !grpIP.IsMulticast() {
-		panic(fmt.Errorf("Wrong Group IP Is Not Multicast IP"))
+		log.Panic("Wrong Group IP Is Not Multicast IP")
 	}
 	for _, dest := range dests {
 		if !dest.IsGlobalUnicast() {
-			panic(fmt.Errorf("Wrong Group IP Is Not Global Unicast IP"))
+			log.Panic("Wrong Group IP Is Not Global Unicast IP")
 		}
 	}
 	entry := &GroupMembersEntry{dests: dests}

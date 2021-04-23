@@ -57,15 +57,17 @@ func (f *FloodHeader) String() string {
 	return fmt.Sprintf("received a msg flooded by:%#v, with seq=%#v", f.SrcIP.String(), f.SeqNum)
 }
 
-type Flooder struct {
+type ZoneFlooder struct {
 	seqNumber uint32
 	fTable    *FloodingTable
 	macConn   *MACLayerConn
 	ip        net.IP
+	zoneID    ZoneID
 	msec      *MSecLayer
+	zlen      byte
 }
 
-func NewFlooder(router *Router) (*Flooder, error) {
+func NewZoneFlooder(router *Router) (*ZoneFlooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
@@ -74,39 +76,33 @@ func NewFlooder(router *Router) (*Flooder, error) {
 
 	fTable := NewFloodingTable()
 
-	log.Println("initalized flooder")
+	log.Println("initalized zone flooder")
 
-	return &Flooder{
+	return &ZoneFlooder{
 		seqNumber: 0,
 		fTable:    fTable,
 		macConn:   macConn,
 		ip:        router.ip,
 		msec:      router.msec,
+		zlen:      router.zlen,
 	}, nil
 }
 
-func (flooder *Flooder) Flood(msg []byte) {
+func (flooder *ZoneFlooder) Flood(msg []byte) {
 	hdr := FloodHeader{SrcIP: flooder.ip, SeqNum: flooder.seqNumber}
 	msg = append(hdr.MarshalBinary(), msg...)
 
 	flooder.seqNumber++
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
+	// TODO: what should be the destZID?
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	encryptedPacket, err := flooder.msec.Encrypt(msg)
-	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
-	}
-
-	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Fatal("failed to write to the device driver: ", err)
-	}
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
 }
 
-func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
 	hdr, payload, ok := UnmarshalFloodedPacket(msg)
 	if !ok {
 		return
@@ -127,21 +123,88 @@ func (flooder *Flooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
 	go payloadProcessor(hdr.SrcIP, payload)
 
-	//log.Println(hdr)
+	log.Println(hdr) // TODO: remove
 
 	// add ZID Header
-	zid := &ZIDHeader{zLen: 1, packetType: LSRFloodPacket, srcZID: 2, dstZID: 3}
+	// TODO: what should be the destZID?
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	// encrypt the msg
-	encryptedPacket, err := flooder.msec.Encrypt(msg)
+	// reflood the msg
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
+}
+
+func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
+	f.zoneID = z
+}
+
+type GlobalFlooder struct {
+	seqNumber uint32
+	fTable    *FloodingTable
+	macConn   *MACLayerConn
+	ip        net.IP
+	msec      *MSecLayer
+}
+
+func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType ethernet.EtherType, msec *MSecLayer) (*GlobalFlooder, error) {
+	// connect to mac layer
+	macConn, err := NewMACLayerConn(iface, etherType)
 	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
+		return nil, err
 	}
 
-	// reflood the msg
-	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Fatal("failed to write to the device driver: ", err)
+	fTable := NewFloodingTable()
+
+	log.Println("initalized global flooder")
+
+	return &GlobalFlooder{
+		seqNumber: 0,
+		fTable:    fTable,
+		macConn:   macConn,
+		ip:        ip,
+		msec:      msec,
+	}, nil
+}
+
+func (f *GlobalFlooder) Flood(msg []byte) {
+	hdr := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
+	msg = append(hdr.MarshalBinary(), msg...)
+
+	f.seqNumber++
+
+	f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
+}
+
+// ReceiveFloodedMsgs inf loop that receives any flooded msgs
+// calls `payloadProcessor` when it receives the message, it gives it the header and the payload
+// and returns whether to continue flooding or not
+func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) bool) {
+	for {
+		msg := f.macConn.Read()
+
+		hdr, payload, ok := UnmarshalFloodedPacket(msg)
+		if !ok {
+			return
+		}
+
+		if net.IP.Equal(hdr.SrcIP, f.ip) {
+			return
+		}
+
+		tableSeq, exist := f.fTable.Get(hdr.SrcIP)
+
+		if exist && hdr.SeqNum <= tableSeq {
+			return
+		}
+
+		f.fTable.Set(hdr.SrcIP, hdr.SeqNum)
+
+		go func() {
+			if !payloadProcessor(hdr, payload) {
+				return
+			}
+
+			f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
+		}()
 	}
 }
