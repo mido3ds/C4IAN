@@ -1,4 +1,4 @@
-package main
+package sarp
 
 import (
 	"bytes"
@@ -23,8 +23,8 @@ type SARPController struct {
 	msec                     *MSecLayer
 	reqMacConn               *MACLayerConn
 	resMacConn               *MACLayerConn
-	neighborsTable           *NeighborsTable
-	neighborhoodUpdateSignal chan bool
+	NeighborsTable           *NeighborsTable
+	NeighborhoodUpdateSignal chan bool
 	myIP                     net.IP
 	myMAC                    net.HardwareAddr
 }
@@ -39,7 +39,7 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		return nil, err
 	}
 
-	neighborsTable := NewNeighborsTable()
+	NeighborsTable := NewNeighborsTable()
 
 	log.Println("initalized sARP controller")
 
@@ -47,8 +47,8 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		msec:                     msec,
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
-		neighborsTable:           neighborsTable,
-		neighborhoodUpdateSignal: make(chan bool),
+		NeighborsTable:           NeighborsTable,
+		NeighborhoodUpdateSignal: make(chan bool),
 		myIP:                     ip,
 		myMAC:                    iface.HardwareAddr,
 	}, nil
@@ -61,19 +61,19 @@ func (s *SARPController) Start() {
 }
 
 func (s *SARPController) sendMsgs() {
-	tableHash := s.neighborsTable.GetTableHash()
+	tableHash := s.NeighborsTable.GetTableHash()
 	for {
-		s.neighborsTable.Clear()
+		s.NeighborsTable.Clear()
 
 		// broadcast request
 		header := &SARPHeader{s.myIP, s.myMAC, time.Now().UnixNano()}
 		s.reqMacConn.Write(s.msec.Encrypt(header.MarshalBinary()), BroadcastMACAddr)
 
 		time.Sleep(sARPHoldTime)
-		newTableHash := s.neighborsTable.GetTableHash()
+		newTableHash := s.NeighborsTable.GetTableHash()
 
 		if !bytes.Equal(tableHash, newTableHash) {
-			s.neighborhoodUpdateSignal <- true
+			s.NeighborhoodUpdateSignal <- true
 		}
 
 		// TODO: Replace with scheduling if necessary
@@ -90,7 +90,7 @@ func (s *SARPController) recvRequests() {
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
 			delay := time.Since(time.Unix(0, header.sendTime))
-			s.neighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
+			s.NeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
 
 			// unicast response
 			header := &SARPHeader{s.myIP, s.myMAC, time.Now().UnixNano()}
@@ -107,7 +107,7 @@ func (s *SARPController) recvResponses() {
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
 			delay := time.Since(time.Unix(0, header.sendTime))
-			s.neighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
+			s.NeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
 		}
 	}
 }
@@ -115,46 +115,4 @@ func (s *SARPController) recvResponses() {
 func (s *SARPController) Close() {
 	s.reqMacConn.Close()
 	s.resMacConn.Close()
-}
-
-type SARPHeader struct {
-	IP       net.IP
-	MAC      net.HardwareAddr
-	sendTime int64
-}
-
-func UnmarshalSARPHeader(packet []byte) (*SARPHeader, bool) {
-	ok := verifySARPHeader(packet)
-	if !ok {
-		return nil, false
-	}
-	// sendTime -> packet[10:18]
-	sendTime := int64(packet[10])<<56 | int64(packet[11])<<48 | int64(packet[12])<<40 | int64(packet[13])<<32 |
-		int64(packet[14])<<24 | int64(packet[15])<<16 | int64(packet[16])<<8 | int64(packet[17])
-	return &SARPHeader{
-		IP:       net.IP(packet[:4]),
-		MAC:      net.HardwareAddr(packet[4:10]),
-		sendTime: sendTime,
-	}, true
-}
-
-func (s *SARPHeader) MarshalBinary() []byte {
-	buf := bytes.NewBuffer(make([]byte, 0, sARPTotalLen))
-
-	buf.Write(s.IP.To4())
-	buf.Write(s.MAC)
-	for i := 56; i >= 0; i -= 8 {
-		buf.WriteByte(byte(s.sendTime >> i))
-	}
-	buf.Write(HashSHA3(buf.Bytes()[:sARPHeaderLen]))
-
-	return buf.Bytes()
-}
-
-func verifySARPHeader(b []byte) bool {
-	if len(b) < sARPTotalLen {
-		return false
-	}
-
-	return VerifySHA3Hash(b[:sARPHeaderLen], b[sARPHeaderLen:sARPTotalLen])
 }

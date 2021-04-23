@@ -9,6 +9,7 @@ import (
 	"github.com/mido3ds/C4IAN/src/router/kernel"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
+	. "github.com/mido3ds/C4IAN/src/router/sarp"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
@@ -62,7 +63,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	unicCont, err := NewUnicastController(iface, ip, sarpCont.neighborsTable, sarpCont.neighborhoodUpdateSignal, msec, zlen)
+	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -72,7 +73,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, zlen, sarpCont.neighborsTable, multCont.GetMissingEntries)
+	forwarder, err := NewForwarder(iface, ip, msec, zlen, sarpCont.NeighborsTable, multCont.GetMissingEntries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
