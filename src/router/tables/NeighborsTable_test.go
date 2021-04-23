@@ -6,9 +6,7 @@ import (
 	"testing"
 )
 
-// TODO: those are not benchmarks, turn them into tests using testing.T
-
-func Benchmark_MarshalBinary(b *testing.B) {
+func TestMarshalBinary(t *testing.T) {
 	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
 	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
 	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})

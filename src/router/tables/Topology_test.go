@@ -8,10 +8,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-// TODO: those are not benchmarks, turn them into tests using testing.T
-
 // Example : https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
-func Benchmark_Topology(b *testing.B) {
+func TestTopology(t *testing.T) {
 	ip0 := net.IP([]byte{0x00, 0x00, 0x00, 0x00})
 	ip1 := net.IP([]byte{0x00, 0x00, 0x00, 0x01})
 	ip2 := net.IP([]byte{0x00, 0x00, 0x00, 0x02})
@@ -113,10 +111,9 @@ func Benchmark_Topology(b *testing.B) {
 		fmt.Println("dst:", key, "prev:", value)
 	}
 	//fmt.Println(topology.g.GetVertex(IPv4ToUInt32(ip0)))
-
 }
 
-func Benchmark_Topology2(b *testing.B) {
+func TestTopology2(t *testing.T) {
 	ip0 := net.IP([]byte{0x00, 0x00, 0x00, 0x00})
 	ip1 := net.IP([]byte{0x00, 0x00, 0x00, 0x01})
 
