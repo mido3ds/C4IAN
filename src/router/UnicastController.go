@@ -28,11 +28,6 @@ type UnicastController struct {
 	neighborsTable           *NeighborsTable
 }
 
-func (c *UnicastController) floodDummy() {
-	dummy := []byte("Dummy")
-	c.flooder.Flood(dummy)
-}
-
 func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
 	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {

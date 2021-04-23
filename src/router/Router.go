@@ -28,9 +28,9 @@ type Router struct {
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
 	// tell linux im a router
-	addIptablesRule()
+	addIPTablesRule()
 	if err := registerGateway(); err != nil {
-		delIptablesRule()
+		deleteIPTablesRule()
 		return nil, err
 	}
 
@@ -102,13 +102,13 @@ func (r *Router) Start() {
 }
 
 func (r *Router) Close() {
-	delIptablesRule()
+	deleteIPTablesRule()
 	unregisterGateway()
 }
 
 // TODO: support parallelism and fan-out
 
-func addIptablesRule() {
+func addIPTablesRule() {
 	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w").Run()
 	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "-w", "--queue-num", "0")
 	stdoutStderr, err := cmd.CombinedOutput()
@@ -118,7 +118,7 @@ func addIptablesRule() {
 	log.Println("added NFQUEUE rule to OUTPUT chain in iptables")
 }
 
-func delIptablesRule() {
+func deleteIPTablesRule() {
 	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w")
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
