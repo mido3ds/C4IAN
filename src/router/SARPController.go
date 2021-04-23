@@ -112,6 +112,11 @@ func (s *SARPController) recvResponses() {
 	}
 }
 
+func (s *SARPController) Close() {
+	s.reqMacConn.Close()
+	s.resMacConn.Close()
+}
+
 type SARPHeader struct {
 	IP       net.IP
 	MAC      net.HardwareAddr

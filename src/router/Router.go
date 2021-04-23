@@ -105,12 +105,12 @@ func (r *Router) Start() {
 
 func (r *Router) Close() {
 	r.forwarder.Close()
-	// r.multCont.Close() TODO
-	// r.unicCont.Close() TODO
-	// r.sarpCont.Close() TODO
+	r.multCont.Close()
+	r.unicCont.Close()
+	r.sarpCont.Close()
 
-	// r.zidAgent.Close() TODO
-	// r.FlushListeners() TODO
+	r.zidAgent.Close()
+	r.zidAgent.FlushListeners()
 
 	kernel.UnregisterGateway()
 	kernel.DeleteIPTablesRule()

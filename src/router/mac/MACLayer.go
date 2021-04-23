@@ -19,10 +19,6 @@ type MACLayerConn struct {
 	// DON'T use one Conn for multiple readers!
 	f *ethernet.Frame
 	b []byte
-
-	// when set to true, i know that the conn closed manually
-	// not for an error
-	closed bool
 }
 
 func NewMACLayerConn(iface *net.Interface, etherType EtherType) (*MACLayerConn, error) {
@@ -40,7 +36,6 @@ func NewMACLayerConn(iface *net.Interface, etherType EtherType) (*MACLayerConn, 
 		f:          f,
 		b:          b,
 		etherType:  etherType,
-		closed:     false,
 	}, nil
 }
 
@@ -59,10 +54,6 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 
 	_, err = c.packetConn.WriteTo(b, &raw.Addr{HardwareAddr: dest})
 	if err != nil {
-		if c.closed {
-			log.Println("packet socket closed while writing to it, no panic")
-			return
-		}
 		log.Panic("failed to write to device driver, err: ", err)
 	}
 }
@@ -70,10 +61,6 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 func (c *MACLayerConn) Read() []byte {
 	n, _, err := c.packetConn.ReadFrom(c.b)
 	if err != nil {
-		if c.closed {
-			log.Println("packet socket closed while reading from it, no panic")
-			return c.b[:] // return temp garbage, router will close anyway
-		}
 		log.Panic("failed to read from device driver, err: ", err)
 	}
 
@@ -86,6 +73,5 @@ func (c *MACLayerConn) Read() []byte {
 }
 
 func (c *MACLayerConn) Close() {
-	c.closed = true
 	c.packetConn.Close()
 }

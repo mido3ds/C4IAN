@@ -79,3 +79,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 		}()
 	}
 }
+
+func (f *GlobalFlooder) Close() {
+	f.macConn.Close()
+}

@@ -90,3 +90,8 @@ func (c *UnicastController) listenNeighChanges() {
 func (c *UnicastController) OnZoneIDChanged(z ZoneID) {
 	c.flooder.OnZoneIDChanged(z)
 }
+
+func (c *UnicastController) Close() {
+	c.flooder.Close()
+	c.macConn.Close()
+}

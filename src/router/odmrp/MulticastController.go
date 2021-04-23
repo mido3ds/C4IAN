@@ -90,6 +90,11 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 	}
 }
 
+func (c *MulticastController) Close() {
+	c.jrConn.Close()
+	c.queryFlooder.Close()
+}
+
 func startMCastTestMode() string {
 	log.Print("start in multicast test mode, assuming im working in rings.topo")
 	address := "224.0.2.1"

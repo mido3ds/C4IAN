@@ -88,3 +88,7 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
 	f.zoneID = z
 }
+
+func (f *ZoneFlooder) Close() {
+	f.macConn.Close()
+}
