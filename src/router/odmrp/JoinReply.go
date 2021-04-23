@@ -1,4 +1,4 @@
-package main
+package odmrp
 
 import (
 	"net"
