@@ -67,7 +67,6 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.neighborsTable.GetTableHash()
 	for {
-		log.Println("Sending sARP request")
 		s.neighborsTable.Clear()
 
 		// broadcast request
