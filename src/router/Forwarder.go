@@ -78,16 +78,6 @@ func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
 	go f.forwardIPFromMACLayer()
 }
 
-func (f *Forwarder) broadcastDummy() {
-	dummy := []byte("Dummy")
-	zid := &ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
-	packet := append(zid.MarshalBinary(), dummy...)
-
-	f.zidMacConn.Write(f.msec.Encrypt(packet), BroadcastMACAddr)
-
-	log.Println("Broadcasting dummy control packet..")
-}
-
 // forwardZIDFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
