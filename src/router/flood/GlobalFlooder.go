@@ -53,7 +53,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 	for {
 		msg := f.macConn.Read()
 
-		hdr, payload, ok := UnmarshalFloodedPacket(msg)
+		hdr, payload, ok := UnmarshalFloodedHeader(msg)
 		if !ok {
 			return
 		}

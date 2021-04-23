@@ -56,7 +56,7 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 }
 
 func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
-	hdr, payload, ok := UnmarshalFloodedPacket(msg)
+	hdr, payload, ok := UnmarshalFloodedHeader(msg)
 	if !ok {
 		return
 	}
