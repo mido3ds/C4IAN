@@ -48,35 +48,32 @@ func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 	return ZoneID(uint32(grid.easts)<<16 | uint32(grid.norths))
 }
 
-// largerZone returns ZoneID with smaller ZLen by a difference of `diff`
-// this means you will get a zone with a bigger area
-func (z ZoneID) largerZone(diff byte) ZoneID {
-	if diff < 0 || diff > 16 {
-		log.Panic("diff must be between 0 and 16")
-	}
-
-	easts := uint16(z>>16) >> diff
-	norths := uint16(z) >> diff
-
-	// pack
-	return ZoneID(uint32(easts)<<16 | uint32(norths))
-}
-
 type Zone struct {
 	ID  ZoneID
 	Len byte // from 0 to 16
 }
 
-// InZone returns true if either z or z2 is inside the other
-// the other doesn't matter
-func (z1 *Zone) InZone(z2 *Zone) bool {
-	diff := z2.Len - z1.Len
-
-	if diff > 0 { // z2 is smaller in area
-		return z1.ID == z2.ID.largerZone(diff)
-	} else if diff < 0 { // z1 is smaller in area
-		return z1.ID.largerZone(-diff) == z2.ID
+// ToLen returns new ZoneID as this zone but with given len
+func (z *Zone) ToLen(len byte) ZoneID {
+	if len < 0 || len > 16 {
+		log.Panic("zlen must be between 0 and 16")
 	}
 
-	return z1.ID == z2.ID
+	if len == z.Len {
+		return z.ID
+	} else if len < z.Len {
+		// z is smaller
+		// enlarge z, will lose details
+		return z.ID >> (z.Len - len)
+	}
+
+	// z is bigger
+	// reduce z, will get arbitrary smaller zone,
+	// but its part of the original nevertheless
+	return z.ID << (len - z.Len)
+}
+
+// Area returns pseudo areas for comparisons
+func (z *Zone) Area() byte {
+	return -z.Len
 }
