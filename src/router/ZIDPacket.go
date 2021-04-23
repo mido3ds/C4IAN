@@ -7,9 +7,6 @@ import (
 
 // "Zone IDentification (ZID)" protocol structs and functions
 
-// TODO: GPS location -> zoneID
-// TODO: translate zondIDs from zlen to another
-
 const (
 	ZIDHeaderLen = 12
 

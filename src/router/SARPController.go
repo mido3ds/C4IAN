@@ -71,9 +71,7 @@ func (s *SARPController) sendMsgs() {
 		s.neighborsTable.Clear()
 
 		// broadcast request
-		if err := s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast); err != nil {
-			log.Panic("failed to write to device driver, err: ", err)
-		}
+		s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast)
 
 		time.Sleep(sARPHoldTime)
 		newTableHash := s.neighborsTable.GetTableHash()
@@ -90,11 +88,7 @@ func (s *SARPController) sendMsgs() {
 
 func (s *SARPController) recvRequests() {
 	for {
-		packet, err := s.reqMacConn.Read()
-		if err != nil {
-			log.Panic("couldn't read from device driver, err: ", err)
-		}
-
+		packet := s.reqMacConn.Read()
 		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
@@ -102,20 +96,14 @@ func (s *SARPController) recvRequests() {
 			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
 
 			// unicast response
-			if err := s.resMacConn.Write(s.encryptedHdr, header.mac); err != nil {
-				log.Panic("failed to write to device driver, err: ", err)
-			}
+			s.resMacConn.Write(s.encryptedHdr, header.mac)
 		}
 	}
 }
 
 func (s *SARPController) recvResponses() {
 	for {
-		packet, err := s.resMacConn.Read()
-		if err != nil {
-			log.Panic("couldn't read from device driver, err: ", err)
-		}
-
+		packet := s.resMacConn.Read()
 		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {

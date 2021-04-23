@@ -66,12 +66,7 @@ func (f *Forwarder) broadcastDummy() {
 	zid := &ZIDHeader{ZLen: f.router.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
 	packet := append(zid.MarshalBinary(), dummy...)
 
-	encryptedPacket := f.router.msec.Encrypt(packet)
-
-	err := f.zidMacConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	f.zidMacConn.Write(f.router.msec.Encrypt(packet), ethernet.Broadcast)
 
 	log.Println("Broadcasting dummy control packet..")
 }
@@ -83,10 +78,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 	log.Println("started receiving from MAC layer")
 
 	for {
-		packet, err := f.zidMacConn.Read()
-		if err != nil {
-			log.Panic("failed to read from interface, err: ", err)
-		}
+		packet := f.zidMacConn.Read()
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
@@ -136,10 +128,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 			}
 
 			// hand it directly to the interface
-			err = f.zidMacConn.Write(packet, e.NextHopMAC)
-			if err != nil {
-				log.Panic("failed to write to the interface: ", err)
-			}
+			f.zidMacConn.Write(packet, e.NextHopMAC)
 		}
 	}
 }
@@ -151,10 +140,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 	log.Println("started receiving from MAC layer")
 
 	for {
-		packet, err := f.ipMacConn.Read()
-		if err != nil {
-			log.Panic("failed to read from interface, err: ", err)
-		}
+		packet := f.ipMacConn.Read()
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
@@ -188,10 +174,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 		// write to device driver
 		for i := 0; i < len(es.NextHopMACs); i++ {
-			err = f.ipMacConn.Write(packet, es.NextHopMACs[i])
-			if err != nil {
-				log.Panic("failed to write to the device driver: ", err)
-			}
+			f.ipMacConn.Write(packet, es.NextHopMACs[i])
 		}
 	}
 }
@@ -248,10 +231,7 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 	encryptedPacket := f.router.msec.Encrypt(buffer.Bytes())
 
 	// write to device driver
-	err := f.zidMacConn.Write(encryptedPacket, e.NextHopMAC)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	f.zidMacConn.Write(encryptedPacket, e.NextHopMAC)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
@@ -266,23 +246,14 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 
 	// write to device driver
 	for i := 0; i < len(es.NextHopMACs); i++ {
-		err := f.zidMacConn.Write(encryptedPacket, es.NextHopMACs[i])
-		if err != nil {
-			log.Panic("failed to write to the device driver: ", err)
-		}
+		f.zidMacConn.Write(encryptedPacket, es.NextHopMACs[i])
 	}
 }
 
 func (f *Forwarder) sendBroadcast(packet []byte) {
-	// encrypt
-	encryptedPacket := f.router.msec.Encrypt(packet)
-
 	// write to device driver
 	// TODO: for now ethernet broadcast
-	err := f.zidMacConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	f.zidMacConn.Write(f.router.msec.Encrypt(packet), ethernet.Broadcast)
 }
 
 func (f *Forwarder) OnZoneIDChanged(z ZoneID) {

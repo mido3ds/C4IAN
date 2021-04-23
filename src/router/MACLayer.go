@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net"
 
 	"github.com/mdlayher/ethernet"
@@ -36,8 +37,7 @@ func NewMACLayerConn(iface *net.Interface, etherType ethernet.EtherType) (*MACLa
 	}, nil
 }
 
-// TODO: don't return error, panic internally
-func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
+func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 	f := &ethernet.Frame{
 		Destination: dest,
 		Source:      c.source,
@@ -47,25 +47,27 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
 
 	b, err := f.MarshalBinary()
 	if err != nil {
-		return err
+		log.Panic("failed to write to device driver, err: ", err)
 	}
 
 	_, err = c.packetConn.WriteTo(b, &raw.Addr{HardwareAddr: dest})
-	return err
+	if err != nil {
+		log.Panic("failed to write to device driver, err: ", err)
+	}
 }
 
-// TODO: don't return error, panic internally
-func (c *MACLayerConn) Read() ([]byte, error) {
+func (c *MACLayerConn) Read() []byte {
 	n, _, err := c.packetConn.ReadFrom(c.b)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to read from device driver, err: ", err)
 	}
 
-	if err = c.f.UnmarshalBinary(c.b[:n]); err != nil {
-		return nil, err
+	err = c.f.UnmarshalBinary(c.b[:n])
+	if err != nil {
+		log.Panic("failed to read from device driver, err: ", err)
 	}
 
-	return c.f.Payload, nil
+	return c.f.Payload
 }
 
 func (c *MACLayerConn) Close() {

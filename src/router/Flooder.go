@@ -99,12 +99,7 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	encryptedPacket := flooder.msec.Encrypt(msg)
-
-	err := flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
 }
 
 func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
@@ -128,21 +123,15 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
 	go payloadProcessor(hdr.SrcIP, payload)
 
-	log.Println(hdr)
+	log.Println(hdr) // TODO: remove
 
 	// add ZID Header
 	// TODO: what should be the destZID?
 	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	// encrypt the msg
-	encryptedPacket := flooder.msec.Encrypt(msg)
-
 	// reflood the msg
-	err := flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
 }
 
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
@@ -183,12 +172,7 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 
 	f.seqNumber++
 
-	encryptedPacket := f.msec.Encrypt(msg)
-
-	err := f.macConn.Write(encryptedPacket, ethernet.Broadcast)
-	if err != nil {
-		log.Panic("failed to write to the device driver: ", err)
-	}
+	f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
 }
 
 // ReceiveFloodedMsgs inf loop that receives any flooded msgs
@@ -196,10 +180,7 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 // and returns whether to continue flooding or not
 func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) bool) {
 	for {
-		msg, err := f.macConn.Read()
-		if err != nil {
-			log.Panic("failed to read from device driver, err: ", err)
-		}
+		msg := f.macConn.Read()
 
 		hdr, payload, ok := UnmarshalFloodedPacket(msg)
 		if !ok {
@@ -223,12 +204,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 				return
 			}
 
-			encryptedPacket := f.msec.Encrypt(msg)
-
-			err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
-			if err != nil {
-				log.Panic("failed to write to the device driver: ", err)
-			}
+			f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
 		}()
 	}
 }
