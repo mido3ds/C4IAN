@@ -94,7 +94,6 @@ func (n *NeighborsTable) String() string {
 	return s
 }
 
-
 func (n *NeighborsTable) MarshalBinary() []byte {
 	payloadLen := n.Len() * EntryLen
 	payload := make([]byte, payloadLen+4)
@@ -113,7 +112,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 		payload[start+3] = byte(IP)
 
 		// Insert cost: 2 bytes
-		cost := item.Value.(*NeighborEntry).Cost 
+		cost := item.Value.(*NeighborEntry).Cost
 		payload[start+4] = byte(cost >> 8)
 		payload[start+5] = byte(cost)
 
@@ -129,6 +128,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 }
 
 // The table hash depends on who the neighbors are, disregarding the costs
+// TODO: hash should be based on the order of the neighbors based on their cost
 func (n *NeighborsTable) GetTableHash() []byte {
 	s := ""
 	for item := range n.m.Iter() {

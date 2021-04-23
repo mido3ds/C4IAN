@@ -39,7 +39,7 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		return nil, err
 	}
 
-	NeighborsTable := NewNeighborsTable()
+	neighborsTable := NewNeighborsTable()
 
 	log.Println("initalized sARP controller")
 
@@ -47,7 +47,7 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		msec:                     msec,
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
-		NeighborsTable:           NeighborsTable,
+		NeighborsTable:           neighborsTable,
 		NeighborhoodUpdateSignal: make(chan bool),
 		myIP:                     ip,
 		myMAC:                    iface.HardwareAddr,
@@ -63,6 +63,7 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.NeighborsTable.GetTableHash()
 	for {
+		// TODO: Neighbors table may be used while it is cleared, find another way to remove gone neighbors
 		s.NeighborsTable.Clear()
 
 		// broadcast request
