@@ -20,7 +20,7 @@ type Router struct {
 	forwarder *Forwarder
 
 	// controllers
-	zoneCont *ZoneIDController
+	zidAgent *ZoneIDAgent
 	unicCont *UnicastController
 	multCont *MulticastController
 	sarpCont *SARPController
@@ -50,7 +50,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
-	zoneCont, err := NewZoneIDController(locSocket, zlen)
+	zidAgent, err := NewZoneIDAgent(locSocket, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize location agent, err: %s", err)
 	}
@@ -81,25 +81,24 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		ip:        ip,
 		zlen:      zlen,
 		forwarder: forwarder,
-		zoneCont:  zoneCont,
+		zidAgent:  zidAgent,
 		unicCont:  unicCont,
 		multCont:  multCont,
 		sarpCont:  sarpCont,
 	}, nil
 }
 
-func (r *Router) Start() error {
-	r.zoneCont.AddListener(r.forwarder.OnZoneIDChanged)
-	r.zoneCont.AddListener(r.unicCont.OnZoneIDChanged)
+func (r *Router) Start() {
+	// zid agent
+	r.zidAgent.AddListener(r.forwarder.OnZoneIDChanged)
+	r.zidAgent.AddListener(r.unicCont.OnZoneIDChanged)
+	go r.zidAgent.Start()
 
 	// start controllers
 	go r.sarpCont.Start()
-	go r.zoneCont.Start()
 	go r.unicCont.Start(r.forwarder.uniForwTable)
 	go r.multCont.Start(r.forwarder.multiForwTable)
 	go r.forwarder.Start(r.unicCont.inputChannel)
-
-	return nil
 }
 
 func (r *Router) Close() {

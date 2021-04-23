@@ -29,10 +29,7 @@ func main() {
 		log.Panic(err)
 	}
 	defer router.Close()
-
-	if err = router.Start(); err != nil {
-		log.Panic(err)
-	}
+	router.Start()
 
 	// wait for SIGINT
 	c := make(chan os.Signal, 1)
