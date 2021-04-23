@@ -1,4 +1,4 @@
-package main
+package zid
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type LocationAgent struct {
+type ZoneIDAgent struct {
 	conn      *net.UnixConn
 	zlen      byte
 	listeners []func(ZoneID)
@@ -16,7 +16,7 @@ type LocationAgent struct {
 	lastZoneID ZoneID
 }
 
-func NewLocationAgent(locSocket string, zlen byte) (*LocationAgent, error) {
+func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
 	if err != nil {
@@ -34,17 +34,17 @@ func NewLocationAgent(locSocket string, zlen byte) (*LocationAgent, error) {
 		return nil, err
 	}
 
-	log.Println("initailized location agent, sock=", locSocket)
+	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
-	return &LocationAgent{
+	return &ZoneIDAgent{
 		conn:      l,
 		zlen:      zlen,
 		listeners: make([]func(ZoneID), 0),
 	}, nil
 }
 
-func (a *LocationAgent) Start() {
-	log.Println("started location agent")
+func (a *ZoneIDAgent) Start() {
+	log.Println("started ZoneIDAgent")
 
 	d := json.NewDecoder(a.conn)
 
@@ -71,6 +71,6 @@ func (a *LocationAgent) Start() {
 
 // AddListener appends a function to the list of functions
 // that will be called when zoneid changes
-func (a *LocationAgent) AddListener(f func(ZoneID)) {
+func (a *ZoneIDAgent) AddListener(f func(ZoneID)) {
 	a.listeners = append(a.listeners, f)
 }

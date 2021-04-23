@@ -1,7 +1,10 @@
-package main
+package odmrp
 
 import (
 	"net"
+
+	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 const (

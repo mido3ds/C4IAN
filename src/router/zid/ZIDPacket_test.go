@@ -1,7 +1,9 @@
-package main
+package zid
 
 import (
 	"testing"
+
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 func TestBasicChecksum(t *testing.T) {

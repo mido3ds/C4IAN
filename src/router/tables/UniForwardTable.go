@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 // UniForwardTable is lock-free thread-safe hash table
@@ -17,7 +18,7 @@ type UniForwardTable struct {
 
 type UniForwardingEntry struct {
 	NextHopMAC net.HardwareAddr
-	DestZoneID ZoneID
+	DestZoneID uint32 // TODO: use ZoneID
 }
 
 func NewUniForwardTable() *UniForwardTable {
@@ -56,10 +57,10 @@ func (f *UniForwardTable) Clear() {
 	f.m = &hashmap.HashMap{}
 }
 
-func (f *ForwardTable) String() string {
+func (f *UniForwardTable) String() string {
 	s := "&ForwardTable{\n"
 	for item := range f.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*ForwardingEntry).NextHopMAC.String())
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*UniForwardingEntry).NextHopMAC.String())
 
 	}
 	s += " }"

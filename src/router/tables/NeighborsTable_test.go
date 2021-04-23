@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Benchmark_MarshalBinary(b *testing.B) {
+func TestMarshalBinary(t *testing.T) {
 	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
 	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
 	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
@@ -14,10 +14,10 @@ func Benchmark_MarshalBinary(b *testing.B) {
 
 	neighborsTable := NewNeighborsTable()
 
-	neighborsTable.Set(ip0, &NeighborEntry{cost: 1})
-	neighborsTable.Set(ip1, &NeighborEntry{cost: 2})
-	neighborsTable.Set(ip2, &NeighborEntry{cost: 3})
-	neighborsTable.Set(ip4, &NeighborEntry{cost: 4})
+	neighborsTable.Set(ip0, &NeighborEntry{Cost: 1})
+	neighborsTable.Set(ip1, &NeighborEntry{Cost: 2})
+	neighborsTable.Set(ip2, &NeighborEntry{Cost: 3})
+	neighborsTable.Set(ip4, &NeighborEntry{Cost: 4})
 
 	payload := neighborsTable.MarshalBinary()
 

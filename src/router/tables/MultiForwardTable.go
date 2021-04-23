@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 // MultiForwardTable is lock-free thread-safe hash table

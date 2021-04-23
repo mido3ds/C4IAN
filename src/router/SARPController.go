@@ -6,7 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
+	. "github.com/mido3ds/C4IAN/src/router/msec"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
 const (
@@ -15,11 +17,6 @@ const (
 	hashLen       = 64              // bytes at the end
 	sARPHeaderLen = 10              // excluding the hash at the end
 	sARPTotalLen  = sARPHeaderLen + hashLen
-
-	// Make use of an unassigned EtherType to differentiate between SARP traffic and other traffic
-	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-	sARPReqEtherType = 0x0809
-	sARPResEtherType = 0x080A
 )
 
 type SARPController struct {
@@ -31,25 +28,25 @@ type SARPController struct {
 	encryptedHdr             []byte
 }
 
-func NewSARPController(router *Router) (*SARPController, error) {
-	reqMacConn, err := NewMACLayerConn(router.iface, sARPReqEtherType)
+func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPController, error) {
+	reqMacConn, err := NewMACLayerConn(iface, SARPReqEtherType)
 	if err != nil {
 		return nil, err
 	}
-	resMacConn, err := NewMACLayerConn(router.iface, sARPResEtherType)
+	resMacConn, err := NewMACLayerConn(iface, SARPResEtherType)
 	if err != nil {
 		return nil, err
 	}
 
 	neighborsTable := NewNeighborsTable()
 
-	header := &SARPHeader{router.ip, router.iface.HardwareAddr}
-	encryptedHdr := router.msec.Encrypt(header.MarshalBinary())
+	header := &SARPHeader{ip, iface.HardwareAddr}
+	encryptedHdr := msec.Encrypt(header.MarshalBinary())
 
 	log.Println("initalized sARP controller")
 
 	return &SARPController{
-		msec:                     router.msec,
+		msec:                     msec,
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
 		neighborsTable:           neighborsTable,
@@ -67,11 +64,10 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.neighborsTable.GetTableHash()
 	for {
-		log.Println("Sending sARP request")
 		s.neighborsTable.Clear()
 
 		// broadcast request
-		s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast)
+		s.reqMacConn.Write(s.encryptedHdr, BroadcastMACAddr)
 
 		time.Sleep(sARPHoldTime)
 		newTableHash := s.neighborsTable.GetTableHash()
@@ -93,7 +89,7 @@ func (s *SARPController) recvRequests() {
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
-			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
+			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, Cost: 1})
 
 			// unicast response
 			s.resMacConn.Write(s.encryptedHdr, header.mac)
@@ -108,7 +104,7 @@ func (s *SARPController) recvResponses() {
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
-			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, cost: 1})
+			s.neighborsTable.Set(header.ip, &NeighborEntry{MAC: header.mac, Cost: 1})
 		}
 	}
 }
@@ -135,7 +131,7 @@ func (s *SARPHeader) MarshalBinary() []byte {
 
 	buf.Write(s.ip[:net.IPv4len])
 	buf.Write(s.mac)
-	buf.Write(Hash_SHA3(buf.Bytes()[:sARPHeaderLen]))
+	buf.Write(HashSHA3(buf.Bytes()[:sARPHeaderLen]))
 
 	return buf.Bytes()
 }
@@ -145,5 +141,5 @@ func verifySARPHeader(b []byte) bool {
 		return false
 	}
 
-	return verifyHash_SHA3(b[:sARPHeaderLen], b[sARPHeaderLen:sARPTotalLen])
+	return VerifySHA3Hash(b[:sARPHeaderLen], b[sARPHeaderLen:sARPTotalLen])
 }

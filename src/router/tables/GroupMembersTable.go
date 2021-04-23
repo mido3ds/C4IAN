@@ -1,4 +1,4 @@
-package main
+package tables
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 type GroupMembersEntry struct {

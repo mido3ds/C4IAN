@@ -1,4 +1,4 @@
-package main
+package msec
 
 import (
 	"bytes"
@@ -65,53 +65,4 @@ func (msec *MSecLayer) Decrypt(in []byte) []byte {
 	}
 
 	return out.Bytes()
-}
-
-type PacketDecrypter struct {
-	reader *cipher.StreamReader
-	out    *bytes.Buffer
-}
-
-// TODO: add DecryptN, and remove DecryptAndVerify
-
-func (msec *MSecLayer) NewPacketDecrypter(in []byte) *PacketDecrypter {
-	stream, err := msec.decryptStream()
-	if err != nil {
-		log.Panic("failed to build packet decrypter, err: ", err)
-	}
-
-	out := new(bytes.Buffer)
-	reader := &cipher.StreamReader{S: stream, R: bytes.NewBuffer(in)}
-
-	return &PacketDecrypter{
-		reader: reader,
-		out:    out,
-	}
-}
-
-func (p *PacketDecrypter) DecryptAndVerifyZID() (*ZIDHeader, bool) {
-	n, err := io.CopyN(p.out, p.reader, ZIDHeaderLen)
-	if err != nil || n != ZIDHeaderLen {
-		return nil, false
-	}
-	b := p.out.Bytes()
-	return UnmarshalZIDHeader(b[len(b)-ZIDHeaderLen:])
-}
-
-func (p *PacketDecrypter) DecryptAndVerifyIP() (*IPHeader, bool) {
-	n, err := io.CopyN(p.out, p.reader, IPv4HeaderLen)
-	if err != nil || n != IPv4HeaderLen {
-		return nil, false
-	}
-	b := p.out.Bytes()
-	return UnmarshalIPHeader(b[len(b)-IPv4HeaderLen:])
-}
-
-func (p *PacketDecrypter) DecryptAll() ([]byte, error) {
-	_, err := io.Copy(p.out, p.reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.out.Bytes(), nil
 }

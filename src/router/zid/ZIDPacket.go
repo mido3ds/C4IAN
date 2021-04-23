@@ -1,18 +1,16 @@
-package main
+package zid
 
 import (
 	"fmt"
 	"math/rand"
+
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 // "Zone IDentification (ZID)" protocol structs and functions
 
 const (
 	ZIDHeaderLen = 12
-
-	// Make use of an unassigned EtherType to differentiate between ZID traffic and other traffic
-	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-	ZIDEtherType = 0x7031
 )
 
 type PacketType uint8
@@ -34,7 +32,7 @@ type ZIDHeader struct {
 	DstZID, SrcZID ZoneID
 }
 
-func (z *ZIDHeader) isControlPacket() bool {
+func (z *ZIDHeader) IsControlPacket() bool {
 	return z.PacketType == LSRFloodPacket ||
 		z.PacketType == DummyControlPacket
 }

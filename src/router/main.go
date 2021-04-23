@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -25,19 +24,12 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetPrefix("[" + args.ifaceName + "] ")
 
-	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen)
+	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen, args.mgrpFilePath)
 	if err != nil {
 		log.Panic(err)
 	}
-
-	AddIPTablesRules()
-	defer RemoveIPTablesRules()
-
-	mgrpContent := ReadJsonFile(args.mgrpFilePath)
-	err = router.Start(mgrpContent)
-	if err != nil {
-		log.Panic(err)
-	}
+	defer router.Close()
+	router.Start()
 
 	// wait for SIGINT
 	c := make(chan os.Signal, 1)
@@ -83,17 +75,6 @@ func parseArgs() (*Args, error) {
 		mgrpFilePath: *mgrpFile,
 		zlen:         byte(*zlen),
 	}, nil
-}
-
-func ReadJsonFile(path string) string {
-	if path != "" {
-		content, err := ioutil.ReadFile(path)
-		if err != nil {
-			log.Panic(err)
-		}
-		return string(content)
-	}
-	return "{}"
 }
 
 func fileExists(path string) bool {
