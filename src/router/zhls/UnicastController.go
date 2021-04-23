@@ -1,4 +1,4 @@
-package main
+package zhls
 
 import (
 	"fmt"
@@ -10,12 +10,12 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zid"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type UnicastControlPacket struct {
-	zidHeader *ZIDHeader
-	payload   []byte
+	ZIDHeader *ZIDHeader
+	Payload   []byte
 }
 
 type UnicastController struct {
@@ -23,7 +23,7 @@ type UnicastController struct {
 	macConn                  *MACLayerConn
 	flooder                  *ZoneFlooder
 	lsr                      *LSR
-	inputChannel             chan *UnicastControlPacket
+	InputChannel             chan *UnicastControlPacket
 	neighborhoodUpdateSignal chan bool
 	neighborsTable           *NeighborsTable
 }
@@ -53,7 +53,7 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 	return &UnicastController{
 		macConn:                  macConn,
 		ip:                       ip,
-		inputChannel:             c,
+		InputChannel:             c,
 		flooder:                  flooder,
 		lsr:                      lsr,
 		neighborhoodUpdateSignal: neighborhoodUpdateSignal,
@@ -75,9 +75,9 @@ func (c *UnicastController) ListenForControlPackets() {
 	log.Println("UnicastController started listening for control packets from the forwarder")
 	// TODO: receive encrypted packet and packet decrypter
 	for {
-		controlPacket := <-c.inputChannel
+		controlPacket := <-c.InputChannel
 
-		switch controlPacket.zidHeader.PacketType {
+		switch controlPacket.ZIDHeader.PacketType {
 		case LSRFloodPacket:
 			c.flooder.ReceiveFloodedMsg(controlPacket.zidHeader, controlPacket.payload, c.lsr.HandleLSRPacket)
 		}

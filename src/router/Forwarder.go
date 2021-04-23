@@ -10,7 +10,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zid"
+	. "github.com/mido3ds/C4IAN/src/router/zhls"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type Forwarder struct {
@@ -111,7 +112,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 				continue
 			}
 
-			controllerChannel <- &UnicastControlPacket{zidHeader: zid, payload: packet[ZIDHeaderLen:]}
+			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: packet[ZIDHeaderLen:]}
 			continue
 		}
 
