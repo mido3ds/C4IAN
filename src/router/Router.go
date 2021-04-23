@@ -8,6 +8,7 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
+	. "github.com/mido3ds/C4IAN/src/router/zid"
 )
 
 type Router struct {

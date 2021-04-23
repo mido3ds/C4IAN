@@ -10,6 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zid"
 )
 
 type Forwarder struct {
@@ -104,7 +105,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 			continue
 		}
 
-		if zid.isControlPacket() {
+		if zid.IsControlPacket() {
 			packet, err := pd.DecryptAll()
 			if err != nil {
 				continue

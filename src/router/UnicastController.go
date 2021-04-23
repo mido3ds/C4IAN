@@ -8,6 +8,7 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zid"
 )
 
 type UnicastControlPacket struct {

@@ -1,4 +1,4 @@
-package main
+package zid
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ type ZIDHeader struct {
 	DstZID, SrcZID ZoneID
 }
 
-func (z *ZIDHeader) isControlPacket() bool {
+func (z *ZIDHeader) IsControlPacket() bool {
 	return z.PacketType == LSRFloodPacket ||
 		z.PacketType == DummyControlPacket
 }
