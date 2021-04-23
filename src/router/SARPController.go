@@ -46,7 +46,7 @@ func NewSARPController(router *Router) (*SARPController, error) {
 	header := &SARPHeader{router.ip, router.iface.HardwareAddr}
 	encryptedHdr, err := router.msec.Encrypt(header.MarshalBinary())
 	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
+		log.Panic("failed to encrypt packet, err: ", err)
 	}
 
 	log.Println("initalized sARP controller")
@@ -75,7 +75,7 @@ func (s *SARPController) sendMsgs() {
 
 		// broadcast request
 		if err := s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast); err != nil {
-			log.Fatal("failed to write to device driver, err: ", err)
+			log.Panic("failed to write to device driver, err: ", err)
 		}
 
 		time.Sleep(sARPHoldTime)
@@ -95,12 +95,12 @@ func (s *SARPController) recvRequests() {
 	for {
 		packet, err := s.reqMacConn.Read()
 		if err != nil {
-			log.Fatal("couldn't read from device driver, err: ", err)
+			log.Panic("couldn't read from device driver, err: ", err)
 		}
 
 		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
 		if err != nil {
-			log.Fatal("couldn't decrypt msg, err: ", err)
+			log.Panic("couldn't decrypt msg, err: ", err)
 		}
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
@@ -109,7 +109,7 @@ func (s *SARPController) recvRequests() {
 
 			// unicast response
 			if err := s.resMacConn.Write(s.encryptedHdr, header.mac); err != nil {
-				log.Fatal("failed to write to device driver, err: ", err)
+				log.Panic("failed to write to device driver, err: ", err)
 			}
 		}
 	}
@@ -119,12 +119,12 @@ func (s *SARPController) recvResponses() {
 	for {
 		packet, err := s.resMacConn.Read()
 		if err != nil {
-			log.Fatal("couldn't read from device driver, err: ", err)
+			log.Panic("couldn't read from device driver, err: ", err)
 		}
 
 		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
 		if err != nil {
-			log.Fatal("couldn't decrypt msg, err: ", err)
+			log.Panic("couldn't decrypt msg, err: ", err)
 		}
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {

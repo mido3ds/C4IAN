@@ -35,7 +35,7 @@ func NewUnicastController(router *Router, neighborsTable *NeighborsTable, neighb
 
 	flooder, err := NewZoneFlooder(router)
 	if err != nil {
-		log.Fatal("failed to initiate flooder, err: ", err)
+		log.Panic("failed to initiate flooder, err: ", err)
 	}
 
 	lsr := NewLSR()

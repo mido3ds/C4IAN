@@ -33,7 +33,7 @@ type ZoneID uint32
 
 func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 	if zlen < 0 || zlen > 16 {
-		panic("zlen must be between 0 and 16")
+		log.Panic("zlen must be between 0 and 16")
 	}
 
 	// transform

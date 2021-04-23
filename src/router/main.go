@@ -14,13 +14,12 @@ import (
 const DefaultZLen = 12
 
 func main() {
-	defer log.Println("finished cleaning up, closing")
-
 	args, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
+	defer log.Println("finished cleaning up, closing")
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
@@ -28,8 +27,7 @@ func main() {
 
 	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen)
 	if err != nil {
-		// TODO: remove all Fatal, replace with log.panic
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	AddIPTablesRules()
@@ -38,8 +36,7 @@ func main() {
 	mgrpContent := ReadJsonFile(args.mgrpFilePath)
 	err = router.Start(mgrpContent)
 	if err != nil {
-		// TODO: remove all panic, replace with log.Panic
-		panic(err)
+		log.Panic(err)
 	}
 
 	// wait for SIGINT
@@ -92,7 +89,7 @@ func ReadJsonFile(path string) string {
 	if path != "" {
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		return string(content)
 	}

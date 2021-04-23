@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/cornelk/hashmap"
@@ -61,7 +62,7 @@ func (n *NeighborsTable) Get(ip net.IP) (*NeighborEntry, bool) {
 
 func (n *NeighborsTable) Set(ip net.IP, entry *NeighborEntry) {
 	if entry == nil {
-		panic(fmt.Errorf("you can't enter nil entry"))
+		log.Panic("you can't enter nil entry")
 	}
 	n.m.Set(IPv4ToUInt32(ip), entry)
 }

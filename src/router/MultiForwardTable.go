@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/cornelk/hashmap"
@@ -36,10 +37,10 @@ func (f *MultiForwardTable) Get(grpIP net.IP) (*MultiForwardingEntry, bool) {
 
 func (f *MultiForwardTable) Set(grpIP net.IP, entry *MultiForwardingEntry) {
 	if entry == nil {
-		panic(fmt.Errorf("you can't enter nil entry"))
+		log.Panic("you can't enter nil entry")
 	}
 	if !grpIP.IsMulticast() {
-		panic(fmt.Errorf("Group IP Is Not Multicast IP"))
+		log.Panic("Group IP Is Not Multicast IP")
 	}
 	f.m.Set(IPv4ToUInt32(grpIP), entry)
 }

@@ -48,7 +48,7 @@ func NewMulticastController(router *Router, mgroupContent string) (*MulticastCon
 
 	flooder, err := NewZoneFlooder(router)
 	if err != nil {
-		log.Fatal("failed to initiate flooder, err: ", err)
+		log.Panic("failed to initiate flooder, err: ", err)
 	}
 
 	log.Println("initalized Multicast controller")

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/cornelk/hashmap"
@@ -36,7 +37,7 @@ func (f *UniForwardTable) Get(destIP net.IP) (*UniForwardingEntry, bool) {
 
 func (f *UniForwardTable) Set(destIP net.IP, entry *UniForwardingEntry) {
 	if entry == nil {
-		panic(fmt.Errorf("you can't enter nil entry"))
+		log.Panic("you can't enter nil entry")
 	}
 	f.m.Set(IPv4ToUInt32(destIP), entry)
 }

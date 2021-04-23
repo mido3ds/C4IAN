@@ -101,12 +101,12 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 
 	encryptedPacket, err := flooder.msec.Encrypt(msg)
 	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
+		log.Panic("failed to encrypt packet, err: ", err)
 	}
 
 	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
-		log.Fatal("failed to write to the device driver: ", err)
+		log.Panic("failed to write to the device driver: ", err)
 	}
 }
 
@@ -141,13 +141,13 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 	// encrypt the msg
 	encryptedPacket, err := flooder.msec.Encrypt(msg)
 	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
+		log.Panic("failed to encrypt packet, err: ", err)
 	}
 
 	// reflood the msg
 	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
-		log.Fatal("failed to write to the device driver: ", err)
+		log.Panic("failed to write to the device driver: ", err)
 	}
 }
 
@@ -191,12 +191,12 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 
 	encryptedPacket, err := f.msec.Encrypt(msg)
 	if err != nil {
-		log.Fatal("failed to encrypt packet, err: ", err)
+		log.Panic("failed to encrypt packet, err: ", err)
 	}
 
 	err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
-		log.Fatal("failed to write to the device driver: ", err)
+		log.Panic("failed to write to the device driver: ", err)
 	}
 }
 
@@ -207,7 +207,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 	for {
 		msg, err := f.macConn.Read()
 		if err != nil {
-			log.Fatal("failed to read from device driver, err: ", err)
+			log.Panic("failed to read from device driver, err: ", err)
 		}
 
 		hdr, payload, ok := UnmarshalFloodedPacket(msg)
@@ -234,12 +234,12 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 
 			encryptedPacket, err := f.msec.Encrypt(msg)
 			if err != nil {
-				log.Fatal("failed to encrypt packet, err: ", err)
+				log.Panic("failed to encrypt packet, err: ", err)
 			}
 
 			err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
 			if err != nil {
-				log.Fatal("failed to write to the device driver: ", err)
+				log.Panic("failed to write to the device driver: ", err)
 			}
 		}()
 	}
