@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 // NeighborsTable is lock-free thread-safe hash table

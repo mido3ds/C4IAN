@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 type FloodHeader struct {

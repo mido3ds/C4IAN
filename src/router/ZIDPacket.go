@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
+
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
 // "Zone IDentification (ZID)" protocol structs and functions
