@@ -44,10 +44,7 @@ func NewSARPController(router *Router) (*SARPController, error) {
 	neighborsTable := NewNeighborsTable()
 
 	header := &SARPHeader{router.ip, router.iface.HardwareAddr}
-	encryptedHdr, err := router.msec.Encrypt(header.MarshalBinary())
-	if err != nil {
-		log.Panic("failed to encrypt packet, err: ", err)
-	}
+	encryptedHdr := router.msec.Encrypt(header.MarshalBinary())
 
 	log.Println("initalized sARP controller")
 
@@ -98,10 +95,7 @@ func (s *SARPController) recvRequests() {
 			log.Panic("couldn't read from device driver, err: ", err)
 		}
 
-		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
-		if err != nil {
-			log.Panic("couldn't decrypt msg, err: ", err)
-		}
+		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it
@@ -122,10 +116,7 @@ func (s *SARPController) recvResponses() {
 			log.Panic("couldn't read from device driver, err: ", err)
 		}
 
-		packet, err = s.msec.Decrypt(packet[:sARPTotalLen])
-		if err != nil {
-			log.Panic("couldn't decrypt msg, err: ", err)
-		}
+		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
 			// store it

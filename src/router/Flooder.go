@@ -99,12 +99,9 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	encryptedPacket, err := flooder.msec.Encrypt(msg)
-	if err != nil {
-		log.Panic("failed to encrypt packet, err: ", err)
-	}
+	encryptedPacket := flooder.msec.Encrypt(msg)
 
-	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
+	err := flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
 		log.Panic("failed to write to the device driver: ", err)
 	}
@@ -139,13 +136,10 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// encrypt the msg
-	encryptedPacket, err := flooder.msec.Encrypt(msg)
-	if err != nil {
-		log.Panic("failed to encrypt packet, err: ", err)
-	}
+	encryptedPacket := flooder.msec.Encrypt(msg)
 
 	// reflood the msg
-	err = flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
+	err := flooder.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
 		log.Panic("failed to write to the device driver: ", err)
 	}
@@ -189,12 +183,9 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 
 	f.seqNumber++
 
-	encryptedPacket, err := f.msec.Encrypt(msg)
-	if err != nil {
-		log.Panic("failed to encrypt packet, err: ", err)
-	}
+	encryptedPacket := f.msec.Encrypt(msg)
 
-	err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
+	err := f.macConn.Write(encryptedPacket, ethernet.Broadcast)
 	if err != nil {
 		log.Panic("failed to write to the device driver: ", err)
 	}
@@ -232,10 +223,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 				return
 			}
 
-			encryptedPacket, err := f.msec.Encrypt(msg)
-			if err != nil {
-				log.Panic("failed to encrypt packet, err: ", err)
-			}
+			encryptedPacket := f.msec.Encrypt(msg)
 
 			err = f.macConn.Write(encryptedPacket, ethernet.Broadcast)
 			if err != nil {
