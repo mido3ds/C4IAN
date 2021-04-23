@@ -65,7 +65,7 @@ func (header *ZIDHeader) MarshalBinary() []byte {
 	// packet type + zlen
 	buf[3] = byte(header.PacketType)<<4 | (byte(header.ZLen) & 0b1111)
 
-	// destZID
+	// DstZID
 	buf[4] = byte(header.DstZID >> 24)
 	buf[5] = byte(header.DstZID >> 16)
 	buf[6] = byte(header.DstZID >> 8)

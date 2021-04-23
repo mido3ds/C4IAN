@@ -28,10 +28,12 @@ func NewNeighborsTable() *NeighborsTable {
 	}
 }
 
+const EntryLen = 6
+
 func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	// extract number of entries
 	numberOfEntries := uint16(payload[0])<<8 | uint16(payload[1])
-	payloadLen := numberOfEntries * 6
+	payloadLen := numberOfEntries * EntryLen
 
 	// extract checksum
 	csum := uint16(payload[2])<<8 | uint16(payload[3])
@@ -47,7 +49,7 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 		IP := net.IP(payload[start : start+4])
 		cost := uint16(payload[start+4])<<8 | uint16(payload[start+5])
 		neighborsTable.Set(IP, &NeighborEntry{Cost: cost})
-		start += 6
+		start += EntryLen
 	}
 
 	return neighborsTable, true
@@ -84,7 +86,7 @@ func (n *NeighborsTable) Clear() {
 }
 
 func (n *NeighborsTable) String() string {
-	s := "&NeighborsTable{"
+	s := "&NeighborsTable{\n"
 	for item := range n.m.Iter() {
 		s += fmt.Sprintf(" (ip=%#v,mac=%#v,Cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
 	}
@@ -92,8 +94,9 @@ func (n *NeighborsTable) String() string {
 	return s
 }
 
+
 func (n *NeighborsTable) MarshalBinary() []byte {
-	payloadLen := n.Len() * 6
+	payloadLen := n.Len() * EntryLen
 	payload := make([]byte, payloadLen+4)
 
 	// 0:2 => number of entries
@@ -110,10 +113,11 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 		payload[start+3] = byte(IP)
 
 		// Insert cost: 2 bytes
-		payload[start+4] = byte(item.Value.(*NeighborEntry).Cost >> 8)
-		payload[start+5] = byte(item.Value.(*NeighborEntry).Cost)
+		cost := item.Value.(*NeighborEntry).Cost 
+		payload[start+4] = byte(cost >> 8)
+		payload[start+5] = byte(cost)
 
-		start += 6
+		start += EntryLen
 	}
 
 	// add checksum

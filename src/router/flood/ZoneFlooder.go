@@ -48,8 +48,7 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	flooder.seqNumber++
 
 	// add ZID Header
-	// TODO: what should be the destZID?
-	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
@@ -77,8 +76,7 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 	go payloadProcessor(hdr.SrcIP, payload)
 
 	// add ZID Header
-	// TODO: what should be the destZID?
-	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
+	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// reflood the msg
