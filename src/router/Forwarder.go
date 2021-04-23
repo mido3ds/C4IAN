@@ -28,7 +28,7 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 	}
 
 	// connect to mac layer for multicast IP packets
-	ipMacConn, err := NewMACLayerConn(router.iface, uint16(ethernet.EtherTypeIPv4))
+	ipMacConn, err := NewMACLayerConn(router.iface, ethernet.EtherTypeIPv4)
 	if err != nil {
 		return nil, err
 	}

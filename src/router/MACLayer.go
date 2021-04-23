@@ -18,8 +18,8 @@ type MACLayerConn struct {
 	b []byte
 }
 
-func NewMACLayerConn(iface *net.Interface, etherType uint16) (*MACLayerConn, error) {
-	packetConn, err := raw.ListenPacket(iface, etherType, nil)
+func NewMACLayerConn(iface *net.Interface, etherType ethernet.EtherType) (*MACLayerConn, error) {
+	packetConn, err := raw.ListenPacket(iface, uint16(etherType), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -32,10 +32,11 @@ func NewMACLayerConn(iface *net.Interface, etherType uint16) (*MACLayerConn, err
 		source:     iface.HardwareAddr,
 		f:          f,
 		b:          b,
-		etherType:  ethernet.EtherType(etherType),
+		etherType:  etherType,
 	}, nil
 }
 
+// TODO: don't return error, panic internally
 func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
 	f := &ethernet.Frame{
 		Destination: dest,
@@ -53,6 +54,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) error {
 	return err
 }
 
+// TODO: don't return error, panic internally
 func (c *MACLayerConn) Read() ([]byte, error) {
 	n, _, err := c.packetConn.ReadFrom(c.b)
 	if err != nil {

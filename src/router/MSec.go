@@ -20,6 +20,7 @@ func NewMSecLayer(pass string) *MSecLayer {
 	}
 }
 
+// TODO: don't return error, panic internally
 func (msec *MSecLayer) Encrypt(in []byte) ([]byte, error) {
 	bReader := bytes.NewBuffer(in)
 	block, err := aes.NewCipher(msec.key)

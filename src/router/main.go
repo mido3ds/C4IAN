@@ -28,6 +28,7 @@ func main() {
 
 	router, err := NewRouter(args.ifaceName, args.passphrase, args.locSocket, args.zlen)
 	if err != nil {
+		// TODO: remove all Fatal, replace with log.panic
 		log.Fatal(err)
 	}
 
@@ -37,6 +38,7 @@ func main() {
 	mgrpContent := ReadJsonFile(args.mgrpFilePath)
 	err = router.Start(mgrpContent)
 	if err != nil {
+		// TODO: remove all panic, replace with log.Panic
 		panic(err)
 	}
 

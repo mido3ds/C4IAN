@@ -24,8 +24,12 @@ type MulticastController struct {
 	router          *Router
 	macConn         *MACLayerConn
 	grpMembersTable *GroupMembersTable
-	flooder         *ZoneFlooder
-	inputChannel    chan *MulticastControlPacket
+
+	// TODO: use global flooder
+	flooder *ZoneFlooder
+
+	// TODO: remove
+	inputChannel chan *MulticastControlPacket
 }
 
 func (c *MulticastController) floodDummy() {
@@ -34,7 +38,8 @@ func (c *MulticastController) floodDummy() {
 }
 
 func NewMulticastController(router *Router, mgroupContent string) (*MulticastController, error) {
-	macConn, err := NewMACLayerConn(router.iface, uint16(ethernet.EtherTypeIPv4))
+	// TODO: create ether type for odmrp control messages
+	macConn, err := NewMACLayerConn(router.iface, ethernet.EtherTypeIPv4)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +62,8 @@ func NewMulticastController(router *Router, mgroupContent string) (*MulticastCon
 	}, nil
 }
 
+// TODO: create function for forwarder to call when forwarding table has no entry
+
 func (c *MulticastController) Start(ft *MultiForwardTable) {
 	go c.ListenForControlPackets()
 
@@ -73,6 +80,7 @@ func (c *MulticastController) HandleMulticastControlPacket(srcIP net.IP, payload
 	log.Println(jq)
 }
 
+// TODO: remove
 func (c *MulticastController) ListenForControlPackets() {
 	log.Println("MulticastController started listening for control packets from the forwarder")
 	// TODO: receive encrypted packet and packet decrypter
