@@ -1,4 +1,4 @@
-package main
+package mac
 
 import (
 	"log"
@@ -8,10 +8,12 @@ import (
 	"github.com/mdlayher/raw"
 )
 
+var BroadcastMACAddr = ethernet.Broadcast
+
 type MACLayerConn struct {
 	packetConn net.PacketConn
 	source     net.HardwareAddr
-	etherType  ethernet.EtherType
+	etherType  EtherType
 
 	// dirty optimization
 	// DON'T use one Conn for multiple readers!
@@ -19,7 +21,7 @@ type MACLayerConn struct {
 	b []byte
 }
 
-func NewMACLayerConn(iface *net.Interface, etherType ethernet.EtherType) (*MACLayerConn, error) {
+func NewMACLayerConn(iface *net.Interface, etherType EtherType) (*MACLayerConn, error) {
 	packetConn, err := raw.ListenPacket(iface, uint16(etherType), nil)
 	if err != nil {
 		return nil, err
@@ -41,7 +43,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 	f := &ethernet.Frame{
 		Destination: dest,
 		Source:      c.source,
-		EtherType:   c.etherType,
+		EtherType:   ethernet.EtherType(c.etherType),
 		Payload:     packet,
 	}
 

@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
-	"github.com/mdlayher/ethernet"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zid"
@@ -40,7 +40,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 	}
 
 	// connect to mac layer for multicast IP packets
-	ipMacConn, err := NewMACLayerConn(iface, ethernet.EtherTypeIPv4)
+	ipMacConn, err := NewMACLayerConn(iface, IPv4EtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (f *Forwarder) broadcastDummy() {
 	zid := &ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
 	packet := append(zid.MarshalBinary(), dummy...)
 
-	f.zidMacConn.Write(f.msec.Encrypt(packet), ethernet.Broadcast)
+	f.zidMacConn.Write(f.msec.Encrypt(packet), BroadcastMACAddr)
 
 	log.Println("Broadcasting dummy control packet..")
 }
@@ -271,7 +271,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 func (f *Forwarder) sendBroadcast(packet []byte) {
 	// write to device driver
 	// TODO: for now ethernet broadcast
-	f.zidMacConn.Write(f.msec.Encrypt(packet), ethernet.Broadcast)
+	f.zidMacConn.Write(f.msec.Encrypt(packet), BroadcastMACAddr)
 }
 
 func (f *Forwarder) OnZoneIDChanged(z ZoneID) {

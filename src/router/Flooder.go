@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zid"
@@ -102,7 +102,7 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID, DstZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
 
-	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
 }
 
 func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
@@ -134,7 +134,7 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(
 	msg = append(zid.MarshalBinary(), msg...)
 
 	// reflood the msg
-	flooder.macConn.Write(flooder.msec.Encrypt(msg), ethernet.Broadcast)
+	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
 }
 
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
@@ -149,7 +149,7 @@ type GlobalFlooder struct {
 	msec      *MSecLayer
 }
 
-func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType ethernet.EtherType, msec *MSecLayer) (*GlobalFlooder, error) {
+func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec *MSecLayer) (*GlobalFlooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(iface, etherType)
 	if err != nil {
@@ -175,7 +175,7 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 
 	f.seqNumber++
 
-	f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
+	f.macConn.Write(f.msec.Encrypt(msg), BroadcastMACAddr)
 }
 
 // ReceiveFloodedMsgs inf loop that receives any flooded msgs
@@ -207,7 +207,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 				return
 			}
 
-			f.macConn.Write(f.msec.Encrypt(msg), ethernet.Broadcast)
+			f.macConn.Write(f.msec.Encrypt(msg), BroadcastMACAddr)
 		}()
 	}
 }

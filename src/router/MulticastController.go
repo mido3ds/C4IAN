@@ -7,17 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-)
-
-const (
-	// Make use of an unassigned EtherType to differentiate between odmrp traffic and other traffic
-	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-	joinQueryEtherType = ethernet.EtherType(0x0901)
-	joinReplyEtherType = ethernet.EtherType(0x0902)
 )
 
 type MulticastController struct {
@@ -27,12 +20,12 @@ type MulticastController struct {
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
-	queryFlooder, err := NewGlobalFlooder(ip, iface, joinQueryEtherType, msec)
+	queryFlooder, err := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 	if err != nil {
 		log.Panic("failed to initiate query flooder, err: ", err)
 	}
 
-	jrConn, err := NewMACLayerConn(iface, joinReplyEtherType)
+	jrConn, err := NewMACLayerConn(iface, JoinReplyEtherType)
 	if err != nil {
 		log.Panic("failed to initiate mac conn, err: ", err)
 	}

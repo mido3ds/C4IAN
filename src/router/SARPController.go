@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mdlayher/ethernet"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
@@ -17,11 +17,6 @@ const (
 	hashLen       = 64              // bytes at the end
 	sARPHeaderLen = 10              // excluding the hash at the end
 	sARPTotalLen  = sARPHeaderLen + hashLen
-
-	// Make use of an unassigned EtherType to differentiate between SARP traffic and other traffic
-	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
-	sARPReqEtherType = 0x0809
-	sARPResEtherType = 0x080A
 )
 
 type SARPController struct {
@@ -34,11 +29,11 @@ type SARPController struct {
 }
 
 func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPController, error) {
-	reqMacConn, err := NewMACLayerConn(iface, sARPReqEtherType)
+	reqMacConn, err := NewMACLayerConn(iface, SARPReqEtherType)
 	if err != nil {
 		return nil, err
 	}
-	resMacConn, err := NewMACLayerConn(iface, sARPResEtherType)
+	resMacConn, err := NewMACLayerConn(iface, SARPResEtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +67,7 @@ func (s *SARPController) sendMsgs() {
 		s.neighborsTable.Clear()
 
 		// broadcast request
-		s.reqMacConn.Write(s.encryptedHdr, ethernet.Broadcast)
+		s.reqMacConn.Write(s.encryptedHdr, BroadcastMACAddr)
 
 		time.Sleep(sARPHoldTime)
 		newTableHash := s.neighborsTable.GetTableHash()
