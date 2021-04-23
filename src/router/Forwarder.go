@@ -18,9 +18,13 @@ type Forwarder struct {
 	uniForwTable   *UniForwardTable
 	multiForwTable *MultiForwardTable
 	neighborsTable *NeighborsTable
+
+	// multicast controller callback
+	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
 }
 
-func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, error) {
+func NewForwarder(router *Router, neighborsTable *NeighborsTable,
+	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(router.iface, ZIDEtherType)
 	if err != nil {
@@ -45,13 +49,14 @@ func NewForwarder(router *Router, neighborsTable *NeighborsTable) (*Forwarder, e
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
-		router:         router,
-		zidMacConn:     zidMacConn,
-		ipMacConn:      ipMacConn,
-		ipConn:         ipConn,
-		uniForwTable:   uniForwTable,
-		neighborsTable: neighborsTable,
-		multiForwTable: multiForwTable,
+		router:              router,
+		zidMacConn:          zidMacConn,
+		ipMacConn:           ipMacConn,
+		ipConn:              ipConn,
+		uniForwTable:        uniForwTable,
+		neighborsTable:      neighborsTable,
+		multiForwTable:      multiForwTable,
+		mcGetMissingEntries: mcGetMissingEntries,
 	}, nil
 }
 
@@ -237,8 +242,10 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	es, ok := f.multiForwTable.Get(grpIP)
 	if !ok {
-		// TODO: call controller
-		return
+		es, ok = f.mcGetMissingEntries(grpIP)
+		if !ok {
+			return
+		}
 	}
 
 	// encrypt

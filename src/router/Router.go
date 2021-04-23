@@ -61,7 +61,7 @@ func (r *Router) Start(mgrpContent string) error {
 		return fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(r, sARP.neighborsTable)
+	forwarder, err := NewForwarder(r, sARP.neighborsTable, multicCont.GetMissingEntries)
 	if err != nil {
 		return fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}

@@ -3,93 +3,82 @@ package main
 import (
 	"log"
 	"net"
-	"time"
 
 	"github.com/mdlayher/ethernet"
 )
 
-type JoinType int
-
 const (
-	JoinQueryType JoinType = iota
-	JoinReplyType
+	// Make use of an unassigned EtherType to differentiate between odmrp traffic and other traffic
+	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
+	joinQueryEtherType = ethernet.EtherType(0x0901)
+	joinReplyEtherType = ethernet.EtherType(0x0902)
 )
 
-type MulticastControlPacket struct {
-	packetType JoinType
-	payload    []byte
-}
-
 type MulticastController struct {
-	router          *Router
-	macConn         *MACLayerConn
-	grpMembersTable *GroupMembersTable
-
-	// TODO: use global flooder
-	flooder *ZoneFlooder
-
-	// TODO: remove
-	inputChannel chan *MulticastControlPacket
-}
-
-func (c *MulticastController) floodDummy() {
-	dummy := []byte("Dummy")
-	c.flooder.Flood(dummy)
+	gmTable      *GroupMembersTable
+	queryFlooder *GlobalFlooder
+	jrConn       *MACLayerConn
 }
 
 func NewMulticastController(router *Router, mgroupContent string) (*MulticastController, error) {
-	// TODO: create ether type for odmrp control messages
-	macConn, err := NewMACLayerConn(router.iface, ethernet.EtherTypeIPv4)
+	queryFlooder, err := NewGlobalFlooder(router.ip, router.iface, joinQueryEtherType, router.msec)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to initiate query flooder, err: ", err)
 	}
 
-	c := make(chan *MulticastControlPacket)
-
-	flooder, err := NewZoneFlooder(router)
+	jrConn, err := NewMACLayerConn(router.iface, joinReplyEtherType)
 	if err != nil {
-		log.Panic("failed to initiate flooder, err: ", err)
+		log.Panic("failed to initiate mac conn, err: ", err)
 	}
 
-	log.Println("initalized Multicast controller")
+	log.Println("initalized multicast controller")
 
 	return &MulticastController{
-		router:          router,
-		macConn:         macConn,
-		grpMembersTable: NewGroupMembersTable(mgroupContent),
-		inputChannel:    c,
-		flooder:         flooder,
+		gmTable:      NewGroupMembersTable(mgroupContent),
+		queryFlooder: queryFlooder,
+		jrConn:       jrConn,
 	}, nil
 }
 
-// TODO: create function for forwarder to call when forwarding table has no entry
+// GetMissingEntries called by forwarder when it doesn't find and entry
+// for given grpIP in the forwarding table
+//
+// forwarder should put the returned entries in the forwarding table
+//
+// it may return false in case it can't find any path to the grpIP
+// or can't find the grpIP itself
+func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingEntry, bool) {
+	// TODO
+	return nil, false
+}
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
-	go c.ListenForControlPackets()
-
-	time.AfterFunc(10*time.Second, func() {
-		log.Println(ft)
-	})
+	go c.queryFlooder.ReceiveFloodedMsgs(c.onRecvJoinQuery)
+	go c.recvJoinReplyMsgs(ft)
 }
 
-func (c *MulticastController) HandleMulticastControlPacket(srcIP net.IP, payload []byte) {
+func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) bool {
+	// TODO: reply with join reply
+	// TODO: store msg in cache
 	jq, valid := UnmarshalJoinQuery(payload)
 	if !valid {
-		log.Panicln("Corrupted LSR packet received")
+		log.Panicln("Corrupted JoinQuery msg received")
 	}
 	log.Println(jq)
+	// TODO: continue or stop flooding?
+	return true
 }
 
-// TODO: remove
-func (c *MulticastController) ListenForControlPackets() {
-	log.Println("MulticastController started listening for control packets from the forwarder")
-	// TODO: receive encrypted packet and packet decrypter
+func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 	for {
-		controlPacket := <-c.inputChannel
+		msg := c.jrConn.Read()
 
-		switch controlPacket.packetType {
-		case JoinQueryType:
-			c.flooder.ReceiveFloodedMsg(controlPacket.payload, c.HandleMulticastControlPacket)
+		jr, valid := UnmarshalJoinReply(msg)
+		if !valid {
+			log.Panicln("Corrupted JoinReply msg received")
 		}
+		log.Println(jr)
+		// TODO: store msg
+		// TODO: resend to next hop, unless im source
 	}
 }
