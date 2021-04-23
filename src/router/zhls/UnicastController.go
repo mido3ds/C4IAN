@@ -28,11 +28,6 @@ type UnicastController struct {
 	neighborsTable           *NeighborsTable
 }
 
-func (c *UnicastController) floodDummy() {
-	dummy := []byte("Dummy")
-	c.flooder.Flood(dummy)
-}
-
 func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
 	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {
@@ -79,7 +74,7 @@ func (c *UnicastController) ListenForControlPackets() {
 
 		switch controlPacket.ZIDHeader.PacketType {
 		case LSRFloodPacket:
-			c.flooder.ReceiveFloodedMsg(controlPacket.zidHeader, controlPacket.payload, c.lsr.HandleLSRPacket)
+			c.flooder.ReceiveFloodedMsg(controlPacket.Payload, c.lsr.HandleLSRPacket)
 		}
 	}
 }
@@ -94,4 +89,9 @@ func (c *UnicastController) listenNeighChanges() {
 
 func (c *UnicastController) OnZoneIDChanged(z ZoneID) {
 	c.flooder.OnZoneIDChanged(z)
+}
+
+func (c *UnicastController) Close() {
+	c.flooder.Close()
+	c.macConn.Close()
 }

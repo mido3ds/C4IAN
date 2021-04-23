@@ -54,15 +54,8 @@ func (flooder *ZoneFlooder) Flood(msg []byte) {
 	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
 }
 
-func (flooder *ZoneFlooder) ReceiveFloodedMsg(msgZidHeader *ZIDHeader, msg []byte, payloadProcessor func(net.IP, []byte)) {
-	myZone := &Zone{ID: flooder.zoneID, Len: flooder.zlen}
-	srcZone := &Zone{ID: msgZidHeader.SrcZID, Len: msgZidHeader.ZLen}
-
-	if !myZone.InZone(srcZone) {
-		return
-	}
-	
-	hdr, payload, ok := UnmarshalFloodedPacket(msg)
+func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+	hdr, payload, ok := UnmarshalFloodedHeader(msg)
 	if !ok {
 		return
 	}
@@ -82,8 +75,6 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msgZidHeader *ZIDHeader, msg []byt
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
 	go payloadProcessor(hdr.SrcIP, payload)
 
-	log.Println(hdr) // TODO: remove
-
 	// add ZID Header
 	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID}
 	msg = append(zid.MarshalBinary(), msg...)
@@ -94,4 +85,8 @@ func (flooder *ZoneFlooder) ReceiveFloodedMsg(msgZidHeader *ZIDHeader, msg []byt
 
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
 	f.zoneID = z
+}
+
+func (f *ZoneFlooder) Close() {
+	f.macConn.Close()
 }

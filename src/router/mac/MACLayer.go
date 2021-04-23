@@ -40,7 +40,7 @@ func NewMACLayerConn(iface *net.Interface, etherType EtherType) (*MACLayerConn, 
 }
 
 func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
-	f := &ethernet.Frame{
+	f := ethernet.Frame{
 		Destination: dest,
 		Source:      c.source,
 		EtherType:   ethernet.EtherType(c.etherType),
@@ -49,7 +49,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 
 	b, err := f.MarshalBinary()
 	if err != nil {
-		log.Panic("failed to write to device driver, err: ", err)
+		log.Panic("failed to marshal ethernet frame, err: ", err)
 	}
 
 	_, err = c.packetConn.WriteTo(b, &raw.Addr{HardwareAddr: dest})
@@ -66,7 +66,7 @@ func (c *MACLayerConn) Read() []byte {
 
 	err = c.f.UnmarshalBinary(c.b[:n])
 	if err != nil {
-		log.Panic("failed to read from device driver, err: ", err)
+		log.Panic("failed to unmarshal ethernet frame, err: ", err)
 	}
 
 	return c.f.Payload

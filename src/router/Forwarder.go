@@ -78,16 +78,6 @@ func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
 	go f.forwardIPFromMACLayer()
 }
 
-func (f *Forwarder) broadcastDummy() {
-	dummy := []byte("Dummy")
-	zid := &ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID, DstZID: f.zoneID}
-	packet := append(zid.MarshalBinary(), dummy...)
-
-	f.zidMacConn.Write(f.msec.Encrypt(packet), BroadcastMACAddr)
-
-	log.Println("Broadcasting dummy control packet..")
-}
-
 // forwardZIDFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
@@ -107,11 +97,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		}
 
 		if zid.IsControlPacket() {
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
+			packet := pd.DecryptAll()
 			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: packet[ZIDHeaderLen:]}
 			continue
 		}
@@ -123,15 +109,10 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		}
 
 		if imDestination(f.ip, ip.DestIP, zid.DstZID) { // i'm destination,
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
-			ippacket := packet[ZIDHeaderLen:]
+			ippacket := pd.DecryptAll()[ZIDHeaderLen:]
 
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(ippacket)
+			err := f.ipConn.Write(ippacket)
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
@@ -168,13 +149,8 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		}
 
 		if imInMulticastGrp(ip.DestIP) { // i'm destination,
-			packet, err := pd.DecryptAll()
-			if err != nil {
-				continue
-			}
-
 			// receive message by injecting it in loopback
-			err = f.ipConn.Write(packet)
+			err := f.ipConn.Write(pd.DecryptAll())
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}

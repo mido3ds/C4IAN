@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os/exec"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
+	"github.com/mido3ds/C4IAN/src/router/kernel"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
+	. "github.com/mido3ds/C4IAN/src/router/sarp"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
@@ -30,9 +31,9 @@ type Router struct {
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
 	// tell linux im a router
-	addIptablesRule()
-	if err := registerGateway(); err != nil {
-		delIptablesRule()
+	kernel.AddIPTablesRule()
+	if err := kernel.RegisterGateway(); err != nil {
+		kernel.DeleteIPTablesRule()
 		return nil, err
 	}
 
@@ -62,7 +63,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	unicCont, err := NewUnicastController(iface, ip, sarpCont.neighborsTable, sarpCont.neighborhoodUpdateSignal, msec, zlen)
+	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -72,7 +73,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, zlen, sarpCont.neighborsTable, multCont.GetMissingEntries)
+	forwarder, err := NewForwarder(iface, ip, msec, zlen, sarpCont.NeighborsTable, multCont.GetMissingEntries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
@@ -104,47 +105,14 @@ func (r *Router) Start() {
 }
 
 func (r *Router) Close() {
-	delIptablesRule()
-	unregisterGateway()
-}
+	r.forwarder.Close()
+	r.multCont.Close()
+	r.unicCont.Close()
+	r.sarpCont.Close()
 
-// TODO: support parallelism and fan-out
+	r.zidAgent.Close()
+	r.zidAgent.FlushListeners()
 
-func addIptablesRule() {
-	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w").Run()
-	cmd := exec.Command("iptables", "-t", "filter", "-A", "OUTPUT", "-j", "NFQUEUE", "-w", "--queue-num", "0")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't add iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("added NFQUEUE rule to OUTPUT chain in iptables")
-}
-
-func delIptablesRule() {
-	cmd := exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't remove iptables rule, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("remove NFQUEUE rule to OUTPUT chain in iptables")
-}
-
-func registerGateway() error {
-	exec.Command("route", "del", "default", "gw", "localhost").Run()
-	cmd := exec.Command("route", "add", "default", "gw", "localhost")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("couldn't add default gateway, err: %#v, stderr: %#v", err, string(stdoutStderr))
-	}
-	log.Println("added default gateway")
-	return nil
-}
-
-func unregisterGateway() {
-	cmd := exec.Command("route", "del", "default", "gw", "localhost")
-	stdoutStderr, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Panic("couldn't remove default gateway, err: ", err, ",stderr: ", string(stdoutStderr))
-	}
-	log.Println("remove default gateway")
+	kernel.UnregisterGateway()
+	kernel.DeleteIPTablesRule()
 }

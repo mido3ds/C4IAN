@@ -19,7 +19,7 @@ type NeighborsTable struct {
 
 type NeighborEntry struct {
 	MAC  net.HardwareAddr
-	Cost uint8
+	Cost uint16
 }
 
 func NewNeighborsTable() *NeighborsTable {
@@ -28,7 +28,7 @@ func NewNeighborsTable() *NeighborsTable {
 	}
 }
 
-const EntryLen = 5
+const EntryLen = 6
 
 func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	// extract number of entries
@@ -47,7 +47,7 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 	start := 0
 	for i := 0; i < int(numberOfEntries); i++ {
 		IP := net.IP(payload[start : start+4])
-		cost := uint8(payload[start+4])
+		cost := uint16(payload[start+4])<<8 | uint16(payload[start+5])
 		neighborsTable.Set(IP, &NeighborEntry{Cost: cost})
 		start += EntryLen
 	}
@@ -105,15 +105,18 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 
 	start := 4
 	for item := range n.m.Iter() {
-		// Insert IP: 4 Bytes
+		// Insert IP: 4 bytes
 		IP := item.Key.(uint32)
 		payload[start] = byte(IP >> 24)
 		payload[start+1] = byte(IP >> 16)
 		payload[start+2] = byte(IP >> 8)
 		payload[start+3] = byte(IP)
 
-		// Insert cost: 1 byte
-		payload[start+4] = byte(item.Value.(*NeighborEntry).Cost)
+		// Insert cost: 2 bytes
+		cost := item.Value.(*NeighborEntry).Cost 
+		payload[start+4] = byte(cost >> 8)
+		payload[start+5] = byte(cost)
+
 		start += EntryLen
 	}
 
@@ -125,6 +128,11 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	return payload[:]
 }
 
+// The table hash depends on who the neighbors are, disregarding the costs
 func (n *NeighborsTable) GetTableHash() []byte {
-	return HashSHA3([]byte(n.String()))
+	s := ""
+	for item := range n.m.Iter() {
+		s += UInt32ToIPv4(item.Key.(uint32)).String() + item.Value.(*NeighborEntry).MAC.String()
+	}
+	return HashSHA3([]byte(s))
 }
