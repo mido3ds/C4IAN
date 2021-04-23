@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/forward"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/mido3ds/C4IAN/src/router/kernel"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
@@ -99,8 +100,8 @@ func (r *Router) Start() {
 
 	// start controllers
 	go r.sarpCont.Start()
-	go r.unicCont.Start(r.forwarder.uniForwTable)
-	go r.multCont.Start(r.forwarder.multiForwTable)
+	go r.unicCont.Start(r.forwarder.UniForwTable)
+	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start(r.unicCont.InputChannel)
 }
 
