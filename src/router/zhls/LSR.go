@@ -36,7 +36,7 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 	forwardingTable *UniForwardTable,
 	neighborsTable *NeighborsTable) {
 
-	forwardingTable.Clear()
+	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(myIP)
 
 	for dst, parent := range sinkTreeParents {
@@ -62,9 +62,9 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 		for parent != IPv4ToUInt32(myIP) {
 			// check if the dst parent shortest path is calculated before
 			parentIP := UInt32ToIPv4(parent.(uint32))
-			forwardingEntry, exists := forwardingTable.Get(parentIP)
+			forwardingEntry, exists := dirtyForwardingTable.Get(parentIP)
 			if exists {
-				forwardingTable.Set(dstIP, forwardingEntry)
+				dirtyForwardingTable.Set(dstIP, forwardingEntry)
 				break
 			}
 			// return through the dst shortest path till reach one of the neighbors
@@ -80,7 +80,11 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 			if !exists {
 				log.Panicln("Attempting to make a next hop through a non-neighbor")
 			}
-			forwardingTable.Set(dstIP, &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
+			dirtyForwardingTable.Set(dstIP, &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
 		}
+		// Shallow copy the forwarding table, this will make the hashmap pointer in forwardingTable
+		// point to the new hashmap inside dityForwardingTable. The old hashmap in forwardingTable
+		// will be deleted by the garbage collector
+		*forwardingTable = *dirtyForwardingTable
 	}
 }

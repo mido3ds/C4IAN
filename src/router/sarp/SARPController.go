@@ -74,6 +74,8 @@ func (s *SARPController) sendMsgs() {
 
 		// Wait for sARP responses then update NeighborsTable
 		time.Sleep(sARPHoldTime)
+		// The NeighborsTable pointer will point to the new dirtyNeighborsTable
+		// The old table will be deleted by the garbage collector
 		s.NeighborsTable = s.dirtyNeighborsTable
 
 		newTableHash := s.NeighborsTable.GetTableHash()
