@@ -24,6 +24,7 @@ type SARPController struct {
 	reqMacConn               *MACLayerConn
 	resMacConn               *MACLayerConn
 	NeighborsTable           *NeighborsTable
+	dirtyNeighborsTable      *NeighborsTable
 	NeighborhoodUpdateSignal chan bool
 	myIP                     net.IP
 	myMAC                    net.HardwareAddr
@@ -39,6 +40,7 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		return nil, err
 	}
 
+	dirtyNeighborsTable := NewNeighborsTable()
 	neighborsTable := NewNeighborsTable()
 
 	log.Println("initalized sARP controller")
@@ -48,6 +50,7 @@ func NewSARPController(ip net.IP, iface *net.Interface, msec *MSecLayer) (*SARPC
 		reqMacConn:               reqMacConn,
 		resMacConn:               resMacConn,
 		NeighborsTable:           neighborsTable,
+		dirtyNeighborsTable:      dirtyNeighborsTable,
 		NeighborhoodUpdateSignal: make(chan bool),
 		myIP:                     ip,
 		myMAC:                    iface.HardwareAddr,
@@ -63,16 +66,17 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.NeighborsTable.GetTableHash()
 	for {
-		// TODO: Neighbors table may be used while it is cleared, find another way to remove gone neighbors
-		s.NeighborsTable.Clear()
+		s.dirtyNeighborsTable = NewNeighborsTable()
 
 		// broadcast request
 		header := &SARPHeader{s.myIP, s.myMAC, time.Now().UnixNano()}
 		s.reqMacConn.Write(s.msec.Encrypt(header.MarshalBinary()), BroadcastMACAddr)
 
+		// Wait for sARP responses then update NeighborsTable
 		time.Sleep(sARPHoldTime)
-		newTableHash := s.NeighborsTable.GetTableHash()
+		s.NeighborsTable = s.dirtyNeighborsTable
 
+		newTableHash := s.NeighborsTable.GetTableHash()
 		if !bytes.Equal(tableHash, newTableHash) {
 			s.NeighborhoodUpdateSignal <- true
 		}
@@ -94,8 +98,8 @@ func (s *SARPController) recvRequests() {
 			s.NeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
 
 			// unicast response
-			header := &SARPHeader{s.myIP, s.myMAC, time.Now().UnixNano()}
-			s.resMacConn.Write(s.msec.Encrypt(header.MarshalBinary()), header.MAC)
+			myHeader := &SARPHeader{s.myIP, s.myMAC, time.Now().UnixNano()}
+			s.resMacConn.Write(s.msec.Encrypt(myHeader.MarshalBinary()), header.MAC)
 		}
 	}
 }
@@ -106,9 +110,9 @@ func (s *SARPController) recvResponses() {
 		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
 		if header, ok := UnmarshalSARPHeader(packet); ok {
-			// store it
+			// store it in the dirty neighbors table
 			delay := time.Since(time.Unix(0, header.sendTime))
-			s.NeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
+			s.dirtyNeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
 		}
 	}
 }

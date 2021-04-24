@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -60,10 +59,10 @@ func (c *UnicastController) Start(ft *UniForwardTable) {
 	go c.listenForControlPackets()
 	go c.listenNeighChanges()
 
-	time.AfterFunc(10*time.Second, func() {
-		c.lsr.UpdateForwardingTable(c.ip, ft, c.neighborsTable)
-		log.Println(ft)
-	})
+	// time.AfterFunc(10*time.Second, func() {
+	// 	c.lsr.UpdateForwardingTable(c.ip, ft, c.neighborsTable)
+	// 	log.Println(ft)
+	// })
 }
 
 func (c *UnicastController) listenForControlPackets() {
