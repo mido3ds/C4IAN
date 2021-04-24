@@ -42,7 +42,7 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 	for dst, parent := range sinkTreeParents {
 		dstIP := UInt32ToIPv4(dst.(uint32))
 
-		// dst is the same as the src node
+		// Dst is the same as the src node
 		if dstIP.Equal(myIP) {
 			continue
 		}
