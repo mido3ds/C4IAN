@@ -52,7 +52,7 @@ while [ "$1" != "" ]; do
                 NODE="$1"
                 shift
 
-                PID=$(pgrep -u root -a bash | grep mininet:${NODE} | cut -d' ' -f1)
+                PID=$(pgrep -u root -a bash | grep mininet:${NODE}$ | cut -d' ' -f1)
                 CMD="$@"
                 if [[ "$#" -eq "0" ]]; then
                     CMD="/bin/bash --norc --noediting"
