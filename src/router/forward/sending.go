@@ -2,6 +2,7 @@ package forward
 
 import (
 	"bytes"
+	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -9,9 +10,11 @@ import (
 )
 
 func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
-	e, ok := getNextHop(destIP, f.UniForwTable, f.neighborsTable, f.zoneID)
-	if !ok {
-		// TODO: call controller
+	e, reachable := getUnicastNextHop(destIP, f)
+
+	if !reachable {
+		// TODO: Should we do anything else here?
+		log.Println("Destination unreachable:", destIP)
 		return
 	}
 

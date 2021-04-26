@@ -28,11 +28,15 @@ type Forwarder struct {
 
 	// multicast controller callback
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
+
+	// Unicast controller callbacks
+	updateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 	neighborsTable *NeighborsTable,
-	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)) (*Forwarder, error) {
+	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
+	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(iface, ZIDEtherType)
 	if err != nil {
@@ -57,17 +61,18 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
-		iface:               iface,
-		msec:                msec,
-		ip:                  ip,
-		zlen:                zlen,
-		zidMacConn:          zidMacConn,
-		ipMacConn:           ipMacConn,
-		ipConn:              ipConn,
-		UniForwTable:        UniForwTable,
-		neighborsTable:      neighborsTable,
-		MultiForwTable:      MultiForwTable,
-		mcGetMissingEntries: mcGetMissingEntries,
+		iface:                        iface,
+		msec:                         msec,
+		ip:                           ip,
+		zlen:                         zlen,
+		zidMacConn:                   zidMacConn,
+		ipMacConn:                    ipMacConn,
+		ipConn:                       ipConn,
+		UniForwTable:                 UniForwTable,
+		neighborsTable:               neighborsTable,
+		MultiForwTable:               MultiForwTable,
+		mcGetMissingEntries:          mcGetMissingEntries,
+		updateUnicastForwardingTable: updateUnicastForwardingTable,
 	}, nil
 }
 
@@ -118,9 +123,10 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		} else { // i'm a forwarder
 			IPv4DecrementTTL(packet[ZIDHeaderLen:])
 
-			e, ok := getNextHop(ip.DestIP, f.UniForwTable, f.neighborsTable, f.zoneID)
-			if !ok {
-				// TODO: call controller
+			e, reachable := getUnicastNextHop(ip.DestIP, f)
+			if !reachable {
+				// TODO: Should we do anything else here?
+				log.Println("Destination unreachable:", ip.DestIP)
 				continue
 			}
 

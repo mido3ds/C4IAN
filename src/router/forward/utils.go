@@ -17,14 +17,14 @@ func imInMulticastGrp(destGrpIP net.IP) bool {
 	return false
 }
 
-func getNextHop(destIP net.IP, ft *UniForwardTable, nt *NeighborsTable, zoneID ZoneID) (*UniForwardingEntry, bool) {
-	fe, ok := ft.Get(destIP)
-	if !ok {
-		ne, ok := nt.Get(destIP)
-		if !ok {
-			return nil, false
-		}
-		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: uint32(zoneID)}, true
+func getUnicastNextHop(destIP net.IP, forwarder *Forwarder) (*UniForwardingEntry, bool) {
+	// Destination is a direct neighbor
+	if ne, ok := forwarder.neighborsTable.Get(destIP); ok {
+		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: uint32(forwarder.zoneID)}, true
 	}
-	return fe, true
+	forwarder.updateUnicastForwardingTable(forwarder.UniForwTable)
+	if fe, ok := forwarder.UniForwTable.Get(destIP); ok {
+		return fe, true
+	}
+	return nil, false
 }

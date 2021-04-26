@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -19,13 +18,14 @@ type UnicastControlPacket struct {
 }
 
 type UnicastController struct {
-	ip                       net.IP
-	macConn                  *MACLayerConn
-	flooder                  *ZoneFlooder
-	lsr                      *LSR
-	InputChannel             chan *UnicastControlPacket
-	neighborhoodUpdateSignal chan bool
-	neighborsTable           *NeighborsTable
+	ip                           net.IP
+	macConn                      *MACLayerConn
+	flooder                      *ZoneFlooder
+	lsr                          *LSR
+	InputChannel                 chan *UnicastControlPacket
+	neighborhoodUpdateSignal     chan bool
+	neighborsTable               *NeighborsTable
+	UpdateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
 func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
@@ -46,24 +46,20 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 	log.Println("initalized controller")
 
 	return &UnicastController{
-		macConn:                  macConn,
-		ip:                       ip,
-		InputChannel:             c,
-		flooder:                  flooder,
-		lsr:                      lsr,
-		neighborhoodUpdateSignal: neighborhoodUpdateSignal,
-		neighborsTable:           neighborsTable,
+		macConn:                      macConn,
+		ip:                           ip,
+		InputChannel:                 c,
+		flooder:                      flooder,
+		lsr:                          lsr,
+		neighborhoodUpdateSignal:     neighborhoodUpdateSignal,
+		neighborsTable:               neighborsTable,
+		UpdateUnicastForwardingTable: lsr.UpdateForwardingTable,
 	}, nil
 }
 
-func (c *UnicastController) Start(ft *UniForwardTable) {
+func (c *UnicastController) Start() {
 	go c.listenForControlPackets()
 	go c.listenNeighChanges()
-
-	time.AfterFunc(7*time.Second, func() {
-		c.lsr.UpdateForwardingTable(c.ip, ft, c.neighborsTable)
-		log.Println(ft)
-	})
 }
 
 func (c *UnicastController) listenForControlPackets() {
