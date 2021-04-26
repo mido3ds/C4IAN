@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"sync"
 )
 
 type Graph struct {
@@ -9,6 +10,7 @@ type Graph struct {
 	visited_dest bool
 	nodes        []Node
 	visiting     *DoubleLinkedList
+	lock         sync.RWMutex
 }
 
 func newGraph() *Graph {
@@ -16,6 +18,9 @@ func newGraph() *Graph {
 }
 
 func (g *Graph) FillDefaults(weight int64, best_node int) {
+	g.lock.Lock()
+	defer g.lock.Unlock()
+
 	for i := range g.nodes {
 		g.nodes[i].best_nodes = []int{best_node}
 		g.nodes[i].weight = weight
@@ -35,6 +40,9 @@ func (g *Graph) InsertNewNode() *Node {
 }
 
 func (g *Graph) InsertNodes(nodes ...Node) {
+	g.lock.Lock()
+	defer g.lock.Unlock()
+
 	for _, node := range nodes {
 		node.best_nodes = []int{-1}
 		if node.id >= len(g.nodes) {

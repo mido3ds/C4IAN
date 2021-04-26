@@ -1,10 +1,13 @@
 package utils
 
+import "sync"
+
 type Node struct {
 	id         int
 	weight     int64
 	best_nodes []int
 	edges      map[int]int64
+	lock       sync.RWMutex
 }
 
 func newNode(id int) *Node {
@@ -26,6 +29,9 @@ func (n *Node) BestContains(id int) bool {
 }
 
 func (n *Node) AddEdge(dest int, weight int64) {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+
 	if n.edges == nil {
 		n.edges = map[int]int64{}
 	}
