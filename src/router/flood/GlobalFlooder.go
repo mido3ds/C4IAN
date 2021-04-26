@@ -50,8 +50,10 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 // calls `payloadProcessor` when it receives the message, it gives it the header and the payload
 // and returns whether to continue flooding or not
 func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) bool) {
+	log.Println("started receiving flooded msgs") // TODO remove
 	for {
 		msg := f.macConn.Read()
+		log.Println("received") // TODO remove
 
 		hdr, payload, ok := UnmarshalFloodedHeader(msg)
 		if !ok {

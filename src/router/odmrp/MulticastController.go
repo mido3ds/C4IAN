@@ -17,6 +17,7 @@ type MulticastController struct {
 	gmTable      *GroupMembersTable
 	queryFlooder *GlobalFlooder
 	jrConn       *MACLayerConn
+	ip           net.IP
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -44,6 +45,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 		gmTable:      NewGroupMembersTable(mgrpContent),
 		queryFlooder: queryFlooder,
 		jrConn:       jrConn,
+		ip:           ip,
 	}, nil
 }
 
@@ -56,6 +58,22 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 // or can't find the grpIP itself
 func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingEntry, bool) {
 	// TODO
+
+	// for now i will just send join queries
+	members, ok := c.gmTable.Get(grpIP)
+	if !ok {
+		log.Panic("must have the members!")
+	}
+	jq := JoinQuery{
+		SeqNo: 1,
+		TTL:   ODMRPDefaultTTL,
+		SrcIP: c.ip,
+		GrpIP: grpIP,
+		Dests: members,
+	}
+	c.queryFlooder.Flood(jq.MarshalBinary())
+	log.Println("sent join query to", grpIP) // TODO remove
+
 	return nil, false
 }
 
