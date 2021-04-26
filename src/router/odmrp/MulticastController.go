@@ -33,7 +33,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 
 	// read mgroup
 	var mgrpContent string
-	if os.Getenv("MTEST") == "1" {
+	if os.Getenv("MTEST") == "1" && ip.String() == "10.0.0.1" {
 		mgrpContent = startMCastTestMode()
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
