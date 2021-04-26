@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -33,8 +32,10 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 
 	// read mgroup
 	var mgrpContent string
-	if os.Getenv("MTEST") == "1" && ip.String() == "10.0.0.1" {
-		mgrpContent = startMCastTestMode()
+	if os.Getenv("MTEST") == "1" {
+		address := "224.0.2.1"
+		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
+		mgrpContent = "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
@@ -112,38 +113,6 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 func (c *MulticastController) Close() {
 	c.jrConn.Close()
 	c.queryFlooder.Close()
-}
-
-func startMCastTestMode() string {
-	log.Print("start in multicast test mode, assuming im working in rings.topo")
-	address := "224.0.2.1"
-	go startSendingMCastMsgs(7, address)
-
-	// return groups members table json
-	return "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
-}
-
-func startSendingMCastMsgs(secs int, address string) {
-	log.Println("started sending multicast dgrams to ", address)
-
-	raddr, err := net.ResolveUDPAddr("udp", address+":8080")
-	if err != nil {
-		log.Panic(err)
-	}
-	conn, err := net.DialUDP("udp", nil, raddr)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer conn.Close()
-
-	for {
-		_, err := conn.Write([]byte("hello world message"))
-		if err != nil {
-			log.Panic(err)
-		}
-
-		time.Sleep(time.Duration(secs) * time.Second)
-	}
 }
 
 func readOptionalJsonFile(path string) string {
