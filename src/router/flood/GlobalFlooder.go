@@ -53,9 +53,12 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 	log.Println("started receiving flooded msgs") // TODO remove
 	for {
 		msg := f.macConn.Read()
-		log.Println("received") // TODO remove
 
-		hdr, payload, ok := UnmarshalFloodedHeader(msg)
+		pd := f.msec.NewPacketDecrypter(msg)
+		encryptedHdr := pd.DecryptN(FloodHeaderLen)
+
+		hdr, _, ok := UnmarshalFloodedHeader(encryptedHdr)
+		log.Println("received", hdr, ok) // TODO remove
 		if !ok {
 			return
 		}
@@ -73,6 +76,8 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 		f.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
 		go func() {
+			payload := pd.DecryptAll()[FloodHeaderLen:]
+
 			if !payloadProcessor(hdr, payload) {
 				return
 			}
