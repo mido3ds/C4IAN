@@ -7,7 +7,15 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
+type SARPType uint8
+
+const (
+	SARPReq SARPType = iota
+	SARPRes
+)
+
 type SARPHeader struct {
+	Type     SARPType
 	IP       net.IP
 	MAC      net.HardwareAddr
 	sendTime int64
@@ -18,12 +26,13 @@ func UnmarshalSARPHeader(packet []byte) (*SARPHeader, bool) {
 	if !ok {
 		return nil, false
 	}
-	// sendTime -> packet[10:18]
-	sendTime := int64(packet[10])<<56 | int64(packet[11])<<48 | int64(packet[12])<<40 | int64(packet[13])<<32 |
-		int64(packet[14])<<24 | int64(packet[15])<<16 | int64(packet[16])<<8 | int64(packet[17])
+	// sendTime -> packet[11:19]
+	sendTime := int64(packet[11])<<56 | int64(packet[12])<<48 | int64(packet[13])<<40 | int64(packet[14])<<32 |
+		int64(packet[15])<<24 | int64(packet[16])<<16 | int64(packet[17])<<8 | int64(packet[18])
 	return &SARPHeader{
-		IP:       net.IP(packet[:4]),
-		MAC:      net.HardwareAddr(packet[4:10]),
+		Type:     SARPType(packet[0]),
+		IP:       net.IP(packet[1:5]),
+		MAC:      net.HardwareAddr(packet[5:11]),
 		sendTime: sendTime,
 	}, true
 }
@@ -31,6 +40,7 @@ func UnmarshalSARPHeader(packet []byte) (*SARPHeader, bool) {
 func (s *SARPHeader) MarshalBinary() []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, sARPTotalLen))
 
+	buf.WriteByte(byte(s.Type))
 	buf.Write(s.IP.To4())
 	buf.Write(s.MAC)
 	for i := 56; i >= 0; i -= 8 {

@@ -20,17 +20,19 @@ func NewLSR() *LSR {
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
+	// log.Println("&&&&&&&&&&&&& Sending LSR")
+	// log.Println(neighborsTable)
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
 func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	srcNeighborsTable, valid := UnmarshalNeighborsTable(payload)
 
-	//log.Println("Received LSR From:", srcIP, srcNeighborsTable)
 	if !valid {
 		log.Panicln("Corrupted LSR packet received")
 	}
-
+	// log.Println("//////////////Received LSR packet from: ", srcIP)
+	// log.Println(srcNeighborsTable)
 	lsr.topology.Update(srcIP, srcNeighborsTable)
 }
 
@@ -41,8 +43,8 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(myIP)
 
-	//log.Println(neighborsTable)
-	//lsr.displaySinkTreeParents(sinkTreeParents)
+	// log.Println(neighborsTable)
+	// lsr.displaySinkTreeParents(sinkTreeParents)
 
 	for dst, parent := range sinkTreeParents {
 		dstIP := UInt32ToIPv4(dst.(uint32))
@@ -113,7 +115,7 @@ func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) 
 			lsr.topology.DisplayVertex(dst.(uint32))
 			continue
 		}
-		log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)),"Parent: ", UInt32ToIPv4(parent.(uint32)))
+		log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)), "Parent: ", UInt32ToIPv4(parent.(uint32)))
 		lsr.topology.DisplayVertex(dst.(uint32))
 	}
 	log.Println("-----------------------------------")

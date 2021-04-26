@@ -58,7 +58,7 @@ func (f *UniForwardTable) Clear() {
 }
 
 func (f *UniForwardTable) String() string {
-	s := "&ForwardTable{\n"
+	s := "&ForwardTable{"
 	for item := range f.m.Iter() {
 		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*UniForwardingEntry).NextHopMAC.String())
 

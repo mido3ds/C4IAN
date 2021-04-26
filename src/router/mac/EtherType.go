@@ -12,8 +12,7 @@ const (
 	JoinQueryEtherType = EtherType(0x0901)
 	JoinReplyEtherType = EtherType(0x0902)
 
-	SARPReqEtherType = EtherType(0x0809)
-	SARPResEtherType = EtherType(0x080A)
+	SARPEtherType = EtherType(0x0809)
 
 	ZIDEtherType = EtherType(0x7031)
 )
