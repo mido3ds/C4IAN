@@ -1,6 +1,7 @@
 package odmrp
 
 import (
+	"fmt"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -101,4 +102,8 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	}
 
 	return &jq, true
+}
+
+func (j *JoinQuery) String() string {
+	return fmt.Sprintf("JoinQuery:seq=%#v, TTL=%#v, SrcIP=%#v, GrpIP=%#v", j.SeqNo, j.TTL, j.SrcIP.String(), j.GrpIP.String())
 }

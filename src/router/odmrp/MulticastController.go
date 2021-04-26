@@ -60,6 +60,7 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
+	log.Println("MulticastController started listening for control packets from the forwarder")
 	go c.queryFlooder.ReceiveFloodedMsgs(c.onRecvJoinQuery)
 	go c.recvJoinReplyMsgs(ft)
 }

@@ -76,6 +76,7 @@ func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, [
 			}
 
 			f.macConn.Write(f.msec.Encrypt(msg), BroadcastMACAddr)
+			log.Println(hdr.String())
 		}()
 	}
 }
