@@ -35,7 +35,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
 		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
-		mgrpContent = "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
+		mgrpContent = "{\"" + address + "\": [\"10.0.0.14\", \"10.0.0.15\", \"10.0.0.16\"]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
@@ -91,13 +91,28 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	if !valid {
 		log.Panicln("Corrupted JoinQuery msg received")
 	}
-	log.Println(jq)
+
+	if c.imInDests(jq) {
+		log.Println("im in dests! :'D") // TODO: remove this
+	} else {
+		log.Println("im NOT in dests :(") // TODO: remove this
+	}
 
 	jq.TTL--
 	if jq.TTL < 0 {
 		return nil, false
 	}
 	return jq.MarshalBinary(), true
+}
+
+func (c *MulticastController) imInDests(jq *JoinQuery) bool {
+	for i := 0; i < len(jq.Dests); i++ {
+		if c.ip.Equal(jq.Dests[i]) {
+			log.Println(c.ip, jq.Dests[i])
+			return true
+		}
+	}
+	return false
 }
 
 func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
