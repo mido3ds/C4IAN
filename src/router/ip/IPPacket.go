@@ -58,6 +58,7 @@ func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 func IPv4DecrementTTL(packet []byte) {
 	ttl := int8(packet[8])
 	packet[8] = byte(ttl) - 1
+	// TODO: Update checksum
 }
 
 func ipv4Checksum(b []byte) uint16 {

@@ -17,9 +17,9 @@ type LSR struct {
 	dirtyTopology  bool
 }
 
-func NewLSR() *LSR {
+func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
 	t := NewTopology()
-	return &LSR{topology: t}
+	return &LSR{myIP: myIP, neighborsTable: neighborsTable, topology: t}
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
@@ -44,6 +44,7 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 	if !lsr.dirtyTopology {
 		return
 	}
+
 	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(lsr.myIP)
 

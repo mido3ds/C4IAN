@@ -92,14 +92,14 @@ func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
 }
 
 func (t *Topology) DisplayVertex(id goraph.ID) {
-	vertex,_ := t.g.GetVertex(id)
+	vertex, _ := t.g.GetVertex(id)
 	s := ""
 	if vertex == nil {
-		s += fmt.Sprintf("Vertex: %v isn't existd\n", id)
+		s += fmt.Sprintf("Vertex: %v isn't existd\n", UInt32ToIPv4(id.(uint32)))
 	} else {
 		s += fmt.Sprintf("Vertex: %v, ", UInt32ToIPv4(vertex.(*myVertex).id))
 		for to, cost := range vertex.(*myVertex).outTo {
-			s += fmt.Sprintf("Edge to %v with cost %v, ",UInt32ToIPv4(to), cost)
+			s += fmt.Sprintf("Edge to %v with cost %v, ", UInt32ToIPv4(to), cost)
 		}
 
 		for from, cost := range vertex.(*myVertex).outTo {
@@ -111,7 +111,7 @@ func (t *Topology) DisplayVertex(id goraph.ID) {
 }
 
 func (t *Topology) DisplayEdge(fromID goraph.ID, toID goraph.ID) {
-	edge,_ := t.g.GetEdge(fromID, toID)
+	edge, _ := t.g.GetEdge(fromID, toID)
 	s := ""
 	t.g.GetEdge(fromID, toID)
 	if edge == nil {

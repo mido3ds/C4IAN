@@ -41,7 +41,7 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
 	}
 
-	lsr := NewLSR()
+	lsr := NewLSR(ip, neighborsTable)
 
 	log.Println("initalized controller")
 

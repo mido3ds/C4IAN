@@ -96,19 +96,20 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		pd := f.msec.NewPacketDecrypter(packet)
 		zid, valid := UnmarshalZIDHeader(pd.DecryptN(ZIDHeaderLen))
 		if !valid {
-			log.Println("Received a packet with invalid ZID header")
+			log.Println("Received a packet with an invalid ZID header")
 			continue
 		}
 
 		if zid.IsControlPacket() {
-			packet := pd.DecryptAll()
-			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: packet[ZIDHeaderLen:]}
+			decryptedPacket := pd.DecryptAll()
+			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: decryptedPacket[ZIDHeaderLen:]}
 			continue
 		}
 
 		// TODO: check if this is the destZoneID before decrypting IP header
 		ip, valid := UnmarshalIPHeader(pd.DecryptN(IPv4HeaderLen))
 		if !valid {
+			log.Println("Received a packet with an invalid IP header")
 			continue
 		}
 
@@ -129,7 +130,6 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 				log.Println("Destination unreachable:", ip.DestIP)
 				continue
 			}
-
 			// hand it directly to the interface
 			f.zidMacConn.Write(packet, e.NextHopMAC)
 		}
