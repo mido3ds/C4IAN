@@ -85,7 +85,6 @@ func (c *MulticastController) Start(ft *MultiForwardTable) {
 }
 
 func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
-	// TODO: reply with join reply
 	// TODO: store msg in cache
 	jq, valid := UnmarshalJoinQuery(payload)
 	if !valid {
@@ -94,8 +93,9 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 
 	if c.imInDests(jq) {
 		log.Println("im in dests! :'D") // TODO: remove this
-	} else {
-		log.Println("im NOT in dests :(") // TODO: remove this
+		// this is a dest
+		// TODO: reply with join reply
+		return nil, false
 	}
 
 	jq.TTL--
@@ -108,7 +108,6 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 func (c *MulticastController) imInDests(jq *JoinQuery) bool {
 	for i := 0; i < len(jq.Dests); i++ {
 		if c.ip.Equal(jq.Dests[i]) {
-			log.Println(c.ip, jq.Dests[i])
 			return true
 		}
 	}
