@@ -84,7 +84,7 @@ func (c *MulticastController) Start(ft *MultiForwardTable) {
 	go c.recvJoinReplyMsgs(ft)
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) bool {
+func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
 	// TODO: reply with join reply
 	// TODO: store msg in cache
 	jq, valid := UnmarshalJoinQuery(payload)
@@ -92,8 +92,12 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		log.Panicln("Corrupted JoinQuery msg received")
 	}
 	log.Println(jq)
-	// TODO: continue or stop flooding?
-	return true
+
+	jq.TTL--
+	if jq.TTL < 0 {
+		return nil, false
+	}
+	return jq.MarshalBinary(), true
 }
 
 func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
