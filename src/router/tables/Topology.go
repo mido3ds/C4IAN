@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/starwander/goraph"
 )
 
 type Topology struct {
-	g *goraph.Graph
+	g    *goraph.Graph
+	lock sync.RWMutex
 }
 
 func NewTopology() *Topology {
@@ -49,6 +51,9 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 }
 
 func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	
 	outToEdges := make(map[uint32]float64)
 
 	for n := range srcNeighbors.m.Iter() {
