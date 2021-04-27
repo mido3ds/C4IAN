@@ -17,9 +17,11 @@ type MulticastController struct {
 	queryFlooder *GlobalFlooder
 	jrConn       *MACLayerConn
 	ip           net.IP
+	mac          net.HardwareAddr
+	jrFTable     *jrForwardTable
 }
 
-func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
+func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
 	queryFlooder, err := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 	if err != nil {
 		log.Panic("failed to initiate query flooder, err: ", err)
@@ -47,6 +49,8 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 		queryFlooder: queryFlooder,
 		jrConn:       jrConn,
 		ip:           ip,
+		mac:          mac,
+		jrFTable:     newJRForwardTable(),
 	}, nil
 }
 
@@ -66,11 +70,12 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 		log.Panic("must have the members!")
 	}
 	jq := JoinQuery{
-		SeqNo: 1,
-		TTL:   ODMRPDefaultTTL,
-		SrcIP: c.ip,
-		GrpIP: grpIP,
-		Dests: members,
+		SeqNo:   1,
+		TTL:     ODMRPDefaultTTL,
+		SrcIP:   c.ip,
+		PrevHop: c.mac,
+		GrpIP:   grpIP,
+		Dests:   members,
 	}
 	c.queryFlooder.Flood(jq.MarshalBinary())
 	log.Println("sent join query to", grpIP) // TODO remove
@@ -85,23 +90,29 @@ func (c *MulticastController) Start(ft *MultiForwardTable) {
 }
 
 func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
-	// TODO: store msg in cache
 	jq, valid := UnmarshalJoinQuery(payload)
+	log.Println(jq) // TODO: remove this
 	if !valid {
-		log.Panicln("Corrupted JoinQuery msg received")
-	}
-
-	if c.imInDests(jq) {
-		log.Println("im in dests! :'D") // TODO: remove this
-		// this is a dest
-		// TODO: reply with join reply
-		return nil, false
+		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
 
 	jq.TTL--
 	if jq.TTL < 0 {
 		return nil, false
 	}
+
+	// register jq for its jr to get back to src
+	// jr's nextHop is this jq's prevHop
+	c.jrFTable.Set(jq.SrcIP, &jrForwardEntry{seqNum: jq.SeqNo, nextHop: jq.PrevHop})
+
+	jq.PrevHop = c.mac
+
+	if c.imInDests(jq) {
+		log.Println("im in dests! :'D") // TODO: remove this
+		// TODO: reply with join reply
+		return nil, false
+	}
+
 	return jq.MarshalBinary(), true
 }
 

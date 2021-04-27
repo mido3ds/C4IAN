@@ -16,11 +16,12 @@ const (
 )
 
 type JoinQuery struct {
-	SeqNo uint64
-	TTL   int8
-	SrcIP net.IP
-	GrpIP net.IP
-	Dests []net.IP
+	SeqNo   uint64
+	TTL     int8
+	SrcIP   net.IP
+	PrevHop net.HardwareAddr
+	GrpIP   net.IP
+	Dests   []net.IP
 }
 
 func (j *JoinQuery) MarshalBinary() []byte {
@@ -28,7 +29,7 @@ func (j *JoinQuery) MarshalBinary() []byte {
 	seqNoSize := 8
 
 	destsSize := netIPSize * len(j.Dests)
-	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + destsSize
+	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + netIPSize + destsSize
 	payload := make([]byte, totalSize+extraBytes)
 	// 0:2 => number of Dests
 	payload[0] = byte(uint16(len(j.Dests)) >> bitsInByte)
@@ -44,6 +45,10 @@ func (j *JoinQuery) MarshalBinary() []byte {
 	}
 	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 		payload[start] = byte(IPv4ToUInt32(j.SrcIP) >> shift)
+		start++
+	}
+	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(hwAddrToUInt32(net.IP(j.PrevHop)) >> shift)
 		start++
 	}
 	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
@@ -71,7 +76,7 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	seqNoSize := int64(8)
 	lenOfDests := uint16(b[0])<<bitsInByte | uint16(b[1])
 	destsSize := netIPSize * int64(lenOfDests)
-	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + destsSize
+	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + netIPSize + destsSize
 
 	var jq JoinQuery
 	start := extraBytes
@@ -92,6 +97,8 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	}
 	jq.SrcIP = net.IP(b[start : start+netIPSize])
 	start += netIPSize
+	jq.PrevHop = net.HardwareAddr(b[start : start+netIPSize])
+	start += netIPSize
 	jq.GrpIP = net.IP(b[start : start+netIPSize])
 	start += netIPSize
 
@@ -105,5 +112,9 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 }
 
 func (j *JoinQuery) String() string {
-	return fmt.Sprintf("JoinQuery:seq=%#v, TTL=%#v, SrcIP=%#v, GrpIP=%#v", j.SeqNo, j.TTL, j.SrcIP.String(), j.GrpIP.String())
+	return fmt.Sprintf("JoinQuery:seq=%#v, TTL=%#v, SrcIP=%#v, PrevHop=%#v, GrpIP=%#v", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
+}
+
+func hwAddrToUInt32(ip net.IP) uint32 {
+	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
 }
