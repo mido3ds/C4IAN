@@ -39,15 +39,11 @@ func (edge *myEdge) Get() (goraph.ID, goraph.ID, float64) {
 }
 
 func (vertex *myVertex) Edges() (edges []goraph.Edge) {
-	edges = make([]goraph.Edge, len(vertex.outTo)+len(vertex.inFrom))
-	i := 0
 	for to, weight := range vertex.outTo {
-		edges[i] = &myEdge{vertex.id, to, weight}
-		i++
+		edges = append(edges, &myEdge{vertex.id, to, weight})
 	}
 	for from, weight := range vertex.inFrom {
-		edges[i] = &myEdge{from, vertex.id, weight}
-		i++
+		edges = append(edges, &myEdge{from, vertex.id, weight})
 	}
 	return
 }
