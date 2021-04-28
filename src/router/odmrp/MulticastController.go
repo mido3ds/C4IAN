@@ -103,30 +103,26 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		return nil, false
 	}
 
-	// register jq for its jr to get back to src
+	if c.imInDests(jq) {
+		log.Println("im in dests! :'D") // TODO: remove this
+
+		// send back join reply to prevHop
+		jr := &JoinReply{
+			SeqNo:  jq.SeqNo,
+			SrcIPs: []net.IP{jq.SrcIP},
+			GrpIPs: []net.IP{jq.GrpIP},
+		}
+		encJR := c.msec.Encrypt(jr.MarshalBinary())
+		c.jrConn.Write(encJR, jq.PrevHop)
+
+		return nil, false
+	}
+
 	// jr's nextHop is this jq's prevHop
 	c.jrFTable.Set(jq.SrcIP, &jrForwardEntry{seqNum: jq.SeqNo, nextHop: jq.PrevHop})
 
+	// im the prev hop for the next one
 	jq.PrevHop = c.mac
-
-	if c.imInDests(jq) {
-		log.Println("im in dests! :'D") // TODO: remove this
-		// TODO: reply with join reply
-		jrEntry, ok := c.jrFTable.Get(jq.SrcIP)
-		if ok && jrEntry.seqNum <= jq.SeqNo {
-			jr := &JoinReply{
-				SeqNo:  jq.SeqNo,
-				SrcIPs: []net.IP{jq.SrcIP},
-				GrpIPs: []net.IP{jq.GrpIP},
-			}
-			msg := jr.MarshalBinary()
-			entryJrFTable, ok := c.jrFTable.Get(jq.SrcIP)
-			if ok {
-				c.jrConn.Write(c.msec.Encrypt(msg), entryJrFTable.nextHop)
-			}
-		}
-		return nil, false
-	}
 
 	return jq.MarshalBinary(), true
 }
