@@ -4,61 +4,33 @@ import (
 	"net"
 )
 
-type IPHeader struct {
-	Version byte
-	DestIP  net.IP
-	TTL     int8
-}
-
 const (
 	IPv4HeaderLen = 20
 )
 
+type IPHeader struct {
+	Version byte
+	DestIP  net.IP
+}
+
 func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
-	var ip net.IP
-	version := byte(buffer[0]) >> 4
-	var ttl int8
-
-	valid := false
-	if version == 4 {
-		if len(buffer) < IPv4HeaderLen {
-			return nil, false
-		}
-
-		// DONT call net.IPv4 here, as it puts the 4 bytes
-		// at the end of 16 byte array
-		// while we expect to have only 4 bytes
-		ip = []byte{buffer[16], buffer[17], buffer[18], buffer[19]}
-
-		ttl = int8(buffer[8])
-		valid = ipv4Checksum(buffer) == 0 && ttl > 0
-	} else if version == 6 {
-		if len(buffer) < 40 {
-			return nil, false
-		}
-		ip = buffer[24:40]
-		ttl = int8(buffer[7])
-		valid = ttl > 0
-	} else {
+	if len(buffer) < IPv4HeaderLen {
 		return nil, false
 	}
 
-	// actually it's ttl>0, but there is an edge case
-	// when this is the destination and it's 0, it should be processed
-	// this is not spec complient to make it easy to write the function
-	valid = valid && ttl >= 0
+	// Only IPv4 is supported
+	version := byte(buffer[0]) >> 4
+	if version != 4 {
+		return nil, false
+	}
+
+	ip := net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19]).To4()
+	valid := ipv4Checksum(buffer) == 0
 
 	return &IPHeader{
 		Version: version,
 		DestIP:  ip,
-		TTL:     ttl,
 	}, valid
-}
-
-func IPv4DecrementTTL(packet []byte) {
-	ttl := int8(packet[8])
-	packet[8] = byte(ttl) - 1
-	// TODO: Update checksum
 }
 
 func ipv4Checksum(b []byte) uint16 {

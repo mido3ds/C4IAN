@@ -115,15 +115,12 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 
 		if imDestination(f.ip, ip.DestIP, zid.DstZID) { // i'm destination,
 			ippacket := pd.DecryptAll()[ZIDHeaderLen:]
-
 			// receive message by injecting it in loopback
 			err := f.ipConn.Write(ippacket)
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
 		} else { // i'm a forwarder
-			IPv4DecrementTTL(packet[ZIDHeaderLen:])
-
 			e, reachable := getUnicastNextHop(ip.DestIP, f)
 			if !reachable {
 				// TODO: Should we do anything else here?
@@ -162,8 +159,6 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		}
 
 		// even if im destination, i may forward it
-		IPv4DecrementTTL(packet)
-
 		es, ok := f.MultiForwTable.Get(ip.DestIP)
 		if !ok {
 			// TODO: call controller
