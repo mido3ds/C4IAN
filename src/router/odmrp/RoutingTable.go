@@ -54,7 +54,7 @@ func (r *RoutingTable) Set(srcIP net.IP, entry *routingEntry) {
 	}
 
 	// Start new Timer
-	fireFunc := fireTimer(srcIP, r)
+	fireFunc := fireRoutingTableTimer(srcIP, r)
 	entry.ageTimer = time.AfterFunc(RTE_TIMEOUT*time.Microsecond, fireFunc)
 	r.m.Set(IPv4ToUInt32(srcIP), entry)
 }
@@ -84,12 +84,12 @@ func (r *RoutingTable) String() string {
 	return s
 }
 
-func fireTimerHelper(srcIP net.IP, r *RoutingTable) {
+func fireRoutingTableTimerHelper(srcIP net.IP, r *RoutingTable) {
 	r.Del(srcIP)
 }
 
-func fireTimer(srcIP net.IP, r *RoutingTable) func() {
+func fireRoutingTableTimer(srcIP net.IP, r *RoutingTable) func() {
 	return func() {
-		fireTimerHelper(srcIP, r)
+		fireRoutingTableTimerHelper(srcIP, r)
 	}
 }
