@@ -119,7 +119,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	}
 
 	// jr's nextHop is this jq's prevHop
-	c.routingTable.Set(jq.SrcIP, &jrForwardEntry{nextHop: jq.PrevHop})
+	c.routingTable.Set(jq.SrcIP, &routingEntry{nextHop: jq.PrevHop})
 
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
