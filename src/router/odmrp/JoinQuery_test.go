@@ -64,6 +64,11 @@ func TestJoinQueryTtlLessThanZero(t *testing.T) {
 	jq.TTL = -1
 	jq.SrcIP = net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
 	jq.GrpIP = net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
+	prevhop, err := net.ParseMAC("00:26:bb:15:31:dd")
+	if err != nil {
+		t.Error(err)
+	}
+	jq.PrevHop = prevhop
 	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
 
 	payload := jq.MarshalBinary()
