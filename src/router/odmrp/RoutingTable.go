@@ -10,7 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const RTE_TIMEOUT = 960
+const RTE_TIMEOUT = 960 * time.Microsecond
 
 // RoutingTable is lock-free thread-safe hash table
 // for multicast forwarding
@@ -55,13 +55,13 @@ func (r *RoutingTable) Set(srcIP net.IP, entry *routingEntry) {
 
 	// Start new Timer
 	fireFunc := fireRoutingTableTimer(srcIP, r)
-	entry.ageTimer = time.AfterFunc(RTE_TIMEOUT*time.Microsecond, fireFunc)
+	entry.ageTimer = time.AfterFunc(RTE_TIMEOUT, fireFunc)
 	r.m.Set(IPv4ToUInt32(srcIP), entry)
 }
 
 // Del silently fails if key doesn't exist
-func (r *RoutingTable) Del(src net.IP) {
-	r.m.Del(IPv4ToUInt32(src))
+func (r *RoutingTable) Del(srcIP net.IP) {
+	r.m.Del(IPv4ToUInt32(srcIP))
 }
 
 func (r *RoutingTable) Len() int {

@@ -10,7 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const MTE_TIMEOUT = 960
+const MTE_TIMEOUT = 960 * time.Microsecond
 
 // MemberTable is lock-free thread-safe hash table
 // for multicast forwarding
@@ -31,8 +31,8 @@ func newMemberTable() *MemberTable {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (mt *MemberTable) Get(src net.IP) (*memberEntry, bool) {
-	v, ok := mt.m.Get(IPv4ToUInt32(src))
+func (mt *MemberTable) Get(srcIP net.IP) (*memberEntry, bool) {
+	v, ok := mt.m.Get(IPv4ToUInt32(srcIP))
 	if !ok {
 		return nil, false
 	}
@@ -55,13 +55,13 @@ func (mt *MemberTable) Set(srcIP net.IP, entry *memberEntry) {
 
 	// Start new Timer
 	fireFunc := fireMemberTableTimer(srcIP, mt)
-	entry.ageTimer = time.AfterFunc(MTE_TIMEOUT*time.Microsecond, fireFunc)
+	entry.ageTimer = time.AfterFunc(MTE_TIMEOUT, fireFunc)
 	mt.m.Set(IPv4ToUInt32(srcIP), entry)
 }
 
 // Del silently fails if key doesn't exist
-func (mt *MemberTable) Del(src net.IP) {
-	mt.m.Del(IPv4ToUInt32(src))
+func (mt *MemberTable) Del(srcIP net.IP) {
+	mt.m.Del(IPv4ToUInt32(srcIP))
 }
 
 func (mt *MemberTable) Len() int {
