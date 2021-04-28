@@ -53,7 +53,7 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	
+
 	outToEdges := make(map[uint32]float64)
 
 	for n := range srcNeighbors.m.Iter() {
@@ -88,6 +88,8 @@ func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 }
 
 func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
 	_, parents, _ := t.g.Dijkstra(IPv4ToUInt32(myIP))
 	return parents
 }
