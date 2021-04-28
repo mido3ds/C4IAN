@@ -93,34 +93,44 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
-		pd := f.msec.NewPacketDecrypter(packet)
-		zid, valid := UnmarshalZIDHeader(pd.DecryptN(ZIDHeaderLen))
+		zid, valid := UnmarshalZIDHeader(f.msec.Decrypt(packet[:ZIDHeaderLen]))
 		if !valid {
 			log.Println("Received a packet with an invalid ZID header")
 			continue
 		}
 
 		if zid.IsControlPacket() {
-			decryptedPacket := pd.DecryptAll()
-			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: decryptedPacket[ZIDHeaderLen:]}
+			decrPayload := f.msec.Decrypt(packet[ZIDHeaderLen:])
+			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: decrPayload}
 			continue
 		}
 
 		// TODO: check if this is the destZoneID before decrypting IP header
-		ip, valid := UnmarshalIPHeader(pd.DecryptN(IPv4HeaderLen))
+		ipHdr := f.msec.Decrypt(packet[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+		ip, valid := UnmarshalIPHeader(ipHdr)
 		if !valid {
 			log.Println("Received a packet with an invalid IP header")
 			continue
 		}
 
 		if imDestination(f.ip, ip.DestIP, zid.DstZID) {
-			ippacket := pd.DecryptAll()[ZIDHeaderLen:]
+			ipPayload := f.msec.Decrypt(packet[ZIDHeaderLen+IPv4HeaderLen:])
+			ipPacket := append(ipHdr, ipPayload...)
+
 			// receive message by injecting it in loopback
-			err := f.ipConn.Write(ippacket)
+			err := f.ipConn.Write(ipPacket)
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
 		} else { // i'm a forwarder
+			if valid := IPv4DecrementTTL(ipHdr); !valid {
+				log.Println("ttl < 0, drop packet")
+				continue
+			}
+
+			// re-encrypt ip hdr
+			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+
 			e, reachable := getUnicastNextHop(ip.DestIP, f)
 			if !reachable {
 				// TODO: Should we do anything else here?
@@ -144,19 +154,30 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
-		pd := f.msec.NewPacketDecrypter(packet)
-		ip, valid := UnmarshalIPHeader(pd.DecryptN(IPv4HeaderLen))
+		ipHdr := f.msec.Decrypt(packet[:IPv4HeaderLen])
+		ip, valid := UnmarshalIPHeader(ipHdr)
 		if !valid {
 			continue
 		}
 
 		if imInMulticastGrp(ip.DestIP) { // i'm destination,
+			ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
+			ipPacket := append(ipHdr, ipPayload...)
+
 			// receive message by injecting it in loopback
-			err := f.ipConn.Write(pd.DecryptAll())
+			err := f.ipConn.Write(ipPacket)
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
 		}
+
+		if valid := IPv4DecrementTTL(ipHdr); !valid {
+			log.Println("ttl < 0, drop packet")
+			continue
+		}
+
+		// re-encrypt ip hdr
+		copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
 
 		// even if im destination, i may forward it
 		es, ok := f.MultiForwTable.Get(ip.DestIP)

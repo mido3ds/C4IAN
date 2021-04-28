@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
@@ -22,14 +23,12 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
-	buffer.Write(zid.MarshalBinary())
-	buffer.Write(packet)
-
-	// encrypt
-	encryptedPacket := f.msec.Encrypt(buffer.Bytes())
+	buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
+	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
+	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
 
 	// write to device driver
-	f.zidMacConn.Write(encryptedPacket, e.NextHopMAC)
+	f.zidMacConn.Write(buffer.Bytes(), e.NextHopMAC)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
@@ -41,8 +40,11 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 		}
 	}
 
-	// encrypt
-	encryptedPacket := f.msec.Encrypt(packet)
+	// build packet
+	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
+	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
+	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
+	encryptedPacket := buffer.Bytes()
 
 	// write to device driver
 	for i := 0; i < len(es.NextHopMACs); i++ {
@@ -51,7 +53,12 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 }
 
 func (f *Forwarder) sendBroadcast(packet []byte) {
+	// build packet
+	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
+	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
+	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
+
 	// write to device driver
 	// TODO: for now ethernet broadcast
-	f.zidMacConn.Write(f.msec.Encrypt(packet), BroadcastMACAddr)
+	f.zidMacConn.Write(buffer.Bytes(), BroadcastMACAddr)
 }

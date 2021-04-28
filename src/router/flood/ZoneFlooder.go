@@ -41,46 +41,48 @@ func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte)
 	}, nil
 }
 
-func (flooder *ZoneFlooder) Flood(msg []byte) {
-	hdr := FloodHeader{SrcIP: flooder.ip, SeqNum: flooder.seqNumber}
-	msg = append(hdr.MarshalBinary(), msg...)
+func (f *ZoneFlooder) Flood(msg []byte) {
+	f.seqNumber++
 
-	flooder.seqNumber++
+	zidHdr := ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID}
+	encZidHdr := f.msec.Encrypt(zidHdr.MarshalBinary())
 
-	// add ZID Header
-	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID}
-	msg = append(zid.MarshalBinary(), msg...)
+	fldHdr := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
+	encFloodedMsg := f.msec.Encrypt(append(fldHdr.MarshalBinary(), msg...))
 
-	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
+	f.macConn.Write(append(encZidHdr, encFloodedMsg...), BroadcastMACAddr)
 }
 
-func (flooder *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+func (f *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
 	hdr, payload, ok := UnmarshalFloodedHeader(msg)
 	if !ok {
 		return
 	}
 
-	if net.IP.Equal(hdr.SrcIP, flooder.ip) {
+	if net.IP.Equal(hdr.SrcIP, f.ip) {
 		return
 	}
 
-	tableSeq, exist := flooder.fTable.Get(hdr.SrcIP)
+	tableSeq, exist := f.fTable.Get(hdr.SrcIP)
 
 	if exist && hdr.SeqNum <= tableSeq {
 		return
 	}
 
-	flooder.fTable.Set(hdr.SrcIP, hdr.SeqNum)
+	f.fTable.Set(hdr.SrcIP, hdr.SeqNum)
 
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
 	go payloadProcessor(hdr.SrcIP, payload)
 
-	// add ZID Header
-	zid := &ZIDHeader{ZLen: flooder.zlen, PacketType: LSRFloodPacket, SrcZID: flooder.zoneID}
-	msg = append(zid.MarshalBinary(), msg...)
+	// re-wrap with zid header
+	// TODO: should i use the ZID header that came with it?
+	zidHdr := ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID}
+	encZidHdr := f.msec.Encrypt(zidHdr.MarshalBinary())
+
+	encFloodedMsg := f.msec.Encrypt(msg)
 
 	// reflood the msg
-	flooder.macConn.Write(flooder.msec.Encrypt(msg), BroadcastMACAddr)
+	f.macConn.Write(append(encZidHdr, encFloodedMsg...), BroadcastMACAddr)
 }
 
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {

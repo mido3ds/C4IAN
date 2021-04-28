@@ -9,17 +9,10 @@ import (
 	"github.com/AkihiroSuda/go-netfilter-queue"
 )
 
-var (
-	loopbackRawAddrIPv4 = syscall.SockaddrInet4{
-		Port: 0,
-		Addr: [4]byte{127, 0, 0, 1},
-	}
-
-	loopbackRawAddrIPv6 = syscall.SockaddrInet6{
-		Port: 0,
-		Addr: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	}
-)
+var loopbackRawAddrIPv4 = syscall.SockaddrInet4{
+	Port: 0,
+	Addr: [4]byte{127, 0, 0, 1},
+}
 
 type IPLayerConn struct {
 	fd4     int
@@ -46,6 +39,7 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 	}, nil
 }
 
+// TODO: don't return error, panic internally instead
 func (c *IPLayerConn) Write(packet []byte) error {
 	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
 }
