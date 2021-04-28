@@ -100,7 +100,7 @@ func (r *Router) Start() {
 
 	// start controllers
 	go r.sarpCont.Start()
-	// go r.unicCont.Start(r.forwarder.UniForwTable)
+	go r.unicCont.Start(r.forwarder.UniForwTable)
 	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start(r.unicCont.InputChannel)
 }
