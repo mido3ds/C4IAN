@@ -101,6 +101,17 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	return &jr, true
 }
 
+func prettyIPs(ips []net.IP) string {
+	s := "[]net.IP{"
+	for i := 0; i < len(ips); i++ {
+		s += fmt.Sprintf("%v", ips[i].String())
+		if i != len(ips)-1 {
+			s += ", "
+		}
+	}
+	return s + "}"
+}
+
 func (j *JoinReply) String() string {
-	return fmt.Sprintf("JoinReply:seq=%#v,SrcIPs=%#v, GrpIPs=%#v", j.SeqNo, j.SrcIPs, j.GrpIPs)
+	return fmt.Sprintf("JoinReply { SeqNo: %d, SrcIPs: %v, GrpIPs: %v, Forwarders: %v }", j.SeqNo, prettyIPs(j.SrcIPs), prettyIPs(j.GrpIPs), prettyIPs(j.Forwarders))
 }

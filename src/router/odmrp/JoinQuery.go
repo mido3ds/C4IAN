@@ -112,7 +112,7 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 }
 
 func (j *JoinQuery) String() string {
-	return fmt.Sprintf("JoinQuery:seq=%#v, TTL=%#v, SrcIP=%#v, PrevHop=%#v, GrpIP=%#v", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
+	return fmt.Sprintf("JoinQuery { SeqNo: %d, TTL: %#v, SrcIP: %v, PrevHop: %v, GrpIP: %v }", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
 }
 
 func hwAddrToUInt64(a net.HardwareAddr) uint64 {
