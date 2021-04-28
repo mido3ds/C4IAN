@@ -11,8 +11,8 @@ import (
 const (
 	ODMRPDefaultTTL = 100
 	ttlSize         = 1
-	netIPSize       = 4
 	bitsInByte      = 8
+	hwAddrLen       = 6
 )
 
 type JoinQuery struct {
@@ -28,8 +28,8 @@ func (j *JoinQuery) MarshalBinary() []byte {
 	extraBytes := 4
 	seqNoSize := 8
 
-	destsSize := netIPSize * len(j.Dests)
-	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + netIPSize + destsSize
+	destsSize := net.IPv4len * len(j.Dests)
+	totalSize := seqNoSize + ttlSize + net.IPv4len + hwAddrLen + net.IPv4len + destsSize
 	payload := make([]byte, totalSize+extraBytes)
 	// 0:2 => number of Dests
 	payload[0] = byte(uint16(len(j.Dests)) >> bitsInByte)
@@ -43,20 +43,20 @@ func (j *JoinQuery) MarshalBinary() []byte {
 		payload[start] = byte(j.TTL >> shift)
 		start++
 	}
-	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 		payload[start] = byte(IPv4ToUInt32(j.SrcIP) >> shift)
 		start++
 	}
-	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-		payload[start] = byte(hwAddrToUInt32(net.IP(j.PrevHop)) >> shift)
+	for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(hwAddrToUInt64(j.PrevHop) >> shift)
 		start++
 	}
-	for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 		payload[start] = byte(IPv4ToUInt32(j.GrpIP) >> shift)
 		start++
 	}
 	for i := 0; i < len(j.Dests); i++ {
-		for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 			payload[start] = byte(IPv4ToUInt32(j.Dests[i]) >> shift)
 			start++
 		}
@@ -75,8 +75,8 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	extraBytes := int64(4)
 	seqNoSize := int64(8)
 	lenOfDests := uint16(b[0])<<bitsInByte | uint16(b[1])
-	destsSize := netIPSize * int64(lenOfDests)
-	totalSize := seqNoSize + ttlSize + netIPSize + netIPSize + netIPSize + destsSize
+	destsSize := net.IPv4len * int64(lenOfDests)
+	totalSize := seqNoSize + ttlSize + net.IPv4len + hwAddrLen + net.IPv4len + destsSize
 
 	var jq JoinQuery
 	start := extraBytes
@@ -95,17 +95,17 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	if csum != BasicChecksum(b[extraBytes:totalSize+extraBytes]) {
 		return nil, false
 	}
-	jq.SrcIP = net.IP(b[start : start+netIPSize])
-	start += netIPSize
-	jq.PrevHop = net.HardwareAddr(b[start : start+netIPSize])
-	start += netIPSize
-	jq.GrpIP = net.IP(b[start : start+netIPSize])
-	start += netIPSize
+	jq.SrcIP = net.IP(b[start : start+net.IPv4len])
+	start += net.IPv4len
+	jq.PrevHop = net.HardwareAddr(b[start : start+hwAddrLen])
+	start += hwAddrLen
+	jq.GrpIP = net.IP(b[start : start+net.IPv4len])
+	start += net.IPv4len
 
 	jq.Dests = make([]net.IP, lenOfDests)
 	for i := 0; i < len(jq.Dests); i++ {
-		jq.Dests[i] = net.IP(b[start : start+netIPSize])
-		start += netIPSize
+		jq.Dests[i] = net.IP(b[start : start+net.IPv4len])
+		start += net.IPv4len
 	}
 
 	return &jq, true
@@ -115,6 +115,6 @@ func (j *JoinQuery) String() string {
 	return fmt.Sprintf("JoinQuery:seq=%#v, TTL=%#v, SrcIP=%#v, PrevHop=%#v, GrpIP=%#v", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
 }
 
-func hwAddrToUInt32(ip net.IP) uint32 {
-	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+func hwAddrToUInt64(a net.HardwareAddr) uint64 {
+	return uint64(a[0])<<40 | uint64(a[1])<<32 | uint64(a[2])<<24 | uint64(a[3])<<16 | uint64(a[4])<<8 | uint64(a[5])
 }

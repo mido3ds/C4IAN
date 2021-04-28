@@ -44,7 +44,7 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	if !net.IP.Equal(jq.GrpIP, newJq.GrpIP) {
 		t.Errorf("grp ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
 	}
-	if bytes.Equal(jq.PrevHop, newJq.PrevHop) {
+	if !bytes.Equal(jq.PrevHop, newJq.PrevHop) {
 		t.Errorf("prev hops not equal: %#v != %#v", jq.PrevHop, newJq.PrevHop)
 	}
 	for i := 0; i < len(jq.Dests); i++ {
