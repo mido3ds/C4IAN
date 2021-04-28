@@ -19,6 +19,7 @@ type MulticastController struct {
 	ip           net.IP
 	mac          net.HardwareAddr
 	jrFTable     *jrForwardTable
+	msec         *MSecLayer
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -51,6 +52,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		ip:           ip,
 		mac:          mac,
 		jrFTable:     newJRForwardTable(),
+		msec:         msec,
 	}, nil
 }
 
@@ -110,6 +112,19 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	if c.imInDests(jq) {
 		log.Println("im in dests! :'D") // TODO: remove this
 		// TODO: reply with join reply
+		jrEntry, ok := c.jrFTable.Get(jq.SrcIP)
+		if ok && jrEntry.seqNum <= jq.SeqNo {
+			jr := &JoinReply{
+				SeqNo:  jq.SeqNo,
+				SrcIPs: []net.IP{jq.SrcIP},
+				GrpIPs: []net.IP{jq.GrpIP},
+			}
+			msg := jr.MarshalBinary()
+			entryJrFTable, ok := c.jrFTable.Get(jq.SrcIP)
+			if ok {
+				c.jrConn.Write(c.msec.Encrypt(msg), entryJrFTable.nextHop)
+			}
+		}
 		return nil, false
 	}
 
@@ -128,8 +143,11 @@ func (c *MulticastController) imInDests(jq *JoinQuery) bool {
 func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 	for {
 		msg := c.jrConn.Read()
+		log.Println("Recieved Join Reply!!")
+		pd := c.msec.NewPacketDecrypter(msg)
+		decryptedJR := pd.DecryptAll()
 
-		jr, valid := UnmarshalJoinReply(msg)
+		jr, valid := UnmarshalJoinReply(decryptedJR)
 		if !valid {
 			log.Panicln("Corrupted JoinReply msg received")
 		}

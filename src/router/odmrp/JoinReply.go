@@ -1,6 +1,7 @@
 package odmrp
 
 import (
+	"fmt"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -98,4 +99,8 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	}
 
 	return &jr, true
+}
+
+func (j *JoinReply) String() string {
+	return fmt.Sprintf("JoinReply:seq=%#v,SrcIPs=%#v, GrpIPs=%#v", j.SeqNo, j.SrcIPs, j.GrpIPs)
 }
