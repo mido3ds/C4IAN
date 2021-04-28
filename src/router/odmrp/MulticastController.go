@@ -18,7 +18,7 @@ type MulticastController struct {
 	jrConn       *MACLayerConn
 	ip           net.IP
 	mac          net.HardwareAddr
-	jrFTable     *jrForwardTable
+	routingTable *RoutingTable
 	msec         *MSecLayer
 }
 
@@ -51,7 +51,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		jrConn:       jrConn,
 		ip:           ip,
 		mac:          mac,
-		jrFTable:     newJRForwardTable(),
+		routingTable: newRoutingTable(),
 		msec:         msec,
 	}, nil
 }
@@ -119,7 +119,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	}
 
 	// jr's nextHop is this jq's prevHop
-	c.jrFTable.Set(jq.SrcIP, &jrForwardEntry{seqNum: jq.SeqNo, nextHop: jq.PrevHop})
+	c.routingTable.Set(jq.SrcIP, &jrForwardEntry{nextHop: jq.PrevHop})
 
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
@@ -154,9 +154,9 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 			jr.Forwarders = append(jr.Forwarders, c.ip)
 			msg = c.msec.Encrypt(jr.MarshalBinary())
 			for _, srcIP := range jr.SrcIPs {
-				entryJrFTable, ok := c.jrFTable.Get(srcIP)
+				entryroutingTable, ok := c.routingTable.Get(srcIP)
 				if ok {
-					c.jrConn.Write(msg, entryJrFTable.nextHop)
+					c.jrConn.Write(msg, entryroutingTable.nextHop)
 				}
 			}
 		}

@@ -11,8 +11,8 @@ import (
 )
 
 type cacheEntry struct {
+	// SrcIP    net.IP // commented as it is the key no need to store it again
 	SeqNo    uint64
-	SrcIP    net.IP // TODO delete srcIP is the key so no need to store it here
 	GrpIP    net.IP
 	PrevHop  net.HardwareAddr
 	ageTimer *time.Timer
