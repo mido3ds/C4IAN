@@ -113,7 +113,7 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 			continue
 		}
 
-		if imDestination(f.ip, ip.DestIP, zid.DstZID) { // i'm destination,
+		if imDestination(f.ip, ip.DestIP, zid.DstZID) {
 			ippacket := pd.DecryptAll()[ZIDHeaderLen:]
 			// receive message by injecting it in loopback
 			err := f.ipConn.Write(ippacket)
@@ -189,7 +189,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 			log.Panic("ip header must have been valid from ip layer!")
 		}
 
-		if IsInjectedPacket(packet) || imDestination(f.ip, ip.DestIP, 0) {
+		if imDestination(f.ip, ip.DestIP, 0) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
 			if ip.DestIP.IsGlobalUnicast() {
