@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -17,9 +16,13 @@ type MulticastController struct {
 	gmTable      *GroupMembersTable
 	queryFlooder *GlobalFlooder
 	jrConn       *MACLayerConn
+	ip           net.IP
+	mac          net.HardwareAddr
+	jrFTable     *jrForwardTable
+	msec         *MSecLayer
 }
 
-func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
+func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
 	queryFlooder, err := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 	if err != nil {
 		log.Panic("failed to initiate query flooder, err: ", err)
@@ -33,7 +36,9 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 	// read mgroup
 	var mgrpContent string
 	if os.Getenv("MTEST") == "1" {
-		mgrpContent = startMCastTestMode()
+		address := "224.0.2.1"
+		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
+		mgrpContent = "{\"" + address + "\": [\"10.0.0.14\", \"10.0.0.15\", \"10.0.0.16\"]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
@@ -44,6 +49,10 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 		gmTable:      NewGroupMembersTable(mgrpContent),
 		queryFlooder: queryFlooder,
 		jrConn:       jrConn,
+		ip:           ip,
+		mac:          mac,
+		jrFTable:     newJRForwardTable(),
+		msec:         msec,
 	}, nil
 }
 
@@ -56,75 +65,116 @@ func NewMulticastController(iface *net.Interface, ip net.IP, msec *MSecLayer, mg
 // or can't find the grpIP itself
 func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingEntry, bool) {
 	// TODO
+
+	// for now i will just send join queries
+	members, ok := c.gmTable.Get(grpIP)
+	if !ok {
+		log.Panic("must have the members!")
+	}
+	jq := JoinQuery{
+		SeqNo:   1,
+		TTL:     ODMRPDefaultTTL,
+		SrcIP:   c.ip,
+		PrevHop: c.mac,
+		GrpIP:   grpIP,
+		Dests:   members,
+	}
+	c.queryFlooder.Flood(jq.MarshalBinary())
+	log.Println("sent join query to", grpIP) // TODO remove
+
 	return nil, false
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
+	log.Println("MulticastController started listening for control packets from the forwarder")
 	go c.queryFlooder.ReceiveFloodedMsgs(c.onRecvJoinQuery)
 	go c.recvJoinReplyMsgs(ft)
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) bool {
-	// TODO: reply with join reply
-	// TODO: store msg in cache
+func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
 	jq, valid := UnmarshalJoinQuery(payload)
+	log.Println(jq) // TODO: remove this
 	if !valid {
-		log.Panicln("Corrupted JoinQuery msg received")
+		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
-	log.Println(jq)
-	// TODO: continue or stop flooding?
-	return true
+
+	jq.TTL--
+	if jq.TTL < 0 {
+		return nil, false
+	}
+
+	if c.imInDests(jq) {
+		log.Println("im in dests! :'D") // TODO: remove this
+
+		// send back join reply to prevHop
+		jr := &JoinReply{
+			SeqNo:  jq.SeqNo,
+			SrcIPs: []net.IP{jq.SrcIP},
+			GrpIPs: []net.IP{jq.GrpIP},
+		}
+		encJR := c.msec.Encrypt(jr.MarshalBinary())
+		c.jrConn.Write(encJR, jq.PrevHop)
+
+		return nil, false
+	}
+
+	// jr's nextHop is this jq's prevHop
+	c.jrFTable.Set(jq.SrcIP, &jrForwardEntry{seqNum: jq.SeqNo, nextHop: jq.PrevHop})
+
+	// im the prev hop for the next one
+	jq.PrevHop = c.mac
+
+	return jq.MarshalBinary(), true
+}
+
+func (c *MulticastController) imInDests(jq *JoinQuery) bool {
+	for i := 0; i < len(jq.Dests); i++ {
+		if c.ip.Equal(jq.Dests[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 	for {
 		msg := c.jrConn.Read()
+		log.Println("Recieved Join Reply!!")
+		pd := c.msec.NewPacketDecrypter(msg)
+		decryptedJR := pd.DecryptAll()
 
-		jr, valid := UnmarshalJoinReply(msg)
+		jr, valid := UnmarshalJoinReply(decryptedJR)
 		if !valid {
 			log.Panicln("Corrupted JoinReply msg received")
 		}
+
 		log.Println(jr)
-		// TODO: store msg
-		// TODO: resend to next hop, unless im source
+
+		if c.imInSrcs(jr) {
+			log.Println("Source Recieved Join Reply!!")
+		} else {
+			for _, srcIP := range jr.SrcIPs {
+				entryJrFTable, ok := c.jrFTable.Get(srcIP)
+				if ok {
+					c.jrConn.Write(c.msec.Encrypt(msg), entryJrFTable.nextHop)
+				}
+			}
+		}
 	}
+}
+
+func (c *MulticastController) imInSrcs(jr *JoinReply) bool {
+	for i := 0; i < len(jr.SrcIPs); i++ {
+		if c.ip.Equal(jr.SrcIPs[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *MulticastController) Close() {
 	c.jrConn.Close()
 	c.queryFlooder.Close()
-}
-
-func startMCastTestMode() string {
-	log.Print("start in multicast test mode, assuming im working in rings.topo")
-	address := "224.0.2.1"
-	go startSendingMCastMsgs(7, address)
-
-	// return groups members table json
-	return "{\"" + address + "\": [\"10.0.0.20\", \"10.0.0.21\", \"10.0.0.22\"]}"
-}
-
-func startSendingMCastMsgs(secs int, address string) {
-	log.Println("started sending multicast dgrams to ", address)
-
-	raddr, err := net.ResolveUDPAddr("udp", address+":8080")
-	if err != nil {
-		log.Panic(err)
-	}
-	conn, err := net.DialUDP("udp", nil, raddr)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer conn.Close()
-
-	for {
-		_, err := conn.Write([]byte("hello world message"))
-		if err != nil {
-			log.Panic(err)
-		}
-
-		time.Sleep(time.Duration(secs) * time.Second)
-	}
 }
 
 func readOptionalJsonFile(path string) string {

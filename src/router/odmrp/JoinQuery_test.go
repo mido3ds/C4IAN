@@ -1,6 +1,7 @@
 package odmrp
 
 import (
+	"bytes"
 	"net"
 	"testing"
 )
@@ -16,6 +17,11 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	jq.SrcIP = net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
 	jq.GrpIP = net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
 	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
+	prevhop, err := net.ParseMAC("00:26:bb:15:31:dd")
+	if err != nil {
+		t.Error(err)
+	}
+	jq.PrevHop = prevhop
 
 	payload := jq.MarshalBinary()
 	newJq, ok := UnmarshalJoinQuery(payload)
@@ -37,6 +43,9 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	}
 	if !net.IP.Equal(jq.GrpIP, newJq.GrpIP) {
 		t.Errorf("grp ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
+	}
+	if !bytes.Equal(jq.PrevHop, newJq.PrevHop) {
+		t.Errorf("prev hops not equal: %#v != %#v", jq.PrevHop, newJq.PrevHop)
 	}
 	for i := 0; i < len(jq.Dests); i++ {
 		if !net.IP.Equal(jq.Dests[i], newJq.Dests[i]) {

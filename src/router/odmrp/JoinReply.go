@@ -1,6 +1,7 @@
 package odmrp
 
 import (
+	"fmt"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -18,7 +19,7 @@ func (j *JoinReply) MarshalBinary() []byte {
 	extraBytes := 5
 	seqNoSize := 8
 
-	totalSize := seqNoSize + netIPSize*len(j.SrcIPs) + netIPSize*len(j.SrcIPs) + netIPSize*len(j.SrcIPs)
+	totalSize := seqNoSize + net.IPv4len*len(j.SrcIPs) + net.IPv4len*len(j.SrcIPs) + net.IPv4len*len(j.SrcIPs)
 	payload := make([]byte, totalSize+extraBytes)
 	// 0:2 => number of Forwarders
 	payload[0] = byte(uint8(len(j.SrcIPs)))
@@ -31,19 +32,19 @@ func (j *JoinReply) MarshalBinary() []byte {
 		start++
 	}
 	for i := 0; i < len(j.SrcIPs); i++ {
-		for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 			payload[start] = byte(IPv4ToUInt32(j.SrcIPs[i]) >> shift)
 			start++
 		}
 	}
 	for i := 0; i < len(j.GrpIPs); i++ {
-		for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 			payload[start] = byte(IPv4ToUInt32(j.GrpIPs[i]) >> shift)
 			start++
 		}
 	}
 	for i := 0; i < len(j.Forwarders); i++ {
-		for shift := netIPSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 			payload[start] = byte(IPv4ToUInt32(j.Forwarders[i]) >> shift)
 			start++
 		}
@@ -67,7 +68,7 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	jr.GrpIPs = make([]net.IP, uint8(b[1]))
 	jr.Forwarders = make([]net.IP, uint8(b[2]))
 
-	totalSize := seqNoSize + netIPSize*len(jr.SrcIPs) + netIPSize*len(jr.GrpIPs) + netIPSize*len(jr.Forwarders)
+	totalSize := seqNoSize + net.IPv4len*len(jr.SrcIPs) + net.IPv4len*len(jr.GrpIPs) + net.IPv4len*len(jr.Forwarders)
 
 	// extract checksum
 	csum := uint16(b[3])<<bitsInByte | uint16(b[4])
@@ -83,19 +84,34 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	}
 
 	for i := 0; i < len(jr.SrcIPs); i++ {
-		jr.SrcIPs[i] = net.IP(b[start : start+netIPSize])
-		start += netIPSize
+		jr.SrcIPs[i] = net.IP(b[start : start+net.IPv4len])
+		start += net.IPv4len
 	}
 
 	for i := 0; i < len(jr.GrpIPs); i++ {
-		jr.GrpIPs[i] = net.IP(b[start : start+netIPSize])
-		start += netIPSize
+		jr.GrpIPs[i] = net.IP(b[start : start+net.IPv4len])
+		start += net.IPv4len
 	}
 
 	for i := 0; i < len(jr.Forwarders); i++ {
-		jr.Forwarders[i] = net.IP(b[start : start+netIPSize])
-		start += netIPSize
+		jr.Forwarders[i] = net.IP(b[start : start+net.IPv4len])
+		start += net.IPv4len
 	}
 
 	return &jr, true
+}
+
+func prettyIPs(ips []net.IP) string {
+	s := "[]net.IP{"
+	for i := 0; i < len(ips); i++ {
+		s += fmt.Sprintf("%v", ips[i].String())
+		if i != len(ips)-1 {
+			s += ", "
+		}
+	}
+	return s + "}"
+}
+
+func (j *JoinReply) String() string {
+	return fmt.Sprintf("JoinReply { SeqNo: %d, SrcIPs: %v, GrpIPs: %v, Forwarders: %v }", j.SeqNo, prettyIPs(j.SrcIPs), prettyIPs(j.GrpIPs), prettyIPs(j.Forwarders))
 }

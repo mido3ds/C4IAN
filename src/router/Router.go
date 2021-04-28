@@ -69,7 +69,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	multCont, err := NewMulticastController(iface, ip, msec, mgrpFilePath)
+	multCont, err := NewMulticastController(iface, ip, iface.HardwareAddr, msec, mgrpFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
