@@ -147,10 +147,29 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 		if !valid {
 			log.Panicln("Corrupted JoinReply msg received")
 		}
+
 		log.Println(jr)
-		// TODO: store msg
-		// TODO: resend to next hop, unless im source
+
+		if c.imInSrcs(jr) {
+			log.Println("Source Recieved Join Reply!!")
+		} else {
+			for _, srcIP := range jr.SrcIPs {
+				entryJrFTable, ok := c.jrFTable.Get(srcIP)
+				if ok {
+					c.jrConn.Write(c.msec.Encrypt(msg), entryJrFTable.nextHop)
+				}
+			}
+		}
 	}
+}
+
+func (c *MulticastController) imInSrcs(jr *JoinReply) bool {
+	for i := 0; i < len(jr.SrcIPs); i++ {
+		if c.ip.Equal(jr.SrcIPs[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *MulticastController) Close() {
