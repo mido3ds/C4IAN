@@ -48,7 +48,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 
 	// write to device driver
 	for i := 0; i < len(es.NextHopMACs); i++ {
-		f.zidMacConn.Write(encryptedPacket, es.NextHopMACs[i])
+		f.ipMacConn.Write(encryptedPacket, es.NextHopMACs[i])
 	}
 }
 
