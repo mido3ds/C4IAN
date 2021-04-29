@@ -9,43 +9,44 @@ import (
 )
 
 type JoinReply struct {
-	SeqNo      uint64
-	SrcIPs     []net.IP
-	GrpIPs     []net.IP
-	Forwarders []net.IP
+	SeqNo    uint64
+	GrpIP    net.IP
+	SrcIPs   []net.IP
+	NextHops []net.HardwareAddr
 }
 
-func (j *JoinReply) MarshalBinary() []byte {
+func (jr *JoinReply) MarshalBinary() []byte {
 	extraBytes := 5
 	seqNoSize := 8
 
-	totalSize := seqNoSize + net.IPv4len*len(j.SrcIPs) + net.IPv4len*len(j.SrcIPs) + net.IPv4len*len(j.SrcIPs)
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 	payload := make([]byte, totalSize+extraBytes)
-	// 0:2 => number of Forwarders
-	payload[0] = byte(uint8(len(j.SrcIPs)))
-	payload[1] = byte(uint8(len(j.GrpIPs)))
-	payload[2] = byte(uint8(len(j.Forwarders)))
+	// 0:2 => number of NextHops
+	payload[0] = byte(uint8(len(jr.SrcIPs)))
+	payload[1] = byte(uint16(len(jr.NextHops)) >> bitsInByte)
+	payload[2] = byte(uint16(len(jr.NextHops)))
 
 	start := extraBytes
 	for shift := seqNoSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-		payload[start] = byte(j.SeqNo >> shift)
+		payload[start] = byte(jr.SeqNo >> shift)
 		start++
 	}
-	for i := 0; i < len(j.SrcIPs); i++ {
+
+	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(IPv4ToUInt32(jr.GrpIP) >> shift)
+		start++
+	}
+
+	for i := 0; i < len(jr.SrcIPs); i++ {
 		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-			payload[start] = byte(IPv4ToUInt32(j.SrcIPs[i]) >> shift)
+			payload[start] = byte(IPv4ToUInt32(jr.SrcIPs[i]) >> shift)
 			start++
 		}
 	}
-	for i := 0; i < len(j.GrpIPs); i++ {
-		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-			payload[start] = byte(IPv4ToUInt32(j.GrpIPs[i]) >> shift)
-			start++
-		}
-	}
-	for i := 0; i < len(j.Forwarders); i++ {
-		for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-			payload[start] = byte(IPv4ToUInt32(j.Forwarders[i]) >> shift)
+
+	for i := 0; i < len(jr.NextHops); i++ {
+		for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+			payload[start] = byte(hwAddrToUInt64(jr.NextHops[i]) >> shift)
 			start++
 		}
 	}
@@ -65,10 +66,11 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 
 	var jr JoinReply
 	jr.SrcIPs = make([]net.IP, uint8(b[0]))
-	jr.GrpIPs = make([]net.IP, uint8(b[1]))
-	jr.Forwarders = make([]net.IP, uint8(b[2]))
 
-	totalSize := seqNoSize + net.IPv4len*len(jr.SrcIPs) + net.IPv4len*len(jr.GrpIPs) + net.IPv4len*len(jr.Forwarders)
+	nextHopsLength := uint16(b[1])<<bitsInByte | uint16(b[2])
+	jr.NextHops = make([]net.HardwareAddr, nextHopsLength)
+
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 
 	// extract checksum
 	csum := uint16(b[3])<<bitsInByte | uint16(b[4])
@@ -83,19 +85,17 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 		start++
 	}
 
+	jr.GrpIP = net.IP(b[start : start+net.IPv4len])
+	start += net.IPv4len
+
 	for i := 0; i < len(jr.SrcIPs); i++ {
 		jr.SrcIPs[i] = net.IP(b[start : start+net.IPv4len])
 		start += net.IPv4len
 	}
 
-	for i := 0; i < len(jr.GrpIPs); i++ {
-		jr.GrpIPs[i] = net.IP(b[start : start+net.IPv4len])
-		start += net.IPv4len
-	}
-
-	for i := 0; i < len(jr.Forwarders); i++ {
-		jr.Forwarders[i] = net.IP(b[start : start+net.IPv4len])
-		start += net.IPv4len
+	for i := 0; i < len(jr.NextHops); i++ {
+		jr.NextHops[i] = net.HardwareAddr(b[start : start+hwAddrLen])
+		start += hwAddrLen
 	}
 
 	return &jr, true
@@ -112,6 +112,17 @@ func prettyIPs(ips []net.IP) string {
 	return s + "}"
 }
 
+func prettyMacIPs(ips []net.HardwareAddr) string {
+	s := "[]net.HardwareAddr{"
+	for i := 0; i < len(ips); i++ {
+		s += fmt.Sprintf("%v", ips[i].String())
+		if i != len(ips)-1 {
+			s += ", "
+		}
+	}
+	return s + "}"
+}
+
 func (j *JoinReply) String() string {
-	return fmt.Sprintf("JoinReply { SeqNo: %d, SrcIPs: %v, GrpIPs: %v, Forwarders: %v }", j.SeqNo, prettyIPs(j.SrcIPs), prettyIPs(j.GrpIPs), prettyIPs(j.Forwarders))
+	return fmt.Sprintf("JoinReply { SeqNo: %d, SrcIPs: %v, GrpIP: %v, NextHops: %v }", j.SeqNo, prettyIPs(j.SrcIPs), j.GrpIP.String(), prettyMacIPs(j.NextHops))
 }
