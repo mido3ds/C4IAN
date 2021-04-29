@@ -149,6 +149,12 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
 
+	// If the TTL field value is less than  0, then discard. DONE
+	jq.TTL--
+	if jq.TTL < 0 {
+		return nil, false
+	}
+
 	if c.imInDests(jq) {
 		log.Println("im in dests! :'D") // TODO: remove this
 
@@ -159,13 +165,9 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		// send back join reply to prevHop
 		jr := c.destGenerateJoinReply(jq)
 		encJR := c.msec.Encrypt(jr.MarshalBinary())
-		c.jrConn.Write(encJR, jq.PrevHop)
-	}
-
-	// If the TTL field value is less than  0, then discard. DONE
-	jq.TTL--
-	if jq.TTL < 0 {
-		return nil, false
+		for _, nextHop := range jr.NextHops {
+			c.jrConn.Write(encJR, nextHop)
+		}
 	}
 
 	return jq.MarshalBinary(), true
