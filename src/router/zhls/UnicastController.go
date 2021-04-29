@@ -47,7 +47,7 @@ func (c *UnicastController) Start() {
 func (c *UnicastController) listenForNeighborhoodChanges() {
 	for {
 		<-c.neighborhoodUpdateSignal
-		c.lsr.topology.Update(c.ip, c.neighborsTable)
+		c.lsr.topology.Update(ToNodeID(c.ip), c.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.neighborsTable)
 	}
 }
