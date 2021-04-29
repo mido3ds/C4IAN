@@ -1,12 +1,13 @@
 package zid
 
 import (
+	"fmt"
 	"log"
 	"math"
 )
 
 const (
-	earthRadiusKM         = 6371e3
+	earthRadiusKM           = 6371e3
 	earthTotalSurfaceAreaKM = 510.1e6
 )
 
@@ -51,6 +52,10 @@ func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 	return ZoneID(uint32(grid.x)<<16 | uint32(grid.y))
 }
 
+func (z ZoneID) toGridPosition() gridLocation {
+	return gridLocation{x: uint16(z >> 16), y: uint16(z)}
+}
+
 type Zone struct {
 	ID  ZoneID
 	Len byte // from 0 to 16
@@ -66,27 +71,26 @@ func (z *Zone) ToLen(len byte) ZoneID {
 		return z.ID
 	}
 
-	x := uint16(z.ID >> 16)
-	y := uint16(z.ID)
+	grid := z.ID.toGridPosition()
 
 	if len < z.Len {
 		// z is smaller
 		// enlarge z, will lose details
 
 		// ID >> (z.Len - len)
-		x >>= z.Len - len
-		y >>= z.Len - len
+		grid.x >>= z.Len - len
+		grid.y >>= z.Len - len
 	} else {
 		// z is bigger
 		// reduce z, will get arbitrary smaller zone,
 		// but its part of the original nevertheless
 
 		// ID << (len - z.Len)
-		x <<= len - z.Len
-		y <<= len - z.Len
+		grid.x <<= len - z.Len
+		grid.y <<= len - z.Len
 	}
 
-	return ZoneID(uint32(x)<<16 | uint32(y))
+	return ZoneID(uint32(grid.x)<<16 | uint32(grid.y))
 }
 
 // Intersects returns true if z2 & z1 are the same zone
@@ -103,6 +107,11 @@ func (z1 *Zone) Equal(z2 *Zone) bool {
 // Area returns pseudo areas for comparisons
 func (z *Zone) Area() byte {
 	return -z.Len
+}
+
+func (z Zone) String() string {
+	g := z.ID.toGridPosition()
+	return fmt.Sprintf("%X.%X/%d", g.x, g.y, z.Len)
 }
 
 // ZLenToAreaKMs returns area of the zone in kms^2

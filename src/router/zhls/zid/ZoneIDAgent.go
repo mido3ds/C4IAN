@@ -60,7 +60,7 @@ func (a *ZoneIDAgent) Start() {
 		myZoneMutex.Lock()
 		if id != myZone.ID {
 			myZone.ID = id
-			log.Println("New Zone =", myZone)
+			log.Println("New Zone =", &myZone)
 		}
 		myZoneMutex.Unlock()
 	}
