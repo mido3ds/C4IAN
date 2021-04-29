@@ -33,17 +33,17 @@ type Args struct {
 	StorePath  string
 	Passphrase string
 	Port       int
-	UIPort     string
+	UIPort     int
 }
 
 func parseArgs() (*Args, error) {
-	parser := argparse.NewParser("unit-daemon", "Unit client daemon")
+	parser := argparse.NewParser("cmd-daemon", "Command-Center client daemon")
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Required: true})
 	passphrase := parser.String("", "pass", &argparse.Options{Help: "Passphrase.", Required: true})
 
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
-	uiPort := parser.String("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
+	uiPort := parser.Int("", "ui-port", &argparse.Options{Help: "UI port the client will bind to, to connect with its UI.", Default: 3170})
 
 	err := parser.Parse(os.Args)
 	if err != nil {

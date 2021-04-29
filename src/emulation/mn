@@ -132,8 +132,3 @@ CLI(net)
 
 print("*** Stopping network")
 net.stop()
-
-print('*** Mininet clean')
-subprocess.check_call(['mn', '-c'],
-                      stdout=sys.stdout,
-                      stderr=subprocess.STDOUT)

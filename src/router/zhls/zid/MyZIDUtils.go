@@ -1,13 +1,17 @@
 package zid
 
+import "sync"
+
 // TODO: Is it okay to use global variables (package-level) here?
-var myZlen uint8
-var myZoneID ZoneID
+var myZoneMutex sync.RWMutex
+var myZone Zone
 
 func MyZone() *Zone {
-	return &Zone{Len: myZlen, ID: myZoneID}
+	myZoneMutex.Lock()
+	defer myZoneMutex.Unlock()
+	return &myZone
 }
 
 func MyZIDHeader(dstZID ZoneID) *ZIDHeader {
-	return &ZIDHeader{ZLen: myZlen, SrcZID: myZoneID, DstZID: dstZID}
+	return &ZIDHeader{ZLen: myZone.Len, SrcZID: myZone.ID, DstZID: dstZID}
 }
