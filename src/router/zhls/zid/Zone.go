@@ -8,7 +8,7 @@ import (
 const earthRadiusKM = 6371 * 1000
 
 type gridLocation struct {
-	norths, easts uint16
+	x, y uint16
 }
 
 // GPSLocation is gps position
@@ -19,7 +19,7 @@ type GPSLocation struct {
 }
 
 func (p *GPSLocation) toGridPosition() gridLocation {
-	return gridLocation{norths: degreesToCartesian(p.Lat), easts: degreesToCartesian(p.Lon)}
+	return gridLocation{y: degreesToCartesian(p.Lat), x: degreesToCartesian(p.Lon)}
 }
 
 func degreesToCartesian(d float64) uint16 {
@@ -41,11 +41,11 @@ func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 
 	// shift
 	shifts := uint16(16 - zlen)
-	grid.easts >>= shifts
-	grid.norths >>= shifts
+	grid.x >>= shifts
+	grid.y >>= shifts
 
 	// pack
-	return ZoneID(uint32(grid.easts)<<16 | uint32(grid.norths))
+	return ZoneID(uint32(grid.x)<<16 | uint32(grid.y))
 }
 
 type Zone struct {
@@ -61,22 +61,40 @@ func (z *Zone) ToLen(len byte) ZoneID {
 
 	if len == z.Len {
 		return z.ID
-	} else if len < z.Len {
-		// z is smaller
-		// enlarge z, will lose details
-		return z.ID >> (z.Len - len)
 	}
 
-	// z is bigger
-	// reduce z, will get arbitrary smaller zone,
-	// but its part of the original nevertheless
-	return z.ID << (len - z.Len)
+	x := uint16(z.ID >> 16)
+	y := uint16(z.ID)
+
+	if len < z.Len {
+		// z is smaller
+		// enlarge z, will lose details
+
+		// ID >> (z.Len - len)
+		x >>= z.Len - len
+		y >>= z.Len - len
+	} else {
+		// z is bigger
+		// reduce z, will get arbitrary smaller zone,
+		// but its part of the original nevertheless
+
+		// ID << (len - z.Len)
+		x <<= len - z.Len
+		y <<= len - z.Len
+	}
+
+	return ZoneID(uint32(x)<<16 | uint32(y))
 }
 
 // Intersects returns true if z2 & z1 are the same zone
 // or one part of the other
 func (z1 *Zone) Intersects(z2 *Zone) bool {
 	return z1.ToLen(z2.Len) == z2.ID
+}
+
+// Equal zones have same id and len
+func (z1 *Zone) Equal(z2 *Zone) bool {
+	return z1.ID == z2.ID && z1.Len == z2.Len
 }
 
 // Area returns pseudo areas for comparisons
