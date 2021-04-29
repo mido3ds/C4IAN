@@ -82,10 +82,6 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 
 	c.sendJoinQuery(grpIP, members)
 
-	// Start new Timer
-	fireFunc := jqRefreshfireTimer(grpIP, members, c)
-	c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
-
 	return nil, false
 }
 
@@ -118,8 +114,8 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	c.queryFlooder.Flood(jq.MarshalBinary())
 	log.Println("sent join query to", grpIP) // TODO remove
 
-	fireFunc := jqRefreshfireTimer(grpIP, members, c)
-	c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
+	// fireFunc := jqRefreshfireTimer(grpIP, members, c)
+	// c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
 	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
