@@ -1,4 +1,4 @@
-package zhls
+package tables
 
 import (
 	"fmt"

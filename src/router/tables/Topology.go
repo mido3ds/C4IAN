@@ -21,9 +21,9 @@ func NewTopology() *Topology {
 }
 
 type myVertex struct {
-	id     uint32
-	outTo  map[uint32]float64
-	inFrom map[uint32]float64
+	id     NodeID
+	outTo  map[NodeID]float64
+	inFrom map[NodeID]float64
 }
 
 func (vertex *myVertex) ID() goraph.ID {
@@ -31,8 +31,8 @@ func (vertex *myVertex) ID() goraph.ID {
 }
 
 type myEdge struct {
-	from   uint32
-	to     uint32
+	from   NodeID
+	to     NodeID
 	weight float64
 }
 
@@ -50,40 +50,40 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 	return
 }
 
-func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
+func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	outToEdges := make(map[uint32]float64)
+	outToEdges := make(map[NodeID]float64)
 
 	for n := range srcNeighbors.m.Iter() {
 		// Check if this neighbor vertex exists
-		neighborVertex, notExist := t.g.GetVertex(n.Key.(uint32))
+		neighborVertex, notExist := t.g.GetVertex(n.Key.(NodeID))
 
 		if notExist == nil {
-			neighborVertex.(*myVertex).inFrom[IPv4ToUInt32(srcIP)] = float64(n.Value.(*NeighborEntry).Cost)
+			neighborVertex.(*myVertex).inFrom[srcID] = float64(n.Value.(*NeighborEntry).Cost)
 			// Remove the old neighbor vertex
-			t.g.DeleteVertex(n.Key.(uint32))
+			t.g.DeleteVertex(n.Key.(NodeID))
 			// Add the neighbor vertex with new inFrom edge
 			t.g.AddVertexWithEdges(neighborVertex.(*myVertex))
 		} else {
-			neighborInFromEdges := make(map[uint32]float64)
-			neighborInFromEdges[IPv4ToUInt32(srcIP)] = float64(n.Value.(*NeighborEntry).Cost)
-			t.g.AddVertexWithEdges(&myVertex{id: n.Key.(uint32), outTo: make(map[uint32]float64), inFrom: neighborInFromEdges})
+			neighborInFromEdges := make(map[NodeID]float64)
+			neighborInFromEdges[srcID] = float64(n.Value.(*NeighborEntry).Cost)
+			t.g.AddVertexWithEdges(&myVertex{id: n.Key.(NodeID), outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
 		}
 
-		outToEdges[n.Key.(uint32)] = float64(n.Value.(*NeighborEntry).Cost)
+		outToEdges[n.Key.(NodeID)] = float64(n.Value.(*NeighborEntry).Cost)
 	}
 
-	vertex, notExist := t.g.GetVertex(IPv4ToUInt32(srcIP))
+	vertex, notExist := t.g.GetVertex(srcID)
 	if notExist == nil {
 		vertex.(*myVertex).outTo = outToEdges
 		// Remove the old src vertex
-		t.g.DeleteVertex(IPv4ToUInt32(srcIP))
+		t.g.DeleteVertex(srcID)
 		// Add the src vertex with new outTo edges
 		return t.g.AddVertexWithEdges(vertex.(*myVertex))
 	} else {
-		return t.g.AddVertexWithEdges(&myVertex{id: IPv4ToUInt32(srcIP), outTo: outToEdges, inFrom: make(map[uint32]float64)})
+		return t.g.AddVertexWithEdges(&myVertex{id: srcID, outTo: outToEdges, inFrom: make(map[NodeID]float64)})
 	}
 }
 
@@ -98,15 +98,15 @@ func (t *Topology) DisplayVertex(id goraph.ID) {
 	vertex, _ := t.g.GetVertex(id)
 	s := ""
 	if vertex == nil {
-		s += fmt.Sprintf("Vertex: %v isn't existd\n", UInt32ToIPv4(id.(uint32)))
+		s += fmt.Sprintf("Vertex: %v doesn't exist\n", id)
 	} else {
-		s += fmt.Sprintf("Vertex: %v, ", UInt32ToIPv4(vertex.(*myVertex).id))
+		s += fmt.Sprintf("Vertex: %v, ", vertex.(*myVertex).id)
 		for to, cost := range vertex.(*myVertex).outTo {
-			s += fmt.Sprintf("Edge to %v with cost %v, ", UInt32ToIPv4(to), cost)
+			s += fmt.Sprintf("Edge to %v with cost %v, ", to, cost)
 		}
 
 		for from, cost := range vertex.(*myVertex).outTo {
-			s += fmt.Sprintf("Edge from %v with cost %v, ", UInt32ToIPv4(from), cost)
+			s += fmt.Sprintf("Edge from %v with cost %v, ", from, cost)
 		}
 	}
 
