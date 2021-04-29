@@ -8,7 +8,6 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type UnicastController struct {
@@ -20,8 +19,8 @@ type UnicastController struct {
 	UpdateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
-func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
-	flooder, err := NewZoneFlooder(iface, ip, msec, zlen)
+func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer) (*UnicastController, error) {
+	flooder, err := NewZoneFlooder(iface, ip, msec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
 	}
@@ -51,10 +50,6 @@ func (c *UnicastController) listenForNeighborhoodChanges() {
 		c.lsr.topology.Update(c.ip, c.neighborsTable)
 		c.lsr.SendLSRPacket(c.flooder, c.neighborsTable)
 	}
-}
-
-func (c *UnicastController) OnZoneIDChanged(z ZoneID) {
-	c.flooder.OnZoneIDChanged(z)
 }
 
 func (c *UnicastController) Close() {
