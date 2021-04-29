@@ -9,14 +9,12 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 const (
-	sARPHoldTime  = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
-	sARPDelay     = 3 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
-	hashLen       = 64              // bytes at the end
-	sARPHeaderLen = 19              // excluding the hash at the end
-	sARPTotalLen  = sARPHeaderLen + hashLen
+	sARPHoldTime = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
+	sARPDelay    = 3 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
 )
 
 type SARPController struct {
@@ -66,8 +64,11 @@ func (s *SARPController) sendMsgs() {
 		s.dirtyNeighborsTable = NewNeighborsTable()
 
 		// Broadcast sARP request
-		header := &SARPHeader{SARPReq, s.myIP, s.myMAC, time.Now().UnixNano()}
-		s.macConn.Write(s.msec.Encrypt(header.MarshalBinary()), BroadcastMACAddr)
+		zidHeader := MyZIDHeader(0)
+		encryptedZIDHeader := s.msec.Encrypt(zidHeader.MarshalBinary())
+		sarpHeader := &SARPHeader{SARPReq, s.myIP, s.myMAC, time.Now().UnixNano()}
+		encryptedSARPHeader := s.msec.Encrypt(sarpHeader.MarshalBinary())
+		s.macConn.Write(append(encryptedZIDHeader, encryptedSARPHeader...), BroadcastMACAddr)
 
 		// Wait for sARP responses (collected in dirtyNeighborsTable)
 		time.Sleep(sARPHoldTime)
@@ -90,22 +91,37 @@ func (s *SARPController) sendMsgs() {
 func (s *SARPController) receiveMsgs() {
 	for {
 		packet := s.macConn.Read()
-		packet = s.msec.Decrypt(packet[:sARPTotalLen])
 
-		header, ok := UnmarshalSARPHeader(packet)
+		zidHeader, ok := UnmarshalZIDHeader(s.msec.Decrypt(packet[:ZIDHeaderLen]))
+		if !ok {
+			log.Panicln("Received sARP Packet with invalid ZID header")
+		}
+
+		sarpHeader, ok := UnmarshalSARPHeader(s.msec.Decrypt(packet[ZIDHeaderLen:]))
 		if !ok {
 			log.Panicln("Invalid sARP packet received")
 		}
-		switch header.Type {
+
+		// TODO: Handle zones of different sizes
+		// Construct NodeID based on whether the neighbor is in the same zone or not
+		var nodeID NodeID
+		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+		if MyZone().Equal(srcZone) {
+			nodeID = ToNodeID(sarpHeader.IP)
+		} else {
+			nodeID = ToNodeID(srcZone.ID)
+		}
+
+		switch sarpHeader.Type {
 		case SARPReq:
-			delay := time.Since(time.Unix(0, header.sendTime))
-			s.NeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
+			delay := time.Since(time.Unix(0, sarpHeader.sendTime))
+			s.NeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
 
 			myHeader := &SARPHeader{SARPRes, s.myIP, s.myMAC, time.Now().UnixNano()}
-			s.macConn.Write(s.msec.Encrypt(myHeader.MarshalBinary()), header.MAC)
+			s.macConn.Write(s.msec.Encrypt(myHeader.MarshalBinary()), sarpHeader.MAC)
 		case SARPRes:
-			delay := time.Since(time.Unix(0, header.sendTime))
-			s.dirtyNeighborsTable.Set(header.IP, &NeighborEntry{MAC: header.MAC, Cost: uint16(delay.Microseconds())})
+			delay := time.Since(time.Unix(0, sarpHeader.sendTime))
+			s.dirtyNeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
 		}
 	}
 }
