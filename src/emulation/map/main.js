@@ -309,7 +309,14 @@ document.getElementById('file-input').addEventListener('change', () => {
 })
 
 document.getElementById('range').addEventListener('change', () => {
-  const range = getRange()
+  let range = getRange()
+  if (range < 50) {
+    document.getElementById('range').value = 50
+  } else if (range > 50000) {
+    document.getElementById('range').value = 50000
+  }
+  range = getRange()
+
   source.getFeatures().forEach(f => {
     source.removeFeature(f)
 

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "parcel index.html",
-    "build": "rm -rf built/*; parcel build --public-url . --dist-dir built --no-content-hash --no-source-maps --no-scope-hoist index.html"
+    "build": "parcel build --public-url . --dist-dir built --no-content-hash --no-source-maps --no-scope-hoist index.html"
   },
   "keywords": [],
   "description": ""
