@@ -20,7 +20,7 @@ type MemberTable struct {
 }
 
 type memberEntry struct {
-	srcIPs   []net.IP
+	grpIP    net.IP
 	ageTimer *time.Timer
 }
 
@@ -31,8 +31,8 @@ func newMemberTable() *MemberTable {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (mt *MemberTable) Get(grpIP net.IP) (*memberEntry, bool) {
-	v, ok := mt.m.Get(IPv4ToUInt32(grpIP))
+func (mt *MemberTable) Get(srcIP net.IP) (*memberEntry, bool) {
+	v, ok := mt.m.Get(IPv4ToUInt32(srcIP))
 	if !ok {
 		return nil, false
 	}
@@ -40,13 +40,13 @@ func (mt *MemberTable) Get(grpIP net.IP) (*memberEntry, bool) {
 	return v.(*memberEntry), true
 }
 
-// Set the grpIP to a new sequence number
+// Set the srcIP to a new sequence number
 // Restart the timer attached to that src
-func (mt *MemberTable) Set(grpIP net.IP, entry *memberEntry) {
+func (mt *MemberTable) Set(srcIP net.IP, entry *memberEntry) {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	v, ok := mt.m.Get(IPv4ToUInt32(grpIP))
+	v, ok := mt.m.Get(IPv4ToUInt32(srcIP))
 	// Stop the previous timer if it wasn't fired
 	if ok {
 		timer := v.(*memberEntry).ageTimer
@@ -54,14 +54,14 @@ func (mt *MemberTable) Set(grpIP net.IP, entry *memberEntry) {
 	}
 
 	// Start new Timer
-	fireFunc := fireMemberTableTimer(grpIP, mt)
+	fireFunc := fireMemberTableTimer(srcIP, mt)
 	entry.ageTimer = time.AfterFunc(MTE_TIMEOUT, fireFunc)
-	mt.m.Set(IPv4ToUInt32(grpIP), entry)
+	mt.m.Set(IPv4ToUInt32(srcIP), entry)
 }
 
 // Del silently fails if key doesn't exist
-func (mt *MemberTable) Del(grpIP net.IP) {
-	mt.m.Del(IPv4ToUInt32(grpIP))
+func (mt *MemberTable) Del(srcIP net.IP) {
+	mt.m.Del(IPv4ToUInt32(srcIP))
 }
 
 func (mt *MemberTable) Len() int {
@@ -77,19 +77,19 @@ func (mt *MemberTable) String() string {
 	s := "&MemberTable{"
 	for item := range mt.m.Iter() {
 		v := item.Value.(*memberEntry)
-		s += fmt.Sprintf(" (grpIP=%#v, srcIPs=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), v.srcIPs)
+		s += fmt.Sprintf(" (srcIP=%#v, GrpIP=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), v.grpIP)
 	}
 	s += " }"
 
 	return s
 }
 
-func fireMemberTableTimerHelper(grpIP net.IP, mt *MemberTable) {
-	mt.Del(grpIP)
+func fireMemberTableTimerHelper(srcIP net.IP, mt *MemberTable) {
+	mt.Del(srcIP)
 }
 
-func fireMemberTableTimer(grpIP net.IP, mt *MemberTable) func() {
+func fireMemberTableTimer(srcIP net.IP, mt *MemberTable) func() {
 	return func() {
-		fireMemberTableTimerHelper(grpIP, mt)
+		fireMemberTableTimerHelper(srcIP, mt)
 	}
 }
