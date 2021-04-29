@@ -1,0 +1,15 @@
+{
+  "name": "c4ian-map",
+  "dependencies": {
+    "ol": "6.5.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.0.0-beta.1"
+  },
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "rm -rf built/*; parcel build --public-url . --dist-dir built --no-content-hash --no-source-maps --no-scope-hoist index.html"
+  },
+  "keywords": [],
+  "description": ""
+}

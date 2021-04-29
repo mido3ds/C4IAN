@@ -26,16 +26,18 @@ PROPAGATION_MODEL = {
     'model': 'logDistance',
     'exp': 4,
 }
-DEFAULT_RANGE = 116
 
 
 class Position(NamedTuple):
-    lat: int  # x
-    long: int  # y
-    z: int  # height relative to sea level
+    lon: int  # x
+    lat: int  # y
 
     def __str__(self) -> str:
-        return f'{self.lat},{self.long},{self.z}'
+        return f'{self.lat},{self.lon},0'
+
+    def to_mn(self):
+        x, y = loc.to_mn_coords(self.lon, self.lat)
+        return Position(x, y)
 
 
 class Node(NamedTuple):
@@ -50,17 +52,11 @@ def read_topo(path_to_json: str) -> List[Node]:
     with open(path_to_json) as f:
         topo = json.load(f)
 
-    def cast(i): return int(float(i))
-
     return [
-        Node(unit['opts']['hostname'],
-             Position(cast(unit['x']), cast(unit['y']), 0))
-        for unit in topo['aps']
-    ] + [
-        Node(cmd['opts']['hostname'],
-             Position(cast(cmd['x']), cast(cmd['y']), 0))
-        for cmd in topo['stations']
-    ]
+        Node(node['name'],
+             Position(node['lat'], node['lon']).to_mn())
+        for node in topo['nodes']
+    ], topo['range']
 
 
 def parse_args():
@@ -90,7 +86,7 @@ def nodes_locations_thread(stations, nodes):
 
 
 args = parse_args()
-nodes = read_topo(args.topology)
+nodes, rng = read_topo(args.topology)
 
 setLogLevel('debug' if args.debug else 'info')
 
@@ -101,7 +97,7 @@ print("*** Creating nodes")
 stations = {}
 for node in nodes:
     stations[node.name] = net.addStation(
-        node.name, position=str(node.position), range=DEFAULT_RANGE
+        node.name, position=str(node.position), range=rng
     )
 
 print("*** Configuring wifi nodes")
