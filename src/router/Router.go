@@ -54,6 +54,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
+	log.Println("ZLen =", zlen, ", Zone Total Area =", ZLenToAreaKMs(zlen), "Kms^2")
 	zidAgent, err := NewZoneIDAgent(locSocket, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize location agent, err: %s", err)

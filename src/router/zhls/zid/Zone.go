@@ -5,7 +5,10 @@ import (
 	"math"
 )
 
-const earthRadiusKM = 6371 * 1000
+const (
+	earthRadiusKM         = 6371e3
+	earthTotalSurfaceAreaKM = 510.1e6
+)
 
 type gridLocation struct {
 	x, y uint16
@@ -100,4 +103,12 @@ func (z1 *Zone) Equal(z2 *Zone) bool {
 // Area returns pseudo areas for comparisons
 func (z *Zone) Area() byte {
 	return -z.Len
+}
+
+// ZLenToAreaKMs returns area of the zone in kms^2
+// of the given zlen
+func ZLenToAreaKMs(zlen byte) float64 {
+	var numZones uint32 = 0xFFFF_FFFF >> (32 - 2*zlen)
+	var area float64 = earthTotalSurfaceAreaKM / float64(numZones)
+	return area
 }
