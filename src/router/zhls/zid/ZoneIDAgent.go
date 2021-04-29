@@ -14,6 +14,8 @@ type ZoneIDAgent struct {
 }
 
 func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
+	myZone.Len = zlen
+
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
 	if err != nil {
@@ -32,8 +34,6 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 	}
 
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
-
-	myZlen = zlen
 
 	return &ZoneIDAgent{
 		conn:      l,
