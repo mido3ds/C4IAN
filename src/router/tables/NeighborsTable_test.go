@@ -14,10 +14,10 @@ func TestMarshalBinary(t *testing.T) {
 
 	neighborsTable := NewNeighborsTable()
 
-	neighborsTable.Set(ip0, &NeighborEntry{Cost: 1})
-	neighborsTable.Set(ip1, &NeighborEntry{Cost: 2})
-	neighborsTable.Set(ip2, &NeighborEntry{Cost: 3})
-	neighborsTable.Set(ip4, &NeighborEntry{Cost: 4})
+	neighborsTable.Set(ToNodeID(ip0), &NeighborEntry{Cost: 1})
+	neighborsTable.Set(ToNodeID(ip1), &NeighborEntry{Cost: 2})
+	neighborsTable.Set(ToNodeID(ip2), &NeighborEntry{Cost: 3})
+	neighborsTable.Set(ToNodeID(ip4), &NeighborEntry{Cost: 4})
 
 	payload := neighborsTable.MarshalBinary()
 
