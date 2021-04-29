@@ -203,8 +203,9 @@ func readOptionalJsonFile(path string) string {
 
 func (c *MulticastController) buildJoinReply(jq *JoinQuery) *JoinReply {
 	return &JoinReply{
-		SeqNo:  jq.SeqNo,
-		SrcIPs: []net.IP{jq.SrcIP},
-		GrpIP:  jq.GrpIP,
+		SeqNo:    jq.SeqNo,
+		GrpIP:    jq.GrpIP,
+		SrcIPs:   []net.IP{jq.SrcIP},
+		NextHops: []net.HardwareAddr{[]byte{0x11, 0x11, 0x11, 0x11, 0x11, 0x11}},
 	}
 }
