@@ -22,7 +22,6 @@ func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
-	//log.Println("Sent LSR packet")
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
@@ -33,7 +32,6 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 		log.Panicln("Corrupted LSR packet received")
 	}
 	lsr.topology.Update(ToNodeID(srcIP), srcNeighborsTable)
-	//log.Println("Received LSR packet")
 	lsr.dirtyTopology = true
 }
 
@@ -44,7 +42,7 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 
 	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(ToNodeID(lsr.myIP))
-	lsr.displaySinkTreeParents(sinkTreeParents)
+	//lsr.displaySinkTreeParents(sinkTreeParents)
 
 	for dst, parent := range sinkTreeParents {
 
@@ -103,16 +101,16 @@ func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) 
 	log.Println("----------- Sink Tree -------------")
 	for dst, parent := range sinkTreeParents {
 		if dst == nil {
-			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
+			log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
 			continue
 		}
 		if parent == nil {
-			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
-			lsr.topology.DisplayVertex(dst.(NodeID))
+			log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
+			lsr.topology.DisplayVertex(NodeID(dst.(uint64)))
 			continue
 		}
-		log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
-		lsr.topology.DisplayVertex(dst.(NodeID))
+		log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
+		lsr.topology.DisplayVertex(NodeID(dst.(uint64)))
 	}
 	log.Println("-----------------------------------")
 }

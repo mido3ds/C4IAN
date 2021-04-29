@@ -57,8 +57,9 @@ func (a *ZoneIDAgent) Start() {
 		id := NewZoneID(loc, a.zlen)
 		myZoneMutex.Lock()
 		if id != myZone.ID {
-			myZone.ID = id
-			log.Println("New Zone =", myZone)
+			// Use a static zone until the error with zone mapping is fixed
+			myZone.ID = 1 //id
+			//log.Println("New Zone =", myZone)
 		}
 		myZoneMutex.Unlock()
 	}
