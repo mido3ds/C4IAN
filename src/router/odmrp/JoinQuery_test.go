@@ -53,28 +53,3 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 		}
 	}
 }
-
-func TestJoinQueryTtlLessThanZero(t *testing.T) {
-	var jq JoinQuery
-	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
-	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
-	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
-	ip3 := net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
-	jq.SeqNo = 999
-	jq.TTL = -1
-	jq.SrcIP = net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
-	jq.GrpIP = net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
-	prevhop, err := net.ParseMAC("00:26:bb:15:31:dd")
-	if err != nil {
-		t.Error(err)
-	}
-	jq.PrevHop = prevhop
-	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
-
-	payload := jq.MarshalBinary()
-	newJq, ok := UnmarshalJoinQuery(payload)
-
-	if !(!ok && newJq == nil) {
-		t.Errorf("Unmarshal should have erros")
-	}
-}

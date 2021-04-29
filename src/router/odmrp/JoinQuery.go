@@ -70,7 +70,7 @@ func (j *JoinQuery) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// UnmarshalJoinQuery returns false if packet is invalid or TTL < 0
+// UnmarshalJoinQuery
 func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	extraBytes := int64(4)
 	seqNoSize := int64(8)
@@ -86,9 +86,7 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	}
 	jq.TTL = int8(b[start])
 	start += ttlSize
-	if jq.TTL < 0 {
-		return nil, false
-	}
+
 	// extract checksum
 	csum := uint16(b[2])<<bitsInByte | uint16(b[3])
 	// if invalid packet
