@@ -44,7 +44,7 @@ $ sudo apt update && sudo apt install -y wget && (
 ```
 For `VSCode` support:
 - Install [Go Extension](https://marketplace.visualstudio.com/items?itemName=golang.go).
-- Install all then extension's recommended tools.
+- Install all the extension's recommended tools.
 - Add `"go.gopath": "~/.config/go/1.15/"` to your `VSCode` settings.json file to enable `Go` extension tools.
 - Open each golang project in its own `VSCode` session, e.g. `$ code src/router` to be able to use linter and gopls.
 
