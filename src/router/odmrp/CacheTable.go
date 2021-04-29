@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/cornelk/hashmap"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -12,10 +11,9 @@ import (
 
 type cacheEntry struct {
 	// SrcIP    net.IP // commented as it is the key no need to store it again
-	SeqNo    uint64
-	GrpIP    net.IP
-	PrevHop  net.HardwareAddr
-	ageTimer *time.Timer
+	SeqNo   uint64
+	GrpIP   net.IP
+	PrevHop net.HardwareAddr
 }
 
 type CacheTable struct {
