@@ -4,7 +4,6 @@ import json
 import math
 
 EARTH_RAD = 6371 * 1000
-CAIRO_UNI_LONLAT = (31.2108959, 30.0272552)
 
 
 def _to_degrees(x):
@@ -18,10 +17,20 @@ def _to_degrees(x):
     return d*sign
 
 
+def _to_cartesian(d):
+    # d in degress, output in meters
+    if d < 0:
+        d += 360
+    x = EARTH_RAD * d * math.pi/180
+    return x
+
+
 def to_gps_coords(x, y):
-    lon = _to_degrees(x) + CAIRO_UNI_LONLAT[0]
-    lat = _to_degrees(y) + CAIRO_UNI_LONLAT[1]
-    return lon, lat
+    return _to_degrees(x), _to_degrees(y)
+
+
+def to_mn_coords(lon, lat):
+    return _to_cartesian(lon), _to_cartesian(lat)
 
 
 def send_location(sock, lon, lat):

@@ -10,7 +10,7 @@ import (
 	"github.com/akamensky/argparse"
 )
 
-const DefaultZLen = 12
+const DefaultZLen = 16
 
 func main() {
 	args, err := parseArgs()
