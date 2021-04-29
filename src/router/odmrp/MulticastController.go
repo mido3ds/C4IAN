@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -12,16 +13,19 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
+const JQ_REFRESH_TIME = 400 * time.Millisecond
+
 type MulticastController struct {
-	gmTable      *GroupMembersTable
-	queryFlooder *GlobalFlooder
-	jrConn       *MACLayerConn
-	ip           net.IP
-	mac          net.HardwareAddr
-	routingTable *RoutingTable
-	cacheTable   *CacheTable
-	memberTable  *MemberTable
-	msec         *MSecLayer
+	gmTable        *GroupMembersTable
+	queryFlooder   *GlobalFlooder
+	jrConn         *MACLayerConn
+	ip             net.IP
+	mac            net.HardwareAddr
+	routingTable   *RoutingTable
+	cacheTable     *CacheTable
+	memberTable    *MemberTable
+	msec           *MSecLayer
+	jQRefreshTimer *time.Timer
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -73,7 +77,29 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 	if !ok {
 		log.Panic("must have the members!")
 	}
+
+	c.sendJoinQuery(grpIP, members)
+
+	// Start new Timer
+	fireFunc := jqRefreshfireTimer(grpIP, members, c)
+	c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
+
+	return nil, false
+}
+
+func jqRefreshfireTimerHelper(srcIP net.IP, members []net.IP, c *MulticastController) {
+	c.sendJoinQuery(srcIP, members)
+}
+
+func jqRefreshfireTimer(srcIP net.IP, members []net.IP, c *MulticastController) func() {
+	return func() {
+		jqRefreshfireTimerHelper(srcIP, members, c)
+	}
+}
+
+func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	jq := JoinQuery{
+		// TODO encode time to seqNo!!
 		SeqNo:   1,
 		TTL:     ODMRPDefaultTTL,
 		SrcIP:   c.ip,
@@ -81,10 +107,16 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 		GrpIP:   grpIP,
 		Dests:   members,
 	}
+
+	// insert in cache in case it use broadcast
+	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
+	c.cacheTable.Set(jq.SrcIP, cached)
+
 	c.queryFlooder.Flood(jq.MarshalBinary())
 	log.Println("sent join query to", grpIP) // TODO remove
 
-	return nil, false
+	fireFunc := jqRefreshfireTimer(grpIP, members, c)
+	c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {

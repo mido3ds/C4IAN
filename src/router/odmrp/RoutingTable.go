@@ -15,6 +15,7 @@ const RTE_TIMEOUT = 960 * time.Microsecond
 // RoutingTable is lock-free thread-safe hash table
 // for multicast forwarding
 // key: 4 bytes src IPv4, value: *routingEntry
+// routing table from destination to srcIP
 type RoutingTable struct {
 	m *hashmap.HashMap
 }
