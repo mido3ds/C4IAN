@@ -71,5 +71,5 @@ func IPv4ToUInt32(ip net.IP) uint32 {
 }
 
 func UInt32ToIPv4(i uint32) net.IP {
-	return net.IPv4(byte(i>>24), byte(i>>16), byte(i>>8), byte(i))
+	return net.IPv4(byte(i>>24), byte(i>>16), byte(i>>8), byte(i)).To4()
 }
