@@ -8,12 +8,8 @@ import (
 )
 
 type ZoneIDAgent struct {
-	conn *net.UnixConn
-	zlen byte
-
-	// don't read it, carries garbage at beginning, use AddListener to be notifies when it gets a correct value
-	lastZoneID ZoneID
-
+	conn      *net.UnixConn
+	zlen      byte
 	locSocket string
 }
 
@@ -57,10 +53,12 @@ func (a *ZoneIDAgent) Start() {
 		}
 
 		id := NewZoneID(loc, a.zlen)
-		if id != a.lastZoneID {
-			a.lastZoneID = id
-			myZoneID = id
+		myZoneMutex.Lock()
+		if id != myZone.ID {
+			myZone.ID = id
+			log.Println("New Zone =", myZone)
 		}
+		myZoneMutex.Unlock()
 	}
 }
 
