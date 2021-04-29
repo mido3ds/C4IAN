@@ -117,6 +117,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 
 	fireFunc := jqRefreshfireTimer(grpIP, members, c)
 	c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
+	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
