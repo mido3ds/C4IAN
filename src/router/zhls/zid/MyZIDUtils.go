@@ -7,8 +7,8 @@ var myZoneMutex sync.RWMutex
 var myZone Zone
 
 func MyZone() *Zone {
-	myZoneMutex.Lock()
-	defer myZoneMutex.Unlock()
+	myZoneMutex.RLock()
+	defer myZoneMutex.RUnlock()
 	return &myZone
 }
 
