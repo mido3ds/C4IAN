@@ -23,8 +23,6 @@ func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
-	// log.Println("&&&&&&&&&&&&& Sending LSR")
-	// log.Println(neighborsTable)
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
@@ -34,8 +32,6 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	if !valid {
 		log.Panicln("Corrupted LSR packet received")
 	}
-	// log.Println("//////////////Received LSR packet from: ", srcIP)
-	// log.Println(srcNeighborsTable)
 	lsr.topology.Update(srcIP, srcNeighborsTable)
 	lsr.dirtyTopology = true
 }
@@ -47,9 +43,6 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 
 	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(lsr.myIP)
-
-	// log.Println(neighborsTable)
-	// lsr.displaySinkTreeParents(sinkTreeParents)
 
 	for dst, parent := range sinkTreeParents {
 		dstIP := UInt32ToIPv4(dst.(uint32))
