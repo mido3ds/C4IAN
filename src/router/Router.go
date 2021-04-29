@@ -102,7 +102,7 @@ func (r *Router) Start() {
 	go r.sarpCont.Start()
 	go r.unicCont.Start()
 	go r.multCont.Start(r.forwarder.MultiForwTable)
-	go r.forwarder.Start(r.unicCont.InputChannel)
+	go r.forwarder.Start()
 }
 
 func (r *Router) Close() {

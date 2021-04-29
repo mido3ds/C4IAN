@@ -38,52 +38,51 @@ func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec
 }
 
 func (f *GlobalFlooder) Flood(msg []byte) {
-	hdr := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
-	msg = append(hdr.MarshalBinary(), msg...)
-
 	f.seqNumber++
 
-	f.macConn.Write(f.msec.Encrypt(msg), BroadcastMACAddr)
+	floodHeader := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
+	encryptedFloodHeader := f.msec.Encrypt(floodHeader.MarshalBinary())
+
+	encryptedPayload := f.msec.Encrypt(msg)
+
+	f.macConn.Write(append(encryptedFloodHeader, encryptedPayload...), BroadcastMACAddr)
 }
 
-// ReceiveFloodedMsgs inf loop that receives any flooded msgs
+// ListenForFloodedMsgs inf loop that receives any flooded msgs
 // calls `payloadProcessor` when it receives the message, it gives it the header and the payload
 // and returns whether to continue flooding or not
-func (f *GlobalFlooder) ReceiveFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
 	for {
 		msg := f.macConn.Read()
-
-		pd := f.msec.NewPacketDecrypter(msg)
-		decryptedHDR := pd.DecryptN(FloodHeaderLen)
-
-		hdr, _, ok := UnmarshalFloodedHeader(decryptedHDR)
-		if !ok {
-			return
-		}
-
-		if net.IP.Equal(hdr.SrcIP, f.ip) {
-			return
-		}
-
-		tableSeq, exist := f.fTable.Get(hdr.SrcIP)
-
-		if exist && hdr.SeqNum <= tableSeq {
-			return
-		}
-
-		f.fTable.Set(hdr.SrcIP, hdr.SeqNum)
-
-		go func() {
-			payload := pd.DecryptAll()[FloodHeaderLen:]
-
-			payload, ok := payloadProcessor(hdr, payload)
-			if !ok {
-				return
-			}
-
-			f.macConn.Write(f.msec.Encrypt(append(decryptedHDR, payload...)), BroadcastMACAddr)
-		}()
+		go f.handleFloodedMsg(msg, payloadProcessor)
 	}
+}
+
+func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:FloodHeaderLen]))
+	if !ok {
+		return
+	}
+
+	if net.IP.Equal(floodHeader.SrcIP, f.ip) {
+		return
+	}
+
+	tableSeq, exist := f.fTable.Get(floodHeader.SrcIP)
+
+	if exist && floodHeader.SeqNum <= tableSeq {
+		return
+	}
+
+	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
+
+	payload := f.msec.Decrypt(msg[FloodHeaderLen:])
+	payload, ok = payloadProcessor(floodHeader, payload)
+	if !ok {
+		return
+	}
+
+	f.macConn.Write(append(msg[:FloodHeaderLen], f.msec.Encrypt(payload)...), BroadcastMACAddr)
 }
 
 func (f *GlobalFlooder) Close() {

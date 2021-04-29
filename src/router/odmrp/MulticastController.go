@@ -121,7 +121,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
 	log.Println("~~ MulticastController started ~~")
-	go c.queryFlooder.ReceiveFloodedMsgs(c.onRecvJoinQuery)
+	go c.queryFlooder.ListenForFloodedMsgs(c.onRecvJoinQuery)
 	go c.recvJoinReplyMsgs(ft)
 }
 
@@ -186,8 +186,7 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 	for {
 		msg := c.jrConn.Read()
 		log.Println("Recieved Join Reply!!")
-		pd := c.msec.NewPacketDecrypter(msg)
-		decryptedJR := pd.DecryptAll()
+		decryptedJR := c.msec.Decrypt(msg)
 
 		jr, valid := UnmarshalJoinReply(decryptedJR)
 		if !valid {

@@ -19,7 +19,7 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 		return
 	}
 
-	zid := &ZIDHeader{ZLen: f.zlen, PacketType: DataPacket, SrcZID: f.zoneID, DstZID: ZoneID(e.DestZoneID)}
+	zid := &ZIDHeader{ZLen: f.zlen, SrcZID: f.zoneID, DstZID: ZoneID(e.DestZoneID)}
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))

@@ -10,6 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
+// TODO: merge with global flooder
 type ZoneFlooder struct {
 	seqNumber uint32
 	fTable    *FloodingTable
@@ -22,7 +23,7 @@ type ZoneFlooder struct {
 
 func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte) (*ZoneFlooder, error) {
 	// connect to mac layer
-	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
+	macConn, err := NewMACLayerConn(iface, ZoneFloodEtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -44,45 +45,47 @@ func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte)
 func (f *ZoneFlooder) Flood(msg []byte) {
 	f.seqNumber++
 
-	zidHdr := ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID}
-	encZidHdr := f.msec.Encrypt(zidHdr.MarshalBinary())
+	zidHeader := ZIDHeader{ZLen: f.zlen, SrcZID: f.zoneID}
+	encryptedZIDHeader := f.msec.Encrypt(zidHeader.MarshalBinary())
 
-	fldHdr := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
-	encFloodedMsg := f.msec.Encrypt(append(fldHdr.MarshalBinary(), msg...))
+	floodHeader := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
+	encryptedFloodHeader := f.msec.Encrypt(floodHeader.MarshalBinary())
 
-	f.macConn.Write(append(encZidHdr, encFloodedMsg...), BroadcastMACAddr)
+	encryptedPayload := f.msec.Encrypt(msg)
+
+	f.macConn.Write(append(encryptedZIDHeader, append(encryptedFloodHeader, encryptedPayload...)...), BroadcastMACAddr)
 }
 
-func (f *ZoneFlooder) ReceiveFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
-	hdr, payload, ok := UnmarshalFloodedHeader(msg)
+func (f *ZoneFlooder) ListenForFloodedMsgs(payloadProcessor func(net.IP, []byte)) {
+	for {
+		msg := f.macConn.Read()
+		go f.handleFloodedMsg(msg, payloadProcessor)
+	}
+}
+
+func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[ZIDHeaderLen : ZIDHeaderLen+FloodHeaderLen]))
 	if !ok {
 		return
 	}
 
-	if net.IP.Equal(hdr.SrcIP, f.ip) {
+	if net.IP.Equal(floodHeader.SrcIP, f.ip) {
 		return
 	}
 
-	tableSeq, exist := f.fTable.Get(hdr.SrcIP)
+	tableSeq, exist := f.fTable.Get(floodHeader.SrcIP)
 
-	if exist && hdr.SeqNum <= tableSeq {
+	if exist && floodHeader.SeqNum <= tableSeq {
 		return
 	}
 
-	f.fTable.Set(hdr.SrcIP, hdr.SeqNum)
+	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
-	go payloadProcessor(hdr.SrcIP, payload)
-
-	// re-wrap with zid header
-	// TODO: should i use the ZID header that came with it?
-	zidHdr := ZIDHeader{ZLen: f.zlen, PacketType: LSRFloodPacket, SrcZID: f.zoneID}
-	encZidHdr := f.msec.Encrypt(zidHdr.MarshalBinary())
-
-	encFloodedMsg := f.msec.Encrypt(msg)
+	go payloadProcessor(floodHeader.SrcIP, f.msec.Decrypt(msg[ZIDHeaderLen+FloodHeaderLen:]))
 
 	// reflood the msg
-	f.macConn.Write(append(encZidHdr, encFloodedMsg...), BroadcastMACAddr)
+	f.macConn.Write(msg, BroadcastMACAddr)
 }
 
 func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {

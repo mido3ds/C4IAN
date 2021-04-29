@@ -6,36 +6,21 @@ import (
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
-	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-type UnicastControlPacket struct {
-	ZIDHeader *ZIDHeader
-	Payload   []byte
-}
-
 type UnicastController struct {
 	ip                           net.IP
-	macConn                      *MACLayerConn
 	flooder                      *ZoneFlooder
 	lsr                          *LSR
-	InputChannel                 chan *UnicastControlPacket
 	neighborhoodUpdateSignal     chan bool
 	neighborsTable               *NeighborsTable
 	UpdateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
 func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, zlen byte) (*UnicastController, error) {
-	macConn, err := NewMACLayerConn(iface, ZIDEtherType)
-	if err != nil {
-		return nil, err
-	}
-
-	c := make(chan *UnicastControlPacket)
-
 	flooder, err := NewZoneFlooder(iface, ip, msec, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
@@ -46,9 +31,7 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 	log.Println("initalized controller")
 
 	return &UnicastController{
-		macConn:                      macConn,
 		ip:                           ip,
-		InputChannel:                 c,
 		flooder:                      flooder,
 		lsr:                          lsr,
 		neighborhoodUpdateSignal:     neighborhoodUpdateSignal,
@@ -58,24 +41,11 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 }
 
 func (c *UnicastController) Start() {
-	go c.listenForControlPackets()
-	go c.listenNeighChanges()
+	go c.listenForNeighborhoodChanges()
+	go c.flooder.ListenForFloodedMsgs(c.lsr.HandleLSRPacket)
 }
 
-func (c *UnicastController) listenForControlPackets() {
-	log.Println("UnicastController started listening for control packets from the forwarder")
-	// TODO: receive encrypted packet and packet decrypter
-	for {
-		controlPacket := <-c.InputChannel
-
-		switch controlPacket.ZIDHeader.PacketType {
-		case LSRFloodPacket:
-			c.flooder.ReceiveFloodedMsg(controlPacket.Payload, c.lsr.HandleLSRPacket)
-		}
-	}
-}
-
-func (c *UnicastController) listenNeighChanges() {
+func (c *UnicastController) listenForNeighborhoodChanges() {
 	for {
 		<-c.neighborhoodUpdateSignal
 		c.lsr.topology.Update(c.ip, c.neighborsTable)
@@ -89,5 +59,4 @@ func (c *UnicastController) OnZoneIDChanged(z ZoneID) {
 
 func (c *UnicastController) Close() {
 	c.flooder.Close()
-	c.macConn.Close()
 }

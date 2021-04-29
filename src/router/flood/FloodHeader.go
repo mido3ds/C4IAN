@@ -15,21 +15,21 @@ type FloodHeader struct {
 
 const FloodHeaderLen = 2 + 2*4
 
-func UnmarshalFloodedHeader(b []byte) (*FloodHeader, []byte, bool) {
+func UnmarshalFloodedHeader(b []byte) (*FloodHeader, bool) {
 	if len(b) < FloodHeaderLen {
-		return nil, nil, false
+		return nil, false
 	}
 
 	// extract checksum
 	csum := uint16(b[0])<<8 | uint16(b[1])
 	if csum != BasicChecksum(b[2:FloodHeaderLen]) {
-		return nil, nil, false
+		return nil, false
 	}
 
 	return &FloodHeader{
 		SrcIP:  b[2:6],
 		SeqNum: uint32(b[6])<<24 | uint32(b[7])<<16 | uint32(b[8])<<8 | uint32(b[9]),
-	}, b[FloodHeaderLen:], true
+	}, true
 }
 
 func (f *FloodHeader) MarshalBinary() []byte {

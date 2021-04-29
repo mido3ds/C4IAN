@@ -9,7 +9,6 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-	. "github.com/mido3ds/C4IAN/src/router/zhls"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
@@ -38,7 +37,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
-	zidMacConn, err := NewMACLayerConn(iface, ZIDEtherType)
+	zidMacConn, err := NewMACLayerConn(iface, ZIDDataEtherType)
 	if err != nil {
 		return nil, err
 	}
@@ -76,16 +75,16 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 	}, nil
 }
 
-func (f *Forwarder) Start(controllerChannel chan *UnicastControlPacket) {
+func (f *Forwarder) Start() {
 	go f.forwardFromIPLayer()
-	go f.forwardZIDFromMACLayer(controllerChannel)
+	go f.forwardZIDFromMACLayer()
 	go f.forwardIPFromMACLayer()
 }
 
 // forwardZIDFromMACLayer continuously receives messages from the interface,
 // then either repeats it over loopback (if this is destination), or forwards it for another node.
 // The messages may be up to the interface's MTU in size.
-func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastControlPacket) {
+func (f *Forwarder) forwardZIDFromMACLayer() {
 	log.Println("started receiving from MAC layer")
 
 	for {
@@ -96,12 +95,6 @@ func (f *Forwarder) forwardZIDFromMACLayer(controllerChannel chan *UnicastContro
 		zid, valid := UnmarshalZIDHeader(f.msec.Decrypt(packet[:ZIDHeaderLen]))
 		if !valid {
 			log.Println("Received a packet with an invalid ZID header")
-			continue
-		}
-
-		if zid.IsControlPacket() {
-			decrPayload := f.msec.Decrypt(packet[ZIDHeaderLen:])
-			controllerChannel <- &UnicastControlPacket{ZIDHeader: zid, Payload: decrPayload}
 			continue
 		}
 

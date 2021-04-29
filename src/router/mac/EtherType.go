@@ -7,12 +7,14 @@ type EtherType ethernet.EtherType
 const (
 	IPv4EtherType = EtherType(0x0800)
 
-	// Make use of an unassigned EtherType to differentiate between odmrp traffic and other traffic
+	// Make use of an unassigned EtherType to differentiate between different types of traffic
 	// https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml
 	JoinQueryEtherType = EtherType(0x0901)
 	JoinReplyEtherType = EtherType(0x0902)
 
 	SARPEtherType = EtherType(0x0809)
 
-	ZIDEtherType = EtherType(0x7031)
+	ZoneFloodEtherType = EtherType(0x7033)
+
+	ZIDDataEtherType = EtherType(0x7031)
 )

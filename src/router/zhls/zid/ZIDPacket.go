@@ -13,28 +13,13 @@ const (
 	ZIDHeaderLen = 12
 )
 
-type PacketType uint8
-
-const (
-	// TODO: Add actual data/control types
-	DataPacket PacketType = iota
-	LSRFloodPacket
-	DummyControlPacket
-)
-
 var (
 	errNegativeMTU = fmt.Errorf("MTU can't be negative")
 )
 
 type ZIDHeader struct {
-	PacketType     PacketType // Most significant 4 bits of the 4th byte
-	ZLen           uint8      // Least significant 4 bits of the 4th byte
+	ZLen           uint8
 	DstZID, SrcZID ZoneID
-}
-
-func (z *ZIDHeader) IsControlPacket() bool {
-	return z.PacketType == LSRFloodPacket ||
-		z.PacketType == DummyControlPacket
 }
 
 func UnmarshalZIDHeader(packet []byte) (*ZIDHeader, bool) {
@@ -49,21 +34,20 @@ func UnmarshalZIDHeader(packet []byte) (*ZIDHeader, bool) {
 	}
 
 	return &ZIDHeader{
-		PacketType: PacketType(packet[3] >> 4),
-		ZLen:       uint8(packet[3] & 0b1111),
-		DstZID:     ZoneID(uint32(packet[4])<<24 | uint32(packet[5])<<16 | uint32(packet[6])<<8 | uint32(packet[7])),
-		SrcZID:     ZoneID(uint32(packet[8])<<24 | uint32(packet[9])<<16 | uint32(packet[10])<<8 | uint32(packet[11])),
+		ZLen:   uint8(packet[3]),
+		DstZID: ZoneID(uint32(packet[4])<<24 | uint32(packet[5])<<16 | uint32(packet[6])<<8 | uint32(packet[7])),
+		SrcZID: ZoneID(uint32(packet[8])<<24 | uint32(packet[9])<<16 | uint32(packet[10])<<8 | uint32(packet[11])),
 	}, true
 }
 
 func (header *ZIDHeader) MarshalBinary() []byte {
 	var buf [ZIDHeaderLen]byte
 
-	// random salt
+	// Random salt
 	buf[2] = byte(rand.Uint32())
 
-	// packet type + zlen
-	buf[3] = byte(header.PacketType)<<4 | (byte(header.ZLen) & 0b1111)
+	// Zlen
+	buf[3] = byte(header.ZLen)
 
 	// DstZID
 	buf[4] = byte(header.DstZID >> 24)
