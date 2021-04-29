@@ -1,5 +1,6 @@
 # C4IAN
 ![C4IAN Logo](./docs/figures/logo.png)
+> Pronounced "Kaian"
 Tactical Mobile ad-hoc network.
 Build a network on the go for tactical teams in war and emeregency situations.
 
