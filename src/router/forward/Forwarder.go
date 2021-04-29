@@ -16,8 +16,6 @@ type Forwarder struct {
 	iface          *net.Interface
 	msec           *MSecLayer
 	ip             net.IP
-	zlen           byte
-	zoneID         ZoneID
 	zidMacConn     *MACLayerConn
 	ipMacConn      *MACLayerConn
 	ipConn         *IPLayerConn
@@ -32,8 +30,7 @@ type Forwarder struct {
 	updateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
-func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
-	neighborsTable *NeighborsTable,
+func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTable *NeighborsTable,
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
@@ -63,7 +60,6 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte,
 		iface:                        iface,
 		msec:                         msec,
 		ip:                           ip,
-		zlen:                         zlen,
 		zidMacConn:                   zidMacConn,
 		ipMacConn:                    ipMacConn,
 		ipConn:                       ipConn,
@@ -218,10 +214,6 @@ func (f *Forwarder) forwardFromIPLayer() {
 			p.SetVerdict(netfilter.NF_DROP)
 		}
 	}
-}
-
-func (f *Forwarder) OnZoneIDChanged(z ZoneID) {
-	f.zoneID = z
 }
 
 func (f *Forwarder) Close() {
