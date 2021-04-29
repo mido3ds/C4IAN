@@ -161,6 +161,13 @@ function updateGrid() {
 updateGrid()
 
 function onZlenChanged() {
+  const zlen = getZLen()
+  if (zlen > 16) {
+    document.getElementById('zlen').value = 16
+  } else if (zlen <= 0) {
+    document.getElementById('zlen').value = 1
+  }
+
   updateGrid()
   updateView()
 }
