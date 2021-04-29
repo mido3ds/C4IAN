@@ -3,10 +3,8 @@ package tables
 import (
 	"fmt"
 	"log"
-	"net"
 	"sync"
 
-	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/starwander/goraph"
 )
 
@@ -87,10 +85,10 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 	}
 }
 
-func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
+func (t *Topology) CalculateSinkTree(nodeID NodeID) map[goraph.ID]goraph.ID {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
-	_, parents, _ := t.g.Dijkstra(IPv4ToUInt32(myIP))
+	_, parents, _ := t.g.Dijkstra(nodeID)
 	return parents
 }
 

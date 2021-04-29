@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
-	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 // UniForwardTable is lock-free thread-safe hash table
@@ -28,24 +27,24 @@ func NewUniForwardTable() *UniForwardTable {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (f *UniForwardTable) Get(destIP net.IP) (*UniForwardingEntry, bool) {
-	v, ok := f.m.Get(IPv4ToUInt32(destIP))
+func (f *UniForwardTable) Get(nodeID NodeID) (*UniForwardingEntry, bool) {
+	v, ok := f.m.Get(nodeID)
 	if !ok {
 		return nil, false
 	}
 	return v.(*UniForwardingEntry), true
 }
 
-func (f *UniForwardTable) Set(destIP net.IP, entry *UniForwardingEntry) {
+func (f *UniForwardTable) Set(nodeID NodeID, entry *UniForwardingEntry) {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	f.m.Set(IPv4ToUInt32(destIP), entry)
+	f.m.Set(nodeID, entry)
 }
 
 // Del silently fails if key doesn't exist
-func (f *UniForwardTable) Del(destIP net.IP) {
-	f.m.Del(IPv4ToUInt32(destIP))
+func (f *UniForwardTable) Del(nodeID NodeID) {
+	f.m.Del(nodeID)
 }
 
 func (f *UniForwardTable) Len() int {
@@ -60,7 +59,7 @@ func (f *UniForwardTable) Clear() {
 func (f *UniForwardTable) String() string {
 	s := "&ForwardTable{"
 	for item := range f.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*UniForwardingEntry).NextHopMAC.String())
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", fmt.Sprint(item.Key), item.Value.(*UniForwardingEntry).NextHopMAC.String())
 
 	}
 	s += " }"

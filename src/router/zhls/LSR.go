@@ -32,7 +32,7 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	if !valid {
 		log.Panicln("Corrupted LSR packet received")
 	}
-	lsr.topology.Update(srcIP, srcNeighborsTable)
+	lsr.topology.Update(ToNodeID(srcIP), srcNeighborsTable)
 	lsr.dirtyTopology = true
 }
 
@@ -42,26 +42,25 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 	}
 
 	dirtyForwardingTable := NewUniForwardTable()
-	sinkTreeParents := lsr.topology.CalculateSinkTree(lsr.myIP)
+	sinkTreeParents := lsr.topology.CalculateSinkTree(ToNodeID(lsr.myIP))
 
 	for dst, parent := range sinkTreeParents {
-		dstIP := UInt32ToIPv4(dst.(uint32))
 
 		// Dst is the same as the src node
-		if dstIP.Equal(lsr.myIP) {
+		if dst == ToNodeID(lsr.myIP) {
 			continue
 		}
 
 		// Dst in unreachable
 		// TODO : to be handled
 		if parent == nil {
-			log.Println(UInt32ToIPv4(dst.(uint32)), "is unreachable")
+			log.Println(dst, "is unreachable")
 			continue
 		}
 
 		// Dst is a direct neighbor
 		var nextHop goraph.ID
-		if parent == IPv4ToUInt32(lsr.myIP) {
+		if parent == ToNodeID(lsr.myIP) {
 			nextHop = dst
 		}
 
@@ -69,12 +68,11 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 		// or one of the nodes that we have already known its nextHop
 		// TODO: Optimize by collecting nodes along a path and adding next hop for all of them together,
 		// 		 then removing them from the map
-		for parent != IPv4ToUInt32(lsr.myIP) {
+		for parent != ToNodeID(lsr.myIP) {
 			// check if the dst parent shortest path is calculated before
-			parentIP := UInt32ToIPv4(parent.(uint32))
-			forwardingEntry, exists := dirtyForwardingTable.Get(parentIP)
+			forwardingEntry, exists := dirtyForwardingTable.Get(parent.(NodeID))
 			if exists {
-				dirtyForwardingTable.Set(dstIP, forwardingEntry)
+				dirtyForwardingTable.Set(dst.(NodeID), forwardingEntry)
 				break
 			}
 			// return through the dst shortest path till reach one of the neighbors
@@ -83,14 +81,13 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 		}
 
 		// We iterated through the path until we reached a direct neighbor
-		if parent == IPv4ToUInt32(lsr.myIP) {
+		if parent == ToNodeID(lsr.myIP) {
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
-			nextHopIP := UInt32ToIPv4(nextHop.(uint32))
-			neighborEntry, exists := lsr.neighborsTable.Get(nextHopIP)
+			neighborEntry, exists := lsr.neighborsTable.Get(nextHop.(NodeID))
 			if !exists {
 				log.Panicln("Attempting to make a next hop through a non-neighbor")
 			}
-			dirtyForwardingTable.Set(dstIP, &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
+			dirtyForwardingTable.Set(dst.(NodeID), &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
 		}
 	}
 	// Shallow copy the forwarding table, this will make the hashmap pointer in forwardingTable
@@ -104,16 +101,16 @@ func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) 
 	log.Println("----------- Sink Tree -------------")
 	for dst, parent := range sinkTreeParents {
 		if dst == nil {
-			log.Println("Dst: ", dst, "Parent: ", UInt32ToIPv4(parent.(uint32)))
+			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
 			continue
 		}
 		if parent == nil {
-			log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)), "Parent: ", parent)
-			lsr.topology.DisplayVertex(dst.(uint32))
+			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
+			lsr.topology.DisplayVertex(dst.(NodeID))
 			continue
 		}
-		log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)), "Parent: ", UInt32ToIPv4(parent.(uint32)))
-		lsr.topology.DisplayVertex(dst.(uint32))
+		log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
+		lsr.topology.DisplayVertex(dst.(NodeID))
 	}
 	log.Println("-----------------------------------")
 }
