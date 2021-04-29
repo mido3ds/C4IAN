@@ -1,5 +1,33 @@
 #!/bin/bash -e
 
+usage() {
+    F=$(realpath --relative-to=. $0)
+    echo "Usage: ${F} [-w|--watch] [-- <options to pass to all cmds>]"
+    echo "Runs all cmds, pass -w|--watch to watch changes in executable"
+    echo "Pass any other options after -- to all cmds argv"
+}
+
+while [ "$1" != "" ]; do
+    PARAM=`echo $1 | awk -F= '{print $1}'`
+    VALUE=`echo $1 | awk -F= '{print $2}'`
+    case $PARAM in
+        -h | --help)
+            usage
+            exit
+            ;;
+        -w | --watch)
+            WATCH=1
+            echo "running in watch mode"
+            ;;
+        --)
+            shift
+            OPTS="$@"
+            break
+            ;;
+    esac
+    shift
+done
+
 # check cmds exist
 python3 emulation/get_nodes_pid.py c 1>&2 >/dev/null || ( echo No cmds found; exit 1 )
 
@@ -7,13 +35,8 @@ mkdir -p /var/log/caian/ /var/lib/caian/
 
 echo "cmds DBs are in /var/lib/caian/"
 
-if [[ "$1" = "-w" ]] || [[ "$1" = "--watch" ]]; then
-    WATCH=1
-    echo "running in watch mode"
-fi
-
-function cleanup() {
-    ps faux | grep emulation/watchdog | grep cmd | cut -d' ' -f6 | xargs kill -9 2>/dev/null
+cleanup() {
+    pkill -u root -f ./emulation/watchdog
 }
 trap cleanup INT
 
@@ -23,6 +46,7 @@ exec &> >(tee  -a /var/log/caian/cmds)
 echo ------------------------
 
 python3 emulation/get_nodes_pid.py c | while read line; do
+    line="${line} ${OPTS}"
     if [[ $WATCH -eq 1 ]]; then
         ./emulation/watchdog --file ./cmd/daemon/daemon --command "nsenter $line" &
     else
