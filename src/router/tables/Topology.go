@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/starwander/goraph"
 )
 
 type Topology struct {
-	g *goraph.Graph
+	g    *goraph.Graph
+	lock sync.RWMutex
 }
 
 func NewTopology() *Topology {
@@ -39,20 +41,19 @@ func (edge *myEdge) Get() (goraph.ID, goraph.ID, float64) {
 }
 
 func (vertex *myVertex) Edges() (edges []goraph.Edge) {
-	edges = make([]goraph.Edge, len(vertex.outTo)+len(vertex.inFrom))
-	i := 0
 	for to, weight := range vertex.outTo {
-		edges[i] = &myEdge{vertex.id, to, weight}
-		i++
+		edges = append(edges, &myEdge{vertex.id, to, weight})
 	}
 	for from, weight := range vertex.inFrom {
-		edges[i] = &myEdge{from, vertex.id, weight}
-		i++
+		edges = append(edges, &myEdge{from, vertex.id, weight})
 	}
 	return
 }
 
 func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
 	outToEdges := make(map[uint32]float64)
 
 	for n := range srcNeighbors.m.Iter() {
@@ -87,19 +88,21 @@ func (t *Topology) Update(srcIP net.IP, srcNeighbors *NeighborsTable) error {
 }
 
 func (t *Topology) CalculateSinkTree(myIP net.IP) map[goraph.ID]goraph.ID {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
 	_, parents, _ := t.g.Dijkstra(IPv4ToUInt32(myIP))
 	return parents
 }
 
 func (t *Topology) DisplayVertex(id goraph.ID) {
-	vertex,_ := t.g.GetVertex(id)
+	vertex, _ := t.g.GetVertex(id)
 	s := ""
 	if vertex == nil {
-		s += fmt.Sprintf("Vertex: %v isn't existd\n", id)
+		s += fmt.Sprintf("Vertex: %v isn't existd\n", UInt32ToIPv4(id.(uint32)))
 	} else {
 		s += fmt.Sprintf("Vertex: %v, ", UInt32ToIPv4(vertex.(*myVertex).id))
 		for to, cost := range vertex.(*myVertex).outTo {
-			s += fmt.Sprintf("Edge to %v with cost %v, ",UInt32ToIPv4(to), cost)
+			s += fmt.Sprintf("Edge to %v with cost %v, ", UInt32ToIPv4(to), cost)
 		}
 
 		for from, cost := range vertex.(*myVertex).outTo {
@@ -111,7 +114,7 @@ func (t *Topology) DisplayVertex(id goraph.ID) {
 }
 
 func (t *Topology) DisplayEdge(fromID goraph.ID, toID goraph.ID) {
-	edge,_ := t.g.GetEdge(fromID, toID)
+	edge, _ := t.g.GetEdge(fromID, toID)
 	s := ""
 	t.g.GetEdge(fromID, toID)
 	if edge == nil {

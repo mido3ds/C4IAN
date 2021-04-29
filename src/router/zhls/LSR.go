@@ -11,12 +11,15 @@ import (
 )
 
 type LSR struct {
-	topology *Topology
+	myIP           net.IP
+	neighborsTable *NeighborsTable
+	topology       *Topology
+	dirtyTopology  bool
 }
 
-func NewLSR() *LSR {
+func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
 	t := NewTopology()
-	return &LSR{topology: t}
+	return &LSR{myIP: myIP, neighborsTable: neighborsTable, topology: t}
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
@@ -26,29 +29,26 @@ func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTab
 func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	srcNeighborsTable, valid := UnmarshalNeighborsTable(payload)
 
-	//log.Println("Received LSR From:", srcIP, srcNeighborsTable)
 	if !valid {
 		log.Panicln("Corrupted LSR packet received")
 	}
-
 	lsr.topology.Update(srcIP, srcNeighborsTable)
+	lsr.dirtyTopology = true
 }
 
-func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
-	forwardingTable *UniForwardTable,
-	neighborsTable *NeighborsTable) {
+func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
+	if !lsr.dirtyTopology {
+		return
+	}
 
 	dirtyForwardingTable := NewUniForwardTable()
-	sinkTreeParents := lsr.topology.CalculateSinkTree(myIP)
-
-	//log.Println(neighborsTable)
-	//lsr.displaySinkTreeParents(sinkTreeParents)
+	sinkTreeParents := lsr.topology.CalculateSinkTree(lsr.myIP)
 
 	for dst, parent := range sinkTreeParents {
 		dstIP := UInt32ToIPv4(dst.(uint32))
 
 		// Dst is the same as the src node
-		if dstIP.Equal(myIP) {
+		if dstIP.Equal(lsr.myIP) {
 			continue
 		}
 
@@ -61,17 +61,15 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 
 		// Dst is a direct neighbor
 		var nextHop goraph.ID
-		if parent == IPv4ToUInt32(myIP) {
+		if parent == IPv4ToUInt32(lsr.myIP) {
 			nextHop = dst
 		}
 
-		// TODO: Optimize by collecting nodes along a path
-		// and adding next hop for all of them together,
-		// then removing them from the map
-
 		// Iterate till reaching one of the direct neighbors
 		// or one of the nodes that we have already known its nextHop
-		for parent != IPv4ToUInt32(myIP) {
+		// TODO: Optimize by collecting nodes along a path and adding next hop for all of them together,
+		// 		 then removing them from the map
+		for parent != IPv4ToUInt32(lsr.myIP) {
 			// check if the dst parent shortest path is calculated before
 			parentIP := UInt32ToIPv4(parent.(uint32))
 			forwardingEntry, exists := dirtyForwardingTable.Get(parentIP)
@@ -85,20 +83,21 @@ func (lsr *LSR) UpdateForwardingTable(myIP net.IP,
 		}
 
 		// We iterated through the path until we reached a direct neighbor
-		if parent == IPv4ToUInt32(myIP) {
+		if parent == IPv4ToUInt32(lsr.myIP) {
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
 			nextHopIP := UInt32ToIPv4(nextHop.(uint32))
-			neighborEntry, exists := neighborsTable.Get(nextHopIP)
+			neighborEntry, exists := lsr.neighborsTable.Get(nextHopIP)
 			if !exists {
 				log.Panicln("Attempting to make a next hop through a non-neighbor")
 			}
 			dirtyForwardingTable.Set(dstIP, &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
 		}
-		// Shallow copy the forwarding table, this will make the hashmap pointer in forwardingTable
-		// point to the new hashmap inside dityForwardingTable. The old hashmap in forwardingTable
-		// will be deleted by the garbage collector
-		*forwardingTable = *dirtyForwardingTable
 	}
+	// Shallow copy the forwarding table, this will make the hashmap pointer in forwardingTable
+	// point to the new hashmap inside dityForwardingTable. The old hashmap in forwardingTable
+	// will be deleted by the garbage collector
+	*forwardingTable = *dirtyForwardingTable
+	lsr.dirtyTopology = false
 }
 
 func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
@@ -113,7 +112,7 @@ func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) 
 			lsr.topology.DisplayVertex(dst.(uint32))
 			continue
 		}
-		log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)),"Parent: ", UInt32ToIPv4(parent.(uint32)))
+		log.Println("Dst: ", UInt32ToIPv4(dst.(uint32)), "Parent: ", UInt32ToIPv4(parent.(uint32)))
 		lsr.topology.DisplayVertex(dst.(uint32))
 	}
 	log.Println("-----------------------------------")

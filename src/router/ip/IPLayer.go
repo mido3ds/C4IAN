@@ -9,17 +9,10 @@ import (
 	"github.com/AkihiroSuda/go-netfilter-queue"
 )
 
-var (
-	loopbackRawAddrIPv4 = syscall.SockaddrInet4{
-		Port: 0,
-		Addr: [4]byte{127, 0, 0, 1},
-	}
-
-	loopbackRawAddrIPv6 = syscall.SockaddrInet6{
-		Port: 0,
-		Addr: [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	}
-)
+var loopbackRawAddrIPv4 = syscall.SockaddrInet4{
+	Port: 0,
+	Addr: [4]byte{127, 0, 0, 1},
+}
 
 type IPLayerConn struct {
 	fd4     int
@@ -46,8 +39,8 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 	}, nil
 }
 
+// TODO: don't return error, panic internally instead
 func (c *IPLayerConn) Write(packet []byte) error {
-	markPacketAsInjected(packet)
 	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
 }
 
@@ -58,16 +51,6 @@ func (c *IPLayerConn) Read() netfilter.NFPacket {
 func (c *IPLayerConn) Close() {
 	syscall.Close(c.fd4)
 	c.nfq.Close()
-}
-
-// markPacketAsInjected puts a mark in a reserved bit in IPv4 header
-// so we can notice it when it comes back in netfilter-queue
-func markPacketAsInjected(b []byte) {
-	b[1] |= 1
-}
-
-func IsInjectedPacket(packet []byte) bool {
-	return packet[1]&1 == 1
 }
 
 func GetMyIPs(iface *net.Interface) (net.IP, net.IP, error) {

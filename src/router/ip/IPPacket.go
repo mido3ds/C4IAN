@@ -4,60 +4,57 @@ import (
 	"net"
 )
 
-type IPHeader struct {
-	Version byte
-	DestIP  net.IP
-	TTL     int8
-}
-
 const (
 	IPv4HeaderLen = 20
 )
 
+type IPHeader struct {
+	Version byte
+	DestIP  net.IP
+}
+
 func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
-	var ip net.IP
-	version := byte(buffer[0]) >> 4
-	var ttl int8
-
-	valid := false
-	if version == 4 {
-		if len(buffer) < IPv4HeaderLen {
-			return nil, false
-		}
-
-		// DONT call net.IPv4 here, as it puts the 4 bytes
-		// at the end of 16 byte array
-		// while we expect to have only 4 bytes
-		ip = []byte{buffer[16], buffer[17], buffer[18], buffer[19]}
-
-		ttl = int8(buffer[8])
-		valid = ipv4Checksum(buffer) == 0 && ttl > 0
-	} else if version == 6 {
-		if len(buffer) < 40 {
-			return nil, false
-		}
-		ip = buffer[24:40]
-		ttl = int8(buffer[7])
-		valid = ttl > 0
-	} else {
+	if len(buffer) < IPv4HeaderLen {
 		return nil, false
 	}
 
-	// actually it's ttl>0, but there is an edge case
-	// when this is the destination and it's 0, it should be processed
-	// this is not spec complient to make it easy to write the function
-	valid = valid && ttl >= 0
+	// Only IPv4 is supported
+	version := byte(buffer[0]) >> 4
+	if version != 4 {
+		return nil, false
+	}
+
+	// checksum and ttl
+	ttl := int8(buffer[8])
+	valid := ipv4Checksum(buffer) == 0 && ttl >= 0
+	if !valid {
+		return nil, false
+	}
 
 	return &IPHeader{
 		Version: version,
-		DestIP:  ip,
-		TTL:     ttl,
-	}, valid
+		DestIP:  net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19]).To4(),
+	}, true
 }
 
-func IPv4DecrementTTL(packet []byte) {
+// IPv4DecrementTTL decrements TTL and returns whether
+// packet is valid or not
+func IPv4DecrementTTL(packet []byte) bool {
 	ttl := int8(packet[8])
+	if ttl == 0 {
+		return false
+	}
+
 	packet[8] = byte(ttl) - 1
+
+	// update checksum
+	packet[10] = 0 // MSB
+	packet[11] = 0 // LSB
+	csum := ipv4Checksum(packet)
+	packet[10] = byte(csum >> 8) // MSB
+	packet[11] = byte(csum)      // LSB
+
+	return true
 }
 
 func ipv4Checksum(b []byte) uint16 {
