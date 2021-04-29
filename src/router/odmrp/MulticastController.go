@@ -19,6 +19,8 @@ type MulticastController struct {
 	ip           net.IP
 	mac          net.HardwareAddr
 	routingTable *RoutingTable
+	cacheTable   *CacheTable
+	memberTable  *MemberTable
 	msec         *MSecLayer
 }
 
@@ -52,6 +54,8 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		ip:           ip,
 		mac:          mac,
 		routingTable: newRoutingTable(),
+		cacheTable:   newCacheTable(),
+		memberTable:  newMemberTable(),
 		msec:         msec,
 	}, nil
 }
@@ -65,8 +69,6 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 // or can't find the grpIP itself
 func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingEntry, bool) {
 	// TODO
-
-	// for now i will just send join queries
 	members, ok := c.gmTable.Get(grpIP)
 	if !ok {
 		log.Panic("must have the members!")
@@ -86,7 +88,7 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingE
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
-	log.Println("MulticastController started listening for control packets from the forwarder")
+	log.Println("~~ MulticastController started ~~")
 	go c.queryFlooder.ReceiveFloodedMsgs(c.onRecvJoinQuery)
 	go c.recvJoinReplyMsgs(ft)
 }
@@ -94,6 +96,7 @@ func (c *MulticastController) Start(ft *MultiForwardTable) {
 func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
 	jq, valid := UnmarshalJoinQuery(payload)
 	log.Println(jq) // TODO: remove this
+
 	if !valid {
 		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
@@ -103,6 +106,15 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		return nil, false
 	}
 
+	// if the join query allready sent
+	cache, ok := c.cacheTable.Get(jq.SrcIP)
+	if ok && cache.SeqNo <= jq.SeqNo {
+		return nil, false
+	}
+	// else insert in cache
+	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
+	c.cacheTable.Set(jq.SrcIP, cached)
+
 	if c.imInDests(jq) {
 		log.Println("im in dests! :'D") // TODO: remove this
 
@@ -110,7 +122,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		jr := &JoinReply{
 			SeqNo:  jq.SeqNo,
 			SrcIPs: []net.IP{jq.SrcIP},
-			GrpIPs: []net.IP{jq.GrpIP},
+			GrpIP:  jq.GrpIP,
 		}
 		encJR := c.msec.Encrypt(jr.MarshalBinary())
 		c.jrConn.Write(encJR, jq.PrevHop)
@@ -151,7 +163,7 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 		if c.imInSrcs(jr) {
 			log.Println("Source Recieved Join Reply!!")
 		} else {
-			jr.Forwarders = append(jr.Forwarders, c.ip)
+			// jr.Forwarders = append(jr.Forwarders, c.ip)
 			msg = c.msec.Encrypt(jr.MarshalBinary())
 			for _, srcIP := range jr.SrcIPs {
 				entryroutingTable, ok := c.routingTable.Get(srcIP)
