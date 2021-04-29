@@ -61,6 +61,18 @@ func (f *ZoneFlooder) ListenForFloodedMsgs(payloadProcessor func(net.IP, []byte)
 }
 
 func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP, []byte)) {
+	zidHeader, ok := UnmarshalZIDHeader(f.msec.Decrypt(msg[:ZIDHeaderLen]))
+	if !ok {
+		return
+	}
+
+	myZone := MyZone()
+	srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+
+	if !myZone.Equal(srcZone) {
+		return
+	}
+
 	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[ZIDHeaderLen : ZIDHeaderLen+FloodHeaderLen]))
 	if !ok {
 		return
