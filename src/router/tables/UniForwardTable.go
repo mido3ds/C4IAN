@@ -28,7 +28,7 @@ func NewUniForwardTable() *UniForwardTable {
 
 // Get returns value associated with the given key, and whether the key existed or not
 func (f *UniForwardTable) Get(nodeID NodeID) (*UniForwardingEntry, bool) {
-	v, ok := f.m.Get(nodeID)
+	v, ok := f.m.Get(uint64(nodeID))
 	if !ok {
 		return nil, false
 	}
@@ -39,12 +39,12 @@ func (f *UniForwardTable) Set(nodeID NodeID, entry *UniForwardingEntry) {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	f.m.Set(nodeID, entry)
+	f.m.Set(uint64(nodeID), entry)
 }
 
 // Del silently fails if key doesn't exist
 func (f *UniForwardTable) Del(nodeID NodeID) {
-	f.m.Del(nodeID)
+	f.m.Del(uint64(nodeID))
 }
 
 func (f *UniForwardTable) Len() int {

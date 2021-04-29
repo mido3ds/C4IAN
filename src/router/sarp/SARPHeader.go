@@ -5,7 +5,6 @@ import (
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/msec"
-	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type SARPType uint8
@@ -13,7 +12,7 @@ type SARPType uint8
 const (
 	hashLen       = 64 // bytes at the end
 	sARPHeaderLen = 19 // excluding the hash at the end
-	sARPTotalLen  = ZIDHeaderLen + sARPHeaderLen + hashLen
+	sARPTotalLen  = sARPHeaderLen + hashLen
 )
 
 const (

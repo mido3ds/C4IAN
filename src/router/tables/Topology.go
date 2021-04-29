@@ -56,21 +56,21 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 
 	for n := range srcNeighbors.m.Iter() {
 		// Check if this neighbor vertex exists
-		neighborVertex, notExist := t.g.GetVertex(n.Key.(NodeID))
+		neighborVertex, notExist := t.g.GetVertex(NodeID(n.Key.(uint64)))
 
 		if notExist == nil {
 			neighborVertex.(*myVertex).inFrom[srcID] = float64(n.Value.(*NeighborEntry).Cost)
 			// Remove the old neighbor vertex
-			t.g.DeleteVertex(n.Key.(NodeID))
+			t.g.DeleteVertex(NodeID(n.Key.(uint64)))
 			// Add the neighbor vertex with new inFrom edge
 			t.g.AddVertexWithEdges(neighborVertex.(*myVertex))
 		} else {
 			neighborInFromEdges := make(map[NodeID]float64)
 			neighborInFromEdges[srcID] = float64(n.Value.(*NeighborEntry).Cost)
-			t.g.AddVertexWithEdges(&myVertex{id: n.Key.(NodeID), outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
+			t.g.AddVertexWithEdges(&myVertex{id: NodeID(n.Key.(uint64)), outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
 		}
 
-		outToEdges[n.Key.(NodeID)] = float64(n.Value.(*NeighborEntry).Cost)
+		outToEdges[NodeID(n.Key.(uint64))] = float64(n.Value.(*NeighborEntry).Cost)
 	}
 
 	vertex, notExist := t.g.GetVertex(srcID)

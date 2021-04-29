@@ -5,7 +5,6 @@ import (
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
-	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	"github.com/starwander/goraph"
 )
@@ -23,6 +22,7 @@ func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
 }
 
 func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
+	//log.Println("Sent LSR packet")
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
@@ -33,6 +33,7 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 		log.Panicln("Corrupted LSR packet received")
 	}
 	lsr.topology.Update(ToNodeID(srcIP), srcNeighborsTable)
+	//log.Println("Received LSR packet")
 	lsr.dirtyTopology = true
 }
 
@@ -43,6 +44,7 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 
 	dirtyForwardingTable := NewUniForwardTable()
 	sinkTreeParents := lsr.topology.CalculateSinkTree(ToNodeID(lsr.myIP))
+	lsr.displaySinkTreeParents(sinkTreeParents)
 
 	for dst, parent := range sinkTreeParents {
 

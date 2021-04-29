@@ -64,11 +64,7 @@ func (s *SARPController) sendMsgs() {
 		s.dirtyNeighborsTable = NewNeighborsTable()
 
 		// Broadcast sARP request
-		zidHeader := MyZIDHeader(0)
-		encryptedZIDHeader := s.msec.Encrypt(zidHeader.MarshalBinary())
-		sarpHeader := &SARPHeader{SARPReq, s.myIP, s.myMAC, time.Now().UnixNano()}
-		encryptedSARPHeader := s.msec.Encrypt(sarpHeader.MarshalBinary())
-		s.macConn.Write(append(encryptedZIDHeader, encryptedSARPHeader...), BroadcastMACAddr)
+		s.macConn.Write(s.CreateSARPPacket(SARPReq), BroadcastMACAddr)
 
 		// Wait for sARP responses (collected in dirtyNeighborsTable)
 		time.Sleep(sARPHoldTime)
@@ -97,9 +93,9 @@ func (s *SARPController) receiveMsgs() {
 			log.Panicln("Received sARP Packet with invalid ZID header")
 		}
 
-		sarpHeader, ok := UnmarshalSARPHeader(s.msec.Decrypt(packet[ZIDHeaderLen:]))
+		sarpHeader, ok := UnmarshalSARPHeader(s.msec.Decrypt(packet[ZIDHeaderLen : ZIDHeaderLen+sARPTotalLen]))
 		if !ok {
-			log.Panicln("Invalid sARP packet received")
+			log.Panicln("Received sARP Packet with invalid sARP header")
 		}
 
 		// TODO: Handle zones of different sizes
@@ -112,18 +108,27 @@ func (s *SARPController) receiveMsgs() {
 			nodeID = ToNodeID(srcZone.ID)
 		}
 
+		// Calculate the delay, which is the link cost in the topology
+		delay := time.Since(time.Unix(0, sarpHeader.sendTime))
 		switch sarpHeader.Type {
 		case SARPReq:
-			delay := time.Since(time.Unix(0, sarpHeader.sendTime))
+			// Update neighbors table
 			s.NeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
-
-			myHeader := &SARPHeader{SARPRes, s.myIP, s.myMAC, time.Now().UnixNano()}
-			s.macConn.Write(s.msec.Encrypt(myHeader.MarshalBinary()), sarpHeader.MAC)
+			// Send sARP response to the request sender
+			s.macConn.Write(s.CreateSARPPacket(SARPRes), sarpHeader.MAC)
 		case SARPRes:
-			delay := time.Since(time.Unix(0, sarpHeader.sendTime))
+			// Update dirty neighbors table
 			s.dirtyNeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
 		}
 	}
+}
+
+func (s *SARPController) CreateSARPPacket(packetType SARPType) []byte {
+	zidHeader := MyZIDHeader(0)
+	encryptedZIDHeader := s.msec.Encrypt(zidHeader.MarshalBinary())
+	mySarpHeader := &SARPHeader{packetType, s.myIP, s.myMAC, time.Now().UnixNano()}
+	encryptedSARPHeader := s.msec.Encrypt(mySarpHeader.MarshalBinary())
+	return append(encryptedZIDHeader, encryptedSARPHeader...)
 }
 
 func (s *SARPController) Close() {

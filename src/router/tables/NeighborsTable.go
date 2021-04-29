@@ -45,15 +45,14 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 
 	start := 0
 	for i := 0; i < int(numberOfEntries); i++ {
-		nodeID := uint64(payload[start])<<64 |
-			uint64(payload[start+1])<<56 |
-			uint64(payload[start+2])<<48 |
-			uint64(payload[start+3])<<40 |
-			uint64(payload[start+4])<<32 |
-			uint64(payload[start+5])<<24 |
-			uint64(payload[start+6])<<16 |
-			uint64(payload[start+7])<<8 |
-			uint64(payload[start+8])
+		nodeID := uint64(payload[start])<<56 |
+			uint64(payload[start+1])<<48 |
+			uint64(payload[start+2])<<40 |
+			uint64(payload[start+3])<<32 |
+			uint64(payload[start+4])<<24 |
+			uint64(payload[start+5])<<16 |
+			uint64(payload[start+6])<<8 |
+			uint64(payload[start+7])
 
 		cost := uint16(payload[start+8])<<8 | uint16(payload[start+9])
 		neighborsTable.Set(NodeID(nodeID), &NeighborEntry{Cost: cost})
@@ -65,7 +64,7 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 
 // Get returns value associated with the given key, and whether the key existed or not
 func (n *NeighborsTable) Get(nodeID NodeID) (*NeighborEntry, bool) {
-	v, ok := n.m.Get(nodeID)
+	v, ok := n.m.Get(uint64(nodeID))
 	if !ok {
 		return nil, false
 	}
@@ -76,12 +75,12 @@ func (n *NeighborsTable) Set(nodeID NodeID, entry *NeighborEntry) {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	n.m.Set(nodeID, entry)
+	n.m.Set(uint64(nodeID), entry)
 }
 
 // Del silently fails if key doesn't exist
 func (n *NeighborsTable) Del(nodeID NodeID) {
-	n.m.Del(nodeID)
+	n.m.Del(uint64(nodeID))
 }
 
 func (n *NeighborsTable) Len() int {
@@ -113,7 +112,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	start := 4
 	for item := range n.m.Iter() {
 		// Insert IP: 4 bytes
-		nodeID := item.Key.(NodeID)
+		nodeID := item.Key.(uint64)
 		payload[start] = byte(nodeID >> 56)
 		payload[start+1] = byte(nodeID >> 48)
 		payload[start+2] = byte(nodeID >> 40)
@@ -144,7 +143,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 func (n *NeighborsTable) GetTableHash() []byte {
 	s := ""
 	for item := range n.m.Iter() {
-		s += fmt.Sprint(item.Key.(NodeID)) + item.Value.(*NeighborEntry).MAC.String()
+		s += fmt.Sprint(item.Key) + item.Value.(*NeighborEntry).MAC.String()
 	}
 	return HashSHA3([]byte(s))
 }
