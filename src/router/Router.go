@@ -94,7 +94,6 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 func (r *Router) Start() {
 	// zid agent
-	r.zidAgent.AddListener(OnZoneIDChanged)
 	go r.zidAgent.Start()
 
 	// start controllers
@@ -111,7 +110,6 @@ func (r *Router) Close() {
 	r.sarpCont.Close()
 
 	r.zidAgent.Close()
-	r.zidAgent.FlushListeners()
 
 	kernel.UnregisterGateway()
 	kernel.DeleteIPTablesRule()

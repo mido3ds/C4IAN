@@ -8,9 +8,8 @@ import (
 )
 
 type ZoneIDAgent struct {
-	conn      *net.UnixConn
-	zlen      byte
-	listeners []func(ZoneID)
+	conn *net.UnixConn
+	zlen byte
 
 	// don't read it, carries garbage at beginning, use AddListener to be notifies when it gets a correct value
 	lastZoneID ZoneID
@@ -41,7 +40,6 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 	return &ZoneIDAgent{
 		conn:      l,
 		zlen:      zlen,
-		listeners: make([]func(ZoneID), 0),
 		locSocket: locSocket,
 	}, nil
 }
@@ -61,25 +59,9 @@ func (a *ZoneIDAgent) Start() {
 		id := NewZoneID(loc, a.zlen)
 		if id != a.lastZoneID {
 			a.lastZoneID = id
-
-			go func() {
-				// call listeners
-				for _, f := range a.listeners {
-					f(id)
-				}
-			}()
+			myZoneID = id
 		}
 	}
-}
-
-// AddListener appends a function to the list of functions
-// that will be called when zoneid changes
-func (a *ZoneIDAgent) AddListener(f func(ZoneID)) {
-	a.listeners = append(a.listeners, f)
-}
-
-func (a *ZoneIDAgent) FlushListeners() {
-	a.listeners = make([]func(ZoneID), 0)
 }
 
 func (a *ZoneIDAgent) Close() {
