@@ -10,7 +10,7 @@ import (
 	"github.com/akamensky/argparse"
 )
 
-const DefaultZLen = 16
+const defaultZLen = 16
 
 func main() {
 	args, err := parseArgs()
@@ -49,7 +49,7 @@ func parseArgs() (*Args, error) {
 	passphrase := parser.String("p", "pass", &argparse.Options{Required: true, Help: "Passphrase for MSec (en/de)cryption."})
 	locSocket := parser.String("l", "location-socket", &argparse.Options{Required: true, Help: "Path to unix domain socket to listen for location stream."})
 	mgrpFile := parser.String("g", "mgroups-file", &argparse.Options{Required: false, Help: "Path to mutlicast group member table file."})
-	zlen := parser.Int("", "zlen", &argparse.Options{Required: false, Default: DefaultZLen, Help: "ZLen value to determine zone area, must be between 0 and 16 inclusive."})
+	zlen := parser.Int("", "zlen", &argparse.Options{Required: false, Default: defaultZLen, Help: "ZLen value to determine zone area, must be between 0 and 16 inclusive."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
