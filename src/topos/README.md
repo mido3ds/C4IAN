@@ -1,5 +1,5 @@
 # Topologies
 
-This directory is a list of topologies created with `MiniEdit`.
+This directory is a list of topologies created with `edit`.
 
-To be used with `virt`, see [src README](../README.md)
+To be used with `start mn`, see [src README](../README.md)
