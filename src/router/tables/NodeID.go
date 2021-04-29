@@ -9,7 +9,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-type NodeID string
+type NodeID uint64
 
 func ToNodeID(Id interface{}) (nodeId NodeID) {
 	switch Id.(type) {

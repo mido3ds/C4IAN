@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/cornelk/hashmap"
-	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
@@ -17,7 +16,7 @@ type NeighborsTable struct {
 	m *hashmap.HashMap
 }
 
-const neigEntryLen = 6
+const neigEntryLen = 10
 
 type NeighborEntry struct {
 	MAC  net.HardwareAddr
@@ -46,9 +45,18 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 
 	start := 0
 	for i := 0; i < int(numberOfEntries); i++ {
-		IP := net.IP(payload[start : start+4])
-		cost := uint16(payload[start+4])<<8 | uint16(payload[start+5])
-		neighborsTable.Set(IP, &NeighborEntry{Cost: cost})
+		nodeID := uint64(payload[start])<<64 |
+			uint64(payload[start+1])<<56 |
+			uint64(payload[start+2])<<48 |
+			uint64(payload[start+3])<<40 |
+			uint64(payload[start+4])<<32 |
+			uint64(payload[start+5])<<24 |
+			uint64(payload[start+6])<<16 |
+			uint64(payload[start+7])<<8 |
+			uint64(payload[start+8])
+
+		cost := uint16(payload[start+8])<<8 | uint16(payload[start+9])
+		neighborsTable.Set(NodeID(nodeID), &NeighborEntry{Cost: cost})
 		start += neigEntryLen
 	}
 
@@ -56,24 +64,24 @@ func UnmarshalNeighborsTable(payload []byte) (*NeighborsTable, bool) {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (n *NeighborsTable) Get(ip net.IP) (*NeighborEntry, bool) {
-	v, ok := n.m.Get(IPv4ToUInt32(ip))
+func (n *NeighborsTable) Get(nodeID NodeID) (*NeighborEntry, bool) {
+	v, ok := n.m.Get(nodeID)
 	if !ok {
 		return nil, false
 	}
 	return v.(*NeighborEntry), true
 }
 
-func (n *NeighborsTable) Set(ip net.IP, entry *NeighborEntry) {
+func (n *NeighborsTable) Set(nodeID NodeID, entry *NeighborEntry) {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	n.m.Set(IPv4ToUInt32(ip), entry)
+	n.m.Set(nodeID, entry)
 }
 
 // Del silently fails if key doesn't exist
-func (n *NeighborsTable) Del(ip net.IP) {
-	n.m.Del(IPv4ToUInt32(ip))
+func (n *NeighborsTable) Del(nodeID NodeID) {
+	n.m.Del(nodeID)
 }
 
 func (n *NeighborsTable) Len() int {
@@ -88,7 +96,7 @@ func (n *NeighborsTable) Clear() {
 func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
 	for item := range n.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v,Cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
+		s += fmt.Sprintf(" (ip=%#v,mac=%#v,Cost=%d)", item.Key, item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
 	}
 	s += " }"
 	return s
@@ -105,16 +113,20 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	start := 4
 	for item := range n.m.Iter() {
 		// Insert IP: 4 bytes
-		IP := item.Key.(uint32)
-		payload[start] = byte(IP >> 24)
-		payload[start+1] = byte(IP >> 16)
-		payload[start+2] = byte(IP >> 8)
-		payload[start+3] = byte(IP)
+		nodeID := item.Key.(NodeID)
+		payload[start] = byte(nodeID >> 56)
+		payload[start+1] = byte(nodeID >> 48)
+		payload[start+2] = byte(nodeID >> 40)
+		payload[start+3] = byte(nodeID >> 32)
+		payload[start+4] = byte(nodeID >> 24)
+		payload[start+5] = byte(nodeID >> 16)
+		payload[start+6] = byte(nodeID >> 8)
+		payload[start+7] = byte(nodeID)
 
 		// Insert cost: 2 bytes
 		cost := item.Value.(*NeighborEntry).Cost
-		payload[start+4] = byte(cost >> 8)
-		payload[start+5] = byte(cost)
+		payload[start+8] = byte(cost >> 8)
+		payload[start+9] = byte(cost)
 
 		start += neigEntryLen
 	}
@@ -132,7 +144,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 func (n *NeighborsTable) GetTableHash() []byte {
 	s := ""
 	for item := range n.m.Iter() {
-		s += UInt32ToIPv4(item.Key.(uint32)).String() + item.Value.(*NeighborEntry).MAC.String()
+		s += fmt.Sprint(item.Key.(NodeID)) + item.Value.(*NeighborEntry).MAC.String()
 	}
 	return HashSHA3([]byte(s))
 }
