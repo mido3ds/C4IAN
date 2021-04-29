@@ -101,32 +101,19 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
 
-	jq.TTL--
-	if jq.TTL < 0 {
-		return nil, false
-	}
-
 	// if the join query allready sent
+	// Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
 	cache, ok := c.cacheTable.Get(jq.SrcIP)
-	if ok && cache.SeqNo <= jq.SeqNo {
+	if ok && cache.SeqNo == jq.SeqNo {
 		return nil, false
 	}
 	// else insert in cache
 	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
 	c.cacheTable.Set(jq.SrcIP, cached)
 
-	if c.imInDests(jq) {
-		log.Println("im in dests! :'D") // TODO: remove this
-
-		// send back join reply to prevHop
-		jr := &JoinReply{
-			SeqNo:  jq.SeqNo,
-			SrcIPs: []net.IP{jq.SrcIP},
-			GrpIP:  jq.GrpIP,
-		}
-		encJR := c.msec.Encrypt(jr.MarshalBinary())
-		c.jrConn.Write(encJR, jq.PrevHop)
-
+	// If the TTL field value is less than  0, then discard. DONE
+	jq.TTL--
+	if jq.TTL < 0 {
 		return nil, false
 	}
 
@@ -135,6 +122,19 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
+
+	if c.imInDests(jq) {
+		log.Println("im in dests! :'D") // TODO: remove this
+
+		// fill member table
+		entry := &memberEntry{grpIP: jq.GrpIP}
+		c.memberTable.Set(jq.SrcIP, entry)
+
+		// send back join reply to prevHop
+		jr := c.buildJoinReply(jq)
+		encJR := c.msec.Encrypt(jr.MarshalBinary())
+		c.jrConn.Write(encJR, jq.PrevHop)
+	}
 
 	return jq.MarshalBinary(), true
 }
@@ -199,4 +199,12 @@ func readOptionalJsonFile(path string) string {
 		return string(content)
 	}
 	return "{}"
+}
+
+func (c *MulticastController) buildJoinReply(jq *JoinQuery) *JoinReply {
+	return &JoinReply{
+		SeqNo:  jq.SeqNo,
+		SrcIPs: []net.IP{jq.SrcIP},
+		GrpIP:  jq.GrpIP,
+	}
 }
