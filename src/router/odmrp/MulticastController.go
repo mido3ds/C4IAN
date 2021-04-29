@@ -192,10 +192,14 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 			log.Panicln("Corrupted JoinReply msg received")
 		}
 
+		routingEntry := &routingEntry{nextHop: jr.PrevHop}
+		c.routingTable.Set(jr.DestIP, routingEntry)
 		if c.imInSrcs(jr) {
 			log.Println("Source Recieved Join Reply!!")
 		} else {
-			// jr.Forwarders = append(jr.Forwarders, c.ip)
+			// TODO If no entries of Next Hops match current router ip do nothing.
+			// If there are valid entries left, broadcast the modified join reply.
+
 			msg = c.msec.Encrypt(jr.MarshalBinary())
 			for _, srcIP := range jr.SrcIPs {
 				entryroutingTable, ok := c.routingTable.Get(srcIP)

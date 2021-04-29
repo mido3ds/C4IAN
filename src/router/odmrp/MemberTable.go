@@ -85,7 +85,7 @@ func (mt *MemberTable) String() string {
 }
 
 func fireMemberTableTimerHelper(srcIP net.IP, mt *MemberTable) {
-	mt.Del(srcIP)
+	// mt.Del(srcIP)
 }
 
 func fireMemberTableTimer(srcIP net.IP, mt *MemberTable) func() {

@@ -86,7 +86,7 @@ func (r *RoutingTable) String() string {
 }
 
 func fireRoutingTableTimerHelper(srcIP net.IP, r *RoutingTable) {
-	r.Del(srcIP)
+	// r.Del(srcIP)
 }
 
 func fireRoutingTableTimer(srcIP net.IP, r *RoutingTable) func() {

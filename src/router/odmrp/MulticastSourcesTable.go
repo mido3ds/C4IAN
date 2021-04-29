@@ -75,7 +75,7 @@ func (mt *MulticastSourcesTable) String() string {
 }
 
 func fireMulticastSourcesTableTimerHelper(srcIP net.IP, mt *MulticastSourcesTable) {
-	mt.Del(srcIP)
+	// mt.Del(srcIP)
 }
 
 func fireMulticastSourcesTableTimer(srcIP net.IP, mt *MulticastSourcesTable) func() {
