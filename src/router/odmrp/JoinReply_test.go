@@ -14,9 +14,12 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 	mac1 := net.HardwareAddr([]byte{0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12})
 	mac2 := net.HardwareAddr([]byte{0x0A, 0x0E, 0x0C, 0x10, 0x11, 0x12})
 	mac3 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0x10, 0x11, 0x12})
+	mac4 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0xAA, 0xCC, 0xC2})
 
 	jr.SeqNo = 215
+	jr.DestIP = ip3
 	jr.GrpIP = ip0
+	jr.PrevHop = mac4
 	jr.SrcIPs = []net.IP{ip1, ip2, ip3}
 	jr.NextHops = []net.HardwareAddr{mac1, mac2, mac3}
 
@@ -29,6 +32,10 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 
 	if jr.SeqNo != newJr.SeqNo {
 		t.Errorf("SeqNo are not equal")
+	}
+
+	if hwAddrToUInt64(jr.PrevHop) != hwAddrToUInt64(newJr.PrevHop) {
+		t.Errorf("ips not equal: %#v != %#v", jr.PrevHop.String(), newJr.PrevHop.String())
 	}
 
 	if !net.IP.Equal(jr.GrpIP, newJr.GrpIP) {

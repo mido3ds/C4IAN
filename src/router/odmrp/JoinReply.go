@@ -11,7 +11,9 @@ import (
 
 type JoinReply struct {
 	SeqNo    uint64
+	DestIP   net.IP
 	GrpIP    net.IP
+	PrevHop  net.HardwareAddr
 	SrcIPs   []net.IP
 	NextHops []net.HardwareAddr
 }
@@ -21,10 +23,10 @@ func (jr *JoinReply) MarshalBinary() []byte {
 	seqNoSize := 8
 
 	if len(jr.SrcIPs) != len(jr.NextHops) {
-		log.Panic("Join query srcIPs should have the same length as NextHops")
+		log.Panic("Join query SrcIPs should have the same length as NextHops")
 	}
 
-	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 	payload := make([]byte, totalSize+extraBytes)
 	// 0:1 => number of NextHops & SrcIPs
 	payload[0] = byte(uint16(len(jr.NextHops)) >> bitsInByte)
@@ -37,7 +39,17 @@ func (jr *JoinReply) MarshalBinary() []byte {
 	}
 
 	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(IPv4ToUInt32(jr.DestIP) >> shift)
+		start++
+	}
+
+	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 		payload[start] = byte(IPv4ToUInt32(jr.GrpIP) >> shift)
+		start++
+	}
+
+	for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(hwAddrToUInt64(jr.PrevHop) >> shift)
 		start++
 	}
 
@@ -74,7 +86,7 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 	jr.SrcIPs = make([]net.IP, count)
 	jr.NextHops = make([]net.HardwareAddr, count)
 
-	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 
 	// extract checksum
 	csum := uint16(b[2])<<bitsInByte | uint16(b[3])
@@ -89,8 +101,14 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 		start++
 	}
 
+	jr.DestIP = net.IP(b[start : start+net.IPv4len])
+	start += net.IPv4len
+
 	jr.GrpIP = net.IP(b[start : start+net.IPv4len])
 	start += net.IPv4len
+
+	jr.PrevHop = net.HardwareAddr(b[start : start+hwAddrLen])
+	start += hwAddrLen
 
 	for i := 0; i < len(jr.SrcIPs); i++ {
 		jr.SrcIPs[i] = net.IP(b[start : start+net.IPv4len])

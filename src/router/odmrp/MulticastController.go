@@ -8,6 +8,7 @@ import (
 	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
@@ -16,17 +17,17 @@ import (
 const JQ_REFRESH_TIME = 400 * time.Millisecond
 
 type MulticastController struct {
-	gmTable          *GroupMembersTable
-	queryFlooder     *GlobalFlooder
-	jrConn           *MACLayerConn
-	ip               net.IP
-	mac              net.HardwareAddr
-	routingTable     *RoutingTable
-	cacheTable       *CacheTable
-	memberTable      *MemberTable
-	msec             *MSecLayer
-	jQRefreshTimer   *time.Timer
-	multiCastSources *MulticastSourcesTable
+	gmTable        *GroupMembersTable
+	queryFlooder   *GlobalFlooder
+	jrConn         *MACLayerConn
+	ip             net.IP
+	mac            net.HardwareAddr
+	routingTable   *RoutingTable
+	cacheTable     *CacheTable
+	memberTable    *MemberTable
+	msec           *MSecLayer
+	jQRefreshTimer *time.Timer
+	packetSeqNo    uint64
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -99,9 +100,10 @@ func jqRefreshfireTimer(srcIP net.IP, members []net.IP, c *MulticastController) 
 }
 
 func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
+	c.packetSeqNo++
 	jq := JoinQuery{
-		// TODO encode time to seqNo!!
-		SeqNo:   1,
+		// TODO encode time to seqNo (Not Sure!!)
+		SeqNo:   c.packetSeqNo,
 		TTL:     ODMRPDefaultTTL,
 		SrcIP:   c.ip,
 		PrevHop: c.mac,
@@ -138,10 +140,10 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	// if the join query allready sent
 	// Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
 	cache, ok := c.cacheTable.Get(jq.SrcIP)
-	if ok && cache.SeqNo == jq.SeqNo {
+	if ok && cache.SeqNo >= jq.SeqNo {
 		return nil, false
 	}
-	// else insert in cache
+	// else insert in cache==
 	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
 	c.cacheTable.Set(jq.SrcIP, cached)
 
@@ -159,7 +161,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		c.memberTable.Set(jq.SrcIP, entry)
 
 		// send back join reply to prevHop
-		jr := c.buildJoinReply(jq)
+		jr := c.destGenerateJoinReply(jq)
 		encJR := c.msec.Encrypt(jr.MarshalBinary())
 		c.jrConn.Write(encJR, jq.PrevHop)
 	}
@@ -235,11 +237,26 @@ func readOptionalJsonFile(path string) string {
 	return "{}"
 }
 
-func (c *MulticastController) buildJoinReply(jq *JoinQuery) *JoinReply {
-	return &JoinReply{
+func (c *MulticastController) destGenerateJoinReply(jq *JoinQuery) *JoinReply {
+	jr := &JoinReply{
 		SeqNo:    jq.SeqNo,
+		DestIP:   c.ip,
 		GrpIP:    jq.GrpIP,
-		SrcIPs:   []net.IP{jq.SrcIP},
-		NextHops: []net.HardwareAddr{[]byte{0x11, 0x11, 0x11, 0x11, 0x11, 0x11}},
+		PrevHop:  c.mac,
+		SrcIPs:   []net.IP{},
+		NextHops: []net.HardwareAddr{},
 	}
+
+	// TODO think for better/faster way
+	for item := range c.memberTable.m.Iter() {
+		src := item.Key.(uint32)
+		member, ok := c.routingTable.m.Get(src)
+		if ok {
+			nextHop := member.(*routingEntry).nextHop
+			jr.SrcIPs = append(jr.SrcIPs, UInt32ToIPv4(src))
+			jr.NextHops = append(jr.NextHops, nextHop)
+		}
+	}
+
+	return jr
 }
