@@ -11,14 +11,28 @@ import (
 
 type NodeID uint64
 
-func ToNodeID(Id interface{}) (nodeId NodeID) {
-	switch Id.(type) {
+func ToNodeID(ID interface{}) (nodeID NodeID) {
+	nodeID = 0
+	switch id := ID.(type) {
 	case net.IP:
-		nodeId = NodeID("0" + fmt.Sprint(IPv4ToUInt32(Id.(net.IP))))
+		nodeID |= NodeID(IPv4ToUInt32(id))
+		nodeID |= 1 << 63 // Set MSB to 1 to avoid collisions with node ids
 	case ZoneID:
-		nodeId = NodeID("1" + fmt.Sprint(Id))
+		nodeID |= NodeID(id)
 	default:
 		log.Panic("Invalid type to NodeId")
 	}
 	return
+}
+
+func (nodeID NodeID) String() string {
+	s := "NodeID"
+	if nodeID>>63 == 1 {
+		s += (" (IP): ")
+		s += UInt32ToIPv4(uint32(nodeID)).String()
+	} else {
+		s += (" (Zone ID): ")
+		s += fmt.Sprint(uint32(nodeID))
+	}
+	return s
 }

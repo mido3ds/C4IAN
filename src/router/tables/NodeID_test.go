@@ -9,7 +9,7 @@ import (
 )
 
 func BenchmarkNewNodeID(t *testing.B) {
-	var a net.IP = net.IP([]byte{0x01, 0x02, 0x03, 0x04})
+	var a net.IP = net.IPv4(0, 0, 0, 55).To4()
 	var b ZoneID = 55
 	S := ToNodeID(a)
 	S2 := ToNodeID(b)

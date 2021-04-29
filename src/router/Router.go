@@ -54,6 +54,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
+	log.Println("ZLen =", zlen, ", Zone Total Area =", ZLenToAreaKMs(zlen), "Kms^2")
 	zidAgent, err := NewZoneIDAgent(locSocket, zlen)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize location agent, err: %s", err)
@@ -94,7 +95,6 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 func (r *Router) Start() {
 	// zid agent
-	r.zidAgent.AddListener(OnZoneIDChanged)
 	go r.zidAgent.Start()
 
 	// start controllers
@@ -111,7 +111,6 @@ func (r *Router) Close() {
 	r.sarpCont.Close()
 
 	r.zidAgent.Close()
-	r.zidAgent.FlushListeners()
 
 	kernel.UnregisterGateway()
 	kernel.DeleteIPTablesRule()
