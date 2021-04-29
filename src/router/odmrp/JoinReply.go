@@ -2,6 +2,7 @@ package odmrp
 
 import (
 	"fmt"
+	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -16,15 +17,18 @@ type JoinReply struct {
 }
 
 func (jr *JoinReply) MarshalBinary() []byte {
-	extraBytes := 5
+	extraBytes := 4
 	seqNoSize := 8
+
+	if len(jr.SrcIPs) != len(jr.NextHops) {
+		log.Panic("Join query srcIPs should have the same length as NextHops")
+	}
 
 	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 	payload := make([]byte, totalSize+extraBytes)
-	// 0:2 => number of NextHops
-	payload[0] = byte(uint8(len(jr.SrcIPs)))
-	payload[1] = byte(uint16(len(jr.NextHops)) >> bitsInByte)
-	payload[2] = byte(uint16(len(jr.NextHops)))
+	// 0:1 => number of NextHops & SrcIPs
+	payload[0] = byte(uint16(len(jr.NextHops)) >> bitsInByte)
+	payload[1] = byte(uint16(len(jr.NextHops)))
 
 	start := extraBytes
 	for shift := seqNoSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
@@ -53,27 +57,27 @@ func (jr *JoinReply) MarshalBinary() []byte {
 
 	// add checksum
 	csum := BasicChecksum(payload[extraBytes:])
-	payload[3] = byte(csum >> bitsInByte)
-	payload[4] = byte(csum)
+	payload[2] = byte(csum >> bitsInByte)
+	payload[3] = byte(csum)
 
 	return payload[:]
 }
 
 // UnmarshalJoinReply returns false if packet is invalid
 func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
-	extraBytes := 5
+	extraBytes := 4
 	seqNoSize := 8
 
 	var jr JoinReply
-	jr.SrcIPs = make([]net.IP, uint8(b[0]))
 
-	nextHopsLength := uint16(b[1])<<bitsInByte | uint16(b[2])
-	jr.NextHops = make([]net.HardwareAddr, nextHopsLength)
+	count := uint16(b[0])<<bitsInByte | uint16(b[1])
+	jr.SrcIPs = make([]net.IP, count)
+	jr.NextHops = make([]net.HardwareAddr, count)
 
 	totalSize := seqNoSize + net.IPv4len + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
 
 	// extract checksum
-	csum := uint16(b[3])<<bitsInByte | uint16(b[4])
+	csum := uint16(b[2])<<bitsInByte | uint16(b[3])
 	// if invalid packet
 	if csum != BasicChecksum(b[extraBytes:totalSize+extraBytes]) {
 		return nil, false
