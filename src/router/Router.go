@@ -64,7 +64,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec, zlen)
+	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -74,7 +74,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, zlen, sarpCont.NeighborsTable, multCont.GetMissingEntries, unicCont.UpdateUnicastForwardingTable)
+	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, multCont.GetMissingEntries, unicCont.UpdateUnicastForwardingTable)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
@@ -94,8 +94,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 func (r *Router) Start() {
 	// zid agent
-	r.zidAgent.AddListener(r.forwarder.OnZoneIDChanged)
-	r.zidAgent.AddListener(r.unicCont.OnZoneIDChanged)
+	r.zidAgent.AddListener(OnZoneIDChanged)
 	go r.zidAgent.Start()
 
 	// start controllers

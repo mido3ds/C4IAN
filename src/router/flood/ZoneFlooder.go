@@ -16,12 +16,10 @@ type ZoneFlooder struct {
 	fTable    *FloodingTable
 	macConn   *MACLayerConn
 	ip        net.IP
-	zoneID    ZoneID
 	msec      *MSecLayer
-	zlen      byte
 }
 
-func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte) (*ZoneFlooder, error) {
+func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) (*ZoneFlooder, error) {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(iface, ZoneFloodEtherType)
 	if err != nil {
@@ -38,14 +36,13 @@ func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer, zlen byte)
 		macConn:   macConn,
 		ip:        ip,
 		msec:      msec,
-		zlen:      zlen,
 	}, nil
 }
 
 func (f *ZoneFlooder) Flood(msg []byte) {
 	f.seqNumber++
 
-	zidHeader := ZIDHeader{ZLen: f.zlen, SrcZID: f.zoneID}
+	zidHeader := MyZIDHeader(0)
 	encryptedZIDHeader := f.msec.Encrypt(zidHeader.MarshalBinary())
 
 	floodHeader := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
@@ -86,10 +83,6 @@ func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP,
 
 	// reflood the msg
 	f.macConn.Write(msg, BroadcastMACAddr)
-}
-
-func (f *ZoneFlooder) OnZoneIDChanged(z ZoneID) {
-	f.zoneID = z
 }
 
 func (f *ZoneFlooder) Close() {
