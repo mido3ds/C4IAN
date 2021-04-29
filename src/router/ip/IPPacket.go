@@ -24,13 +24,37 @@ func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 		return nil, false
 	}
 
-	ip := net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19]).To4()
-	valid := ipv4Checksum(buffer) == 0
+	// checksum and ttl
+	ttl := int8(buffer[8])
+	valid := ipv4Checksum(buffer) == 0 && ttl >= 0
+	if !valid {
+		return nil, false
+	}
 
 	return &IPHeader{
 		Version: version,
-		DestIP:  ip,
-	}, valid
+		DestIP:  net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19]).To4(),
+	}, true
+}
+
+// IPv4DecrementTTL decrements TTL and returns whether
+// packet is valid or not
+func IPv4DecrementTTL(packet []byte) bool {
+	ttl := int8(packet[8])
+	if ttl == 0 {
+		return false
+	}
+
+	packet[8] = byte(ttl) - 1
+
+	// update checksum
+	packet[10] = 0 // MSB
+	packet[11] = 0 // LSB
+	csum := ipv4Checksum(packet)
+	packet[10] = byte(csum >> 8) // MSB
+	packet[11] = byte(csum)      // LSB
+
+	return true
 }
 
 func ipv4Checksum(b []byte) uint16 {
