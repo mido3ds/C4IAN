@@ -16,16 +16,17 @@ import (
 const JQ_REFRESH_TIME = 400 * time.Millisecond
 
 type MulticastController struct {
-	gmTable        *GroupMembersTable
-	queryFlooder   *GlobalFlooder
-	jrConn         *MACLayerConn
-	ip             net.IP
-	mac            net.HardwareAddr
-	routingTable   *RoutingTable
-	cacheTable     *CacheTable
-	memberTable    *MemberTable
-	msec           *MSecLayer
-	jQRefreshTimer *time.Timer
+	gmTable          *GroupMembersTable
+	queryFlooder     *GlobalFlooder
+	jrConn           *MACLayerConn
+	ip               net.IP
+	mac              net.HardwareAddr
+	routingTable     *RoutingTable
+	cacheTable       *CacheTable
+	memberTable      *MemberTable
+	msec             *MSecLayer
+	jQRefreshTimer   *time.Timer
+	multiCastSources *MulticastSourcesTable
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -144,12 +145,6 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
 	c.cacheTable.Set(jq.SrcIP, cached)
 
-	// If the TTL field value is less than  0, then discard. DONE
-	jq.TTL--
-	if jq.TTL < 0 {
-		return nil, false
-	}
-
 	// jr's nextHop is this jq's prevHop
 	c.routingTable.Set(jq.SrcIP, &routingEntry{nextHop: jq.PrevHop})
 
@@ -167,6 +162,12 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		jr := c.buildJoinReply(jq)
 		encJR := c.msec.Encrypt(jr.MarshalBinary())
 		c.jrConn.Write(encJR, jq.PrevHop)
+	}
+
+	// If the TTL field value is less than  0, then discard. DONE
+	jq.TTL--
+	if jq.TTL < 0 {
+		return nil, false
 	}
 
 	return jq.MarshalBinary(), true
