@@ -10,7 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const MTE_TIMEOUT = 960 * time.Microsecond
+const MTE_TIMEOUT = 960 * time.Millisecond
 
 // MemberTable is lock-free thread-safe hash table
 // for multicast forwarding
