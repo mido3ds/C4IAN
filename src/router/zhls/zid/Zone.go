@@ -3,10 +3,13 @@ package zid
 import (
 	"fmt"
 	"log"
+	"math"
 )
 
 const (
 	earthTotalSurfaceAreaKM = 510.1e6
+	meridianLengthKM        = 40_007.86
+	equatorLengthKM         = 40_075.0
 )
 
 type gridLocation struct {
@@ -28,7 +31,7 @@ type GPSLocation struct {
 	Lon float64 `json:"lon"`
 }
 
-func (p *GPSLocation) toGridPosition() gridLocation {
+func (p *GPSLocation) toGridLocation() gridLocation {
 	return gridLocation{y: degreesToIndex(p.Lat), x: degreesToIndex(p.Lon)}
 }
 
@@ -66,7 +69,7 @@ func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 	}
 
 	// transform
-	grid := l.toGridPosition()
+	grid := l.toGridLocation()
 
 	// mask
 	mask := zlenMask(zlen)
@@ -77,12 +80,12 @@ func NewZoneID(l GPSLocation, zlen byte) ZoneID {
 	return ZoneID(uint32(grid.x)<<16 | uint32(grid.y))
 }
 
-func (z ZoneID) toGridPosition() gridLocation {
+func (z ZoneID) toGridLocation() gridLocation {
 	return gridLocation{x: uint16(z >> 16), y: uint16(z)}
 }
 
 func (z ZoneID) String() string {
-	g := z.toGridPosition()
+	g := z.toGridLocation()
 	return fmt.Sprintf("%04X.%04X", g.x, g.y)
 }
 
@@ -120,14 +123,19 @@ func (z *Zone) Area() byte {
 }
 
 func (z Zone) String() string {
-	g := z.ID.toGridPosition()
+	g := z.ID.toGridLocation()
 	return fmt.Sprintf("%04X.%04X/%d", g.x, g.y, z.Len)
+}
+
+func round3(x float64) float64 {
+	return math.Round(x*1000) / 1000
 }
 
 // ZLenToAreaKMs returns area of the zone in kms^2
 // of the given zlen
 func ZLenToAreaKMs(zlen byte) float64 {
-	var numZones uint32 = 0xFFFF_FFFF >> (32 - 2*zlen)
-	var area float64 = earthTotalSurfaceAreaKM / float64(numZones)
-	return area
+	precision := 1 / float64(int(1<<zlen))
+	xl := equatorLengthKM * precision
+	yl := meridianLengthKM * precision
+	return round3(xl * yl)
 }
