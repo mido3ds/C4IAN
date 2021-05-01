@@ -59,6 +59,8 @@ func (s *SARPController) sendMsgs() {
 	for {
 		// TODO: Replace with scheduling if necessary
 		time.Sleep(sARPDelay - sARPHoldTime)
+		//log.Println(s.NeighborsTable)
+		//log.Println(MyZone())
 
 		// Create a new table to collect sARP responses
 		s.dirtyNeighborsTable = NewNeighborsTable()
