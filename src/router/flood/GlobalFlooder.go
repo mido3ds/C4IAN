@@ -59,7 +59,7 @@ func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader,
 }
 
 func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
-	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:FloodHeaderLen]))
+	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:floodHeaderLen]))
 	if !ok {
 		return
 	}
@@ -76,13 +76,13 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 
 	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
-	payload := f.msec.Decrypt(msg[FloodHeaderLen:])
+	payload := f.msec.Decrypt(msg[floodHeaderLen:])
 	payload, ok = payloadProcessor(floodHeader, payload)
 	if !ok {
 		return
 	}
 
-	f.macConn.Write(append(msg[:FloodHeaderLen], f.msec.Encrypt(payload)...), BroadcastMACAddr)
+	f.macConn.Write(append(msg[:floodHeaderLen], f.msec.Encrypt(payload)...), BroadcastMACAddr)
 }
 
 func (f *GlobalFlooder) Close() {
