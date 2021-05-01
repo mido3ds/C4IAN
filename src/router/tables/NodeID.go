@@ -1,7 +1,6 @@
 package tables
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -26,13 +25,13 @@ func ToNodeID(ID interface{}) (nodeID NodeID) {
 }
 
 func (nodeID NodeID) String() string {
-	s := "NodeID"
+	s := ""
 	if nodeID>>63 == 1 {
-		s += (" (IP): ")
+		s += ("IP:")
 		s += UInt32ToIPv4(uint32(nodeID)).String()
 	} else {
-		s += (" (Zone ID): ")
-		s += fmt.Sprint(uint32(nodeID))
+		s += ("ZoneID:")
+		s += (Zone{ID: ZoneID(uint32(nodeID)), Len: MyZone().Len}).String()
 	}
 	return s
 }
