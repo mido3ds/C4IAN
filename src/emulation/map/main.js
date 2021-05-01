@@ -13,6 +13,7 @@ import { Draw, Translate, Select } from "ol/interaction"
 import { getCenter as getExtentCenter } from 'ol/extent'
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer"
 import { METERS_PER_UNIT } from 'ol/proj/Units'
+import Overlay from 'ol/Overlay';
 
 let prefix = ''
 let mode = ''
@@ -155,10 +156,23 @@ const map = new Map({
   target: "map",
   view: view
 })
-map.on('pointermove', (e) => {
-  const center = transform(e.coordinate, 'EPSG:3857', 'EPSG:4326')
-  document.getElementById('lonlatLbl').textContent = center
-})
+
+
+var cross = new Overlay({
+  element: document.getElementById('overlay'),
+  stopEvent: false,
+  positioning: 'center-center'
+});
+cross.setPosition(START_CENTER);
+map.addOverlay(cross);
+function updateCross() {
+  const center = view.getCenter()
+  document.getElementById('lonlatLbl').textContent = transform(center, 'EPSG:3857', 'EPSG:4326')
+  cross.setPosition(center)
+}
+
+map.on('pointermove',updateCross)
+map.on('moveend', updateCross)
 
 let grid
 function updateGrid() {
