@@ -26,7 +26,11 @@ function getRange() {
 }
 
 function calcInterval(zlen) {
-  return 825.3644039596112 / (2 ** zlen)
+  let d = 1.0 / (1 << zlen) // [0, 1]
+  d *= 2                    // [0, 2]
+  d = d > 1 ? (d - 2) : d   // [-1, 1]
+  d *= 180                  // [-180, 180]
+  return d
 }
 
 function getZLen() {
@@ -67,12 +71,23 @@ const raster = new TileLayer({
 })
 
 const view = new View({ center: START_CENTER })
+function updateViewLabels() {
+  document.getElementById('zoomLbl').textContent = view.getZoom()
+}
+
+view.on('change', updateViewLabels)
 function updateView() {
   view.setZoom(bestZoom[getZLen()])
   view.setMaxZoom(getMaxZoom(getZLen()))
   view.setMinZoom(getMinZoom(getZLen()))
 }
 updateView()
+
+document.getElementById('lonlatBtn').addEventListener('click', () => {
+  const lon = document.getElementById('lonInput').value
+  const lat = document.getElementById('latInput').value
+  view.animate({ center: fromLonLat([lon, lat]) })
+})
 
 const source = new VectorSource()
 const vector = new VectorLayer({
@@ -139,6 +154,10 @@ const map = new Map({
   layers: [raster, vector],
   target: "map",
   view: view
+})
+map.on('pointermove', (e) => {
+  const center = transform(e.coordinate, 'EPSG:3857', 'EPSG:4326')
+  document.getElementById('lonlatLbl').textContent = center
 })
 
 let grid
@@ -326,4 +345,9 @@ document.getElementById('range').addEventListener('change', () => {
   })
 })
 
-document.getElementById('clear').addEventListener('click', () => source.clear())
+document.getElementById('clear').addEventListener('click', () => {
+  source.clear()
+  numUnits = 1
+  numCmds = 1
+})
+updateViewLabels()

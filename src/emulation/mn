@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 import argparse
 import json
-import subprocess
-import sys
 import threading
 import time
 from typing import List, NamedTuple
@@ -54,7 +52,7 @@ def read_topo(path_to_json: str) -> List[Node]:
 
     return [
         Node(node['name'],
-             Position(node['lat'], node['lon']).to_mn())
+             Position(node['lon'], node['lat']).to_mn())
         for node in topo['nodes']
     ], topo['range']
 
@@ -80,7 +78,7 @@ def nodes_locations_thread(stations, nodes):
         for node in nodes:
             sock = node.get_sock()
             x, y, _ = stations[node.name].getxyz()
-            lon, lat = loc.to_gps_coords(x, y)
+            lat, lon = loc.to_gps_coords(x, y)
             loc.send_location(sock, lon, lat)
         time.sleep(2)
 
