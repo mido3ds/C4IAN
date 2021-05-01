@@ -50,13 +50,13 @@ func (a *ZoneIDAgent) Start() {
 	d := json.NewDecoder(a.conn)
 
 	for {
-		var loc GPSLocation
+		var loc gpsLocation
 		err := d.Decode(&loc)
 		if err != nil {
 			continue
 		}
 
-		id := NewZoneID(loc, a.zlen)
+		id := newZoneID(loc, a.zlen)
 		myZoneMutex.Lock()
 		if id != myZone.ID {
 			myZone.ID = id

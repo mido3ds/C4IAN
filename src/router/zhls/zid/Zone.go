@@ -20,22 +20,22 @@ func (g gridLocation) String() string {
 	return fmt.Sprintf("gridLocation{x:%v,y:%v}", g.x, g.y)
 }
 
-func (g *gridLocation) toGPSLocation() GPSLocation {
-	return GPSLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
+func (g *gridLocation) toGPSLocation() gpsLocation {
+	return gpsLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
 }
 
-// GPSLocation is gps position
+// gpsLocation is gps position
 // where Lat and Lon are in degrees
-type GPSLocation struct {
+type gpsLocation struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
 }
 
-func (p *GPSLocation) toGridLocation() gridLocation {
+func (p *gpsLocation) toGridLocation() gridLocation {
 	return gridLocation{y: degreesToIndex(p.Lat), x: degreesToIndex(p.Lon)}
 }
 
-func (p GPSLocation) String() string {
+func (p gpsLocation) String() string {
 	return fmt.Sprintf("GPSLocation{Lon:%v,Lat:%v}", p.Lon, p.Lat)
 }
 
@@ -63,7 +63,7 @@ func zlenMask(zlen byte) uint16 {
 
 type ZoneID uint32
 
-func NewZoneID(l GPSLocation, zlen byte) ZoneID {
+func newZoneID(l gpsLocation, zlen byte) ZoneID {
 	if zlen < 0 || zlen > 16 {
 		log.Panic("zlen must be between 0 and 16")
 	}
@@ -94,7 +94,7 @@ type Zone struct {
 	Len byte // from 0 to 16
 }
 
-// ToLen returns new ZoneID as this zone but with given len
+// ToLen returns new ZoneID as this zone but with given Len
 func (z *Zone) ToLen(len byte) ZoneID {
 	if len == z.Len {
 		return z.ID
@@ -123,8 +123,7 @@ func (z *Zone) Area() byte {
 }
 
 func (z Zone) String() string {
-	g := z.ID.toGridLocation()
-	return fmt.Sprintf("%04X.%04X/%d", g.x, g.y, z.Len)
+	return fmt.Sprintf("%v/%d", z.ID, z.Len)
 }
 
 func round3(x float64) float64 {

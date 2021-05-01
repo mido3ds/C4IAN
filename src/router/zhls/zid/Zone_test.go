@@ -59,68 +59,68 @@ func Test_zlenMask(t *testing.T) {
 }
 
 func TestNewZoneID(t *testing.T) {
-	l := GPSLocation{Lon: 31.20713052751232, Lat: 30.027653972850516}
-	if uint32(NewZoneID(l, 0)) != 0 {
+	l := gpsLocation{Lon: 31.20713052751232, Lat: 30.027653972850516}
+	if uint32(newZoneID(l, 0)) != 0 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 0)
 	}
-	if uint32(NewZoneID(l, 1)) != 2147516416 {
+	if uint32(newZoneID(l, 1)) != 2147516416 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 1)
 	}
-	if uint32(NewZoneID(l, 2)) != 3221274624 {
+	if uint32(newZoneID(l, 2)) != 3221274624 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 2)
 	}
-	if uint32(NewZoneID(l, 3)) != 3758153728 {
+	if uint32(newZoneID(l, 3)) != 3758153728 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 3)
 	}
-	if uint32(NewZoneID(l, 4)) != 4026593280 {
+	if uint32(newZoneID(l, 4)) != 4026593280 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 4)
 	}
-	if uint32(NewZoneID(l, 5)) != 4026593280 {
+	if uint32(newZoneID(l, 5)) != 4026593280 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 5)
 	}
-	if uint32(NewZoneID(l, 6)) != 4026593280 {
+	if uint32(newZoneID(l, 6)) != 4026593280 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 6)
 	}
-	if uint32(NewZoneID(l, 7)) != 4060148224 {
+	if uint32(newZoneID(l, 7)) != 4060148224 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 7)
 	}
-	if uint32(NewZoneID(l, 8)) != 4060148224 {
+	if uint32(newZoneID(l, 8)) != 4060148224 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 8)
 	}
-	if uint32(NewZoneID(l, 9)) != 4068536960 {
+	if uint32(newZoneID(l, 9)) != 4068536960 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 9)
 	}
-	if uint32(NewZoneID(l, 10)) != 4072731264 {
+	if uint32(newZoneID(l, 10)) != 4072731264 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 10)
 	}
-	if uint32(NewZoneID(l, 11)) != 4074828448 {
+	if uint32(newZoneID(l, 11)) != 4074828448 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 11)
 	}
-	if uint32(NewZoneID(l, 12)) != 4075877024 {
+	if uint32(newZoneID(l, 12)) != 4075877024 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 12)
 	}
-	if uint32(NewZoneID(l, 13)) != 4076401320 {
+	if uint32(newZoneID(l, 13)) != 4076401320 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 13)
 	}
-	if uint32(NewZoneID(l, 14)) != 4076401320 {
+	if uint32(newZoneID(l, 14)) != 4076401320 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 14)
 	}
-	if uint32(NewZoneID(l, 15)) != 4076532394 {
+	if uint32(newZoneID(l, 15)) != 4076532394 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 15)
 	}
-	if uint32(NewZoneID(l, 16)) != 4076532394 {
+	if uint32(newZoneID(l, 16)) != 4076532394 {
 		t.Errorf("failed to create zone id for l={%#v}, zlen={%d}", l, 16)
 	}
 }
 
 func TestZoneIDToLen(t *testing.T) {
 	var len byte = 16
-	l := GPSLocation{Lon: 31.20713052751232, Lat: 30.027653972850516}
-	zid := NewZoneID(l, len)
+	l := gpsLocation{Lon: 31.20713052751232, Lat: 30.027653972850516}
+	zid := newZoneID(l, len)
 	z := Zone{ID: zid, Len: len}
 	for i := 0; i < 16; i++ {
 		z1 := z.ToLen(byte(i))
-		z2 := NewZoneID(l, byte(i))
+		z2 := newZoneID(l, byte(i))
 		if z1 != z2 {
 			t.Error("mismatch", z1, z2)
 		}
