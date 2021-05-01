@@ -6,10 +6,10 @@ import "sync"
 var myZoneMutex sync.RWMutex
 var myZone Zone
 
-func MyZone() *Zone {
+func MyZone() Zone {
 	myZoneMutex.RLock()
 	defer myZoneMutex.RUnlock()
-	return &myZone
+	return myZone
 }
 
 func MyZIDHeader(dstZID ZoneID) *ZIDHeader {

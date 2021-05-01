@@ -108,17 +108,17 @@ func (z *Zone) ToLen(len byte) ZoneID {
 
 // Intersects returns true if z2 & z1 are the same zone
 // or one part of the other
-func (z1 *Zone) Intersects(z2 *Zone) bool {
+func (z1 Zone) Intersects(z2 *Zone) bool {
 	return z1.ToLen(z2.Len) == z2.ID
 }
 
 // Equal zones have same id and len
-func (z1 *Zone) Equal(z2 *Zone) bool {
+func (z1 Zone) Equal(z2 *Zone) bool {
 	return z1.ID == z2.ID && z1.Len == z2.Len
 }
 
 // Area returns pseudo areas for comparisons
-func (z *Zone) Area() byte {
+func (z Zone) Area() byte {
 	return -z.Len
 }
 
