@@ -64,7 +64,7 @@ func (s *SARPController) sendMsgs() {
 		s.dirtyNeighborsTable = NewNeighborsTable()
 
 		// Broadcast sARP request
-		s.macConn.Write(s.CreateSARPPacket(SARPReq), BroadcastMACAddr)
+		s.macConn.Write(s.createSARPPacket(SARPReq), BroadcastMACAddr)
 
 		// Wait for sARP responses (collected in dirtyNeighborsTable)
 		time.Sleep(sARPHoldTime)
@@ -115,7 +115,7 @@ func (s *SARPController) receiveMsgs() {
 			// Update neighbors table
 			s.NeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
 			// Send sARP response to the request sender
-			s.macConn.Write(s.CreateSARPPacket(SARPRes), sarpHeader.MAC)
+			s.macConn.Write(s.createSARPPacket(SARPRes), sarpHeader.MAC)
 		case SARPRes:
 			// Update dirty neighbors table
 			s.dirtyNeighborsTable.Set(nodeID, &NeighborEntry{MAC: sarpHeader.MAC, Cost: uint16(delay.Microseconds())})
@@ -123,7 +123,7 @@ func (s *SARPController) receiveMsgs() {
 	}
 }
 
-func (s *SARPController) CreateSARPPacket(packetType SARPType) []byte {
+func (s *SARPController) createSARPPacket(packetType SARPType) []byte {
 	zidHeader := MyZIDHeader(0)
 	encryptedZIDHeader := s.msec.Encrypt(zidHeader.MarshalBinary())
 	mySarpHeader := &SARPHeader{packetType, s.myIP, s.myMAC, time.Now().UnixNano()}
