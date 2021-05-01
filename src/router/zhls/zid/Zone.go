@@ -20,7 +20,7 @@ func (g gridLocation) String() string {
 	return fmt.Sprintf("gridLocation{x:%v,y:%v}", g.x, g.y)
 }
 
-func (g *gridLocation) toGPSLocation() gpsLocation {
+func (g gridLocation) toGPSLocation() gpsLocation {
 	return gpsLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
 }
 
@@ -31,7 +31,7 @@ type gpsLocation struct {
 	Lon float64 `json:"lon"`
 }
 
-func (p *gpsLocation) toGridLocation() gridLocation {
+func (p gpsLocation) toGridLocation() gridLocation {
 	return gridLocation{y: degreesToIndex(p.Lat), x: degreesToIndex(p.Lon)}
 }
 
