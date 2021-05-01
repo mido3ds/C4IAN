@@ -13,7 +13,7 @@ import (
 type UnicastController struct {
 	ip                           net.IP
 	flooder                      *ZoneFlooder
-	lsr                          *LSR
+	lsr                          *lsrController
 	neighborhoodUpdateSignal     chan bool
 	neighborsTable               *NeighborsTable
 	UpdateUnicastForwardingTable func(ft *UniForwardTable)
@@ -25,7 +25,7 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
 	}
 
-	lsr := NewLSR(ip, neighborsTable)
+	lsr := newLSR(ip, neighborsTable)
 
 	log.Println("initalized controller")
 
@@ -35,20 +35,20 @@ func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *Neigh
 		lsr:                          lsr,
 		neighborhoodUpdateSignal:     neighborhoodUpdateSignal,
 		neighborsTable:               neighborsTable,
-		UpdateUnicastForwardingTable: lsr.UpdateForwardingTable,
+		UpdateUnicastForwardingTable: lsr.updateForwardingTable,
 	}, nil
 }
 
 func (c *UnicastController) Start() {
 	go c.listenForNeighborhoodChanges()
-	go c.flooder.ListenForFloodedMsgs(c.lsr.HandleLSRPacket)
+	go c.flooder.ListenForFloodedMsgs(c.lsr.handleLSRPacket)
 }
 
 func (c *UnicastController) listenForNeighborhoodChanges() {
 	for {
 		<-c.neighborhoodUpdateSignal
 		c.lsr.topology.Update(ToNodeID(c.ip), c.neighborsTable)
-		c.lsr.SendLSRPacket(c.flooder, c.neighborsTable)
+		c.lsr.sendLSRPacket(c.flooder, c.neighborsTable)
 	}
 }
 
