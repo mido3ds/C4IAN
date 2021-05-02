@@ -187,12 +187,14 @@ function calcInterval(zlen) {
 function getZLen() {
   return parseInt(document.getElementById('zlen').value);
 }
-const bestZoom = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+function bestZoom(zlen) {
+  return zlen - 1;
+}
 function getMaxZoom(zlen) {
-  return bestZoom[zlen] * (1 + 0.113);
+  return bestZoom(zlen) * (1 + 0.113);
 }
 function getMinZoom(zlen) {
-  return bestZoom[zlen] * (1 - 0.113);
+  return bestZoom(zlen) * (1 - 0.070);
 }
 function indexToDegrees(i) {
   /*i*/
@@ -242,7 +244,7 @@ function updateViewLabels() {
 }
 view.on('change', updateViewLabels);
 function updateView() {
-  view.setZoom(bestZoom[getZLen()]);
+  view.setZoom(bestZoom(getZLen()));
   view.setMaxZoom(getMaxZoom(getZLen()));
   view.setMinZoom(getMinZoom(getZLen()));
   updateViewLabels();
@@ -263,7 +265,7 @@ document.getElementById('zoneidBtn').addEventListener('click', () => {
   y = parseInt(y, 16) & zlenMask(zlen);
   view.animate({
     center: _olProj.fromLonLat([indexToDegrees(x), indexToDegrees(y)]),
-    zoom: bestZoom[zlen]
+    zoom: bestZoom(zlen)
   });
   updateViewLabels();
 });
@@ -453,7 +455,7 @@ function importFile(fileContent) {
   source.addFeatures(features);
   view.animate({
     center: avgCenter,
-    zoom: bestZoom[getZLen()]
+    zoom: bestZoom(getZLen())
   });
   updateViewLabels();
 }

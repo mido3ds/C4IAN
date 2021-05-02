@@ -38,30 +38,14 @@ function getZLen() {
   return parseInt(document.getElementById('zlen').value)
 }
 
-const bestZoom = [
-  1.9106593850919042, // 0
-  1.9106593850919042, // 1
-  1.9106593850919042, // 2
-  2.1592278779030680, // 3
-  3.4465588756583085, // 4
-  3.4465588756583085, // 5
-  5.2093235813695510, // 6
-  5.6673399339085660, // 7
-  6.7044641422046390, // 8
-  7.6488708143325940, // 9
-  8.5171023882495000, // 10
-  9.6466901351308640, // 11
-  10.478585300924003, // 12
-  11.321827975883714, // 13
-  12.889894303560485, // 14
-  13.561995542821041, // 15
-  14.800000000000000, // 16
-]
+function bestZoom(zlen) {
+  return zlen-1
+}
 function getMaxZoom(zlen) {
-  return bestZoom[zlen] * (1 + 0.113)
+  return bestZoom(zlen) * (1 + 0.113)
 }
 function getMinZoom(zlen) {
-  return bestZoom[zlen] * (1 - 0.113)
+  return bestZoom(zlen) * (1 - 0.070)
 }
 
 function indexToDegrees(i) {
@@ -106,9 +90,10 @@ function updateViewLabels() {
 
 view.on('change', updateViewLabels)
 function updateView() {
-  view.setZoom(bestZoom[getZLen()])
+  view.setZoom(bestZoom(getZLen()))
   view.setMaxZoom(getMaxZoom(getZLen()))
   view.setMinZoom(getMinZoom(getZLen()))
+  updateViewLabels()
 }
 updateView()
 
@@ -126,7 +111,8 @@ document.getElementById('zoneidBtn').addEventListener('click', () => {
   let y = document.getElementById('zoneidInput2').value
   y = parseInt(y, 16) & zlenMask(zlen)
 
-  view.animate({ center: fromLonLat([indexToDegrees(x), indexToDegrees(y)]), zoom: bestZoom[zlen] })
+  view.animate({ center: fromLonLat([indexToDegrees(x), indexToDegrees(y)]), zoom: bestZoom(zlen) })
+  updateViewLabels()
 })
 
 const source = new VectorSource()
@@ -335,7 +321,8 @@ function importFile(fileContent) {
   source.clear()
   source.addFeatures(features)
 
-  view.animate({ center: avgCenter, zoom: bestZoom[getZLen()] })
+  view.animate({ center: avgCenter, zoom: bestZoom(getZLen()) })
+  updateViewLabels()
 }
 
 function downloadToFile(content, filename) {
@@ -410,5 +397,5 @@ document.getElementById('reset').addEventListener('click', () => {
   onZlenChanged()
   view.setZoom(bestZoom[16])
   view.animate({ center: START_CENTER })
+  updateViewLabels()
 })
-updateViewLabels()
