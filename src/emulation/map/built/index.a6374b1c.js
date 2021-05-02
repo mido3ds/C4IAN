@@ -169,7 +169,7 @@ let prefix = '';
 let mode = '';
 let numUnits = 1;
 let numCmds = 1;
-const START_CENTER = _olProj.fromLonLat([31.2108959, 30.0272552]);
+const START_CENTER = _olProj.fromLonLat([0, 0]);
 function getRange() {
   return parseFloat(document.getElementById('range').value);
 }
