@@ -210,7 +210,7 @@ function updateCross() {
   document.getElementById('lonLbl').textContent = coord[0].toFixed(10)
   document.getElementById('latLbl').textContent = coord[1].toFixed(10)
   cross.setPosition(center)
-  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen())
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase()
 }
 
 map.on('pointermove', updateCross)
@@ -245,7 +245,7 @@ function onZlenChanged() {
 
   updateGrid()
   updateView()
-  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen())
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase()
 }
 
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
