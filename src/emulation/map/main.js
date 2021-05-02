@@ -295,23 +295,24 @@ function importFile(fileContent) {
   const json = JSON.parse(fileContent)
 
   let avgCenter = [0, 0]
-  let n = 0
+  let total = 0
 
   const features = json.nodes.map(n => {
     const center = fromLonLat([n.lon, n.lat])
     avgCenter[0] += center[0]
     avgCenter[1] += center[1]
+    total++
 
     const f = new Feature(new Circle(center, json.range))
     f.setId(n.name)
     return f
   })
 
-  if (n === 0) {
+  if (total === 0) {
     avgCenter = START_CENTER
   } else {
-    avgCenter[0] /= n
-    avgCenter[1] /= n
+    avgCenter[0] /= total
+    avgCenter[1] /= total
   }
 
   // set zlen
