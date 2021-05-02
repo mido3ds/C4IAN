@@ -39,19 +39,35 @@ func (p gpsLocation) String() string {
 	return fmt.Sprintf("GPSLocation{Lon:%v,Lat:%v}", p.Lon, p.Lat)
 }
 
+// [0, 2] -> [-1, 1]
+func unwrap(f float64) float64 {
+	if f > 1 {
+		return f - 2
+	}
+	return f
+}
+
 func indexToDegrees(i uint16) float64 {
 	/*i*/                    // [0, 0xFFFF]
 	d := float64(i) / 0xFFFF // [0, 1]
 	d *= 2                   // [0, 2]
-	d -= 1                   // [-1, 1]
+	d = unwrap(d)            // [-1, 1]
 	d *= 180                 // [-180, 180]
 	return d
+}
+
+// [-1, 1] -> [0, 2]
+func wrap(f float64) float64 {
+	if f < 0 {
+		return f + 2
+	}
+	return f
 }
 
 func degreesToIndex(d float64) uint16 {
 	/*d*/       // [-180, 180]
 	d /= 180    // [-1, 1]
-	d += 1      // [0, 2]
+	d = wrap(d) // [0, 2]
 	d /= 2      // [0, 1]
 	d *= 0xFFFF // [0, 0xFFFF]
 	return uint16(d)

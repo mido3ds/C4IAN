@@ -9,7 +9,7 @@
   <style>
     .map {
       width: 100%;
-      height: 500px;
+      height: 400px;
     }
   </style>
 </head>
@@ -43,21 +43,31 @@
     <label for="range">Range (in meters):</label>
     <input type="number" id='range' name='range' min='50' max='50000' value='116'>
   </div>
-  <div>
-    <label for="range">ZLen:</label>
-    <input type="number" id='zlen' name='zlen' min='1' max='16' value='16'>
-  </div>
-  <button id='clear'>CLEAR</button>
 
   <div>
-    LonLat: <span id='lonlatLbl'></span>
+    ZoneID: <span id='zoneidLbl'>0000.0000/16</span>
   </div>
   <div>
-    LonLat: <input id='lonInput' type="number"></input> <input id='latInput' type="number"></input> <button id='lonlatBtn'>GO</button>
+    ZoneID:
+    <input name='zone' id='zoneidInput1' type="text" maxlength='4' minlength='4' value='0000' />
+    . <input name='zone' id='zoneidInput2' type="text" maxlength='4' minlength='4' value='0000' />
+    / <input name='zone' type="number" id='zlen' name='zlen' min='1' max='16' value='16'>
+    <button name='zone' id='zoneidBtn'>GO</button>
   </div>
+
+  <div>
+    Lon: <span id='lonLbl'></span>, Lat: <span id='latLbl'></span>
+  </div>
+  <div>
+    Lon: <input id='lonInput' type="number" value='0' />, Lat: <input id='latInput' type="number" value='0' />
+    <button id='lonlatBtn'>GO</button>
+  </div>
+
   <div>
     Zoom: <span id='zoomLbl'></span>
   </div>
+
+  <button id='reset'>RESET</button>
 
   <script src="main.js"></script>
 </body>

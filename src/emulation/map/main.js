@@ -64,6 +64,34 @@ function getMinZoom(zlen) {
   return bestZoom[zlen] * (1 - 0.113)
 }
 
+function indexToDegrees(i) {
+  /*i*/                    // [0, 0xFFFF]
+  let d = i / 0xFFFF       // [0, 1]
+  d *= 2                   // [0, 2]
+  d = d > 1 ? d - 2 : d    // [-1, 1]
+  d *= 180                 // [-180, 180]
+  return d
+}
+
+function degreesToIndex(d) {
+  /*d*/                  // [-180, 180]
+  d /= 180               // [-1, 1]
+  d = d < 0 ? d + 2 : d  // [0, 2]
+  d /= 2                 // [0, 1]
+  d *= 0xFFFF            // [0, 0xFFFF]
+  return d
+}
+
+function zlenMask(zlen) {
+  return ~(0xFFFF >> zlen)
+}
+
+function getZoneID(lon, lat, zlen) {
+  const x = degreesToIndex(lon) & zlenMask(zlen)
+  const y = degreesToIndex(lat) & zlenMask(zlen)
+  return x.toString(16) + '.' + y.toString(16) + '/' + zlen
+}
+
 const raster = new TileLayer({
   source: new OSM({
     wrapX: false,
@@ -73,7 +101,7 @@ const raster = new TileLayer({
 
 const view = new View({ center: START_CENTER })
 function updateViewLabels() {
-  document.getElementById('zoomLbl').textContent = view.getZoom()
+  document.getElementById('zoomLbl').textContent = view.getZoom().toFixed(5)
 }
 
 view.on('change', updateViewLabels)
@@ -88,6 +116,17 @@ document.getElementById('lonlatBtn').addEventListener('click', () => {
   const lon = document.getElementById('lonInput').value
   const lat = document.getElementById('latInput').value
   view.animate({ center: fromLonLat([lon, lat]) })
+})
+document.getElementById('zoneidBtn').addEventListener('click', () => {
+  const zlen = getZLen()
+
+  let x = document.getElementById('zoneidInput1').value
+  x = parseInt(x, 16) & zlenMask(zlen)
+
+  let y = document.getElementById('zoneidInput2').value
+  y = parseInt(y, 16) & zlenMask(zlen)
+
+  view.animate({ center: fromLonLat([indexToDegrees(x), indexToDegrees(y)]), zoom: bestZoom[zlen] })
 })
 
 const source = new VectorSource()
@@ -167,11 +206,14 @@ cross.setPosition(START_CENTER);
 map.addOverlay(cross);
 function updateCross() {
   const center = view.getCenter()
-  document.getElementById('lonlatLbl').textContent = transform(center, 'EPSG:3857', 'EPSG:4326')
+  coord = transform(center, 'EPSG:3857', 'EPSG:4326')
+  document.getElementById('lonLbl').textContent = coord[0].toFixed(10)
+  document.getElementById('latLbl').textContent = coord[1].toFixed(10)
   cross.setPosition(center)
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen())
 }
 
-map.on('pointermove',updateCross)
+map.on('pointermove', updateCross)
 map.on('moveend', updateCross)
 
 let grid
@@ -203,6 +245,7 @@ function onZlenChanged() {
 
   updateGrid()
   updateView()
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen())
 }
 
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
@@ -359,9 +402,13 @@ document.getElementById('range').addEventListener('change', () => {
   })
 })
 
-document.getElementById('clear').addEventListener('click', () => {
+document.getElementById('reset').addEventListener('click', () => {
   source.clear()
   numUnits = 1
   numCmds = 1
+  document.getElementById('zlen').value = 16
+  onZlenChanged()
+  view.setZoom(bestZoom[16])
+  view.animate({ center: START_CENTER })
 })
 updateViewLabels()
