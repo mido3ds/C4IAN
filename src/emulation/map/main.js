@@ -395,7 +395,7 @@ document.getElementById('reset').addEventListener('click', () => {
   numCmds = 1
   document.getElementById('zlen').value = 16
   onZlenChanged()
-  view.setZoom(bestZoom[16])
+  view.setZoom(bestZoom(16))
   view.animate({ center: START_CENTER })
   updateViewLabels()
 })
