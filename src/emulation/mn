@@ -10,6 +10,7 @@ from mn_wifi.cli import CLI
 from mn_wifi.link import adhoc, wmediumd
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+from mininet.util import ipAdd
 
 import location as loc
 
@@ -44,6 +45,14 @@ class Node(NamedTuple):
 
     def get_sock(self):
         return f'/tmp/{self.name}.router.locsock'
+
+    def get_ip(self):
+        t = self.name[0].lower()
+        num = int(self.name[1:])
+        if t == 'u':
+            return ipAdd(num)
+        elif t == 'c':
+            return ipAdd(num+255)
 
 
 def read_topo(path_to_json: str) -> List[Node]:
@@ -104,11 +113,13 @@ net.setPropagationModel(**PROPAGATION_MODEL)
 
 print("*** Creating links")
 for node in nodes:
+    intf = f'{node.name}-wlan0'
     net.addLink(
         stations[node.name],
-        intf=f'{node.name}-wlan0',
+        intf=intf,
         **WIRELESS_CONF
     )
+    stations[node.name].setIP(node.get_ip(), intf=intf)
 
 if args.plot:
     print('*** Plotting topology')
