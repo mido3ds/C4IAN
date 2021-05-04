@@ -6,11 +6,12 @@ import time
 from typing import List, NamedTuple
 
 from mininet.log import setLogLevel
+from mininet.util import ipAdd
 from mn_wifi.cli import CLI
 from mn_wifi.link import adhoc, wmediumd
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
-from mininet.util import ipAdd
+from simple_websocket_server import WebSocket, WebSocketServer
 
 import location as loc
 
@@ -25,6 +26,7 @@ PROPAGATION_MODEL = {
     'model': 'logDistance',
     'exp': 4,
 }
+REFRESH_PERIOD = 1 / 15  # 15ms
 
 
 class Position(NamedTuple):
@@ -63,7 +65,7 @@ def read_topo(path_to_json: str) -> List[Node]:
         Node(node['name'],
              Position(node['lon'], node['lat']).to_mn())
         for node in topo['nodes']
-    ], topo['range']
+    ], topo['range'], topo['zlen']
 
 
 def parse_args():
@@ -79,6 +81,10 @@ def parse_args():
     parser.add_argument(
         '-d', '--debug', help='Print debug level logs', action='store_true'
     )
+
+    parser.add_argument('-p', '--port', default=2479, type=int,
+                        help='Port number to listen to')
+
     return parser.parse_args()
 
 
@@ -89,11 +95,28 @@ def nodes_locations_thread(stations, nodes):
             x, y, _ = stations[node.name].getxyz()
             lat, lon = loc.to_gps_coords(x, y)
             loc.send_location(sock, lon, lat)
-        time.sleep(2)
+        time.sleep(REFRESH_PERIOD)
+
+
+def map_locations_thread(stations, rng, zlen, socket):
+    print('websocket-client has connected')
+    try:
+        while True:
+            nodes = []
+            for name, station in stations.items():
+                x, y, _ = station.getxyz()
+                lat, lon = loc.to_gps_coords(x, y)
+                nodes.append({'name': name, 'lon': lon, 'lat': lat})
+            socket.send_message(
+                json.dumps({'nodes': nodes, 'zlen': zlen, 'range': rng})
+            )
+            time.sleep(REFRESH_PERIOD)
+    except:
+        pass
 
 
 args = parse_args()
-nodes, rng = read_topo(args.topology)
+nodes, rng, zlen = read_topo(args.topology)
 
 setLogLevel('debug' if args.debug else 'info')
 
@@ -123,10 +146,33 @@ for node in nodes:
 
 if args.plot:
     print('*** Plotting topology')
-    # TODO: select best (x,y) or set dynamically
-    # TODO: update with mobility
-    # TODO: make the window unfreaze
     net.plotGraph(max_x=500, max_y=500)
+
+
+class WSServer(WebSocket):
+    def handle(self):
+        data = json.loads(self.data)
+
+        pos = Position(data['lon'], data['lat']).to_mn()
+        station = stations[data['name']]
+
+        station.setPosition(str(pos))
+
+    def connected(self):
+        threading.Thread(target=map_locations_thread,
+                         args=(stations, rng, zlen, self), daemon=True).start()
+
+    def handle_close(self):
+        print('websocket-client has closed')
+
+
+def serve(port):
+    server = WebSocketServer('', port, WSServer)
+    server.serve_forever()
+
+
+print('*** Starting websocket server')
+threading.Thread(target=serve, args=(args.port,), daemon=True).start()
 
 print("*** Starting network")
 net.build()

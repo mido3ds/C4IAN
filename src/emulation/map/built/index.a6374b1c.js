@@ -315,11 +315,18 @@ let select = new _olInteraction.Select({
     })
   })]
 });
+let selectedFeature = null;
 select.on('select', e => {
   if (mode === 'delete') {
     e.selected.forEach(f => {
       source.removeFeature(f);
     });
+  } else {
+    if (e.selected.length == 1) {
+      selectedFeature = e.selected[0];
+    } else {
+      selectedFeature = null;
+    }
   }
 });
 var translate = new _olInteraction.Translate({
@@ -434,7 +441,7 @@ function importFile(fileContent) {
   const json = JSON.parse(fileContent);
   let avgCenter = [0, 0];
   let total = 0;
-  const features = json.nodes.map(n => {
+  let features = json.nodes.map(n => {
     const center = _olProj.fromLonLat([n.lon, n.lat]);
     avgCenter[0] += center[0];
     avgCenter[1] += center[1];
@@ -460,6 +467,52 @@ function importFile(fileContent) {
   });
   updateViewLabels();
 }
+function replaceFeatures(features) {
+  // remove existing
+  features.forEach(f => {
+    f2 = source.getFeatureById(f.getId());
+    if (f2) {
+      source.removeFeature(f2);
+    }
+  });
+  source.addFeatures(features);
+}
+function importFromMininet(data, change) {
+  const json = JSON.parse(data);
+  let avgCenter = [0, 0];
+  let total = 0;
+  let features = json.nodes.filter(n => {
+    if (selectedFeature && n.name === selectedFeature.getId()) {
+      return false;
+    }
+    return true;
+  }).map(n => {
+    const center = _olProj.fromLonLat([n.lon, n.lat]);
+    avgCenter[0] += center[0];
+    avgCenter[1] += center[1];
+    total++;
+    const f = new _olFeatureDefault.default(new _olGeom.Circle(center, json.range));
+    f.setId(n.name);
+    return f;
+  });
+  replaceFeatures(features);
+  if (change) {
+    if (total === 0) {
+      avgCenter = START_CENTER;
+    } else {
+      avgCenter[0] /= total;
+      avgCenter[1] /= total;
+    }
+    // set zlen
+    document.getElementById('zlen').value = json.zlen;
+    onZlenChanged();
+    view.animate({
+      center: avgCenter,
+      zoom: bestZoom(getZLen())
+    });
+    updateViewLabels();
+  }
+}
 function downloadToFile(content, filename) {
   const a = document.createElement('a');
   const file = new Blob([content], {
@@ -470,19 +523,20 @@ function downloadToFile(content, filename) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+function featureToJSON(f) {
+  const center = _olExtent.getCenter(f.getGeometry().getExtent());
+  const lonlat = _olProj.transform(center, 'EPSG:3857', 'EPSG:4326');
+  const lon = lonlat[0];
+  const lat = lonlat[1];
+  const name = f.getId();
+  return {
+    name,
+    lon,
+    lat
+  };
+}
 function exportFile() {
-  const nodes = source.getFeatures().map(f => {
-    const center = _olExtent.getCenter(f.getGeometry().getExtent());
-    const lonlat = _olProj.transform(center, 'EPSG:3857', 'EPSG:4326');
-    const lon = lonlat[0];
-    const lat = lonlat[1];
-    const name = f.getId();
-    return {
-      name,
-      lon,
-      lat
-    };
-  });
+  const nodes = source.getFeatures().map(featureToJSON);
   const range = getRange();
   const zlen = getZLen();
   downloadToFile(JSON.stringify({
@@ -535,6 +589,77 @@ document.getElementById('reset').addEventListener('click', () => {
     center: START_CENTER
   });
   updateViewLabels();
+});
+function onSendMsg(socket) {
+  if (selectedFeature) {
+    socket.send(JSON.stringify(featureToJSON(selectedFeature)));
+  }
+}
+let firstReceive = true;
+function onReceiveMsg(msg) {
+  if (firstReceive) {
+    // clear
+    numUnits = 1;
+    numCmds = 1;
+    // import
+    importFromMininet(msg.data, true);
+    firstReceive = false;
+  } else {
+    importFromMininet(msg.data, false);
+  }
+}
+const cnctBtn = document.getElementById('connect');
+let socket = null;
+let inter = null;
+function isOpen(ws) {
+  return ws && ws.readyState === ws.OPEN;
+}
+function disconnect() {
+  console.log("disconnecting");
+  cnctBtn.innerHTML = 'Connect';
+  cnctBtn.className = 'toConnect';
+  if (isOpen(socket)) {
+    socket.close(1000, "disconnect");
+  }
+  socket = null;
+  document.getElementById('add-unit').disabled = false;
+  document.getElementById('add-cmd').disabled = false;
+  document.getElementById('delete').disabled = false;
+  firstReceive = true;
+}
+function connect() {
+  const UPDATE_RATE = 1 / 15.0 * 1000;
+  // 15fps
+  console.log("connecting");
+  socket = new WebSocket('ws://localhost:' + document.getElementById('portInput').value);
+  socket.onopen = () => {
+    console.log('connected');
+    firstReceive = true;
+    cnctBtn.innerHTML = 'Disconnect';
+    cnctBtn.className = 'toDisconnect';
+    inter = setInterval(() => {
+      if (isOpen(socket)) {
+        onSendMsg(socket);
+      } else {
+        clearInterval(inter);
+        disconnect();
+      }
+    }, UPDATE_RATE);
+    document.getElementById('add-unit').disabled = true;
+    document.getElementById('add-cmd').disabled = true;
+    document.getElementById('delete').disabled = true;
+    document.getElementById('move').checked = true;
+    onActionChange();
+  };
+  socket.onerror = disconnect;
+  socket.onmessage = onReceiveMsg;
+}
+cnctBtn.addEventListener('click', () => {
+  if (socket) {
+    disconnect();
+  } else {
+    connect();
+  }
 });
 
 },{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {

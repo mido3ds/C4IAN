@@ -10,6 +10,16 @@
       width: 100%;
       height: 400px;
     }
+
+    .toConnect {
+      background-color: forestgreen;
+      color: white;
+    }
+
+    .toDisconnect {
+      background-color: red;
+      color: white;
+    }
 </style>
 </head>
 
@@ -21,6 +31,12 @@
 "></line>
   </svg>
   <div id="map" class="map"></div>
+
+  <div>
+    Mininet Port: <input value="2479" min="1000" type="number" id="portInput" style="width: 45px;
+"> 
+    <button class="toConnect" id="connect">Connect</button>
+  </div>
 
   <div>
     <input type="radio" id="add-unit" name="action" value="add-unit" checked="">
@@ -43,7 +59,8 @@
 
   <div>
     <label for="range">Range (in meters):</label>
-    <input type="number" id="range" name="range" min="50" max="50000" value="116">
+    <input type="number" id="range" name="range" min="50" max="50000" value="116" style="width: 47px;
+">
   </div>
 
   <div>
@@ -51,9 +68,12 @@
   </div>
   <div>
     ZoneID:
-    <input name="zone" id="zoneidInput1" type="text" maxlength="4" minlength="4" value="0000">
-    . <input name="zone" id="zoneidInput2" type="text" maxlength="4" minlength="4" value="0000">
-    / <input name="zone" type="number" id="zlen" min="1" max="16" value="16">
+    <input name="zone" id="zoneidInput1" type="text" maxlength="4" minlength="4" value="0000" style="width: 45px;
+">
+    . <input name="zone" id="zoneidInput2" type="text" maxlength="4" minlength="4" value="0000" style="width: 45px;
+">
+    / <input name="zone" type="number" id="zlen" min="1" max="16" value="16" style="width: 35px;
+">
     <button name="zone" id="zoneidBtn">GO</button>
   </div>
 
@@ -69,7 +89,7 @@
     Zoom: <span id="zoomLbl"></span>
   </div>
 
-  <button id="reset">RESET</button>
+  <button id="reset" class="toDisconnect">RESET</button>
 
   <script src="index.a6374b1c.js"></script>
 </body>

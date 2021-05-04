@@ -76,6 +76,10 @@ $ (
 
 ### yarn
 ### nodejs
+### websocket-client
+```
+sudo python3 -m pip install simple-websocket-server
+```
 
 ## Issues
 - `electron: error while loading shared libraries: libgconf-2.so.4: cannot open shared object file: No such file or directory`
