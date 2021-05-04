@@ -20,7 +20,7 @@ let mode = ''
 let numUnits = 1
 let numCmds = 1
 
-const START_CENTER = fromLonLat([0, 0])
+const START_CENTER = fromLonLat([6.7318473939, 0.3320770836])
 
 function getRange() {
   return parseFloat(document.getElementById('range').value)

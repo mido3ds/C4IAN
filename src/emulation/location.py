@@ -24,16 +24,13 @@ def _to_cartesian(d):
     x = EARTH_RAD * d * math.pi/180
     return x
 
-SCALE=95596.88361256948
 
 def to_gps_coords(x, y):
     return _to_degrees(x), _to_degrees(y)
-    # return x/SCALE, y/SCALE
 
 
 def to_mn_coords(lon, lat):
     return _to_cartesian(lon), _to_cartesian(lat)
-    # return lon*SCALE, lat*SCALE
 
 
 def send_location(sock, lon, lat):
@@ -43,29 +40,3 @@ def send_location(sock, lon, lat):
         client.send(json.dumps({'lon': lon, 'lat': lat}).encode('ASCII'))
     except:
         pass
-
-
-def __lonlat_to_xyz(lon, lat):
-    # lon, lat in degrees
-    assert lon >= -180 and lon <= 180
-    lon += 180
-    lon %= 360
-    assert lon >= 0 and lon < 360
-    # [0, 360) -> [0, 0x10000)
-    x = int(lon / 360.0 * 0x10000)
-    assert x >= 0 and x < 0x10000
-
-    assert lat >= -90 and lat <= 90
-    lat += 90
-    lat %= 180
-    assert lat >= 0 and lat < 180
-    # [0, 180) -> [0, 0x10000)
-    y = int(lat / 180.0 * 0x10000)
-    assert x >= 0 and x < 0x10000
-
-    return x, y
-
-
-def __dist(x1, y1, x2, y2):
-    return math.sqrt((x1-x2)**2 + (y1-y2)**2)
-    
