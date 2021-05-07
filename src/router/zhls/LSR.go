@@ -22,7 +22,6 @@ func newLSR(myIP net.IP, neighborsTable *NeighborsTable) *lsrController {
 }
 
 func (lsr *lsrController) sendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
-	//log.Println("Sent LSR packet")
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
@@ -102,16 +101,16 @@ func (lsr *lsrController) displaySinkTreeParents(sinkTreeParents map[goraph.ID]g
 	log.Println("----------- Sink Tree -------------")
 	for dst, parent := range sinkTreeParents {
 		if dst == nil {
-			log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
+			log.Println("Dst: ", dst, "Parent: ", parent.(NodeID))
 			continue
 		}
 		if parent == nil {
-			log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
-			lsr.topology.DisplayVertex(NodeID(dst.(uint64)))
+			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent)
+			lsr.topology.DisplayVertex(dst.(NodeID))
 			continue
 		}
-		log.Println("Dst: ", NodeID(dst.(uint64)), "Parent: ", NodeID(parent.(uint64)))
-		lsr.topology.DisplayVertex(NodeID(dst.(uint64)))
+		log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
+		lsr.topology.DisplayVertex(dst.(NodeID))
 	}
 	log.Println("-----------------------------------")
 }
