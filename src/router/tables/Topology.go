@@ -92,6 +92,97 @@ func (t *Topology) CalculateSinkTree(nodeID NodeID) map[goraph.ID]goraph.ID {
 	return parents
 }
 
+func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
+	if srcNodeID.isZone() {
+		log.Panic("Trying to find gateways of zone vertex")
+	}
+
+	visited := make(map[NodeID]bool)
+
+	var stack [](*myVertex)
+
+	srcVertex, notExist := t.g.GetVertex(srcNodeID)
+	if notExist != nil {
+		log.Panic("Trying to find gateways of inexistent src vertex")
+	}
+	stack = append(stack, srcVertex.(*myVertex))
+
+	for len(stack) != 0 {
+		n := len(stack) - 1 // Top element
+		currentVertex := stack[n]
+		stack = stack[:n] // Pop
+
+		if !visited[currentVertex.id] {
+			visited[currentVertex.id] = true
+		}
+
+		markedAsGateway := false
+		for vertexID, _ := range currentVertex.outTo {
+			vertex, notExist := t.g.GetVertex(vertexID)
+			if notExist != nil {
+				log.Panic("Incorrect topology")
+			}
+			if vertex.(*myVertex).id.isZone() {
+				if !markedAsGateway {
+					gateways = append(gateways, currentVertex.id)
+					markedAsGateway = true
+				}
+			} else {
+				if !visited[vertex.(*myVertex).id] {
+					stack = append(stack, vertex.(*myVertex))
+				}
+			}
+		}
+	}
+	return
+}
+
+func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborszones []NodeID) {
+	if srcNodeID.isZone() {
+		log.Panic("Trying to find neighbour zones of zone vertex")
+	}
+
+	visited := make(map[NodeID]bool)
+
+	var stack [](*myVertex)
+
+	srcVertex, notExist := t.g.GetVertex(srcNodeID)
+	if notExist != nil {
+		log.Panic("Trying to find neighbour zones  of inexistent src vertex")
+	}
+	stack = append(stack, srcVertex.(*myVertex))
+
+	markedAsNeighbourZone := make(map[NodeID]bool)
+	for len(stack) != 0 {
+		n := len(stack) - 1 // Top element
+		currentVertex := stack[n]
+		stack = stack[:n] // Pop
+
+		if !visited[currentVertex.id] {
+			visited[currentVertex.id] = true
+		}
+
+		for vertexID, _ := range currentVertex.outTo {
+			vertex, notExist := t.g.GetVertex(vertexID)
+			if notExist != nil {
+				log.Panic("Incorrect topology")
+			}
+			if vertex.(*myVertex).id.isZone() {
+				_, marked := markedAsNeighbourZone[vertex.(*myVertex).id]
+				if !marked {
+					neighborszones = append(neighborszones, vertex.(*myVertex).id)
+					markedAsNeighbourZone[vertex.(*myVertex).id] = true
+				}
+			} else {
+				if !visited[vertex.(*myVertex).id] {
+					stack = append(stack, vertex.(*myVertex))
+				}
+			}
+		}
+	}
+	return
+}
+
 func (t *Topology) DisplayVertex(id goraph.ID) {
 	vertex, _ := t.g.GetVertex(id)
 	s := ""
