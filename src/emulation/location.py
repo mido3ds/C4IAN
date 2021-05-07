@@ -40,3 +40,7 @@ def send_location(sock, lon, lat):
         client.send(json.dumps({'lon': lon, 'lat': lat}).encode('ASCII'))
     except:
         pass
+
+
+def kmhour_to_msec(speed: float) -> float:
+    return speed * 1000 / (60*60)

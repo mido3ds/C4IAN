@@ -34,34 +34,155 @@
       margin-left: 30px;
     }
 
-    .map-item {
+    .map-area {
       grid-area: map-area;
     }
 
-    .right-item {
+    .right-area {
       grid-area: right-area;
       margin-left: 10px;
     }
 
-    .down-item {
-      margin-top: 10px;
-      grid-area: down-area;
-    }
 
-    .container {
+    .container0 {
       display: grid;
       grid-template-rows: auto;
       grid-template-columns: 500px 500px 50px;
       grid-template-areas:
-        "map-area map-area right-area"
-        "down-area down-area down-area";
+        "map-area map-area right-area";
+    }
+
+    .nav-area {
+      grid-area: nav-area;
+      margin-top: 10px;
+    }
+
+    .mob-area {
+      grid-area: mob-area;
+      margin-top: 10px;
+    }
+
+    .container1 {
+      display: grid;
+      grid-template-rows: auto;
+      grid-template-columns: 500px 130px 500px;
+      grid-template-areas:
+        "nav-area . mob-area";
+    }
+
+    * {
+      font: inherit;
+    }
+
+    .wrap {
+      --dif: calc(var(--max) - var(--min));
+      display: grid;
+      grid-template: repeat(2, -webkit-max-content) 1em/1fr 1fr;
+      grid-template: repeat(2, max-content) 1em/1fr 1fr;
+      overflow: hidden;
+      position: relative;
+      margin-top: 1ex;
+      margin-bottom: 1ex;
+      width: 20em;
+      background: linear-gradient(0deg, #ccc 1em, transparent 0);
+      font-family: ubuntu mono, consolas, monaco, monospace;
+    }
+
+    .wrap::before,
+    .wrap::after {
+      grid-column: 1/span 2;
+      grid-row: 3;
+      height: 100%;
+      background: #95a;
+      content: "";
+    }
+
+    .wrap::before {
+      margin-left: calc((var(--minVelocity) - var(--min))/var(--dif)*100%);
+      width: calc((var(--maxVelocity) - var(--minVelocity))/var(--dif)*100%);
+    }
+
+    .wrap::after {
+      margin-left: calc((var(--maxVelocity) - var(--min))/var(--dif)*100%);
+      width: calc((var(--minVelocity) - var(--maxVelocity))/var(--dif)*100%);
+    }
+
+    [id=multi-lbl] {
+      grid-column: 1/span 2;
+    }
+
+    .newRange {
+      grid-column: 1/span 2;
+      grid-row: 3;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      margin: 0;
+      background: none;
+      /* get rid of white Chrome background */
+      color: #000;
+      pointer-events: none;
+    }
+
+    .newRange::-webkit-slider-runnable-track,
+    .newRange::-webkit-slider-thumb,
+    .newRange {
+      -webkit-appearance: none;
+    }
+
+    .newRange::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 100%;
+      background: none;
+    }
+
+    .newRange::-moz-range-track {
+      width: 100%;
+      height: 100%;
+      background: none;
+    }
+
+    .newRange::-webkit-slider-thumb {
+      border: none;
+      /* get rid of Firefox thumb border */
+      width: 1em;
+      height: 1em;
+      border-radius: 0;
+      /* get rid of Firefox corner rounding */
+      background: currentcolor;
+      pointer-events: auto;
+    }
+
+    .newRange::-moz-range-thumb {
+      border: none;
+      /* get rid of Firefox thumb border */
+      width: 1em;
+      height: 1em;
+      border-radius: 0;
+      /* get rid of Firefox corner rounding */
+      background: currentcolor;
+      pointer-events: auto;
+    }
+
+    .newRange:focus {
+      z-index: 2;
+      outline: dotted 1px currentcolor;
+    }
+
+    .newRange:focus,
+    .newRange:focus+output {
+      color: darkorange;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <div class="map-item">
+  <div class="container0">
+    <div class="map-area">
       <svg id='overlay' height="20" width="20">
         <line x1="0" y1="10" x2="20" y2="10" style="stroke:rgb(0,0,0);stroke-width:2" />
         <line x1="10" y1="0" x2="10" y2="20" style="stroke:rgb(0,0,0);stroke-width:2" />
@@ -69,7 +190,7 @@
       <div id="map" class="map"></div>
     </div>
 
-    <div class="right-item">
+    <div class="right-area">
       <fieldset class='fit'>
         <legend>File</legend>
 
@@ -95,26 +216,39 @@
           Actions
         </legend>
 
-        <input type="radio" id="add-unit" name="action" value="add-unit" checked>
-        <label for="add">Add Unit</label><br>
-        <input type="radio" id="add-cmd" name="action" value="add-cmd">
-        <label for="add">Add CMD</label><br>
-        <input type="radio" id="move" name="action" value="move">
-        <label for="move">Move</label><br>
-        <input type="radio" id="delete" name="action" value="delete">
-        <label for="delete">Delete</label>
+        <div>
+          <input type="radio" id="add-unit" name="action" value="add-unit" checked />
+          <label for="add-unit">Add Unit</label><br>
+        </div>
+
+        <div>
+          <input type="radio" id="add-cmd" name="action" value="add-cmd" />
+          <label for="add-cmd">Add CMD</label><br>
+        </div>
+
+        <div>
+          <input type="radio" id="move" name="action" value="move" />
+          <label for="move">Move</label><br>
+        </div>
+
+        <div>
+          <input type="radio" id="delete" name="action" value="delete" />
+          <label for="delete">Delete</label>
+        </div>
 
         <div style='margin-top: 10px;'>
           <label for="range">Range (in meters):</label>
-          <input type="number" id='range' name='range' min='50' max='50000' value='116' style='width: 47px;'>
+          <input type="number" id='range' name='range' min='50' max='50000' value='116' style='width: 47px;' />
         </div>
       </fieldset>
     </div>
+  </div>
 
-    <div class="down-item">
+  <div class="container1">
+    <div class="nav-area">
       <fieldset class='fit'>
         <legend>
-          Location
+          Navigation
         </legend>
 
         <div>
@@ -126,7 +260,7 @@
             style='width: 45px;' />
           . <input name='zone' id='zoneidInput2' type="text" maxlength='4' minlength='4' value='0000'
             style='width: 45px;' />
-          / <input name='zone' type="number" id='zlen' name='zlen' min='1' max='16' value='16' style='width: 35px;'>
+          / <input name='zone' type="number" id='zlen' name='zlen' min='1' max='16' value='16' style='width: 35px;' />
           <button name='zone' id='zoneidBtn'>GO</button>
         </div>
 
@@ -142,6 +276,42 @@
         <div>
           Zoom: <span id='zoomLbl'></span>
         </div>
+
+        <div>
+          <input type="checkbox" name='zoomBoundry' id='zoomBoundry' checked />
+          <label for="zoomBoundry">Limit Zoom Boundries</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="mob-area">
+      <fieldset class='fit' disabled id='mob-fieldset'>
+        <legend>
+          Mobility
+        </legend>
+
+        <div>
+          Velocity {
+          min: <span id='minVelocityText'>10</span>,
+          max: <span id='maxVelocityText'>30</span>
+          } km/h
+          <div class="wrap" role="group" aria-labelledby="multi-lbl"
+            style="--minVelocity: 10; --maxVelocity: 30; --min: 0; --max: 100">
+            <input class='newRange' id="minVelocity" type="range" min="0" value="10" max="100" />
+            <input class='newRange' id="maxVelocity" type="range" min="0" value="30" max="100" />
+          </div>
+        </div>
+
+        <div>
+          Aggregation: <span id="aggregText">0.9</span>
+          <input id="aggregInput" type="range" min="0" value="90" max="100" style='margin-left: 1ex;' />
+        </div>
+
+        <div id='extentTip' style='margin-top: 1ex;' class='hidden'>
+          Hit SHIFT and draw/modify mobility limits.
+        </div>
+
+        <button style='margin-top: 1ex;' id='startMobility'>Start</button>
       </fieldset>
     </div>
   </div>

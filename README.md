@@ -76,9 +76,11 @@ $ (
 
 ### yarn
 ### nodejs
-### websocket-client
+### python3
+### python3-pip
+### python packages: websocket-client, numpy
 ```
-sudo python3 -m pip install simple-websocket-server
+sudo python3 -m pip install simple-websocket-server numpy
 ```
 
 ## Issues
