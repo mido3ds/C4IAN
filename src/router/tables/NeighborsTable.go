@@ -95,7 +95,7 @@ func (n *NeighborsTable) Clear() {
 func (n *NeighborsTable) String() string {
 	s := "&NeighborsTable{"
 	for item := range n.m.Iter() {
-		s += fmt.Sprintf(" (id=%#v,mac=%#v,Cost=%d)", NodeID(item.Key.(uint64)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
+		s += fmt.Sprintf(" (%#v,mac=%#v,Cost=%d)", NodeID(item.Key.(uint64)).String(), item.Value.(*NeighborEntry).MAC.String(), item.Value.(*NeighborEntry).Cost)
 	}
 	s += " }"
 	return s

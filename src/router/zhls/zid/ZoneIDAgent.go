@@ -35,6 +35,13 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
+<<<<<<< HEAD
+=======
+	myZoneMutex.Lock()
+	myZone.Len = zlen
+	myZoneMutex.Unlock()
+
+>>>>>>> master
 	return &ZoneIDAgent{
 		conn:      l,
 		zlen:      zlen,
@@ -48,18 +55,17 @@ func (a *ZoneIDAgent) Start() {
 	d := json.NewDecoder(a.conn)
 
 	for {
-		var loc GPSLocation
+		var loc gpsLocation
 		err := d.Decode(&loc)
 		if err != nil {
 			continue
 		}
 
-		id := NewZoneID(loc, a.zlen)
+		id := newZoneID(loc, a.zlen)
 		myZoneMutex.Lock()
 		if id != myZone.ID {
-			// Use a static zone until the error with zone mapping is fixed
-			myZone.ID = 1 //id
-			//log.Println("New Zone =", myZone)
+			myZone.ID = id
+			log.Println("New Zone =", &myZone)
 		}
 		myZoneMutex.Unlock()
 	}

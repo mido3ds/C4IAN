@@ -13,50 +13,67 @@ import { Draw, Translate, Select } from "ol/interaction"
 import { getCenter as getExtentCenter } from 'ol/extent'
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer"
 import { METERS_PER_UNIT } from 'ol/proj/Units'
+import Overlay from 'ol/Overlay';
 
 let prefix = ''
 let mode = ''
 let numUnits = 1
 let numCmds = 1
 
-const START_CENTER = fromLonLat([31.2108959, 30.0272552])
+const START_CENTER = fromLonLat([6.7318473939, 0.3320770836])
 
 function getRange() {
   return parseFloat(document.getElementById('range').value)
 }
 
 function calcInterval(zlen) {
-  return 825.3644039596112 / (2 ** zlen)
+  let d = 1.0 / (1 << zlen) // [0, 1]
+  d *= 2                    // [0, 2]
+  d = d > 1 ? (d - 2) : d   // [-1, 1]
+  d *= 180                  // [-180, 180]
+  return d
 }
 
 function getZLen() {
   return parseInt(document.getElementById('zlen').value)
 }
 
-const bestZoom = [
-  1.9106593850919042, // 0
-  1.9106593850919042, // 1
-  1.9106593850919042, // 2
-  2.1592278779030680, // 3
-  3.4465588756583085, // 4
-  3.4465588756583085, // 5
-  5.2093235813695510, // 6
-  5.6673399339085660, // 7
-  6.7044641422046390, // 8
-  7.6488708143325940, // 9
-  8.5171023882495000, // 10
-  9.6466901351308640, // 11
-  10.478585300924003, // 12
-  11.321827975883714, // 13
-  12.889894303560485, // 14
-  13.561995542821041, // 15
-  14.800000000000000, // 16
-]
+function bestZoom(zlen) {
+  return zlen - 1
+}
 function getMaxZoom(zlen) {
-  return bestZoom[zlen] * (1 + 0.113)
+  return bestZoom(zlen) * (1 + 0.113)
 }
 function getMinZoom(zlen) {
-  return bestZoom[zlen] * (1 - 0.113)
+  return bestZoom(zlen) * (1 - 0.070)
+}
+
+function indexToDegrees(i) {
+  /*i*/                    // [0, 0xFFFF]
+  let d = i / 0xFFFF       // [0, 1]
+  d *= 2                   // [0, 2]
+  d = d > 1 ? d - 2 : d    // [-1, 1]
+  d *= 180                 // [-180, 180]
+  return d
+}
+
+function degreesToIndex(d) {
+  /*d*/                  // [-180, 180]
+  d /= 180               // [-1, 1]
+  d = d < 0 ? d + 2 : d  // [0, 2]
+  d /= 2                 // [0, 1]
+  d *= 0xFFFF            // [0, 0xFFFF]
+  return d
+}
+
+function zlenMask(zlen) {
+  return ~(0xFFFF >> zlen)
+}
+
+function getZoneID(lon, lat, zlen) {
+  const x = degreesToIndex(lon) & zlenMask(zlen)
+  const y = degreesToIndex(lat) & zlenMask(zlen)
+  return x.toString(16) + '.' + y.toString(16) + '/' + zlen
 }
 
 const raster = new TileLayer({
@@ -67,12 +84,36 @@ const raster = new TileLayer({
 })
 
 const view = new View({ center: START_CENTER })
+function updateViewLabels() {
+  document.getElementById('zoomLbl').textContent = view.getZoom().toFixed(5)
+}
+
+view.on('change', updateViewLabels)
 function updateView() {
-  view.setZoom(bestZoom[getZLen()])
+  view.setZoom(bestZoom(getZLen()))
   view.setMaxZoom(getMaxZoom(getZLen()))
   view.setMinZoom(getMinZoom(getZLen()))
+  updateViewLabels()
 }
 updateView()
+
+document.getElementById('lonlatBtn').addEventListener('click', () => {
+  const lon = document.getElementById('lonInput').value
+  const lat = document.getElementById('latInput').value
+  view.animate({ center: fromLonLat([lon, lat]) })
+})
+document.getElementById('zoneidBtn').addEventListener('click', () => {
+  const zlen = getZLen()
+
+  let x = document.getElementById('zoneidInput1').value
+  x = parseInt(x, 16) & zlenMask(zlen)
+
+  let y = document.getElementById('zoneidInput2').value
+  y = parseInt(y, 16) & zlenMask(zlen)
+
+  view.animate({ center: fromLonLat([indexToDegrees(x), indexToDegrees(y)]), zoom: bestZoom(zlen) })
+  updateViewLabels()
+})
 
 const source = new VectorSource()
 const vector = new VectorLayer({
@@ -120,9 +161,16 @@ let select = new Select({
   ]
 })
 
+let selectedFeature = null
 select.on('select', (e) => {
   if (mode === 'delete') {
     e.selected.forEach((f) => { source.removeFeature(f) })
+  } else {
+    if (e.selected.length == 1) {
+      selectedFeature = e.selected[0]
+    } else {
+      selectedFeature = null
+    }
   }
 })
 
@@ -140,6 +188,26 @@ const map = new Map({
   target: "map",
   view: view
 })
+
+
+var cross = new Overlay({
+  element: document.getElementById('overlay'),
+  stopEvent: false,
+  positioning: 'center-center'
+});
+cross.setPosition(START_CENTER);
+map.addOverlay(cross);
+function updateCross() {
+  const center = view.getCenter()
+  coord = transform(center, 'EPSG:3857', 'EPSG:4326')
+  document.getElementById('lonLbl').textContent = coord[0].toFixed(10)
+  document.getElementById('latLbl').textContent = coord[1].toFixed(10)
+  cross.setPosition(center)
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase()
+}
+
+map.on('pointermove', updateCross)
+map.on('moveend', updateCross)
 
 let grid
 function updateGrid() {
@@ -170,6 +238,7 @@ function onZlenChanged() {
 
   updateGrid()
   updateView()
+  document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase()
 }
 
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
@@ -233,23 +302,24 @@ function importFile(fileContent) {
   const json = JSON.parse(fileContent)
 
   let avgCenter = [0, 0]
-  let n = 0
+  let total = 0
 
-  const features = json.nodes.map(n => {
+  let features = json.nodes.map(n => {
     const center = fromLonLat([n.lon, n.lat])
     avgCenter[0] += center[0]
     avgCenter[1] += center[1]
+    total++
 
     const f = new Feature(new Circle(center, json.range))
     f.setId(n.name)
     return f
   })
 
-  if (n === 0) {
+  if (total === 0) {
     avgCenter = START_CENTER
   } else {
-    avgCenter[0] /= n
-    avgCenter[1] /= n
+    avgCenter[0] /= total
+    avgCenter[1] /= total
   }
 
   // set zlen
@@ -259,7 +329,61 @@ function importFile(fileContent) {
   source.clear()
   source.addFeatures(features)
 
-  view.animate({ center: avgCenter, zoom: bestZoom[getZLen()] })
+  view.animate({ center: avgCenter, zoom: bestZoom(getZLen()) })
+  updateViewLabels()
+}
+
+function replaceFeatures(features) {
+  // remove existing
+  features.forEach(f => {
+    f2 = source.getFeatureById(f.getId())
+    if (f2) {
+      source.removeFeature(f2)
+    }
+  })
+
+  source.addFeatures(features)
+}
+
+function importFromMininet(data, change) {
+  const json = JSON.parse(data)
+
+  let avgCenter = [0, 0]
+  let total = 0
+
+  let features = json.nodes.filter(n => {
+    if (selectedFeature && n.name === selectedFeature.getId()) {
+      return false
+    }
+    return true
+  }).map(n => {
+    const center = fromLonLat([n.lon, n.lat])
+    avgCenter[0] += center[0]
+    avgCenter[1] += center[1]
+    total++
+
+    const f = new Feature(new Circle(center, json.range))
+    f.setId(n.name)
+    return f
+  })
+
+  replaceFeatures(features)
+
+  if (change) {
+    if (total === 0) {
+      avgCenter = START_CENTER
+    } else {
+      avgCenter[0] /= total
+      avgCenter[1] /= total
+    }
+
+    // set zlen
+    document.getElementById('zlen').value = json.zlen
+    onZlenChanged()
+
+    view.animate({ center: avgCenter, zoom: bestZoom(getZLen()) })
+    updateViewLabels()
+  }
 }
 
 function downloadToFile(content, filename) {
@@ -273,16 +397,18 @@ function downloadToFile(content, filename) {
   URL.revokeObjectURL(a.href)
 }
 
-function exportFile() {
-  const nodes = source.getFeatures().map(f => {
-    const center = getExtentCenter(f.getGeometry().getExtent())
-    const lonlat = transform(center, 'EPSG:3857', 'EPSG:4326')
-    const lon = lonlat[0]
-    const lat = lonlat[1]
-    const name = f.getId()
+function featureToJSON(f) {
+  const center = getExtentCenter(f.getGeometry().getExtent())
+  const lonlat = transform(center, 'EPSG:3857', 'EPSG:4326')
+  const lon = lonlat[0]
+  const lat = lonlat[1]
+  const name = f.getId()
 
-    return { name, lon, lat }
-  })
+  return { name, lon, lat }
+}
+
+function exportFile() {
+  const nodes = source.getFeatures().map(featureToJSON)
   const range = getRange()
   const zlen = getZLen()
 
@@ -326,4 +452,95 @@ document.getElementById('range').addEventListener('change', () => {
   })
 })
 
-document.getElementById('clear').addEventListener('click', () => source.clear())
+document.getElementById('reset').addEventListener('click', () => {
+  source.clear()
+  numUnits = 1
+  numCmds = 1
+  document.getElementById('zlen').value = 16
+  onZlenChanged()
+  view.setZoom(bestZoom(16))
+  view.animate({ center: START_CENTER })
+  updateViewLabels()
+})
+
+function onSendMsg(socket) {
+  if (selectedFeature) {
+    socket.send(JSON.stringify(featureToJSON(selectedFeature)))
+  }
+}
+
+let firstReceive = true
+function onReceiveMsg(msg) {
+  if (firstReceive) {
+    // clear
+    numUnits = 1
+    numCmds = 1
+
+    // import
+    importFromMininet(msg.data, true)
+
+    firstReceive = false
+  } else {
+    importFromMininet(msg.data, false)
+  }
+}
+
+const cnctBtn = document.getElementById('connect')
+let socket = null
+let inter = null
+
+function isOpen(ws) { return ws && ws.readyState === ws.OPEN }
+
+function disconnect() {
+  console.log("disconnecting")
+  cnctBtn.innerHTML = 'Connect'
+  cnctBtn.className = 'toConnect'
+
+  if (isOpen(socket)) {
+    socket.close(1000, "disconnect")
+  }
+  socket = null
+
+  document.getElementById('add-unit').disabled = false
+  document.getElementById('add-cmd').disabled = false
+  document.getElementById('delete').disabled = false
+  firstReceive = true
+}
+
+function connect() {
+  const UPDATE_RATE = 1 / 15.0 * 1000 // 15fps
+
+  console.log("connecting")
+  socket = new WebSocket('ws://localhost:' + document.getElementById('portInput').value)
+  socket.onopen = () => {
+    console.log('connected')
+    firstReceive = true
+    cnctBtn.innerHTML = 'Disconnect'
+    cnctBtn.className = 'toDisconnect'
+
+    inter = setInterval(() => {
+      if (isOpen(socket)) {
+        onSendMsg(socket)
+      } else {
+        clearInterval(inter)
+        disconnect()
+      }
+    }, UPDATE_RATE)
+
+    document.getElementById('add-unit').disabled = true
+    document.getElementById('add-cmd').disabled = true
+    document.getElementById('delete').disabled = true
+    document.getElementById('move').checked = true
+    onActionChange()
+  }
+  socket.onerror = disconnect
+  socket.onmessage = onReceiveMsg
+}
+
+cnctBtn.addEventListener('click', () => {
+  if (socket) {
+    disconnect()
+  } else {
+    connect()
+  }
+})

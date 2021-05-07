@@ -73,7 +73,7 @@ func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP,
 		return
 	}
 
-	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[ZIDHeaderLen : ZIDHeaderLen+FloodHeaderLen]))
+	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[ZIDHeaderLen : ZIDHeaderLen+floodHeaderLen]))
 	if !ok {
 		return
 	}
@@ -91,7 +91,7 @@ func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP,
 	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
 	// Call the payload processor in a separate goroutine to avoid delays during flooding
-	go payloadProcessor(floodHeader.SrcIP, f.msec.Decrypt(msg[ZIDHeaderLen+FloodHeaderLen:]))
+	go payloadProcessor(floodHeader.SrcIP, f.msec.Decrypt(msg[ZIDHeaderLen+floodHeaderLen:]))
 
 	// reflood the msg
 	f.macConn.Write(msg, BroadcastMACAddr)

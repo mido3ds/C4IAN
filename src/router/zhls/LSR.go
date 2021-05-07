@@ -9,23 +9,24 @@ import (
 	"github.com/starwander/goraph"
 )
 
-type LSR struct {
+type lsrController struct {
 	myIP           net.IP
 	neighborsTable *NeighborsTable
 	topology       *Topology
 	dirtyTopology  bool
 }
 
-func NewLSR(myIP net.IP, neighborsTable *NeighborsTable) *LSR {
+func newLSR(myIP net.IP, neighborsTable *NeighborsTable) *lsrController {
 	t := NewTopology()
-	return &LSR{myIP: myIP, neighborsTable: neighborsTable, topology: t}
+	return &lsrController{myIP: myIP, neighborsTable: neighborsTable, topology: t}
 }
 
-func (lsr *LSR) SendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
+func (lsr *lsrController) sendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
+	//log.Println("Sent LSR packet")
 	flooder.Flood(neighborsTable.MarshalBinary())
 }
 
-func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
+func (lsr *lsrController) handleLSRPacket(srcIP net.IP, payload []byte) {
 	srcNeighborsTable, valid := UnmarshalNeighborsTable(payload)
 
 	if !valid {
@@ -35,7 +36,7 @@ func (lsr *LSR) HandleLSRPacket(srcIP net.IP, payload []byte) {
 	lsr.dirtyTopology = true
 }
 
-func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
+func (lsr *lsrController) updateForwardingTable(forwardingTable *UniForwardTable) {
 	if !lsr.dirtyTopology {
 		return
 	}
@@ -97,7 +98,7 @@ func (lsr *LSR) UpdateForwardingTable(forwardingTable *UniForwardTable) {
 	lsr.dirtyTopology = false
 }
 
-func (lsr *LSR) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
+func (lsr *lsrController) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
 	log.Println("----------- Sink Tree -------------")
 	for dst, parent := range sinkTreeParents {
 		if dst == nil {

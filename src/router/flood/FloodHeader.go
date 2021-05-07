@@ -7,22 +7,23 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
+// TODO: make it package private
 type FloodHeader struct {
 	// [0:2] checksum here
 	SrcIP  net.IP // [2:6]
 	SeqNum uint32 // [6:10]
 }
 
-const FloodHeaderLen = 2 + 2*4
+const floodHeaderLen = 2 + 2*4
 
 func UnmarshalFloodedHeader(b []byte) (*FloodHeader, bool) {
-	if len(b) < FloodHeaderLen {
+	if len(b) < floodHeaderLen {
 		return nil, false
 	}
 
 	// extract checksum
 	csum := uint16(b[0])<<8 | uint16(b[1])
-	if csum != BasicChecksum(b[2:FloodHeaderLen]) {
+	if csum != BasicChecksum(b[2:floodHeaderLen]) {
 		return nil, false
 	}
 
@@ -33,7 +34,7 @@ func UnmarshalFloodedHeader(b []byte) (*FloodHeader, bool) {
 }
 
 func (f *FloodHeader) MarshalBinary() []byte {
-	var header [FloodHeaderLen]byte
+	var header [floodHeaderLen]byte
 
 	// ip
 	copy(header[2:6], f.SrcIP[:])
@@ -45,7 +46,7 @@ func (f *FloodHeader) MarshalBinary() []byte {
 	header[9] = byte(f.SeqNum)
 
 	// add checksum
-	csum := BasicChecksum(header[2:FloodHeaderLen])
+	csum := BasicChecksum(header[2:floodHeaderLen])
 	header[0] = byte(csum >> 8)
 	header[1] = byte(csum)
 

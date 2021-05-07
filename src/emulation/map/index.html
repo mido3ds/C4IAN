@@ -9,40 +9,142 @@
   <style>
     .map {
       width: 100%;
-      height: 500px;
+      height: 400px;
+    }
+
+    .toConnect {
+      background-color: forestgreen;
+      color: white;
+    }
+
+    .toDisconnect {
+      background-color: red;
+      color: white;
+    }
+
+    .fit {
+      width: max-content;
+    }
+
+    #lonInput #latInput {
+      width: 110px;
+    }
+
+    #reset {
+      margin-left: 30px;
+    }
+
+    .map-item {
+      grid-area: map-area;
+    }
+
+    .right-item {
+      grid-area: right-area;
+      margin-left: 10px;
+    }
+
+    .down-item {
+      margin-top: 10px;
+      grid-area: down-area;
+    }
+
+    .container {
+      display: grid;
+      grid-template-rows: auto;
+      grid-template-columns: 500px 500px 50px;
+      grid-template-areas:
+        "map-area map-area right-area"
+        "down-area down-area down-area";
     }
   </style>
 </head>
 
 <body>
-  <div id="map" class="map"></div>
-  <div>
-    <input type="radio" id="add-unit" name="action" value="add-unit" checked>
-    <label for="add">Add Unit</label><br>
-    <input type="radio" id="add-cmd" name="action" value="add-cmd">
-    <label for="add">Add CMD</label><br>
-    <input type="radio" id="move" name="action" value="move">
-    <label for="move">Move</label><br>
-    <input type="radio" id="delete" name="action" value="delete">
-    <label for="delete">Delete</label>
-  </div>
+  <div class="container">
+    <div class="map-item">
+      <svg id='overlay' height="20" width="20">
+        <line x1="0" y1="10" x2="20" y2="10" style="stroke:rgb(0,0,0);stroke-width:2" />
+        <line x1="10" y1="0" x2="10" y2="20" style="stroke:rgb(0,0,0);stroke-width:2" />
+      </svg>
+      <div id="map" class="map"></div>
+    </div>
 
-  <div>
-    <button id='exportBtn'>Export</button>
+    <div class="right-item">
+      <fieldset class='fit'>
+        <legend>File</legend>
 
-    <button id='importBtn'>Import</button>
-    <input id="file-input" type="file" name="name" style="display: none;" accept=".topo" />
-  </div>
+        <button id='exportBtn'>Export</button>
 
-  <div>
-    <label for="range">Range (in meters):</label>
-    <input type="number" id='range' name='range' min='50' max='50000' value='116'>
+        <button id='importBtn'>Import</button>
+        <input id="file-input" type="file" name="name" style="display: none;" accept=".topo" />
+
+        <button id='reset' class='toDisconnect'>RESET</button>
+      </fieldset>
+
+      <fieldset class='fit'>
+        <legend>
+          Mininet
+        </legend>
+
+        Port: <input value='2479' min="1000" type="number" id='portInput' style='width: 45px;' />
+        <button class='toConnect' id='connect'>Connect</button>
+      </fieldset>
+
+      <fieldset class='fit'>
+        <legend>
+          Actions
+        </legend>
+
+        <input type="radio" id="add-unit" name="action" value="add-unit" checked>
+        <label for="add">Add Unit</label><br>
+        <input type="radio" id="add-cmd" name="action" value="add-cmd">
+        <label for="add">Add CMD</label><br>
+        <input type="radio" id="move" name="action" value="move">
+        <label for="move">Move</label><br>
+        <input type="radio" id="delete" name="action" value="delete">
+        <label for="delete">Delete</label>
+
+        <div style='margin-top: 10px;'>
+          <label for="range">Range (in meters):</label>
+          <input type="number" id='range' name='range' min='50' max='50000' value='116' style='width: 47px;'>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="down-item">
+      <fieldset class='fit'>
+        <legend>
+          Location
+        </legend>
+
+        <div>
+          ZoneID: <span id='zoneidLbl'>0000.0000/16</span>
+        </div>
+        <div>
+          ZoneID:
+          <input name='zone' id='zoneidInput1' type="text" maxlength='4' minlength='4' value='0000'
+            style='width: 45px;' />
+          . <input name='zone' id='zoneidInput2' type="text" maxlength='4' minlength='4' value='0000'
+            style='width: 45px;' />
+          / <input name='zone' type="number" id='zlen' name='zlen' min='1' max='16' value='16' style='width: 35px;'>
+          <button name='zone' id='zoneidBtn'>GO</button>
+        </div>
+
+        <div>
+          Lon: <span id='lonLbl'></span>, Lat: <span id='latLbl'></span>
+        </div>
+        <div>
+          Lon: <input id='lonInput' type="number" value='0' />
+          , Lat: <input id='latInput' type="number" value='0' />
+          <button id='lonlatBtn'>GO</button>
+        </div>
+
+        <div>
+          Zoom: <span id='zoomLbl'></span>
+        </div>
+      </fieldset>
+    </div>
   </div>
-  <div>
-    <label for="range">ZLen:</label>
-    <input type="number" id='zlen' name='zlen' min='1' max='16' value='16'>
-  </div>
-  <button id='clear'>CLEAR</button>
 
   <script src="main.js"></script>
 </body>
