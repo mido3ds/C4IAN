@@ -35,13 +35,10 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
-<<<<<<< HEAD
-=======
 	myZoneMutex.Lock()
 	myZone.Len = zlen
 	myZoneMutex.Unlock()
 
->>>>>>> master
 	return &ZoneIDAgent{
 		conn:      l,
 		zlen:      zlen,
