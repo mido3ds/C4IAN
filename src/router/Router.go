@@ -75,7 +75,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, multCont.GetMissingEntries, unicCont.UpdateUnicastForwardingTable)
+	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, multCont.GetMissingEntries, multCont.IsDest, unicCont.UpdateUnicastForwardingTable)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}

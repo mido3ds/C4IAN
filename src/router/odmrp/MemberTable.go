@@ -2,7 +2,6 @@ package odmrp
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"time"
 
@@ -20,7 +19,6 @@ type MemberTable struct {
 }
 
 type memberEntry struct {
-	grpIP    net.IP
 	ageTimer *time.Timer
 }
 
@@ -31,22 +29,15 @@ func newMemberTable() *MemberTable {
 }
 
 // Get returns value associated with the given key, and whether the key existed or not
-func (mt *MemberTable) Get(srcIP net.IP) (*memberEntry, bool) {
-	v, ok := mt.m.Get(IPv4ToUInt32(srcIP))
-	if !ok {
-		return nil, false
-	}
-
-	return v.(*memberEntry), true
+func (mt *MemberTable) Get(grpIP net.IP) bool {
+	_, ok := mt.m.Get(IPv4ToUInt32(grpIP))
+	return ok
 }
 
-// Set the srcIP to a new sequence number
+// Set the grpIP to a new sequence number
 // Restart the timer attached to that src
-func (mt *MemberTable) Set(srcIP net.IP, entry *memberEntry) {
-	if entry == nil {
-		log.Panic("you can't enter nil entry")
-	}
-	v, ok := mt.m.Get(IPv4ToUInt32(srcIP))
+func (mt *MemberTable) Set(grpIP net.IP) {
+	v, ok := mt.m.Get(IPv4ToUInt32(grpIP))
 	// Stop the previous timer if it wasn't fired
 	if ok {
 		timer := v.(*memberEntry).ageTimer
@@ -54,14 +45,14 @@ func (mt *MemberTable) Set(srcIP net.IP, entry *memberEntry) {
 	}
 
 	// Start new Timer
-	fireFunc := fireMemberTableTimer(srcIP, mt)
-	entry.ageTimer = time.AfterFunc(MTE_TIMEOUT, fireFunc)
-	mt.m.Set(IPv4ToUInt32(srcIP), entry)
+	fireFunc := fireMemberTableTimer(grpIP, mt)
+	ageTimer := time.AfterFunc(MTE_TIMEOUT, fireFunc)
+	mt.m.Set(IPv4ToUInt32(grpIP), &memberEntry{ageTimer: ageTimer})
 }
 
 // Del silently fails if key doesn't exist
-func (mt *MemberTable) Del(srcIP net.IP) {
-	mt.m.Del(IPv4ToUInt32(srcIP))
+func (mt *MemberTable) Del(grpIP net.IP) {
+	mt.m.Del(IPv4ToUInt32(grpIP))
 }
 
 func (mt *MemberTable) Len() int {
@@ -76,20 +67,19 @@ func (mt *MemberTable) Clear() {
 func (mt *MemberTable) String() string {
 	s := "&MemberTable{"
 	for item := range mt.m.Iter() {
-		v := item.Value.(*memberEntry)
-		s += fmt.Sprintf(" (srcIP=%#v, GrpIP=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), v.grpIP)
+		s += fmt.Sprintf(" (grpIP=%#v)", UInt32ToIPv4(item.Key.(uint32)).String())
 	}
 	s += " }"
 
 	return s
 }
 
-func fireMemberTableTimerHelper(srcIP net.IP, mt *MemberTable) {
-	// mt.Del(srcIP)
+func fireMemberTableTimerHelper(grpIP net.IP, mt *MemberTable) {
+	// mt.Del(grpIP)
 }
 
-func fireMemberTableTimer(srcIP net.IP, mt *MemberTable) func() {
+func fireMemberTableTimer(grpIP net.IP, mt *MemberTable) func() {
 	return func() {
-		fireMemberTableTimerHelper(srcIP, mt)
+		fireMemberTableTimerHelper(grpIP, mt)
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
@@ -32,10 +33,12 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
+	log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 	es, ok := f.MultiForwTable.Get(grpIP)
 	if !ok {
-		es, ok = f.mcGetMissingEntries(grpIP)
+		ok = f.mcGetMissingEntries(grpIP)
 		if !ok {
+			log.Println("error")
 			return
 		}
 	}
@@ -47,8 +50,14 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	encryptedPacket := buffer.Bytes()
 
 	// write to device driver
-	for i := 0; i < len(es.NextHopMACs); i++ {
-		f.ipMacConn.Write(encryptedPacket, es.NextHopMACs[i])
+	es, ok = f.MultiForwTable.Get(grpIP)
+	log.Println(f.MultiForwTable.String())
+	if ok {
+		log.Println("Sending....")
+		for item := range es.Items.Iter() {
+			log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
+			f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
+		}
 	}
 }
 

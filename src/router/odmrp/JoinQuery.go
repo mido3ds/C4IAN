@@ -48,7 +48,7 @@ func (j *JoinQuery) MarshalBinary() []byte {
 		start++
 	}
 	for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-		payload[start] = byte(hwAddrToUInt64(j.PrevHop) >> shift)
+		payload[start] = byte(HwAddrToUInt64(j.PrevHop) >> shift)
 		start++
 	}
 	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
@@ -111,8 +111,4 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 
 func (j *JoinQuery) String() string {
 	return fmt.Sprintf("JoinQuery { SeqNo: %d, TTL: %#v, SrcIP: %v, PrevHop: %v, GrpIP: %v }", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
-}
-
-func hwAddrToUInt64(a net.HardwareAddr) uint64 {
-	return uint64(a[0])<<40 | uint64(a[1])<<32 | uint64(a[2])<<24 | uint64(a[3])<<16 | uint64(a[4])<<8 | uint64(a[5])
 }

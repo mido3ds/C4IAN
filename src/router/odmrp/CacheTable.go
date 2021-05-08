@@ -14,6 +14,7 @@ type cacheEntry struct {
 	SeqNo   uint64
 	GrpIP   net.IP
 	PrevHop net.HardwareAddr
+	Cost    int8
 }
 
 type CacheTable struct {
@@ -36,11 +37,21 @@ func (f *CacheTable) Get(src net.IP) (*cacheEntry, bool) {
 	return v.(*cacheEntry), true
 }
 
-func (f *CacheTable) Set(src net.IP, entry *cacheEntry) {
+func (f *CacheTable) Set(src net.IP, entry *cacheEntry) bool {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
+	v, ok := f.m.Get(IPv4ToUInt32(src))
+	if ok {
+		val := v.(*cacheEntry)
+		if val.Cost <= entry.Cost && val.SeqNo < entry.SeqNo {
+			f.m.Set(IPv4ToUInt32(src), entry)
+			return true
+		}
+		return false
+	}
 	f.m.Set(IPv4ToUInt32(src), entry)
+	return true
 }
 
 // Del silently fails if key doesn't exist
@@ -61,7 +72,7 @@ func (f *CacheTable) String() string {
 	s := "&CacheTable{"
 	for item := range f.m.Iter() {
 		v := item.Value.(*cacheEntry)
-		s += fmt.Sprintf(" (srcIP=%#v,seq=%d, grpIP=%#v,prevhop=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), v.SeqNo, v.GrpIP, v.PrevHop)
+		s += fmt.Sprintf(" (srcIP=%#v, seq=%d, grpIP=%#v, prevhop=%#v, Cost=%d)", UInt32ToIPv4(item.Key.(uint32)).String(), v.SeqNo, v.GrpIP.String(), v.PrevHop.String(), v.Cost)
 	}
 	s += " }"
 

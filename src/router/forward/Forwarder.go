@@ -24,14 +24,17 @@ type Forwarder struct {
 	neighborsTable *NeighborsTable
 
 	// multicast controller callback
-	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
+	mcGetMissingEntries func(grpIP net.IP) bool
+	isDest              func(grpIP net.IP) bool
 
 	// Unicast controller callbacks
 	updateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
-func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTable *NeighborsTable,
-	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
+func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
+	neighborsTable *NeighborsTable,
+	mcGetMissingEntries func(grpIP net.IP) bool,
+	isDest func(grpIP net.IP) bool,
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(iface, ZIDDataEtherType)
@@ -68,6 +71,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTab
 		MultiForwTable:               MultiForwTable,
 		mcGetMissingEntries:          mcGetMissingEntries,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
+		isDest:                       isDest,
 	}, nil
 }
 
@@ -140,24 +144,30 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 	for {
 		packet := f.ipMacConn.Read()
+		log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
 		ipHdr := f.msec.Decrypt(packet[:IPv4HeaderLen])
 		ip, valid := UnmarshalIPHeader(ipHdr)
 		if !valid {
+			log.Printf("NOT valid header") // TODO delete
 			continue
 		}
+		log.Printf("valid header") // TODO delete
 
-		if imInMulticastGrp(ip.DestIP) { // i'm destination,
+		if f.isDest(ip.DestIP) { // i'm destination,
 			ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
 			ipPacket := append(ipHdr, ipPayload...)
 
 			// receive message by injecting it in loopback
 			err := f.ipConn.Write(ipPacket)
+			log.Println("recieved and destination") // TODO remove this
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
+		} else { // TODO remove
+			log.Println("recieved but not destination")
 		}
 
 		if valid := IPv4DecrementTTL(ipHdr); !valid {
@@ -170,14 +180,15 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 		// even if im destination, i may forward it
 		es, ok := f.MultiForwTable.Get(ip.DestIP)
-		if !ok {
-			// TODO: call controller
-			return
-		}
 
-		// write to device driver
-		for i := 0; i < len(es.NextHopMACs); i++ {
-			f.ipMacConn.Write(packet, es.NextHopMACs[i])
+		if ok {
+			// encrypt
+			encryptedPacket := f.msec.Encrypt(packet)
+			// write to device driver
+			for item := range es.Items.Iter() {
+				log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
+				f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
+			}
 		}
 	}
 }

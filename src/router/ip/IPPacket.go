@@ -70,6 +70,10 @@ func IPv4ToUInt32(ip net.IP) uint32 {
 	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
 }
 
+func HwAddrToUInt64(a net.HardwareAddr) uint64 {
+	return uint64(a[0])<<40 | uint64(a[1])<<32 | uint64(a[2])<<24 | uint64(a[3])<<16 | uint64(a[4])<<8 | uint64(a[5])
+}
+
 func UInt32ToIPv4(i uint32) net.IP {
 	return net.IPv4(byte(i>>24), byte(i>>16), byte(i>>8), byte(i)).To4()
 }

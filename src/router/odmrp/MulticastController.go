@@ -1,6 +1,7 @@
 package odmrp
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,20 +15,25 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
-const JQ_REFRESH_TIME = 400 * time.Millisecond
+const (
+	JQ_REFRESH_TIME        = 400 * time.Millisecond
+	FILL_FWD_TABLE_TIMEOUT = 5 * time.Second
+)
 
 type MulticastController struct {
-	gmTable        *GroupMembersTable
-	queryFlooder   *GlobalFlooder
-	jrConn         *MACLayerConn
-	ip             net.IP
-	mac            net.HardwareAddr
-	routingTable   *RoutingTable
-	cacheTable     *CacheTable
-	memberTable    *MemberTable
-	msec           *MSecLayer
-	jQRefreshTimer *time.Timer
-	packetSeqNo    uint64
+	gmTable         *GroupMembersTable // have grpIP: [destIP1, destIP2, destIP3, ...] where to send?
+	queryFlooder    *GlobalFlooder     // control message flooder
+	jrConn          *MACLayerConn
+	ip              net.IP
+	mac             net.HardwareAddr
+	forwardingTable *ForwardingTable
+	cacheTable      *CacheTable  // cache for duplicate checks and for building forwarding table
+	memberTable     *MemberTable // member table group ips, Am I a destination?
+	msec            *MSecLayer   // decreption & encryption
+	jQRefreshTimer  *time.Timer  // timer to resend join query
+	packetSeqNo     uint64
+	ch              chan bool
+	channelTimer    *time.Timer
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
@@ -46,7 +52,8 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
 		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
-		mgrpContent = "{\"" + address + "\": [\"10.0.0.14\", \"10.0.0.15\", \"10.0.0.16\"]}"
+		// mgrpContent = "{\"" + address + "\": [\"10.0.0.14\", \"10.0.0.15\", \"10.0.0.16\"]}"
+		mgrpContent = "{\"" + address + "\": [\"10.0.0.9\", \"10.0.0.18\", \"10.0.0.14\"]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
@@ -54,15 +61,18 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	log.Println("initalized multicast controller")
 
 	return &MulticastController{
-		gmTable:      NewGroupMembersTable(mgrpContent),
-		queryFlooder: queryFlooder,
-		jrConn:       jrConn,
-		ip:           ip,
-		mac:          mac,
-		routingTable: newRoutingTable(),
-		cacheTable:   newCacheTable(),
-		memberTable:  newMemberTable(),
-		msec:         msec,
+		gmTable:         NewGroupMembersTable(mgrpContent),
+		queryFlooder:    queryFlooder,
+		jrConn:          jrConn,
+		ip:              ip,
+		mac:             mac,
+		forwardingTable: newRoutingTable(),
+		cacheTable:      newCacheTable(),
+		memberTable:     newMemberTable(),
+		msec:            msec,
+		ch:              make(chan bool),
+		packetSeqNo:     0,
+		channelTimer:    nil,
 	}, nil
 }
 
@@ -73,26 +83,39 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 //
 // it may return false in case it can't find any path to the grpIP
 // or can't find the grpIP itself
-func (c *MulticastController) GetMissingEntries(grpIP net.IP) (*MultiForwardingEntry, bool) {
+func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 	// TODO
-	members, ok := c.gmTable.Get(grpIP)
+	destsIPs, ok := c.gmTable.Get(grpIP)
 	if !ok {
-		log.Panic("must have the members!")
+		log.Panic("must have the destsIPs!")
 	}
 
-	c.sendJoinQuery(grpIP, members)
+	c.sendJoinQuery(grpIP, destsIPs)
 
-	return nil, false
+	c.channelTimer = time.AfterFunc(FILL_FWD_TABLE_TIMEOUT, fireChannelTimer(c))
+	flag := <-c.ch
+	c.channelTimer.Stop()
+	time.Sleep(10 * time.Second)
+	log.Println(flag)
+	return flag
 }
 
-func jqRefreshfireTimerHelper(srcIP net.IP, members []net.IP, c *MulticastController) {
-	c.sendJoinQuery(srcIP, members)
+func fireChannelTimer(c *MulticastController) func() {
+	return func() {
+		c.ch <- false
+	}
 }
 
 func jqRefreshfireTimer(srcIP net.IP, members []net.IP, c *MulticastController) func() {
 	return func() {
-		jqRefreshfireTimerHelper(srcIP, members, c)
+		c.sendJoinQuery(srcIP, members)
 	}
+}
+
+func (c *MulticastController) Start(ft *MultiForwardTable) {
+	log.Println("~~ MulticastController started ~~")
+	go c.queryFlooder.ListenForFloodedMsgs(c.onRecvJoinQuery)
+	go c.onRecvJoinReply(ft)
 }
 
 func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
@@ -108,7 +131,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	}
 
 	// insert in cache in case it use broadcast
-	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
+	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop, Cost: ODMRPDefaultTTL - jq.TTL}
 	c.cacheTable.Set(jq.SrcIP, cached)
 
 	c.queryFlooder.Flood(jq.MarshalBinary())
@@ -119,35 +142,53 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
-func (c *MulticastController) Start(ft *MultiForwardTable) {
-	log.Println("~~ MulticastController started ~~")
-	go c.queryFlooder.ListenForFloodedMsgs(c.onRecvJoinQuery)
-	go c.recvJoinReplyMsgs(ft)
-}
-
 func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
 	jq, valid := UnmarshalJoinQuery(payload)
+	log.Printf("(ip:%#v, mac:%#v), Recieved JoinQuery form %#v\n", c.ip.String(), c.mac.String(), jq.PrevHop.String())
+
+	if "10.0.0.13" == c.ip.String() {
+		log.Println("JQ important debug")
+	}
 	log.Println(jq) // TODO: remove this
 
 	if !valid {
 		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
 
-	// if the join query allready sent
-	// Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
-	cache, ok := c.cacheTable.Get(jq.SrcIP)
-	if ok && cache.SeqNo >= jq.SeqNo {
+	// // if the join query allready sent
+	// // Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
+	// cache, ok := c.cacheTable.Get(jq.SrcIP)
+	// if ok && cache.SeqNo >= jq.SeqNo {
+	// 	return nil, false
+	// }
+
+	// else insert join query in cache
+	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, Cost: ODMRPDefaultTTL - jq.TTL}
+	cached.PrevHop = make(net.HardwareAddr, len(jq.PrevHop))
+	copy(cached.PrevHop, jq.PrevHop)
+	isCached := c.cacheTable.Set(jq.SrcIP, cached)
+	if !isCached {
 		return nil, false
 	}
-	// else insert in cache==
-	cached := &cacheEntry{SeqNo: jq.SeqNo, GrpIP: jq.GrpIP, PrevHop: jq.PrevHop}
-	c.cacheTable.Set(jq.SrcIP, cached)
-
-	// jr's nextHop is this jq's prevHop
-	c.routingTable.Set(jq.SrcIP, &routingEntry{nextHop: jq.PrevHop})
-
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
+	log.Println("Cache after change prev hop")
+	log.Println(c.cacheTable.String())
+
+	// grpIPExists := c.memberTable.Get(jq.GrpIP)
+	// memberTable for faster recieving
+	// if grpIPExists || c.imInDests(jq) {
+	if c.imInDests(jq) {
+		log.Printf("im in dests, (ip:%#v, mac: %#v)\n", c.ip.String(), c.mac.String()) // TODO: remove this
+		// fill member table
+		c.memberTable.Set(jq.GrpIP)
+
+		// send back join reply to prevHop
+		jr := c.generateJoinReply(jq)
+		if jr != nil { // impossible equals nil
+			c.sendJoinReply(jr)
+		}
+	}
 
 	// If the TTL field value is less than  0, then discard. DONE
 	jq.TTL--
@@ -155,34 +196,91 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		return nil, false
 	}
 
-	if c.imInDests(jq) {
-		log.Println("im in dests! :'D") // TODO: remove this
-
-		// fill member table
-		entry := &memberEntry{grpIP: jq.GrpIP}
-		c.memberTable.Set(jq.SrcIP, entry)
-
-		// send back join reply to prevHop
-		jr := c.destGenerateJoinReply(jq)
-		encJR := c.msec.Encrypt(jr.MarshalBinary())
-		for _, nextHop := range jr.NextHops {
-			c.jrConn.Write(encJR, nextHop)
-		}
-	}
-
 	return jq.MarshalBinary(), true
 }
 
-func (c *MulticastController) imInDests(jq *JoinQuery) bool {
-	for i := 0; i < len(jq.Dests); i++ {
-		if c.ip.Equal(jq.Dests[i]) {
-			return true
+func (c *MulticastController) generateJoinReply(jq *JoinQuery) *JoinReply {
+	log.Println("Generate JoinReply")
+	jr := &JoinReply{
+		SeqNo:    jq.SeqNo,
+		DestIP:   c.ip,
+		GrpIP:    jq.GrpIP,
+		PrevHop:  c.mac,
+		SrcIPs:   []net.IP{},
+		NextHops: []net.HardwareAddr{},
+		Cost:     0, // intialize cost, here it is hop count
+	}
+
+	// Fill srcIPs and nextHops of the JoinReply
+	for item := range c.cacheTable.m.Iter() {
+		val := item.Value.(*cacheEntry)
+		if val.GrpIP.Equal(jr.GrpIP) {
+			jr.SrcIPs = append(jr.SrcIPs, UInt32ToIPv4(item.Key.(uint32)))
+			jr.NextHops = append(jr.NextHops, val.PrevHop)
 		}
 	}
-	return false
+	if len(jr.SrcIPs) > 0 {
+		return jr
+	}
+	return nil
 }
 
-func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
+func (c *MulticastController) updateJoinReply(jr *JoinReply, ft *MultiForwardTable) *JoinReply {
+	newJR := &JoinReply{
+		SeqNo:    jr.SeqNo,
+		DestIP:   jr.DestIP,
+		GrpIP:    jr.GrpIP,
+		PrevHop:  c.mac,
+		SrcIPs:   []net.IP{},
+		NextHops: []net.HardwareAddr{},
+		Cost:     calcNewJRCost(jr),
+	}
+
+	// Fill srcIPs and nextHops of the JoinReply
+	log.Println("Debug before")
+	log.Println(c.cacheTable.String())
+	for i := 0; i < len(jr.SrcIPs); i++ {
+		if !jr.SrcIPs[i].Equal(c.ip) { // TODO check if I can remove this if
+			cacheEntry, ok := c.cacheTable.Get(jr.SrcIPs[i])
+			if ok && cacheEntry.GrpIP.Equal(jr.GrpIP) {
+				newJR.SrcIPs = append(newJR.SrcIPs, jr.SrcIPs[i])
+				newJR.NextHops = append(newJR.NextHops, cacheEntry.PrevHop)
+			}
+		}
+	}
+	logIPs("Old join reply source ips", jr.SrcIPs)
+	logMacIPs("Old join reply next hops ips", jr.NextHops)
+	logIPs("New join reply source ips", newJR.SrcIPs)
+	logMacIPs("New join reply next hops ips", newJR.NextHops)
+	log.Println("print forwarding table")
+	log.Println(c.forwardingTable.String())
+	log.Println("print multiforwarding table")
+	log.Println(ft.String())
+
+	if len(newJR.SrcIPs) > 0 {
+		log.Println("Debug cache after")
+		log.Println(c.cacheTable.String())
+		return newJR
+	}
+	log.Println("Debug cache after")
+	log.Println(c.cacheTable.String())
+	return nil
+}
+
+func calcNewJRCost(jr *JoinReply) uint16 {
+	return jr.Cost + 1
+}
+
+func (c *MulticastController) sendJoinReply(jr *JoinReply) {
+	encJR := c.msec.Encrypt(jr.MarshalBinary())
+	for i := 0; i < len(jr.NextHops); i++ {
+		c.jrConn.Write(encJR, jr.NextHops[i])
+	}
+	msg := fmt.Sprintf("ip: %#v sends Join Reply to", c.ip.String())
+	logMacIPs(msg, jr.NextHops)
+}
+
+func (c *MulticastController) onRecvJoinReply(ft *MultiForwardTable) {
 	for {
 		msg := c.jrConn.Read()
 		log.Println("Recieved Join Reply!!")
@@ -193,24 +291,52 @@ func (c *MulticastController) recvJoinReplyMsgs(ft *MultiForwardTable) {
 			log.Panicln("Corrupted JoinReply msg received")
 		}
 
-		routingEntry := &routingEntry{nextHop: jr.PrevHop}
-		c.routingTable.Set(jr.DestIP, routingEntry)
+		// TODO log
+		log.Printf("(ip:%#v, mac:%#v), Recieved JoinReply form %#v\n", c.ip.String(), c.mac.String(), jr.PrevHop.String())
+		log.Println("Before")
+		log.Println(jr.String())
+		log.Println(c.cacheTable.String())
+
+		// forwardingEntry := &forwardingEntry{nextHop: .PrevHop, cost: jr.Cost}
+		// refreshForwarder := c.forwardingTable.Set(jr.DestIP, forwardingEntry)
+		// if refreshForwarder {
+		// 	ft.Set(jr.GrpIP, jr.PrevHop)
+		// } else {
+		// 	log.Println("Path with more cost (ignore)")
+		// }
+
+		// update forwarding table
+		forwardingEntry := &forwardingEntry{nextHop: jr.PrevHop, cost: jr.Cost}
+		refreshForwarder := c.forwardingTable.Set(jr.DestIP, forwardingEntry)
+		if refreshForwarder {
+			ft.Set(jr.GrpIP, jr.PrevHop)
+		}
+
 		if c.imInSrcs(jr) {
 			log.Println("Source Recieved Join Reply!!")
+			newJR := c.updateJoinReply(jr, ft)
+			if newJR != nil {
+				c.sendJoinReply(newJR)
+			}
+			c.ch <- true
 		} else {
-			// TODO If no entries of Next Hops match current router ip do nothing.
-			// If there are valid entries left, broadcast the modified join reply.
-
-			msg = c.msec.Encrypt(jr.MarshalBinary())
-			for _, srcIP := range jr.SrcIPs {
-				entryroutingTable, ok := c.routingTable.Get(srcIP)
-				if ok {
-					c.jrConn.Write(msg, entryroutingTable.nextHop)
-				}
+			newJR := c.updateJoinReply(jr, ft)
+			if newJR != nil {
+				c.sendJoinReply(newJR)
 			}
 		}
-		log.Println(jr)
+		log.Println("Final Cache Debug After Recieve JoinReply")
+		log.Println(c.cacheTable.String())
 	}
+}
+
+func (c *MulticastController) imInDests(jq *JoinQuery) bool {
+	for i := 0; i < len(jq.Dests); i++ {
+		if c.ip.Equal(jq.Dests[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *MulticastController) imInSrcs(jr *JoinReply) bool {
@@ -238,26 +364,24 @@ func readOptionalJsonFile(path string) string {
 	return "{}"
 }
 
-func (c *MulticastController) destGenerateJoinReply(jq *JoinQuery) *JoinReply {
-	jr := &JoinReply{
-		SeqNo:    jq.SeqNo,
-		DestIP:   c.ip,
-		GrpIP:    jq.GrpIP,
-		PrevHop:  c.mac,
-		SrcIPs:   []net.IP{},
-		NextHops: []net.HardwareAddr{},
+func logMacIPs(msg string, macIPs []net.HardwareAddr) {
+	msg += ": {"
+	for i := 0; i < len(macIPs); i++ {
+		msg += fmt.Sprintf("%#v, ", macIPs[i].String())
 	}
+	msg += "}"
+	log.Println(msg)
+}
 
-	// TODO think for better/faster way
-	for item := range c.memberTable.m.Iter() {
-		src := item.Key.(uint32)
-		member, ok := c.routingTable.m.Get(src)
-		if ok {
-			nextHop := member.(*routingEntry).nextHop
-			jr.SrcIPs = append(jr.SrcIPs, UInt32ToIPv4(src))
-			jr.NextHops = append(jr.NextHops, nextHop)
-		}
+func logIPs(msg string, ips []net.IP) {
+	msg += ": {"
+	for i := 0; i < len(ips); i++ {
+		msg += fmt.Sprintf("%#v, ", ips[i].String())
 	}
+	msg += "}"
+	log.Println(msg)
+}
 
-	return jr
+func (c *MulticastController) IsDest(grpIP net.IP) bool {
+	return c.memberTable.Get(grpIP)
 }

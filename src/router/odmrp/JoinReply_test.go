@@ -3,6 +3,8 @@ package odmrp
 import (
 	"net"
 	"testing"
+
+	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
 func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
@@ -19,6 +21,7 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 	jr.SeqNo = 215
 	jr.DestIP = ip3
 	jr.GrpIP = ip0
+	jr.Cost = 5
 	jr.PrevHop = mac4
 	jr.SrcIPs = []net.IP{ip1, ip2, ip3}
 	jr.NextHops = []net.HardwareAddr{mac1, mac2, mac3}
@@ -34,7 +37,7 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 		t.Errorf("SeqNo are not equal")
 	}
 
-	if hwAddrToUInt64(jr.PrevHop) != hwAddrToUInt64(newJr.PrevHop) {
+	if HwAddrToUInt64(jr.PrevHop) != HwAddrToUInt64(newJr.PrevHop) {
 		t.Errorf("ips not equal: %#v != %#v", jr.PrevHop.String(), newJr.PrevHop.String())
 	}
 
@@ -56,8 +59,12 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 		t.Errorf("NextHops length are not equal")
 	}
 
+	if jr.Cost != newJr.Cost {
+		t.Errorf("Cost are not equal")
+	}
+
 	for i := 0; i < len(jr.NextHops); i++ {
-		if hwAddrToUInt64(jr.NextHops[i]) != hwAddrToUInt64(newJr.NextHops[i]) {
+		if HwAddrToUInt64(jr.NextHops[i]) != HwAddrToUInt64(newJr.NextHops[i]) {
 			t.Errorf("ips not equal: %#v != %#v", jr.NextHops[i].String(), newJr.NextHops[i].String())
 		}
 	}
