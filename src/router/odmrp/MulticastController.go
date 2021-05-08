@@ -85,7 +85,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 //
 // it may return false in case it can't find any path to the grpIP
 // or can't find the grpIP itself
-func (c *MulticastController) GetMissingEntries(grpIP net.IP) {
+func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 	// TODO
 	destsIPs, ok := c.gmTable.Get(grpIP)
 	if !ok {
@@ -96,10 +96,12 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) {
 
 	c.channelTimer = time.AfterFunc(fillFwdTableTimeout, fireChannelTimer(c, len(destsIPs)))
 	// time.Sleep(10 * time.Second)
+	flag := false
 	for i := 0; i < len(destsIPs); i++ {
-		<-c.ch
+		flag = flag || <-c.ch
 	}
 	c.channelTimer.Stop()
+	return flag
 }
 
 func fireChannelTimer(c *MulticastController, destCount int) func() {

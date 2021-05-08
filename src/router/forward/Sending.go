@@ -34,7 +34,7 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
-	es, ok := f.MultiForwTable.Get(grpIP)
+	_, ok := f.MultiForwTable.Get(grpIP)
 	if !ok {
 		ok = f.mcGetMissingEntries(grpIP)
 		if !ok {
@@ -50,10 +50,9 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	encryptedPacket := buffer.Bytes()
 
 	// write to device driver
-	es, ok = f.MultiForwTable.Get(grpIP)
+	es, exist := f.MultiForwTable.Get(grpIP)
 	log.Println(f.MultiForwTable.String())
-	if ok {
-		log.Println("Sending....")
+	if exist {
 		for item := range es.Items.Iter() {
 			log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
 			f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)

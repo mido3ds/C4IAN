@@ -24,7 +24,7 @@ type Forwarder struct {
 	neighborsTable *NeighborsTable
 
 	// multicast controller callback
-	mcGetMissingEntries func(grpIP net.IP)
+	mcGetMissingEntries func(grpIP net.IP) bool
 	isDest              func(grpIP net.IP) bool
 
 	// Unicast controller callbacks
@@ -33,7 +33,7 @@ type Forwarder struct {
 
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable,
-	mcGetMissingEntries func(grpIP net.IP),
+	mcGetMissingEntries func(grpIP net.IP) bool,
 	isDest func(grpIP net.IP) bool,
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
@@ -182,12 +182,10 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		es, ok := f.MultiForwTable.Get(ip.DestIP)
 
 		if ok {
-			// encrypt
-			encryptedPacket := f.msec.Encrypt(packet)
 			// write to device driver
 			for item := range es.Items.Iter() {
 				log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
-				f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
+				f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
 			}
 		}
 	}
