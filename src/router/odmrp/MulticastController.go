@@ -34,9 +34,10 @@ type MulticastController struct {
 	packetSeqNo     uint64
 	ch              chan bool
 	channelTimer    *time.Timer
+	timers          *TimersQueue
 }
 
-func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string) (*MulticastController, error) {
+func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string, timers *TimersQueue) (*MulticastController, error) {
 	queryFlooder, err := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 	if err != nil {
 		log.Panic("failed to initiate query flooder, err: ", err)
@@ -73,6 +74,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		ch:              make(chan bool),
 		packetSeqNo:     0,
 		channelTimer:    nil,
+		timers:          timers,
 	}, nil
 }
 
