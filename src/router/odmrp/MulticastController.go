@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
@@ -52,8 +53,34 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	var mgrpContent string
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
-		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
-		mgrpContent = "{\"" + address + "\": [\"10.0.0.15\", \"10.0.0.26\", \"10.0.0.9\"]}"
+
+		// pass members ids in MEMS env var
+		// like MEMS=5,14,20
+		var membersIPs []string
+		for _, i := range strings.Split(os.Getenv("MEMS"), ",") {
+			membersIPs = append(membersIPs, "\"10.0.0."+i+"\"")
+		}
+
+		// pass src sender in MSRC
+		// like MSRC=3
+		src := "10.0.0.1"
+		if msrc := os.Getenv("MSRC"); msrc != "" {
+			src = "10.0.0." + msrc
+		}
+
+		// start sender & receivers
+		if ip.String() == src {
+			go sendUDPPackets(address)
+		} else {
+			for _, ip2 := range membersIPs {
+				if "\""+ip.String()+"\"" == ip2 {
+					go receiveUDPPackets(address)
+				}
+			}
+		}
+
+		log.Printf("multicast test mode, adr={%v}, members={%v}\n", address, membersIPs)
+		mgrpContent = "{\"" + address + "\": [" + strings.Join(membersIPs, ", ") + "]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
@@ -75,6 +102,53 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		channelTimer:    nil,
 		timers:          timers,
 	}, nil
+}
+
+func sendUDPPackets(address string) {
+	adr, err := net.ResolveUDPAddr("udp", address+":1234")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	conn, err := net.DialUDP("udp", nil, adr)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	i := 0
+	log.Println("******sending udp packets")
+	for {
+		time.Sleep(5 * time.Second)
+		msg := fmt.Sprintf("message #%v", i)
+		i++
+		_, err := conn.Write([]byte(msg))
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Println("******sent:", msg)
+	}
+}
+
+func receiveUDPPackets(address string) {
+	adr, err := net.ResolveUDPAddr("udp", address+":1234")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	conn, err := net.ListenUDP("udp", adr)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	log.Println("+++++++receiving udp packets")
+	buf := make([]byte, 1024)
+	for {
+		_, err := conn.Read(buf)
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Println("+++++++received", string(buf))
+	}
 }
 
 // GetMissingEntries called by forwarder when it doesn't find and entry
