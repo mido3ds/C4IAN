@@ -13,9 +13,10 @@ func BenchmarkDZDHeader(t *testing.B) {
 	dst := UInt32ToIPv4(2)
 
 	visitedZones := []ZoneID{ZoneID(1), ZoneID(2), ZoneID(3)}
-	dzdHeader := &DZDHeader{srcIP: src, dstIP: dst, visitedZones: visitedZones}
+	dzdHeader := &DZRequestHeader{srcIP: src, dstIP: dst, visitedZones: visitedZones}
 
 	packet := dzdHeader.MarshalBinary()
+
 	newHeader, valid := UnmarshalDZDPHeader(packet)
 	visitedZones = newHeader.visitedZones
 
