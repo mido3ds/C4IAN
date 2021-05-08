@@ -18,7 +18,7 @@ import (
 
 const (
 	jqRefreshTime       = 400 * time.Millisecond
-	fillFwdTableTimeout = 2 * time.Second
+	fillFwdTableTimeout = 4 * time.Second
 )
 
 type MulticastController struct {
