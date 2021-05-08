@@ -2,25 +2,26 @@ package forward
 
 import (
 	"bytes"
-	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
-	// TODO: Discover destination zone id (instead of 0)
-	e, reachable := f.getUnicastNextHop(destIP, 0)
+func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
+	// Get the next hop using the dstIP
+	// return true only if the dst inside my zone
+	nextHopMac, inMyZone := f.GetUnicastNextHop(ToNodeID(dstIP))
 
-	if !reachable {
-		// TODO: Should we do anything else here?
-		log.Println("Destination unreachable:", destIP)
+	if !inMyZone {
+		// Search for the Dst Zone
+
 		return
 	}
 
-	zid := MyZIDHeader(ZoneID(e.DestZoneID))
+	zid := MyZIDHeader(MyZone().ID)
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
@@ -29,7 +30,7 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
 
 	// write to device driver
-	f.zidMacConn.Write(buffer.Bytes(), e.NextHopMAC)
+	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {

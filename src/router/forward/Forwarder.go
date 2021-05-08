@@ -53,7 +53,6 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTab
 
 	UniForwTable := NewUniForwardTable()
 	MultiForwTable := NewMultiForwardTable()
-
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
@@ -119,14 +118,32 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			// re-encrypt ip hdr
 			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
 
-			e, reachable := f.getUnicastNextHop(ip.DestIP, zid.DstZID)
-			if !reachable {
-				// TODO: Should we do anything else here?
-				log.Println("Destination unreachable:", ip.DestIP)
-				continue
+			var nextHopMAC net.HardwareAddr
+			var inMyZone, reachable bool
+			if zid.DstZID == MyZone().ID {
+				// The destination is in my zone, search in the forwarding table by its ip
+				nextHopMAC, inMyZone = f.GetUnicastNextHop(ToNodeID(ip.DestIP))
+				if !inMyZone {
+					// TODO: If the IP is not found in the forwarding table (my zone)
+					// although the src claims that it is
+					// then the dest may have moved out of this zone
+					// and the src have an old value for the dst zone
+					// discover its new zone
+					continue
+				}
+			} else {
+				// The dst is in a different zone,
+				// search in the forwarding table by its zone
+				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(zid.DstZID))
+				if !reachable {
+					// TODO: Should we do anything else here?
+					log.Println("Destination zone is unreachable:", zid.DstZID)
+					continue
+				}
 			}
+
 			// hand it directly to the interface
-			f.zidMacConn.Write(packet, e.NextHopMAC)
+			f.zidMacConn.Write(packet, nextHopMAC)
 		}
 	}
 }
