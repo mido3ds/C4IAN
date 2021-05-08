@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	IPv4HeaderLen = 20
+	IPv4HeaderLen  = 20
+	IPv4DefaultTTL = 64
 )
 
 type IPHeader struct {
@@ -41,20 +42,21 @@ func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 // packet is valid or not
 func IPv4DecrementTTL(packet []byte) bool {
 	ttl := int8(packet[8])
-	if ttl == 0 {
+	if ttl <= 0 {
 		return false
 	}
 
 	packet[8] = byte(ttl) - 1
 
-	// update checksum
-	packet[10] = 0 // MSB
-	packet[11] = 0 // LSB
-	csum := ipv4Checksum(packet)
-	packet[10] = byte(csum >> 8) // MSB
-	packet[11] = byte(csum)      // LSB
-
 	return true
+}
+
+func IPv4ResetTTL(b []byte) {
+	b[8] = IPv4DefaultTTL
+}
+
+func IPv4SetDest(b []byte, ip net.IP) {
+	copy(b[16:20], ip.To4()[:4])
 }
 
 func ipv4Checksum(b []byte) uint16 {
@@ -63,6 +65,15 @@ func ipv4Checksum(b []byte) uint16 {
 		sum += uint32(b[i])<<8 | uint32(b[i+1])
 	}
 	return ^uint16((sum >> 16) + sum)
+}
+
+func IPv4UpdateChecksum(b []byte) {
+	// update checksum
+	b[10] = 0 // MSB
+	b[11] = 0 // LSB
+	csum := ipv4Checksum(b)
+	b[10] = byte(csum >> 8) // MSB
+	b[11] = byte(csum)      // LSB
 }
 
 func IPv4ToUInt32(ip net.IP) uint32 {
