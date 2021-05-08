@@ -9,7 +9,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const Age = 5
+const Age = 10
 
 // PacketsBugger is lock-free thread-safe hash table
 // optimized for fastest read access
