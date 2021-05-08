@@ -8,7 +8,7 @@ import (
 )
 
 func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
-	var jr JoinReply
+	var jr joinReply
 	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
 	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
 	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
@@ -26,8 +26,8 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 	jr.SrcIPs = []net.IP{ip1, ip2, ip3}
 	jr.NextHops = []net.HardwareAddr{mac1, mac2, mac3}
 
-	payload := jr.MarshalBinary()
-	newJr, ok := UnmarshalJoinReply(payload)
+	payload := jr.marshalBinary()
+	newJr, ok := unmarshalJoinReply(payload)
 
 	if !ok {
 		t.Errorf("Unmarshal should return no erros")

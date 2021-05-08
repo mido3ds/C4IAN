@@ -9,12 +9,12 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const MTE_TIMEOUT = 960 * time.Millisecond
+const mteTimeout = 960 * time.Millisecond
 
-// MemberTable is lock-free thread-safe hash table
+// membersTable is lock-free thread-safe hash table
 // for multicast forwarding
 // key: 4 bytes grpIP IPv4, value: *memberEntry
-type MemberTable struct {
+type membersTable struct {
 	m *hashmap.HashMap
 }
 
@@ -22,21 +22,21 @@ type memberEntry struct {
 	ageTimer *time.Timer
 }
 
-func newMemberTable() *MemberTable {
-	return &MemberTable{
+func newMembersTable() *membersTable {
+	return &membersTable{
 		m: &hashmap.HashMap{},
 	}
 }
 
-// Get returns value associated with the given key, and whether the key existed or not
-func (mt *MemberTable) Get(grpIP net.IP) bool {
+// get returns value associated with the given key, and whether the key existed or not
+func (mt *membersTable) get(grpIP net.IP) bool {
 	_, ok := mt.m.Get(IPv4ToUInt32(grpIP))
 	return ok
 }
 
-// Set the grpIP to a new sequence number
+// set the grpIP to a new sequence number
 // Restart the timer attached to that src
-func (mt *MemberTable) Set(grpIP net.IP) {
+func (mt *membersTable) set(grpIP net.IP) {
 	v, ok := mt.m.Get(IPv4ToUInt32(grpIP))
 	// Stop the previous timer if it wasn't fired
 	if ok {
@@ -45,26 +45,26 @@ func (mt *MemberTable) Set(grpIP net.IP) {
 	}
 
 	// Start new Timer
-	fireFunc := fireMemberTableTimer(grpIP, mt)
-	ageTimer := time.AfterFunc(MTE_TIMEOUT, fireFunc)
+	fireFunc := fireMembersTableTimer(grpIP, mt)
+	ageTimer := time.AfterFunc(mteTimeout, fireFunc)
 	mt.m.Set(IPv4ToUInt32(grpIP), &memberEntry{ageTimer: ageTimer})
 }
 
-// Del silently fails if key doesn't exist
-func (mt *MemberTable) Del(grpIP net.IP) {
+// del silently fails if key doesn't exist
+func (mt *membersTable) del(grpIP net.IP) {
 	mt.m.Del(IPv4ToUInt32(grpIP))
 }
 
-func (mt *MemberTable) Len() int {
+func (mt *membersTable) len() int {
 	return mt.m.Len()
 }
 
-// Clear MemberTable
-func (mt *MemberTable) Clear() {
+// clear MemberTable
+func (mt *membersTable) clear() {
 	mt.m = &hashmap.HashMap{}
 }
 
-func (mt *MemberTable) String() string {
+func (mt *membersTable) String() string {
 	s := "&MemberTable{"
 	for item := range mt.m.Iter() {
 		s += fmt.Sprintf(" (grpIP=%#v)", UInt32ToIPv4(item.Key.(uint32)).String())
@@ -74,11 +74,11 @@ func (mt *MemberTable) String() string {
 	return s
 }
 
-func fireMemberTableTimerHelper(grpIP net.IP, mt *MemberTable) {
+func fireMemberTableTimerHelper(grpIP net.IP, mt *membersTable) {
 	// mt.Del(grpIP)
 }
 
-func fireMemberTableTimer(grpIP net.IP, mt *MemberTable) func() {
+func fireMembersTableTimer(grpIP net.IP, mt *membersTable) func() {
 	return func() {
 		fireMemberTableTimerHelper(grpIP, mt)
 	}

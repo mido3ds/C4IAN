@@ -10,9 +10,9 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const FWRD_ENTRY_TIMEOUT = 960 * time.Millisecond
+const forwardEntryTimeout = 960 * time.Millisecond
 
-// ForwardingTable is lock-free thread-safe hash table
+// forwardingTable is lock-free thread-safe hash table
 // for multicast forwarding
 // key: 4 bytes dest IPv4, value: *forwardingEntry
 // routing table from destination to destIP
@@ -21,7 +21,7 @@ const FWRD_ENTRY_TIMEOUT = 960 * time.Millisecond
 destIP | nextHop | Cost
 ------------------------------------
 */
-type ForwardingTable struct {
+type forwardingTable struct {
 	m *hashmap.HashMap
 }
 
@@ -31,14 +31,14 @@ type forwardingEntry struct {
 	ageTimer *time.Timer
 }
 
-func newRoutingTable() *ForwardingTable {
-	return &ForwardingTable{
+func newForwardingTable() *forwardingTable {
+	return &forwardingTable{
 		m: &hashmap.HashMap{},
 	}
 }
 
-// Get returns value associated with the given key, and whether the key existed or not
-func (r *ForwardingTable) Get(destIP net.IP) (*forwardingEntry, bool) {
+// get returns value associated with the given key, and whether the key existed or not
+func (r *forwardingTable) get(destIP net.IP) (*forwardingEntry, bool) {
 	v, ok := r.m.Get(IPv4ToUInt32(destIP))
 	if !ok {
 		return nil, false
@@ -47,10 +47,10 @@ func (r *ForwardingTable) Get(destIP net.IP) (*forwardingEntry, bool) {
 	return v.(*forwardingEntry), true
 }
 
-// Set the destIP to a new sequence number
+// set the destIP to a new sequence number
 // Restart the timer attached to that dest
 // return true if inserted/refreshed successfully
-func (r *ForwardingTable) Set(destIP net.IP, entry *forwardingEntry) bool {
+func (r *forwardingTable) set(destIP net.IP, entry *forwardingEntry) bool {
 	if entry == nil {
 		log.Panic("you can't enter nil entry")
 	}
@@ -69,27 +69,27 @@ func (r *ForwardingTable) Set(destIP net.IP, entry *forwardingEntry) bool {
 	}
 
 	// Start new Timer
-	fireFunc := fireRoutingTableTimer(destIP, r)
-	entry.ageTimer = time.AfterFunc(FWRD_ENTRY_TIMEOUT, fireFunc)
+	fireFunc := fireForwardingTableTimer(destIP, r)
+	entry.ageTimer = time.AfterFunc(forwardEntryTimeout, fireFunc)
 	r.m.Set(IPv4ToUInt32(destIP), entry)
 	return true
 }
 
-// Del silently fails if key doesn't exist
-func (r *ForwardingTable) Del(destIP net.IP) {
+// del silently fails if key doesn't exist
+func (r *forwardingTable) del(destIP net.IP) {
 	r.m.Del(IPv4ToUInt32(destIP))
 }
 
-func (r *ForwardingTable) Len() int {
+func (r *forwardingTable) len() int {
 	return r.m.Len()
 }
 
-// Clear ForwardingTable
-func (r *ForwardingTable) Clear() {
+// clear ForwardingTable
+func (r *forwardingTable) clear() {
 	r.m = &hashmap.HashMap{}
 }
 
-func (r *ForwardingTable) String() string {
+func (r *forwardingTable) String() string {
 	s := "&ForwardingTable{"
 	for item := range r.m.Iter() {
 		v := item.Value.(*forwardingEntry)
@@ -100,11 +100,11 @@ func (r *ForwardingTable) String() string {
 	return s
 }
 
-func fireRoutingTableTimerHelper(destIP net.IP, r *ForwardingTable) {
+func fireRoutingTableTimerHelper(destIP net.IP, r *forwardingTable) {
 	// r.Del(destIP)
 }
 
-func fireRoutingTableTimer(destIP net.IP, r *ForwardingTable) func() {
+func fireForwardingTableTimer(destIP net.IP, r *forwardingTable) func() {
 	return func() {
 		fireRoutingTableTimerHelper(destIP, r)
 	}

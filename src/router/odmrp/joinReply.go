@@ -11,7 +11,7 @@ import (
 
 const costSize = 16
 
-type JoinReply struct {
+type joinReply struct {
 	SeqNo    uint64
 	DestIP   net.IP
 	GrpIP    net.IP
@@ -21,7 +21,7 @@ type JoinReply struct {
 	Cost     uint16
 }
 
-func (jr *JoinReply) MarshalBinary() []byte {
+func (jr *joinReply) marshalBinary() []byte {
 	extraBytes := 4
 	seqNoSize := 8
 
@@ -83,12 +83,12 @@ func (jr *JoinReply) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// UnmarshalJoinReply returns false if packet is invalid
-func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
+// unmarshalJoinReply returns false if packet is invalid
+func unmarshalJoinReply(b []byte) (*joinReply, bool) {
 	extraBytes := 4
 	seqNoSize := 8
 
-	var jr JoinReply
+	var jr joinReply
 
 	count := uint16(b[0])<<bitsInByte | uint16(b[1])
 	jr.SrcIPs = make([]net.IP, count)
@@ -158,6 +158,6 @@ func prettyMacIPs(ips []net.HardwareAddr) string {
 	return s + "}"
 }
 
-func (j *JoinReply) String() string {
+func (j *joinReply) String() string {
 	return fmt.Sprintf("JoinReply { SeqNo: %d, DestIP: %#v, GrpIP: %v, SrcIPs: %v, NextHops: %v, Cost:%d }", j.SeqNo, j.DestIP.String(), j.GrpIP.String(), prettyIPs(j.SrcIPs), prettyMacIPs(j.NextHops), j.Cost)
 }

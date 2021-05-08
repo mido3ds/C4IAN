@@ -7,7 +7,7 @@ import (
 )
 
 func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
-	var jq JoinQuery
+	var jq joinQuery
 	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
 	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
 	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
@@ -23,8 +23,8 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	}
 	jq.PrevHop = prevhop
 
-	payload := jq.MarshalBinary()
-	newJq, ok := UnmarshalJoinQuery(payload)
+	payload := jq.marshalBinary()
+	newJq, ok := unmarshalJoinQuery(payload)
 
 	if !ok {
 		t.Errorf("Unmarshal should return no erros")
