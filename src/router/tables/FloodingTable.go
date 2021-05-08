@@ -50,8 +50,8 @@ func (f *FloodingTable) Set(srcIP net.IP, seq uint32) {
 	// Start new Timer
 	fireFunc := floodingFireTimer(srcIP, f)
 	newTimer := time.AfterFunc(FloodingAge*time.Second, fireFunc)
-	entry := &FloodingEntry{seqNumber: seq, ageTimer: newTimer}
-	f.m.Set(IPv4ToUInt32(srcIP), entry)
+
+	f.m.Set(IPv4ToUInt32(srcIP), &FloodingEntry{seqNumber: seq, ageTimer: newTimer})
 }
 
 // Del silently fails if key doesn't exist
