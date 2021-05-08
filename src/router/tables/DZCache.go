@@ -53,6 +53,8 @@ func (z *DZCache) Set(dstIP net.IP, zoneID ZoneID) {
 	newTimer := time.AfterFunc(DZCahceAge*time.Second, fireFunc)
 
 	z.m.Set(IPv4ToUInt32(dstIP), &DZEntry{zoneID: zoneID, ageTimer: newTimer})
+
+	// TODO: Send all msgs in Buffer for this dst IP
 }
 
 // Del silently fails if key doesn't exist
