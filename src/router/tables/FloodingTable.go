@@ -9,7 +9,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const Age = 60
+const FloodingAge = 60
 
 // FloodingTable is lock-free thread-safe hash table
 // optimized for fastest read access
@@ -48,8 +48,8 @@ func (f *FloodingTable) Set(srcIP net.IP, seq uint32) {
 	}
 
 	// Start new Timer
-	fireFunc := fireTimer(srcIP, f)
-	newTimer := time.AfterFunc(Age*time.Second, fireFunc)
+	fireFunc := floodingFireTimer(srcIP, f)
+	newTimer := time.AfterFunc(FloodingAge*time.Second, fireFunc)
 	entry := &FloodingEntry{seqNumber: seq, ageTimer: newTimer}
 	f.m.Set(IPv4ToUInt32(srcIP), entry)
 }
@@ -73,12 +73,12 @@ func (f *FloodingTable) String() string {
 	return s
 }
 
-func fireTimerHelper(srcIP net.IP, f *FloodingTable) {
+func floodingFireTimerHelper(srcIP net.IP, f *FloodingTable) {
 	f.Del(srcIP)
 }
 
-func fireTimer(srcIP net.IP, f *FloodingTable) func() {
+func floodingFireTimer(srcIP net.IP, f *FloodingTable) func() {
 	return func() {
-		fireTimerHelper(srcIP, f)
+		floodingFireTimerHelper(srcIP, f)
 	}
 }
