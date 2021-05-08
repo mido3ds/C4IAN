@@ -17,12 +17,12 @@ const (
 )
 
 type DZRequestHeader struct {
-	srcIP        net.IP
-	dstIP        net.IP
-	visitedZones []ZoneID
+	srcIP         net.IP
+	requiredDstIP net.IP
+	visitedZones  []ZoneID
 }
 
-func UnmarshalDZDPHeader(packet []byte) (*DZRequestHeader, bool) {
+func UnmarshalDZRequestHeader(packet []byte) (*DZRequestHeader, bool) {
 	numOfVisistedZones := binary.BigEndian.Uint32(packet[:numOfVisitedZonesLen])
 	DZDTotalLen := DZRequestHeaderLen + 4*numOfVisistedZones
 
@@ -40,9 +40,9 @@ func UnmarshalDZDPHeader(packet []byte) (*DZRequestHeader, bool) {
 	}
 
 	return &DZRequestHeader{
-		srcIP:        net.IP(packet[4:8]),
-		dstIP:        net.IP(packet[8:12]),
-		visitedZones: visitedZones,
+		srcIP:         net.IP(packet[4:8]),
+		requiredDstIP: net.IP(packet[8:12]),
+		visitedZones:  visitedZones,
 	}, true
 }
 
@@ -57,7 +57,7 @@ func (d *DZRequestHeader) MarshalBinary() []byte {
 	}
 
 	buffer.Write(d.srcIP.To4())
-	buffer.Write(d.dstIP.To4())
+	buffer.Write(d.requiredDstIP.To4())
 
 	for _, zoneID := range d.visitedZones {
 		for i := 24; i >= 0; i -= 8 {
