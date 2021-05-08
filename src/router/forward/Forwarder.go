@@ -24,7 +24,7 @@ type Forwarder struct {
 	neighborsTable *NeighborsTable
 
 	// multicast controller callback
-	mcGetMissingEntries func(grpIP net.IP) bool
+	mcGetMissingEntries func(grpIP net.IP)
 	isDest              func(grpIP net.IP) bool
 
 	// Unicast controller callbacks
@@ -33,7 +33,7 @@ type Forwarder struct {
 
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable,
-	mcGetMissingEntries func(grpIP net.IP) bool,
+	mcGetMissingEntries func(grpIP net.IP),
 	isDest func(grpIP net.IP) bool,
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets

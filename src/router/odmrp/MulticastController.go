@@ -17,7 +17,7 @@ import (
 
 const (
 	jqRefreshTime       = 400 * time.Millisecond
-	fillFwdTableTimeout = 5 * time.Second
+	fillFwdTableTimeout = 2 * time.Second
 )
 
 type MulticastController struct {
@@ -83,7 +83,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 //
 // it may return false in case it can't find any path to the grpIP
 // or can't find the grpIP itself
-func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
+func (c *MulticastController) GetMissingEntries(grpIP net.IP) {
 	// TODO
 	destsIPs, ok := c.gmTable.Get(grpIP)
 	if !ok {
@@ -92,17 +92,19 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 
 	c.sendJoinQuery(grpIP, destsIPs)
 
-	c.channelTimer = time.AfterFunc(fillFwdTableTimeout, fireChannelTimer(c))
-	flag := <-c.ch
+	c.channelTimer = time.AfterFunc(fillFwdTableTimeout, fireChannelTimer(c, len(destsIPs)))
+	// time.Sleep(10 * time.Second)
+	for i := 0; i < len(destsIPs); i++ {
+		<-c.ch
+	}
 	c.channelTimer.Stop()
-	time.Sleep(10 * time.Second)
-	log.Println(flag)
-	return flag
 }
 
-func fireChannelTimer(c *MulticastController) func() {
+func fireChannelTimer(c *MulticastController, destCount int) func() {
 	return func() {
-		c.ch <- false
+		for i := 0; i < destCount; i++ {
+			c.ch <- false
+		}
 	}
 }
 
