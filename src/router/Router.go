@@ -11,6 +11,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/odmrp"
 	. "github.com/mido3ds/C4IAN/src/router/sarp"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
@@ -22,6 +23,7 @@ type Router struct {
 
 	msec      *MSecLayer
 	forwarder *Forwarder
+	timers    *TimersQueue
 
 	// controllers
 	zidAgent *ZoneIDAgent
@@ -54,6 +56,8 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
+	timers := NewTimersQueue()
+
 	log.Println("ZLen =", zlen, ", Zone Max Area =", ZLenToAreaKMs(zlen), "km^2")
 	zidAgent, err := NewZoneIDAgent(locSocket, zlen)
 	if err != nil {
@@ -70,7 +74,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	multCont, err := NewMulticastController(iface, ip, iface.HardwareAddr, msec, mgrpFilePath)
+	multCont, err := NewMulticastController(iface, ip, iface.HardwareAddr, msec, mgrpFilePath, timers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -86,6 +90,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		ip:        ip,
 		zlen:      zlen,
 		forwarder: forwarder,
+		timers:    timers,
 		zidAgent:  zidAgent,
 		unicCont:  unicCont,
 		multCont:  multCont,
@@ -94,6 +99,8 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 }
 
 func (r *Router) Start() {
+	go r.timers.Start()
+
 	// zid agent
 	go r.zidAgent.Start()
 
