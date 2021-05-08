@@ -87,7 +87,7 @@ func (lsr *lsrController) updateForwardingTable(forwardingTable *UniForwardTable
 			if !exists {
 				log.Panicln("Attempting to make a next hop through a non-neighbor")
 			}
-			dirtyForwardingTable.Set(dst.(NodeID), &UniForwardingEntry{NextHopMAC: neighborEntry.MAC})
+			dirtyForwardingTable.Set(dst.(NodeID), neighborEntry.MAC)
 		}
 	}
 	// Shallow copy the forwarding table, this will make the hashmap pointer in forwardingTable
