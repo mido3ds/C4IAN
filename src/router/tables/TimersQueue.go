@@ -10,7 +10,7 @@ const timersQueueDefaultCap = 1000
 type TimersQueue struct {
 	mutex    sync.Mutex
 	canEnter *sync.Cond
-	q        []Timer
+	q        []*Timer
 	nonce    uint64
 }
 
@@ -22,8 +22,8 @@ type Timer struct {
 	tq       *TimersQueue
 }
 
-func newTimer(d time.Duration, callback func(), nonce uint64, tq *TimersQueue) Timer {
-	return Timer{
+func newTimer(d time.Duration, callback func(), nonce uint64, tq *TimersQueue) *Timer {
+	return &Timer{
 		nonce:    nonce,
 		t:        time.Now().UnixNano() + d.Nanoseconds(),
 		callback: callback,
@@ -52,14 +52,14 @@ func (t *Timer) Reset(d time.Duration) bool {
 func NewTimersQueue() *TimersQueue {
 	return &TimersQueue{
 		nonce:    0,
-		q:        make([]Timer, 0, timersQueueDefaultCap),
+		q:        make([]*Timer, 0, timersQueueDefaultCap),
 		canEnter: sync.NewCond(&sync.Mutex{}),
 	}
 }
 
 // Add a timer that will fire after `d`, TimersQueue then will call `callback`
 // in a new goroutine for each callback
-func (t *TimersQueue) Add(d time.Duration, callback func()) Timer {
+func (t *TimersQueue) Add(d time.Duration, callback func()) *Timer {
 	defer t.canEnter.Signal()
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
