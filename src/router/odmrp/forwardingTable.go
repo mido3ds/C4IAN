@@ -8,6 +8,7 @@ import (
 
 	"github.com/cornelk/hashmap"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
 const forwardEntryTimeout = 960 * time.Millisecond
@@ -22,18 +23,20 @@ destIP | nextHop | Cost
 ------------------------------------
 */
 type forwardingTable struct {
-	m *hashmap.HashMap
+	m      *hashmap.HashMap
+	timers *TimersQueue
 }
 
 type forwardingEntry struct {
-	nextHop  net.HardwareAddr
-	cost     uint16
-	ageTimer *time.Timer
+	nextHop net.HardwareAddr
+	cost    uint16
+	timer   Timer
 }
 
-func newForwardingTable() *forwardingTable {
+func newForwardingTable(timers *TimersQueue) *forwardingTable {
 	return &forwardingTable{
-		m: &hashmap.HashMap{},
+		m:      &hashmap.HashMap{},
+		timers: timers,
 	}
 }
 
@@ -61,7 +64,7 @@ func (r *forwardingTable) set(destIP net.IP, entry *forwardingEntry) bool {
 		if v.(*forwardingEntry).cost >= entry.cost {
 			entry.cost = v.(*forwardingEntry).cost
 			entry.nextHop = v.(*forwardingEntry).nextHop
-			timer := v.(*forwardingEntry).ageTimer
+			timer := v.(*forwardingEntry).timer
 			timer.Stop()
 		} else {
 			return false
@@ -69,8 +72,9 @@ func (r *forwardingTable) set(destIP net.IP, entry *forwardingEntry) bool {
 	}
 
 	// Start new Timer
-	fireFunc := fireForwardingTableTimer(destIP, r)
-	entry.ageTimer = time.AfterFunc(forwardEntryTimeout, fireFunc)
+	entry.timer = r.timers.Add(forwardEntryTimeout, func() {
+		r.del(destIP)
+	})
 	r.m.Set(IPv4ToUInt32(destIP), entry)
 	return true
 }
@@ -98,14 +102,4 @@ func (r *forwardingTable) String() string {
 	s += " }"
 
 	return s
-}
-
-func fireRoutingTableTimerHelper(destIP net.IP, r *forwardingTable) {
-	// r.Del(destIP)
-}
-
-func fireForwardingTableTimer(destIP net.IP, r *forwardingTable) func() {
-	return func() {
-		fireRoutingTableTimerHelper(destIP, r)
-	}
 }
