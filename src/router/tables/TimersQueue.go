@@ -18,7 +18,7 @@ type Timer struct {
 	nonce    uint64
 	t        int64
 	callback func()
-	gotimer  *time.Timer
+	gotimer  *time.Timer // TODO: remove gotimer
 	tq       *TimersQueue
 }
 
@@ -38,6 +38,7 @@ func (t *Timer) HasFired() bool {
 
 // Stop prevents the Timer from firing.
 // It returns true if the call stops the timer, false if the timer has already expired or been stopped.
+// TODO: this doesn't stop first timer, make it stop first timer
 func (t *Timer) Stop() bool {
 	return t.tq.stop(t)
 }
