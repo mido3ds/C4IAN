@@ -25,7 +25,7 @@ type Forwarder struct {
 
 	// multicast controller callback
 	mcGetMissingEntries func(grpIP net.IP) bool
-	isDest              func(grpIP net.IP) bool
+	isInMCastGroup      func(grpIP net.IP) bool
 
 	// Unicast controller callbacks
 	updateUnicastForwardingTable func(ft *UniForwardTable)
@@ -34,7 +34,7 @@ type Forwarder struct {
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable,
 	mcGetMissingEntries func(grpIP net.IP) bool,
-	isDest func(grpIP net.IP) bool,
+	isInMCastGroup func(grpIP net.IP) bool,
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(iface, ZIDDataEtherType)
@@ -71,7 +71,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 		MultiForwTable:               MultiForwTable,
 		mcGetMissingEntries:          mcGetMissingEntries,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
-		isDest:                       isDest,
+		isInMCastGroup:               isInMCastGroup,
 	}, nil
 }
 
@@ -117,9 +117,10 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			}
 		} else { // i'm a forwarder
 			if valid := IPv4DecrementTTL(ipHdr); !valid {
-				log.Println("ttl < 0, drop packet")
+				log.Println("ttl <= 0, drop packet")
 				continue
 			}
+			IPv4UpdateChecksum(ipHdr)
 
 			// re-encrypt ip hdr
 			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
@@ -156,7 +157,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		}
 		log.Printf("valid header") // TODO delete
 
-		if f.isDest(ip.DestIP) { // i'm destination,
+		if f.isInMCastGroup(ip.DestIP) { // i'm destination,
 			ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
 			ipPacket := append(ipHdr, ipPayload...)
 
@@ -171,9 +172,10 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 		}
 
 		if valid := IPv4DecrementTTL(ipHdr); !valid {
-			log.Println("ttl < 0, drop packet")
+			log.Println("ttl <= 0, drop packet")
 			continue
 		}
+		IPv4UpdateChecksum(ipHdr)
 
 		// even if im destination, i may forward it
 		es, exist := f.MultiForwTable.Get(ip.DestIP)
@@ -203,13 +205,21 @@ func (f *Forwarder) forwardFromIPLayer() {
 		// TODO: speed up by fanout netfilter feature
 
 		ip, valid := UnmarshalIPHeader(packet)
-		if !valid {
-			log.Panic("ip header must have been valid from ip layer!")
-		}
 
-		if imDestination(f.ip, ip.DestIP, 0) {
+		if !valid {
+			log.Println("ip6 is not supported, drop packet")
+			p.SetVerdict(netfilter.NF_DROP)
+		} else if imDestination(f.ip, ip.DestIP, 0) || f.isInMCastGroup(ip.DestIP) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
+			// sender shall know the papcket is sent
+			p.SetVerdict(netfilter.NF_DROP)
+
+			// reset ttl if ip layer, weirdly, gave low ttl
+			// doesn't work for traceroute
+			IPv4ResetTTL(packet)
+			IPv4UpdateChecksum(packet)
+
 			if ip.DestIP.IsGlobalUnicast() {
 				go f.sendUnicast(packet, ip.DestIP)
 			} else if ip.DestIP.IsMulticast() {
@@ -217,9 +227,6 @@ func (f *Forwarder) forwardFromIPLayer() {
 			} else {
 				go f.sendBroadcast(packet)
 			}
-
-			// sender shall know the papcket is sent
-			p.SetVerdict(netfilter.NF_DROP)
 		}
 	}
 }
