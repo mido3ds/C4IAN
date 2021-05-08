@@ -30,10 +30,9 @@ type MulticastController struct {
 	cacheTable      *cache        // cache for duplicate checks and for building forwarding table
 	memberTable     *membersTable // member table group ips, Am I a destination?
 	msec            *MSecLayer    // decreption & encryption
-	jQRefreshTimer  *time.Timer   // timer to resend join query
 	packetSeqNo     uint64
 	ch              chan bool
-	channelTimer    *time.Timer
+	refJoinQuery    Timer
 	timers          *TimersQueue
 }
 
@@ -66,13 +65,12 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		jrConn:          jrConn,
 		ip:              ip,
 		mac:             mac,
-		forwardingTable: newForwardingTable(),
-		cacheTable:      newCache(),
-		memberTable:     newMembersTable(),
+		forwardingTable: newForwardingTable(timers),
+		cacheTable:      newCache(timers),
+		memberTable:     newMembersTable(timers),
 		msec:            msec,
 		ch:              make(chan bool),
 		packetSeqNo:     0,
-		channelTimer:    nil,
 		timers:          timers,
 	}, nil
 }
@@ -93,22 +91,23 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 
 	c.sendJoinQuery(grpIP, destsIPs)
 
-	c.channelTimer = time.AfterFunc(fillFwdTableTimeout, fireChannelTimer(c, len(destsIPs)))
-	// time.Sleep(10 * time.Second)
+	t1 := c.timers.Add(fillFwdTableTimeout, func() {
+		for i := 0; i < len(destsIPs); i++ {
+			c.ch <- false
+		}
+	})
 	flag := false
 	for i := 0; i < len(destsIPs); i++ {
 		flag = flag || <-c.ch
 	}
-	c.channelTimer.Stop()
-	return flag
-}
-
-func fireChannelTimer(c *MulticastController, destCount int) func() {
-	return func() {
-		for i := 0; i < destCount; i++ {
-			c.ch <- false
-		}
+	if flag {
+		// TODO important stop timer when you want to stop sending to this grpIP
+		c.refJoinQuery = c.timers.Add(jqRefreshTime, func() {
+			c.sendJoinQuery(grpIP, destsIPs)
+		})
 	}
+	t1.Stop()
+	return flag
 }
 
 func jqRefreshfireTimer(srcIP net.IP, members []net.IP, c *MulticastController) func() {
@@ -142,8 +141,9 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	c.queryFlooder.Flood(jq.marshalBinary())
 	log.Println("sent join query to", grpIP) // TODO remove
 
-	// fireFunc := jqRefreshfireTimer(grpIP, members, c)
-	// c.jQRefreshTimer = time.AfterFunc(JQ_REFRESH_TIME, fireFunc)
+	c.timers.Add(jqRefreshTime, func() {
+		c.sendJoinQuery(grpIP, members)
+	})
 	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
@@ -296,19 +296,11 @@ func (c *MulticastController) onRecvJoinReply(ft *MultiForwardTable) {
 			log.Panicln("Corrupted JoinReply msg received")
 		}
 
-		// TODO log
+		// TODO remove log
 		log.Printf("(ip:%#v, mac:%#v), Recieved JoinReply form %#v\n", c.ip.String(), c.mac.String(), jr.PrevHop.String())
 		log.Println("Before")
 		log.Println(jr.String())
 		log.Println(c.cacheTable.String())
-
-		// forwardingEntry := &forwardingEntry{nextHop: .PrevHop, cost: jr.Cost}
-		// refreshForwarder := c.forwardingTable.Set(jr.DestIP, forwardingEntry)
-		// if refreshForwarder {
-		// 	ft.Set(jr.GrpIP, jr.PrevHop)
-		// } else {
-		// 	log.Println("Path with more cost (ignore)")
-		// }
 
 		// update forwarding table
 		forwardingEntry := &forwardingEntry{nextHop: jr.PrevHop, cost: jr.Cost}
