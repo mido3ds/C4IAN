@@ -44,6 +44,7 @@ func (t *Timer) Stop() bool {
 
 // Reset changes the timer to expire after duration d.
 // It returns true if the timer had been active, false if the timer had expired or been stopped.
+// It resets the timer in either ways
 func (t *Timer) Reset(d time.Duration) bool {
 	return t.tq.reset(t, d)
 }
@@ -128,12 +129,10 @@ func (tq *TimersQueue) stop(t *Timer) bool {
 }
 
 func (tq *TimersQueue) reset(t *Timer, d time.Duration) bool {
-	if tq.stop(t) {
-		t2 := tq.Add(d, t.callback)
-		t.nonce = t2.nonce
-		return true
-	}
-	return false
+	state := tq.stop(t)
+	t2 := tq.Add(d, t.callback)
+	t.nonce = t2.nonce
+	return state
 }
 
 func nanosToDuration(nanos int64) time.Duration {
