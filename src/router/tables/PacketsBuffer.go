@@ -9,7 +9,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const Age = 10
+const BufferAge = 10
 
 // PacketsBugger is lock-free thread-safe hash table
 // optimized for fastest read access
@@ -59,7 +59,7 @@ func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte) {
 
 	// Start new Timer
 	fireFunc := bufferFireTimer(dstIP, p)
-	newTimer := time.AfterFunc(Age*time.Second, fireFunc)
+	newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
 
 	p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer})
 
