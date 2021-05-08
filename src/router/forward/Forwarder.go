@@ -175,13 +175,12 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 			continue
 		}
 
-		// re-encrypt ip hdr
-		copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
-
 		// even if im destination, i may forward it
-		es, ok := f.MultiForwTable.Get(ip.DestIP)
+		es, exist := f.MultiForwTable.Get(ip.DestIP)
 
-		if ok {
+		if exist {
+			// re-encrypt ip hdr
+			copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
 			// write to device driver
 			for item := range es.Items.Iter() {
 				log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())

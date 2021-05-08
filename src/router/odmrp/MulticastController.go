@@ -53,8 +53,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
 		log.Printf("multicast test mode, ping address={%s} from any node to start mcasting\n", address)
-		// mgrpContent = "{\"" + address + "\": [\"10.0.0.14\", \"10.0.0.15\", \"10.0.0.16\"]}"
-		mgrpContent = "{\"" + address + "\": [\"10.0.0.9\", \"10.0.0.18\", \"10.0.0.14\"]}"
+		mgrpContent = "{\"" + address + "\": [\"10.0.0.15\", \"10.0.0.26\", \"10.0.0.9\"]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
