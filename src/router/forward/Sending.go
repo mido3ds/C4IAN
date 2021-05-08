@@ -60,7 +60,10 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	}
 }
 
-func (f *Forwarder) sendBroadcast(packet []byte) {
+func (f *Forwarder) sendBroadcast(packet []byte, ip net.IP) {
+	radius := BroadcastRadius(ip)
+	log.Print("broadcasting with radius=", radius) //TODO: remove
+
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
 	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header

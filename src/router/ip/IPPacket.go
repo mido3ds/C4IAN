@@ -88,3 +88,33 @@ func HwAddrToUInt64(a net.HardwareAddr) uint64 {
 func UInt32ToIPv4(i uint32) net.IP {
 	return net.IPv4(byte(i>>24), byte(i>>16), byte(i>>8), byte(i)).To4()
 }
+
+type IPAddrType uint8
+
+const (
+	BroadcastIPAddr IPAddrType = iota
+	MulticastIPAddr
+	UnicastIPAddr
+	InvalidIPAddr
+)
+
+func GetIPAddrType(ip net.IP) IPAddrType {
+	ip4 := ip.To4()
+	if isBroadcast(ip4) {
+		return BroadcastIPAddr
+	} else if ip4.IsGlobalUnicast() {
+		return UnicastIPAddr
+	} else if ip4.IsMulticast() {
+		return MulticastIPAddr
+	}
+	return InvalidIPAddr
+}
+
+func isBroadcast(ip net.IP) bool {
+	return ip[0] == 255 && ip[1] == 255
+}
+
+func BroadcastRadius(ip net.IP) uint16 {
+	ip4 := ip.To4()
+	return uint16(ip4[2])<<8 | uint16(ip4[3])
+}

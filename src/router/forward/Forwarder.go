@@ -220,12 +220,15 @@ func (f *Forwarder) forwardFromIPLayer() {
 			IPv4ResetTTL(packet)
 			IPv4UpdateChecksum(packet)
 
-			if ip.DestIP.IsGlobalUnicast() {
+			switch iptype := GetIPAddrType(ip.DestIP); iptype {
+			case UnicastIPAddr:
 				go f.sendUnicast(packet, ip.DestIP)
-			} else if ip.DestIP.IsMulticast() {
+			case MulticastIPAddr:
 				go f.sendMulticast(packet, ip.DestIP)
-			} else {
-				go f.sendBroadcast(packet)
+			case BroadcastIPAddr:
+				go f.sendBroadcast(packet, ip.DestIP)
+			default:
+				log.Panic("got invalid ip address from ip layer")
 			}
 		}
 	}
