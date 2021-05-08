@@ -7,8 +7,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func imDestination(ip, destIP net.IP, destZoneID ZoneID) bool {
-	// TODO: use destZID with the ip
+func imDestination(ip, destIP net.IP) bool {
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }
 
@@ -17,14 +16,26 @@ func imInMulticastGrp(destGrpIP net.IP) bool {
 	return false
 }
 
-func getUnicastNextHop(destIP net.IP, forwarder *Forwarder) (*UniForwardingEntry, bool) {
-	// TODO: Get destination zone to check if we should look for its zone or ip in the forwarding table
-	// Destination is a direct neighbor
+func (forwarder *Forwarder) getUnicastNextHop(destIP net.IP, destZID ZoneID) (*UniForwardingEntry, bool) {
+	// Destination is a direct neighbor, send directly to it
 	if ne, ok := forwarder.neighborsTable.Get(ToNodeID(destIP)); ok {
 		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: uint32(MyZone().ID)}, true
 	}
+
+	// Otherwise look for the next hop in the forwarding table
 	forwarder.updateUnicastForwardingTable(forwarder.UniForwTable)
-	if fe, ok := forwarder.UniForwTable.Get(ToNodeID(destIP)); ok {
+
+	var fe *UniForwardingEntry
+	var ok bool
+	if destZID == MyZone().ID {
+		// The destination is in my zone, search in the forwarding table by its ip
+		// TODO: If the IP is not found in the forwarding table then the dest may have moved out of this zone, discover its new zone
+		fe, ok = forwarder.UniForwTable.Get(ToNodeID(destIP))
+	} else {
+		// The destination is in a different zone, search in the forwarding table by its zone
+		fe, ok = forwarder.UniForwTable.Get(ToNodeID(destZID))
+	}
+	if ok {
 		return fe, true
 	}
 	return nil, false

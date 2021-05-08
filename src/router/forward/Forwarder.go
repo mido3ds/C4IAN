@@ -94,7 +94,6 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			continue
 		}
 
-		// TODO: check if this is the destZoneID before decrypting IP header
 		ipHdr := f.msec.Decrypt(packet[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
 		ip, valid := UnmarshalIPHeader(ipHdr)
 		if !valid {
@@ -102,7 +101,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			continue
 		}
 
-		if imDestination(f.ip, ip.DestIP, zid.DstZID) {
+		if imDestination(f.ip, ip.DestIP) {
 			ipPayload := f.msec.Decrypt(packet[ZIDHeaderLen+IPv4HeaderLen:])
 			ipPacket := append(ipHdr, ipPayload...)
 
@@ -120,7 +119,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			// re-encrypt ip hdr
 			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
 
-			e, reachable := getUnicastNextHop(ip.DestIP, f)
+			e, reachable := f.getUnicastNextHop(ip.DestIP, zid.DstZID)
 			if !reachable {
 				// TODO: Should we do anything else here?
 				log.Println("Destination unreachable:", ip.DestIP)
@@ -199,7 +198,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 			log.Panic("ip header must have been valid from ip layer!")
 		}
 
-		if imDestination(f.ip, ip.DestIP, 0) {
+		if imDestination(f.ip, ip.DestIP) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
 			if ip.DestIP.IsGlobalUnicast() {
