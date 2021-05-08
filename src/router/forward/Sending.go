@@ -11,7 +11,8 @@ import (
 )
 
 func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
-	e, reachable := getUnicastNextHop(destIP, f)
+	// TODO: Discover destination zone id (instead of 0)
+	e, reachable := f.getUnicastNextHop(destIP, 0)
 
 	if !reachable {
 		// TODO: Should we do anything else here?
