@@ -37,13 +37,11 @@ func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec
 	}, nil
 }
 
-func (f *GlobalFlooder) Flood(msg []byte) {
+func (f *GlobalFlooder) Flood(encryptedPayload []byte) {
 	f.seqNumber++
 
 	floodHeader := FloodHeader{SrcIP: f.ip, SeqNum: f.seqNumber}
 	encryptedFloodHeader := f.msec.Encrypt(floodHeader.MarshalBinary())
-
-	encryptedPayload := f.msec.Encrypt(msg)
 
 	f.macConn.Write(append(encryptedFloodHeader, encryptedPayload...), BroadcastMACAddr)
 }
@@ -76,13 +74,13 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 
 	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
-	payload := f.msec.Decrypt(msg[floodHeaderLen:])
-	payload, ok = payloadProcessor(floodHeader, payload)
+	encryptedPayload := msg[floodHeaderLen:]
+	newEncryptedPayload, ok := payloadProcessor(floodHeader, encryptedPayload)
 	if !ok {
 		return
 	}
 
-	f.macConn.Write(append(msg[:floodHeaderLen], f.msec.Encrypt(payload)...), BroadcastMACAddr)
+	f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
 }
 
 func (f *GlobalFlooder) Close() {

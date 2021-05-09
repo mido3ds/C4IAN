@@ -213,7 +213,8 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	cached := &cacheEntry{seqNo: jq.SeqNo, grpIP: jq.GrpIP, prevHop: jq.PrevHop, cost: odmrpDefaultTTL - jq.TTL}
 	c.cacheTable.set(jq.SrcIP, cached)
 
-	c.queryFlooder.Flood(jq.marshalBinary())
+	encryptedJQ := c.msec.Encrypt(jq.marshalBinary())
+	c.queryFlooder.Flood(encryptedJQ)
 	log.Println("sent join query to", grpIP) // TODO remove
 
 	// fireFunc := jqRefreshfireTimer(grpIP, members, c)
@@ -221,18 +222,20 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
+func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayload []byte) ([]byte, bool) {
+	payload := c.msec.Decrypt(encryptedPayload)
+
 	jq, valid := unmarshalJoinQuery(payload)
+	if !valid {
+		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
+	}
+
 	log.Printf("(ip:%#v, mac:%#v), Recieved JoinQuery form %#v\n", c.ip.String(), c.mac.String(), jq.PrevHop.String())
 
 	if "10.0.0.13" == c.ip.String() {
 		log.Println("JQ important debug")
 	}
 	log.Println(jq) // TODO: remove this
-
-	if !valid {
-		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
-	}
 
 	// // if the join query allready sent
 	// // Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
@@ -275,7 +278,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byt
 		return nil, false
 	}
 
-	return jq.marshalBinary(), true
+	return c.msec.Encrypt(jq.marshalBinary()), true
 }
 
 func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
