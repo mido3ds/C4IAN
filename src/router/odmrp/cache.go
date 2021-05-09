@@ -18,7 +18,7 @@ type cacheEntry struct {
 	grpIP   net.IP
 	prevHop net.HardwareAddr
 	cost    int8
-	timer   Timer
+	timer   *Timer
 }
 
 type cache struct {
@@ -48,13 +48,14 @@ func (f *cache) set(src net.IP, entry *cacheEntry) bool {
 		log.Panic("you can't enter nil entry")
 	}
 	v, ok := f.m.Get(IPv4ToUInt32(src))
-	val := v.(*cacheEntry)
 	if ok {
-		if !(val.cost <= entry.cost && val.seqNo < entry.seqNo) {
+		val := v.(*cacheEntry)
+		// if it doesn't has less or equal cost cost take it
+		if val.seqNo > entry.seqNo || (val.seqNo == entry.seqNo && val.cost < entry.cost) {
 			return false
 		}
+		val.timer.Stop()
 	}
-	val.timer.Stop()
 	entry.timer = f.timers.Add(cacheTimeout, func() {
 		f.del(src)
 	})
