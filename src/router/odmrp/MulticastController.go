@@ -33,8 +33,9 @@ type MulticastController struct {
 	msec            *MSecLayer    // decreption & encryption
 	packetSeqNo     uint64
 	ch              chan bool
-	refJoinQuery    Timer
+	refJoinQuery    *Timer
 	timers          *TimersQueue
+	// TODO make dest doesn't send join reply if it doesn't want to this grpIP
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string, timers *TimersQueue) (*MulticastController, error) {
@@ -174,20 +175,8 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 	for i := 0; i < len(destsIPs); i++ {
 		flag = flag || <-c.ch
 	}
-	if flag {
-		// TODO important stop timer when you want to stop sending to this grpIP
-		c.refJoinQuery = c.timers.Add(jqRefreshTime, func() {
-			c.sendJoinQuery(grpIP, destsIPs)
-		})
-	}
 	t1.Stop()
 	return flag
-}
-
-func jqRefreshfireTimer(srcIP net.IP, members []net.IP, c *MulticastController) func() {
-	return func() {
-		c.sendJoinQuery(srcIP, members)
-	}
 }
 
 func (c *MulticastController) Start(ft *MultiForwardTable) {
@@ -215,19 +204,16 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	c.queryFlooder.Flood(jq.marshalBinary())
 	log.Println("sent join query to", grpIP) // TODO remove
 
-	c.timers.Add(jqRefreshTime, func() {
+	// TODO important stop timer when you want to stop sending to this grpIP
+	c.refJoinQuery = c.timers.Add(jqRefreshTime, func() {
 		c.sendJoinQuery(grpIP, members)
 	})
-	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
 func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
 	jq, valid := unmarshalJoinQuery(payload)
 	log.Printf("(ip:%#v, mac:%#v), Recieved JoinQuery form %#v\n", c.ip.String(), c.mac.String(), jq.PrevHop.String())
 
-	if "10.0.0.13" == c.ip.String() {
-		log.Println("JQ important debug")
-	}
 	log.Println(jq) // TODO: remove this
 
 	if !valid {
