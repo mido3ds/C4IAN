@@ -10,7 +10,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
-const mteTimeout = 960 * time.Millisecond
+// const mteTimeout = 960 * time.Millisecond
+const mteTimeout = 2 * time.Second
 
 // membersTable is lock-free thread-safe hash table
 // for multicast forwarding
@@ -47,7 +48,7 @@ func (mt *membersTable) set(grpIP net.IP) {
 	}
 	// Start new Timer
 	timer := mt.timers.Add(mteTimeout, func() {
-		mt.del(grpIP)
+		// mt.del(grpIP)
 	})
 	mt.m.Set(IPv4ToUInt32(grpIP), &memberEntry{timer: timer})
 }

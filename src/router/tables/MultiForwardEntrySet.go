@@ -9,7 +9,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const FWRD_SET_ENTRY_TIMEOUT = 960 * time.Millisecond
+// const FWRD_SET_ENTRY_TIMEOUT = 960 * time.Millisecond
+const FWRD_SET_ENTRY_TIMEOUT = 2 * time.Second
 
 // MultiForwardEntrySet is lock-free thread-safe set
 // for multicast forwarding
@@ -53,7 +54,7 @@ func (s *MultiForwardEntrySet) Set(nextHop net.HardwareAddr) {
 	entry := &NextHopEntry{
 		NextHop: nextHop,
 		timer: s.timers.Add(FWRD_SET_ENTRY_TIMEOUT, func() {
-			s.Items.Del(nextHopKey)
+			// s.Items.Del(nextHopKey)
 		}),
 	}
 	s.Items.Set(nextHopKey, entry)
