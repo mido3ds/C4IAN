@@ -21,7 +21,7 @@ type membersTable struct {
 }
 
 type memberEntry struct {
-	timer Timer
+	timer *Timer
 }
 
 func newMembersTable(timers *TimersQueue) *membersTable {
@@ -54,12 +54,6 @@ func (mt *membersTable) set(grpIP net.IP) {
 
 // del silently fails if key doesn't exist
 func (mt *membersTable) del(grpIP net.IP) {
-	// TODO is it important to stop timer first ?
-	v, ok := mt.m.Get(IPv4ToUInt32(grpIP))
-	if ok {
-		v.(*memberEntry).timer.Stop()
-	}
-
 	mt.m.Del(IPv4ToUInt32(grpIP))
 }
 
