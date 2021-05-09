@@ -1,6 +1,7 @@
 package dzd
 
 import (
+	"fmt"
 	"log"
 	"net"
 
@@ -70,9 +71,14 @@ func (d *DZDController) BufferPacket(dstIP net.IP, packet []byte) {
 }
 
 func (d *DZDController) FindDstZone(dstIP net.IP) {
+	_, inSearch := d.packetsBuffer.Get(dstIP)
+	if inSearch {
+		return
+	}
+
 	neighborsZones := d.topology.GetNeighborsZones(ToNodeID(d.myIP))
 	for _, zone := range neighborsZones {
-		dzRequestPacket := d.createDZRequestPacket(zone, dstIP, []ZoneID{MyZone().ID})
+		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone().ID, zone, dstIP, []ZoneID{MyZone().ID})
 		nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
 		if !reachable {
 			log.Panicln("Neighbor Zone:", zone, "must be reachable")
@@ -93,7 +99,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 	requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
 	if exist {
 		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
-		dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, requiredDstZoneID, dzRequestHeader.srcIP, srcZone.ID)
+		dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, requiredDstZoneID, dzRequestHeader.srcIP, dzRequestHeader.srcZone)
 		var dstNodeID NodeID
 		if MyZone().Equal(srcZone) {
 			dstNodeID = ToNodeID(dzRequestHeader.srcIP)
@@ -119,11 +125,12 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 		d.reqMacConn.Write(packet, nextHopMAC)
 		return
 	} else {
+		fmt.Println(d.myIP, "Received ", dzRequestHeader)
 		// Check if the required dstIP exist in my zone
 		_, inMyZone := d.getUnicastNextHopCallback(ToNodeID(dzRequestHeader.requiredDstIP))
 		if inMyZone {
 			srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
-			dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, MyZone().ID, dzRequestHeader.srcIP, srcZone.ID)
+			dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, MyZone().ID, dzRequestHeader.srcIP, dzRequestHeader.srcZone)
 			var dstNodeID NodeID
 			if MyZone().Equal(srcZone) {
 				dstNodeID = ToNodeID(dzRequestHeader.srcIP)
@@ -132,7 +139,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 			}
 			nextHopMAC, reachable := d.getUnicastNextHopCallback(dstNodeID)
 			if !reachable {
-				log.Panicln("Neighbor :", dstNodeID, "must be reachable")
+				log.Panicln("Neighbor :", dstNodeID, "must be reachable1")
 			}
 			//	Forward tha packet as is
 			d.resMacConn.Write(dzResponsePacket, nextHopMAC)
@@ -142,7 +149,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 			nextZones := discardVisitedZones(dzRequestHeader.visitedZones, neighborsZones)
 			visitedZones := append(dzRequestHeader.visitedZones, MyZone().ID)
 			for _, zone := range nextZones {
-				dzRequestPacket := d.createDZRequestPacket(zone, dzRequestHeader.requiredDstIP, visitedZones)
+				dzRequestPacket := d.createDZRequestPacket(dzRequestHeader.srcIP, dzRequestHeader.srcZone, zone, dzRequestHeader.requiredDstIP, visitedZones)
 				nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
 				if !reachable {
 					log.Panicln("Neighbor Zone:", zone, "must be reachable")
@@ -165,6 +172,8 @@ func (d *DZDController) receiveDZResponsePackets() {
 func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	zidHeader, dzResponseHeader := d.unpackDZResponsePacket(packet)
 
+	fmt.Println(d.myIP, "Received ", dzResponseHeader)
+
 	d.dzCahce.Set(dzResponseHeader.requiredDstIP, dzResponseHeader.requiredDstZone)
 	go d.sendBufferedMsgs(dzResponseHeader.requiredDstIP)
 
@@ -181,19 +190,19 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	}
 	nextHopMAC, reachable := d.getUnicastNextHopCallback(dstNodeID)
 	if !reachable {
-		log.Panicln("Neighbor :", dstNodeID, "must be reachable")
+		log.Panicln("Neighbor :", dstNodeID, "must be reachable2")
 	}
 	//	Forward tha packet as is
 	d.resMacConn.Write(packet, nextHopMAC)
 }
 
-func (d *DZDController) createDZRequestPacket(nextZone NodeID, dstIP net.IP, visitedZones []ZoneID) []byte {
+func (d *DZDController) createDZRequestPacket(srcIP net.IP, srcZone ZoneID, nextZone NodeID, dstIP net.IP, visitedZones []ZoneID) []byte {
 	nextZoneID, valid := nextZone.ToZoneID()
 	if !valid {
 		log.Panicln("Invalid next zoneID in dzd request packet")
 	}
 	zidHeader := MyZIDHeader(nextZoneID)
-	dzRequestHeader := &DZRequestHeader{srcIP: d.myIP, requiredDstIP: dstIP, visitedZones: visitedZones}
+	dzRequestHeader := &DZRequestHeader{srcIP: srcIP, srcZone: srcZone, requiredDstIP: dstIP, visitedZones: visitedZones}
 	return append(zidHeader.MarshalBinary(), dzRequestHeader.MarshalBinary()...)
 }
 

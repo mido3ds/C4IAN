@@ -17,7 +17,7 @@ func BenchmarkDZDController(t *testing.B) {
 	visitedZones := []ZoneID{ZoneID(4), ZoneID(5), ZoneID(6)}
 	nextZone := ToNodeID(ZoneID(1))
 
-	dzdController, _ := NewDZDController(myIP, nil, nil, nil)
+	dzdController, _ := NewDZDController(myIP, nil, nil)
 	dzRequestPacket := dzdController.createDZRequestPacket(nextZone, requiredDstIP, visitedZones)
 	ZIDHeader, dzRequestHeader := dzdController.unpackDZRequestPacket(dzRequestPacket)
 

@@ -45,7 +45,7 @@ func (d *DZResponseHeader) MarshalBinary() []byte {
 
 	buffer.Write(d.requiredDstIP.To4())
 	for i := 24; i >= 0; i -= 8 {
-		buffer.WriteByte(byte(d.requiredDstZone) >> i)
+		buffer.WriteByte(byte(d.requiredDstZone >> i))
 	}
 
 	// add checksum
@@ -55,4 +55,12 @@ func (d *DZResponseHeader) MarshalBinary() []byte {
 	}
 
 	return buffer.Bytes()
+}
+
+func (d DZResponseHeader) String() string {
+	s := "DZResponseMsg: "
+	s += "dstIP=" + d.dstIP.String()
+	s += ", requiredDstIP=" + d.requiredDstIP.String()
+	s += ", requiredDstZone=" + d.requiredDstZone.String() + "\n"
+	return s
 }
