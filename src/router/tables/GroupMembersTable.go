@@ -15,12 +15,14 @@ type GroupMembersEntry struct {
 }
 
 type GroupMembersTable struct {
-	m hashmap.HashMap
+	m *hashmap.HashMap
 }
 
 // json string to GroupMembersTable
 func NewGroupMembersTable(j string) *GroupMembersTable {
-	var grpTable GroupMembersTable
+	grpTable := &GroupMembersTable{
+		m: &hashmap.HashMap{},
+	}
 	var reading map[string][]string
 	err := json.Unmarshal([]byte(j), &reading)
 	if err != nil {
@@ -44,7 +46,7 @@ func NewGroupMembersTable(j string) *GroupMembersTable {
 		}
 		dests = []net.IP{} // clear dests array
 	}
-	return &grpTable
+	return grpTable
 }
 
 // Set the grpIP to a new destinations group
