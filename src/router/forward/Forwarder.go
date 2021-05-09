@@ -39,7 +39,8 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable,
 	mcGetMissingEntries func(grpIP net.IP) bool,
 	isInMCastGroup func(grpIP net.IP) bool,
-	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
+	updateUnicastForwardingTable func(ft *UniForwardTable),
+	timers *TimersQueue) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(iface, ZIDDataEtherType)
 	if err != nil {
@@ -59,7 +60,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	}
 
 	UniForwTable := NewUniForwardTable()
-	MultiForwTable := NewMultiForwardTable()
+	MultiForwTable := NewMultiForwardTable(timers)
 
 	log.Println("initalized forwarder")
 

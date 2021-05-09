@@ -4,25 +4,33 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/cornelk/hashmap"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
+	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
+
+// const cacheTimeout = 960 * time.Millisecond
+const cacheTimeout = 2 * time.Second
 
 type cacheEntry struct {
 	seqNo   uint64
 	grpIP   net.IP
 	prevHop net.HardwareAddr
 	cost    int8
+	timer   *Timer
 }
 
 type cache struct {
-	m *hashmap.HashMap
+	m      *hashmap.HashMap
+	timers *TimersQueue
 }
 
-func newCache() *cache {
+func newCache(timers *TimersQueue) *cache {
 	return &cache{
-		m: &hashmap.HashMap{},
+		m:      &hashmap.HashMap{},
+		timers: timers,
 	}
 }
 
@@ -43,12 +51,15 @@ func (f *cache) set(src net.IP, entry *cacheEntry) bool {
 	v, ok := f.m.Get(IPv4ToUInt32(src))
 	if ok {
 		val := v.(*cacheEntry)
-		if val.cost <= entry.cost && val.seqNo < entry.seqNo {
-			f.m.Set(IPv4ToUInt32(src), entry)
-			return true
+		// if it doesn't has less or equal cost cost take it
+		if val.seqNo > entry.seqNo || (val.seqNo == entry.seqNo && val.cost < entry.cost) {
+			return false
 		}
-		return false
+		val.timer.Stop()
 	}
+	entry.timer = f.timers.Add(cacheTimeout, func() {
+		// f.del(src)
+	})
 	f.m.Set(IPv4ToUInt32(src), entry)
 	return true
 }
