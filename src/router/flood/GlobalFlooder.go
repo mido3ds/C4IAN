@@ -17,11 +17,11 @@ type GlobalFlooder struct {
 	msec      *MSecLayer
 }
 
-func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec *MSecLayer) (*GlobalFlooder, error) {
+func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec *MSecLayer) *GlobalFlooder {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(iface, etherType)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to create device connection, err: ", err)
 	}
 
 	fTable := NewFloodingTable()
@@ -34,7 +34,7 @@ func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec
 		macConn:   macConn,
 		ip:        ip,
 		msec:      msec,
-	}, nil
+	}
 }
 
 func (f *GlobalFlooder) Flood(encryptedPayload []byte) {
@@ -49,14 +49,14 @@ func (f *GlobalFlooder) Flood(encryptedPayload []byte) {
 // ListenForFloodedMsgs inf loop that receives any flooded msgs
 // calls `payloadProcessor` when it receives the message, it gives it the header and the payload
 // and returns whether to continue flooding or not
-func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) []byte) {
 	for {
 		msg := f.macConn.Read()
 		go f.handleFloodedMsg(msg, payloadProcessor)
 	}
 }
 
-func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) []byte) {
 	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:floodHeaderLen]))
 	if !ok {
 		return
@@ -75,12 +75,10 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
 	encryptedPayload := msg[floodHeaderLen:]
-	newEncryptedPayload, ok := payloadProcessor(floodHeader, encryptedPayload)
-	if !ok {
-		return
+	newEncryptedPayload := payloadProcessor(floodHeader, encryptedPayload)
+	if newEncryptedPayload != nil {
+		f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
 	}
-
-	f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
 }
 
 func (f *GlobalFlooder) Close() {

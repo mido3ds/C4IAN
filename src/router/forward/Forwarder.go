@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
+	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
@@ -29,6 +30,9 @@ type Forwarder struct {
 
 	// Unicast controller callbacks
 	updateUnicastForwardingTable func(ft *UniForwardTable)
+
+	// braodcast
+	bcFlooder *GlobalFlooder
 }
 
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
@@ -72,6 +76,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 		mcGetMissingEntries:          mcGetMissingEntries,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
 		isInMCastGroup:               isInMCastGroup,
+		bcFlooder:                    NewGlobalFlooder(ip, iface, ZIDBroadcastEtherType, msec),
 	}, nil
 }
 
@@ -79,6 +84,7 @@ func (f *Forwarder) Start() {
 	go f.forwardFromIPLayer()
 	go f.forwardZIDFromMACLayer()
 	go f.forwardIPFromMACLayer()
+	go f.forwardBroadcastMessages()
 }
 
 // forwardZIDFromMACLayer continuously receives messages from the interface,
@@ -232,6 +238,15 @@ func (f *Forwarder) forwardFromIPLayer() {
 			}
 		}
 	}
+}
+
+func (f *Forwarder) forwardBroadcastMessages() {
+	f.bcFlooder.ListenForFloodedMsgs(f.onReceiveBroadcastMessage)
+}
+
+func (f *Forwarder) onReceiveBroadcastMessage(hdr *FloodHeader, encryptedPacket []byte) []byte {
+	// TODO: stop at zones boundries
+	return nil
 }
 
 func (f *Forwarder) Close() {

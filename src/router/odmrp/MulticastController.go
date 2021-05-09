@@ -39,10 +39,7 @@ type MulticastController struct {
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string, timers *TimersQueue) (*MulticastController, error) {
-	queryFlooder, err := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
-	if err != nil {
-		log.Panic("failed to initiate query flooder, err: ", err)
-	}
+	queryFlooder := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 
 	jrConn, err := NewMACLayerConn(iface, JoinReplyEtherType)
 	if err != nil {
@@ -222,7 +219,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	// TODO important to stop the timer once the sender stop sending packets to group address
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayload []byte) ([]byte, bool) {
+func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayload []byte) []byte {
 	payload := c.msec.Decrypt(encryptedPayload)
 
 	jq, valid := unmarshalJoinQuery(payload)
@@ -250,7 +247,7 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayl
 	copy(cached.prevHop, jq.PrevHop)
 	isCached := c.cacheTable.set(jq.SrcIP, cached)
 	if !isCached {
-		return nil, false
+		return nil
 	}
 	// im the prev hop for the next one
 	jq.PrevHop = c.mac
@@ -275,10 +272,10 @@ func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayl
 	// If the TTL field value is less than  0, then discard. DONE
 	jq.TTL--
 	if jq.TTL < 0 {
-		return nil, false
+		return nil
 	}
 
-	return c.msec.Encrypt(jq.marshalBinary()), true
+	return c.msec.Encrypt(jq.marshalBinary())
 }
 
 func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
