@@ -232,7 +232,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 			case MulticastIPAddr:
 				go f.sendMulticast(packet, ip.DestIP)
 			case BroadcastIPAddr:
-				go f.sendBroadcast(packet, ip.DestIP)
+				go f.sendBroadcast(packet)
 			default:
 				log.Panic("got invalid ip address from ip layer")
 			}
@@ -245,8 +245,34 @@ func (f *Forwarder) forwardBroadcastMessages() {
 }
 
 func (f *Forwarder) onReceiveBroadcastMessage(hdr *FloodHeader, encryptedPacket []byte) []byte {
-	// TODO: stop at zones boundries
-	return nil
+	zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
+	zid, ok := UnmarshalZIDHeader(zidhdr)
+	if !ok {
+		// invalid zid header, stop here
+		return nil
+	}
+
+	iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+	ip, ok := UnmarshalIPHeader(iphdr)
+	if !ok {
+		// invalid ip header, stop here
+		return nil
+	}
+
+	r1 := BroadcastRadius(ip.DestIP)
+	r2 := MyZone().ID.DistTo(zid.SrcZID)
+	if r2 > r1 {
+		// out of zone broadcast, stop here
+		return nil
+	}
+
+	// inject it into my ip layer
+	payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
+	IPv4SetDest(iphdr, f.ip)
+	f.ipConn.Write(append(iphdr, payload...))
+
+	// continue flooding
+	return encryptedPacket
 }
 
 func (f *Forwarder) Close() {

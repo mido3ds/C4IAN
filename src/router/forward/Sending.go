@@ -59,10 +59,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	}
 }
 
-func (f *Forwarder) sendBroadcast(packet []byte, ip net.IP) {
-	radius := BroadcastRadius(ip)
-	log.Print("broadcasting with radius=", radius) //TODO: remove
-
+func (f *Forwarder) sendBroadcast(packet []byte) {
 	zid := MyZIDHeader(ZoneID(0))
 
 	// build packet

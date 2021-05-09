@@ -24,6 +24,10 @@ func (g gridLocation) toGPSLocation() gpsLocation {
 	return gpsLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
 }
 
+func (g gridLocation) toZoneID() ZoneID {
+	return ZoneID(uint32(g.x)<<16 | uint32(g.y))
+}
+
 // gpsLocation is gps position
 // where Lat and Lon are in degrees
 type gpsLocation struct {
@@ -93,11 +97,29 @@ func newZoneID(l gpsLocation, zlen byte) ZoneID {
 	grid.y &= mask
 
 	// pack
-	return ZoneID(uint32(grid.x)<<16 | uint32(grid.y))
+	return grid.toZoneID()
 }
 
 func (z ZoneID) toGridLocation() gridLocation {
 	return gridLocation{x: uint16(z >> 16), y: uint16(z)}
+}
+
+func abs(i int32) int32 {
+	if i >= 0 {
+		return i
+	}
+	return -i
+}
+
+func absub(i, j uint16) uint16 {
+	return uint16(abs(int32(i) - int32(j)))
+}
+
+// DistTo manhatten distance between 2 zones
+func (z1 ZoneID) DistTo(z2 ZoneID) uint16 {
+	g1 := z1.toGridLocation()
+	g2 := z2.toGridLocation()
+	return absub(g1.x, g2.x) + absub(g1.y, g2.y)
 }
 
 func (z ZoneID) String() string {
