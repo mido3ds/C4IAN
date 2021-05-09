@@ -1,0 +1,71 @@
+package odmrp
+
+import (
+	"net"
+	"testing"
+
+	. "github.com/mido3ds/C4IAN/src/router/ip"
+)
+
+func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
+	var jr joinReply
+	ip0 := net.IP([]byte{0x01, 0x02, 0x03, 0x04})
+	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
+	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
+	ip3 := net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
+	mac1 := net.HardwareAddr([]byte{0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12})
+	mac2 := net.HardwareAddr([]byte{0x0A, 0x0E, 0x0C, 0x10, 0x11, 0x12})
+	mac3 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0x10, 0x11, 0x12})
+	mac4 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0xAA, 0xCC, 0xC2})
+
+	jr.SeqNo = 215
+	jr.DestIP = ip3
+	jr.GrpIP = ip0
+	jr.Cost = 5
+	jr.PrevHop = mac4
+	jr.SrcIPs = []net.IP{ip1, ip2, ip3}
+	jr.NextHops = []net.HardwareAddr{mac1, mac2, mac3}
+
+	payload := jr.marshalBinary()
+	newJr, ok := unmarshalJoinReply(payload)
+
+	if !ok {
+		t.Errorf("Unmarshal should return no erros")
+	}
+
+	if jr.SeqNo != newJr.SeqNo {
+		t.Errorf("SeqNo are not equal")
+	}
+
+	if HwAddrToUInt64(jr.PrevHop) != HwAddrToUInt64(newJr.PrevHop) {
+		t.Errorf("ips not equal: %#v != %#v", jr.PrevHop.String(), newJr.PrevHop.String())
+	}
+
+	if !net.IP.Equal(jr.GrpIP, newJr.GrpIP) {
+		t.Errorf("ips not equal: %#v != %#v", jr.GrpIP.String(), newJr.GrpIP.String())
+	}
+
+	if len(jr.SrcIPs) != len(newJr.SrcIPs) {
+		t.Errorf("SrcIPs length are not equal")
+	}
+
+	for i := 0; i < len(jr.SrcIPs); i++ {
+		if !net.IP.Equal(jr.SrcIPs[i], newJr.SrcIPs[i]) {
+			t.Errorf("ips not equal: %#v != %#v", jr.SrcIPs[i].String(), newJr.SrcIPs[i].String())
+		}
+	}
+
+	if len(jr.NextHops) != len(newJr.NextHops) {
+		t.Errorf("NextHops length are not equal")
+	}
+
+	if jr.Cost != newJr.Cost {
+		t.Errorf("Cost are not equal")
+	}
+
+	for i := 0; i < len(jr.NextHops); i++ {
+		if HwAddrToUInt64(jr.NextHops[i]) != HwAddrToUInt64(newJr.NextHops[i]) {
+			t.Errorf("ips not equal: %#v != %#v", jr.NextHops[i].String(), newJr.NextHops[i].String())
+		}
+	}
+}
