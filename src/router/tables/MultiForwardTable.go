@@ -17,12 +17,14 @@ grpIP | Set of nextHops
 ------------------------------------
 */
 type MultiForwardTable struct {
-	m *hashmap.HashMap
+	m      *hashmap.HashMap
+	timers *TimersQueue
 }
 
-func NewMultiForwardTable() *MultiForwardTable {
+func NewMultiForwardTable(timers *TimersQueue) *MultiForwardTable {
 	return &MultiForwardTable{
-		m: &hashmap.HashMap{},
+		m:      &hashmap.HashMap{},
+		timers: timers,
 	}
 }
 
@@ -46,7 +48,7 @@ func (f *MultiForwardTable) Set(grpIP net.IP, nextHop net.HardwareAddr) {
 	if ok {
 		entry = v.(*MultiForwardEntrySet)
 	} else {
-		entry = NewMultiForwardEntrySet()
+		entry = NewMultiForwardEntrySet(f.timers)
 	}
 	entry.Set(nextHop)
 	f.m.Set(grpIPkey, entry)

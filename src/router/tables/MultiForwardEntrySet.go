@@ -9,23 +9,25 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const FWRD_SET_ENTRY_TIMEOUT = 1 * time.Second
+const FWRD_SET_ENTRY_TIMEOUT = 960 * time.Millisecond
 
 // MultiForwardEntrySet is lock-free thread-safe set
 // for multicast forwarding
 // key: 8 bytes IPv4, value: *NextHopEntry
 type MultiForwardEntrySet struct {
-	Items *hashmap.HashMap
+	Items  *hashmap.HashMap
+	timers *TimersQueue
 }
 
 type NextHopEntry struct {
-	NextHop  net.HardwareAddr // Can be deleted if memory is so critical
-	ageTimer *time.Timer
+	NextHop net.HardwareAddr // Can be deleted if memory is so critical
+	timer   *Timer
 }
 
-func NewMultiForwardEntrySet() *MultiForwardEntrySet {
+func NewMultiForwardEntrySet(timers *TimersQueue) *MultiForwardEntrySet {
 	return &MultiForwardEntrySet{
-		Items: &hashmap.HashMap{},
+		Items:  &hashmap.HashMap{},
+		timers: timers,
 	}
 }
 
@@ -44,15 +46,15 @@ func (s *MultiForwardEntrySet) Set(nextHop net.HardwareAddr) {
 	v, ok := s.Items.Get(nextHopKey)
 	// Stop the previous timer if it wasn't fired
 	if ok {
-		timer := v.(*NextHopEntry).ageTimer
-		timer.Stop()
+		v.(*NextHopEntry).timer.Stop()
 	}
 
 	// Start new Timer
-	fireFunc := fireSetTimer(nextHopKey, s)
 	entry := &NextHopEntry{
-		NextHop:  nextHop,
-		ageTimer: time.AfterFunc(FWRD_SET_ENTRY_TIMEOUT, fireFunc),
+		NextHop: nextHop,
+		timer: s.timers.Add(FWRD_SET_ENTRY_TIMEOUT, func() {
+			s.Items.Del(nextHopKey)
+		}),
 	}
 	s.Items.Set(nextHopKey, entry)
 }
@@ -79,10 +81,4 @@ func (s *MultiForwardEntrySet) String() string {
 	str += " }"
 
 	return str
-}
-
-func fireSetTimer(nextHopKey uint64, s *MultiForwardEntrySet) func() {
-	return func() {
-		// s.Items.Del(nextHopKey)
-	}
 }
