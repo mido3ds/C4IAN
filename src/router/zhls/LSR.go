@@ -16,8 +16,7 @@ type lsrController struct {
 	dirtyTopology  bool
 }
 
-func newLSR(myIP net.IP, neighborsTable *NeighborsTable) *lsrController {
-	t := NewTopology()
+func newLSR(myIP net.IP, neighborsTable *NeighborsTable, t *Topology) *lsrController {
 	return &lsrController{myIP: myIP, neighborsTable: neighborsTable, topology: t}
 }
 

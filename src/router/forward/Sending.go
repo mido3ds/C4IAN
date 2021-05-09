@@ -10,18 +10,27 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
+func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 	// Get the next hop using the dstIP
 	// return true only if the dst inside my zone
 	nextHopMac, inMyZone := f.GetUnicastNextHop(ToNodeID(dstIP))
 
-	if !inMyZone {
-		// Search for the Dst Zone
-
-		return
+	var zid *ZIDHeader
+	if inMyZone {
+		zid = MyZIDHeader(MyZone().ID)
+	} else {
+		// Check if this dst zone is cached
+		dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
+		if cached {
+			zid = MyZIDHeader(dstZoneID)
+		} else {
+			// if dst zone isn't cached, search for it
+			// and buffer this msg to be sent when dst zone response arrive
+			f.dzdController.FindDstZone(dstIP)
+			f.dzdController.BufferPacket(dstIP, packet)
+			return
+		}
 	}
-
-	zid := MyZIDHeader(MyZone().ID)
 
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))

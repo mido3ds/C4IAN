@@ -9,6 +9,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/dzd"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
@@ -22,6 +23,7 @@ type Forwarder struct {
 	UniForwTable   *UniForwardTable
 	MultiForwTable *MultiForwardTable
 	neighborsTable *NeighborsTable
+	dzdController  *DZDController
 
 	// multicast controller callback
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
@@ -30,7 +32,8 @@ type Forwarder struct {
 	updateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
-func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTable *NeighborsTable,
+func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
+	neighborsTable *NeighborsTable, dzdController *DZDController,
 	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
 	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
@@ -64,6 +67,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer, neighborsTab
 		ipConn:                       ipConn,
 		UniForwTable:                 UniForwTable,
 		neighborsTable:               neighborsTable,
+		dzdController:                dzdController,
 		MultiForwTable:               MultiForwTable,
 		mcGetMissingEntries:          mcGetMissingEntries,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
@@ -124,12 +128,26 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 				// The destination is in my zone, search in the forwarding table by its ip
 				nextHopMAC, inMyZone = f.GetUnicastNextHop(ToNodeID(ip.DestIP))
 				if !inMyZone {
-					// TODO: If the IP is not found in the forwarding table (my zone)
+					// If the IP is not found in the forwarding table (my zone)
 					// although the src claims that it is
 					// then the dest may have moved out of this zone
 					// and the src have an old value for the dst zone
 					// discover its new zone
-					continue
+					dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
+					if cached {
+						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+						if !reachable {
+							// TODO: Should we do anything else here?
+							log.Println("Destination zone is unreachable:", zid.DstZID)
+							continue
+						}
+					} else {
+						// if dst zone isn't cached, search for it
+						// and buffer this msg to be sent when dst zone response arrive
+						f.dzdController.FindDstZone(ip.DestIP)
+						f.dzdController.BufferPacket(ip.DestIP, packet)
+						continue
+					}
 				}
 			} else {
 				// The dst is in a different zone,
@@ -219,7 +237,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
 			if ip.DestIP.IsGlobalUnicast() {
-				go f.sendUnicast(packet, ip.DestIP)
+				go f.SendUnicast(packet, ip.DestIP)
 			} else if ip.DestIP.IsMulticast() {
 				go f.sendMulticast(packet, ip.DestIP)
 			} else {

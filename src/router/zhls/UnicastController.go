@@ -19,13 +19,13 @@ type UnicastController struct {
 	UpdateUnicastForwardingTable func(ft *UniForwardTable)
 }
 
-func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer) (*UnicastController, error) {
+func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, topology *Topology) (*UnicastController, error) {
 	flooder, err := NewZoneFlooder(iface, ip, msec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
 	}
 
-	lsr := newLSR(ip, neighborsTable)
+	lsr := newLSR(ip, neighborsTable, topology)
 
 	log.Println("initalized controller")
 
