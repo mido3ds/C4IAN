@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkBuffer(t *testing.B) {
-	buffer := NewPacketsBuffer()
+	buffer := NewPacketsBuffer(nil)
 
 	dst1 := UInt32ToIPv4(1)
 	dst2 := UInt32ToIPv4(2)

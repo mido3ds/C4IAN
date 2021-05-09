@@ -10,21 +10,26 @@ import (
 )
 
 const BufferAge = 10
+const MaxNumOfSearches = 3
 
 // PacketsBugger is lock-free thread-safe hash table
 // optimized for fastest read access
 // key: 4 bytes dst IPv4, value: queue for msgs
 type PacketsBuffer struct {
-	m hashmap.HashMap
+	m                   hashmap.HashMap
+	findDstZoneCallback func(dstIP net.IP)
 }
 
 type BufferEntry struct {
-	packetsQueue [][]byte
-	ageTimer     *time.Timer
+	packetsQueue     [][]byte
+	ageTimer         *time.Timer
+	numOfDstSearches uint8
 }
 
-func NewPacketsBuffer() *PacketsBuffer {
-	return &PacketsBuffer{}
+func NewPacketsBuffer(findDstZoneCallback func(dstIP net.IP)) *PacketsBuffer {
+	return &PacketsBuffer{
+		findDstZoneCallback: findDstZoneCallback,
+	}
 }
 
 // Get returns value associated with the given key
@@ -34,35 +39,36 @@ func (p *PacketsBuffer) Get(dstIP net.IP) ([][]byte, bool) {
 	if !ok {
 		return nil, false
 	}
+
+	// Stop the timer
+	timer := v.(*BufferEntry).ageTimer
+	timer.Stop()
+
 	return v.(*BufferEntry).packetsQueue, true
 }
 
-// Set the srcIP to a new sequence number
-// Restart the timer attached to that src
 func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte) {
 	v, ok := p.m.Get(IPv4ToUInt32(dstIP))
 	var queue [][]byte
 	if ok {
-		// Stop the previous timer if it wasn't fired
-		timer := v.(*BufferEntry).ageTimer
-		timer.Stop()
-
 		// enqueue the new packet
 		queue = v.(*BufferEntry).packetsQueue
 		queue = append(queue, packet)
+		timer := v.(*BufferEntry).ageTimer
+		numOfDstSearches := v.(*BufferEntry).numOfDstSearches
+
+		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: timer, numOfDstSearches: numOfDstSearches})
 
 	} else {
+		// Start new Timer
+		fireFunc := bufferFireTimer(dstIP, p)
+		newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
+
 		// make new queue for upcoming messages to the same destination
 		queue = make([][]byte, 0)
 		queue = append(queue, packet)
+		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer, numOfDstSearches: 0})
 	}
-
-	// Start new Timer
-	fireFunc := bufferFireTimer(dstIP, p)
-	newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
-
-	p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer})
-
 }
 
 // Del silently fails if key doesn't exist
@@ -89,7 +95,22 @@ func (p *PacketsBuffer) String() string {
 }
 
 func bufferFireTimerHelper(dstIP net.IP, p *PacketsBuffer) {
-	p.Del(dstIP)
+	v, ok := p.m.Get(IPv4ToUInt32(dstIP))
+	if !ok {
+		return
+	}
+	numOfDstSearches := v.(*BufferEntry).numOfDstSearches
+	if numOfDstSearches < MaxNumOfSearches {
+		p.findDstZoneCallback(dstIP)
+		// Start new Timer
+		fireFunc := bufferFireTimer(dstIP, p)
+		newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
+		queue := v.(*BufferEntry).packetsQueue
+
+		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer, numOfDstSearches: numOfDstSearches + 1})
+	} else {
+		p.Del(dstIP)
+	}
 }
 
 func bufferFireTimer(dstIP net.IP, p *PacketsBuffer) func() {
