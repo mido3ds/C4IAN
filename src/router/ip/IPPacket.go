@@ -118,3 +118,17 @@ func BroadcastRadius(ip net.IP) uint16 {
 	ip4 := ip.To4()
 	return uint16(ip4[2])<<8 | uint16(ip4[3])
 }
+
+func DecrementBroadcastRadius(b []byte) bool {
+	rad := BroadcastRadius(net.IPv4(b[16], b[17], b[18], b[19]))
+	if rad == 0 {
+		return false
+	}
+
+	rad -= 1
+
+	b[18] = byte(rad >> 8)
+	b[19] = byte(rad)
+
+	return true
+}
