@@ -30,7 +30,7 @@ type forwardingTable struct {
 type forwardingEntry struct {
 	nextHop net.HardwareAddr
 	cost    uint16
-	timer   Timer
+	timer   *Timer
 }
 
 func newForwardingTable(timers *TimersQueue) *forwardingTable {
@@ -61,14 +61,11 @@ func (r *forwardingTable) set(destIP net.IP, entry *forwardingEntry) bool {
 	// Stop the previous timer if it wasn't fired
 	if ok {
 		// if less cost refresh
-		if v.(*forwardingEntry).cost >= entry.cost {
-			entry.cost = v.(*forwardingEntry).cost
-			entry.nextHop = v.(*forwardingEntry).nextHop
-			timer := v.(*forwardingEntry).timer
-			timer.Stop()
-		} else {
+		val := v.(*forwardingEntry)
+		if val.cost < entry.cost {
 			return false
 		}
+		val.timer.Stop()
 	}
 
 	// Start new Timer
