@@ -98,7 +98,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 	zidHeader, dzRequestHeader := d.unpackDZRequestPacket(packet)
 	requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
 	if exist {
-		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+		srcZone := &Zone{ID: dzRequestHeader.srcZone, Len: zidHeader.ZLen}
 		dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, requiredDstZoneID, dzRequestHeader.srcIP, dzRequestHeader.srcZone)
 		var dstNodeID NodeID
 		if MyZone().Equal(srcZone) {
@@ -129,7 +129,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 		// Check if the required dstIP exist in my zone
 		_, inMyZone := d.getUnicastNextHopCallback(ToNodeID(dzRequestHeader.requiredDstIP))
 		if inMyZone {
-			srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+			srcZone := &Zone{ID: dzRequestHeader.srcZone, Len: zidHeader.ZLen}
 			dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, MyZone().ID, dzRequestHeader.srcIP, dzRequestHeader.srcZone)
 			var dstNodeID NodeID
 			if MyZone().Equal(srcZone) {
