@@ -24,6 +24,7 @@ func (forwarder *Forwarder) GetUnicastNextHop(dst NodeID) (net.HardwareAddr, boo
 
 	// Otherwise look for the next hop in the forwarding table
 	forwarder.updateUnicastForwardingTable(forwarder.UniForwTable)
+	//log.Println(forwarder.UniForwTable)
 	nextHopMAC, ok := forwarder.UniForwTable.Get(dst)
 	if ok {
 		return nextHopMAC, true

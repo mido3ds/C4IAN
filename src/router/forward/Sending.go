@@ -2,6 +2,7 @@ package forward
 
 import (
 	"bytes"
+	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -23,6 +24,7 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 		dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
 		if cached {
 			zid = MyZIDHeader(dstZoneID)
+			nextHopMac, _ = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 		} else {
 			// if dst zone isn't cached, search for it
 			// and buffer this msg to be sent when dst zone response arrive
@@ -39,6 +41,7 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
 
 	// write to device driver
+	log.Println("Sending to: ", nextHopMac)
 	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
 }
 

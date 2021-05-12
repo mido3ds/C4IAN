@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 	"github.com/starwander/goraph"
 )
 
@@ -52,25 +53,37 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
+	// Ignore interzone LSR packets originating at my zone
+	if zoneID, isZone := srcID.ToZoneID(); isZone && zoneID == MyZone().ID {
+		return nil
+	}
+
 	outToEdges := make(map[NodeID]float64)
 
 	for n := range srcNeighbors.m.Iter() {
+		nodeID := NodeID(n.Key.(uint64))
+
+		// Ignore edges pointing to my zone
+		if zoneID, isZone := nodeID.ToZoneID(); isZone && zoneID == MyZone().ID {
+			continue
+		}
+
 		// Check if this neighbor vertex exists
-		neighborVertex, notExist := t.g.GetVertex(NodeID(n.Key.(uint64)))
+		neighborVertex, notExist := t.g.GetVertex(nodeID)
 
 		if notExist == nil {
 			neighborVertex.(*myVertex).inFrom[srcID] = float64(n.Value.(*NeighborEntry).Cost)
 			// Remove the old neighbor vertex
-			t.g.DeleteVertex(NodeID(n.Key.(uint64)))
+			t.g.DeleteVertex(nodeID)
 			// Add the neighbor vertex with new inFrom edge
 			t.g.AddVertexWithEdges(neighborVertex.(*myVertex))
 		} else {
 			neighborInFromEdges := make(map[NodeID]float64)
 			neighborInFromEdges[srcID] = float64(n.Value.(*NeighborEntry).Cost)
-			t.g.AddVertexWithEdges(&myVertex{id: NodeID(n.Key.(uint64)), outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
+			t.g.AddVertexWithEdges(&myVertex{id: nodeID, outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
 		}
 
-		outToEdges[NodeID(n.Key.(uint64))] = float64(n.Value.(*NeighborEntry).Cost)
+		outToEdges[nodeID] = float64(n.Value.(*NeighborEntry).Cost)
 	}
 
 	vertex, notExist := t.g.GetVertex(srcID)
@@ -93,6 +106,8 @@ func (t *Topology) CalculateSinkTree(nodeID NodeID) map[goraph.ID]goraph.ID {
 }
 
 func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
 	if srcNodeID.isZone() {
 		log.Panic("Trying to find gateways of zone vertex")
 	}
@@ -117,7 +132,7 @@ func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
 		}
 
 		markedAsGateway := false
-		for vertexID, _ := range currentVertex.outTo {
+		for vertexID := range currentVertex.outTo {
 			vertex, notExist := t.g.GetVertex(vertexID)
 			if notExist != nil {
 				log.Panic("Incorrect topology")
@@ -137,11 +152,14 @@ func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
 	return
 }
 
-func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborZones []NodeID) {
+func (t *Topology) GetNeighborZones(srcNodeID NodeID) (neighborZones []NodeID, isMaxIP bool) {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
 	if srcNodeID.isZone() {
 		log.Panic("Trying to find neighbour zones of zone vertex")
 	}
 
+	isMaxIP = true
 	visited := make(map[NodeID]bool)
 
 	var stack [](*myVertex)
@@ -174,6 +192,9 @@ func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborZones []NodeID) 
 					markedAsNeighbourZone[vertex.(*myVertex).id] = true
 				}
 			} else {
+				if vertexID > srcNodeID {
+					isMaxIP = false
+				}
 				if !visited[vertex.(*myVertex).id] {
 					stack = append(stack, vertex.(*myVertex))
 				}

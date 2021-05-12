@@ -116,23 +116,6 @@ func (r *Router) Start() {
 	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start()
 	go r.dzdCont.Start()
-
-	/*f := func() {
-		myIP := net.IP([]byte{10, 0, 0, 3})
-		if myIP.Equal(r.ip) {
-			dstIP := net.IP([]byte{10, 0, 0, 32})
-			r.dzdCont.FindDstZone(dstIP)
-
-			time.AfterFunc(2*time.Second, func() {
-				dstIP := net.IP([]byte{10, 0, 0, 32})
-				zoneID, cached := r.dzdCont.CachedDstZone(dstIP)
-				fmt.Println("Zone: ", zoneID, "Cached: ", cached)
-			})
-		}
-	}
-
-	time.AfterFunc(10*time.Second, f)*/
-
 }
 
 func (r *Router) Close() {
