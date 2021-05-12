@@ -51,14 +51,14 @@ func (f *GlobalFlooder) Flood(msg []byte) {
 // ListenForFloodedMsgs inf loop that receives any flooded msgs
 // calls `payloadProcessor` when it receives the message, it gives it the header and the payload
 // and returns whether to continue flooding or not
-func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func([]byte) ([]byte, bool)) {
 	for {
 		msg := f.macConn.Read()
 		go f.handleFloodedMsg(msg, payloadProcessor)
 	}
 }
 
-func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) ([]byte, bool)) {
+func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func([]byte) ([]byte, bool)) {
 	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:floodHeaderLen]))
 	if !ok {
 		return
@@ -77,7 +77,7 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
 
 	payload := f.msec.Decrypt(msg[floodHeaderLen:])
-	payload, ok = payloadProcessor(floodHeader, payload)
+	payload, ok = payloadProcessor(payload)
 	if !ok {
 		return
 	}

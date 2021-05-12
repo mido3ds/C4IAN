@@ -59,7 +59,7 @@ func (f *UniForwardTable) Clear() {
 func (f *UniForwardTable) String() string {
 	s := "&ForwardTable{"
 	for item := range f.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", fmt.Sprint(item.Key), item.Value.(*UniForwardingEntry).NextHopMAC.String())
+		s += fmt.Sprintf(" (%#v,mac=%#v)\n", NodeID(item.Key.(uint64)).String(), item.Value.(*UniForwardingEntry).NextHopMAC.String())
 
 	}
 	s += " }"

@@ -16,6 +16,8 @@ type NeighborsTable struct {
 	m *hashmap.HashMap
 }
 
+// 8 bytes (NodeID) + 2 bytes (Cost)
+// The MAC addresses are not transfered in LSR packets, so they are not marshalled
 const neighborEntryLen = 10
 
 type NeighborEntry struct {
@@ -111,7 +113,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 
 	start := 4
 	for item := range n.m.Iter() {
-		// Insert IP: 4 bytes
+		// Insert Node ID: 8 bytes
 		nodeID := item.Key.(uint64)
 		payload[start] = byte(nodeID >> 56)
 		payload[start+1] = byte(nodeID >> 48)

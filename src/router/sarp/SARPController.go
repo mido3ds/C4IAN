@@ -81,7 +81,6 @@ func (s *SARPController) sendMsgs() {
 		newTableHash := s.NeighborsTable.GetTableHash()
 		if !bytes.Equal(tableHash, newTableHash) {
 			s.NeighborhoodUpdateSignal <- true
-			log.Println(s.NeighborsTable)
 		}
 		tableHash = newTableHash
 	}

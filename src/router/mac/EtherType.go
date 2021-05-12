@@ -21,4 +21,6 @@ const (
 	ZoneFloodEtherType = EtherType(0x7033)
 
 	ZIDDataEtherType = EtherType(0x7031)
+
+	InterzoneLSREtherType = EtherType(0x7032)
 )

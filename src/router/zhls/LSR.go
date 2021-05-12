@@ -1,14 +1,20 @@
 package zhls
 
 import (
-	"fmt"
 	"log"
 	"net"
+	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
+	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 	"github.com/starwander/goraph"
+)
+
+const (
+	interzoneLSRDelay = 5 * time.Second // Time between sending interzone LSR packets
 )
 
 type LSRController struct {
@@ -20,21 +26,59 @@ type LSRController struct {
 	dirtyTopology  bool
 }
 
-func newLSR(iface *net.Interface, msec *MSecLayer, myIP net.IP, neighborsTable *NeighborsTable, t *Topology) (*LSRController, error) {
+func newLSR(iface *net.Interface, msec *MSecLayer, myIP net.IP, neighborsTable *NeighborsTable, t *Topology) *LSRController {
 	zoneFlooder, err := NewZoneFlooder(iface, myIP, msec)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
+		log.Panic("failed to initiate LSR global flooder, err: ", err)
 	}
 
-	return &LSRController{myIP: myIP, neighborsTable: neighborsTable, topology: t, zoneFlooder: zoneFlooder}, nil
+	globalFlooder, err := NewGlobalFlooder(myIP, iface, InterzoneLSREtherType, msec)
+	if err != nil {
+		log.Panic("failed to initiate LSR global flooder, err: ", err)
+	}
+
+	return &LSRController{
+		myIP:           myIP,
+		neighborsTable: neighborsTable,
+		topology:       t,
+		zoneFlooder:    zoneFlooder,
+		globalFlooder:  globalFlooder,
+	}
 }
 
 func (lsr *LSRController) Start() {
-	go lsr.zoneFlooder.ListenForFloodedMsgs(lsr.handleLSRPacket)
+	go lsr.zoneFlooder.ListenForFloodedMsgs(lsr.handleIntrazoneLSRPacket)
+	go lsr.globalFlooder.ListenForFloodedMsgs(lsr.handleInterzoneLSRPacket)
+	go lsr.sendInterzoneLSR()
 }
 
 func (lsr *LSRController) Close() {
 	lsr.zoneFlooder.Close()
+}
+
+func (lsr *LSRController) sendInterzoneLSR() {
+	for {
+		// TODO: Replace with scheduling if necessary
+		time.Sleep(interzoneLSRDelay)
+		// Get a list of neighbor zones
+		neighborZones, isMaxIP := lsr.topology.GetNeighborZones(ToNodeID(lsr.myIP))
+
+		// Only the node with the maximum IP value in a zone floods the zone LSR
+		if !isMaxIP {
+			continue
+		}
+
+		//log.Println("Sending Interzone LSR Packet")
+
+		// Create a zone neighbors table
+		zoneNeighborsTable := NewNeighborsTable()
+		for _, neighborZoneID := range neighborZones {
+			zoneNeighborsTable.Set(neighborZoneID, &NeighborEntry{Cost: 65535}) // Cost = MAX_UINT16
+		}
+
+		zidHeader := MyZIDHeader(0)
+		lsr.globalFlooder.Flood(append(zidHeader.MarshalBinary(), zoneNeighborsTable.MarshalBinary()...))
+	}
 }
 
 func (lsr *LSRController) onNeighborhoodUpdate() {
@@ -42,14 +86,34 @@ func (lsr *LSRController) onNeighborhoodUpdate() {
 	lsr.zoneFlooder.Flood(lsr.neighborsTable.MarshalBinary())
 }
 
-func (lsr *LSRController) handleLSRPacket(srcIP net.IP, payload []byte) {
+func (lsr *LSRController) handleIntrazoneLSRPacket(srcIP net.IP, payload []byte) {
 	srcNeighborsTable, valid := UnmarshalNeighborsTable(payload)
-
 	if !valid {
-		log.Panicln("Corrupted LSR packet received")
+		log.Panicln("Corrupted neighbors table in intrazone LSR packet received")
 	}
+
 	lsr.topology.Update(ToNodeID(srcIP), srcNeighborsTable)
 	lsr.dirtyTopology = true
+}
+
+func (lsr *LSRController) handleInterzoneLSRPacket(payload []byte) ([]byte, bool) {
+	zidHeader, valid := UnmarshalZIDHeader(payload[:ZIDHeaderLen])
+	if !valid {
+		log.Panicln("Corrupted ZID header in interzone LSR packet received")
+	}
+
+	zoneNeighborsTable, valid := UnmarshalNeighborsTable(payload[ZIDHeaderLen:])
+	if !valid {
+		log.Panicln("Corrupted neighbors table in interzone LSR packet received")
+	}
+
+	//log.Println("Received Interzone LSR Packet from zone:", zidHeader.SrcZID)
+	//log.Println(zoneNeighborsTable)
+	//lsr.displaySinkTreeParents(lsr.topology.CalculateSinkTree(ToNodeID(lsr.myIP)))
+
+	lsr.topology.Update(ToNodeID(zidHeader.SrcZID), zoneNeighborsTable)
+	lsr.dirtyTopology = true
+	return payload, true
 }
 
 func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable) {
@@ -102,7 +166,8 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
 			neighborEntry, exists := lsr.neighborsTable.Get(nextHop.(NodeID))
 			if !exists {
-				log.Panicln("Attempting to make a next hop through a non-neighbor")
+				log.Println(lsr.neighborsTable)
+				log.Panicln("Attempting to make a next hop through a non-neighbor, dst: ", nextHop.(NodeID))
 			}
 			dirtyForwardingTable.Set(dst.(NodeID), neighborEntry.MAC)
 		}

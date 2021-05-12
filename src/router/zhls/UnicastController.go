@@ -1,7 +1,6 @@
 package zhls
 
 import (
-	"fmt"
 	"log"
 	"net"
 
@@ -18,10 +17,7 @@ type UnicastController struct {
 }
 
 func NewUnicastController(iface *net.Interface, ip net.IP, neighborsTable *NeighborsTable, neighborhoodUpdateSignal chan bool, msec *MSecLayer, topology *Topology) (*UnicastController, error) {
-	lsr, err := newLSR(iface, msec, ip, neighborsTable, topology)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initiate LSR Controller, err: %#v", err)
-	}
+	lsr := newLSR(iface, msec, ip, neighborsTable, topology)
 
 	log.Println("initalized controller")
 

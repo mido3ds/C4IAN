@@ -125,7 +125,7 @@ func (c *MulticastController) Start(ft *MultiForwardTable) {
 	go c.recvJoinReplyMsgs(ft)
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, payload []byte) ([]byte, bool) {
+func (c *MulticastController) onRecvJoinQuery(payload []byte) ([]byte, bool) {
 	jq, valid := UnmarshalJoinQuery(payload)
 	log.Println(jq) // TODO: remove this
 
