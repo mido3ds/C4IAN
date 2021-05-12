@@ -1,30 +1,48 @@
 package zhls
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/flood"
+	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	"github.com/starwander/goraph"
 )
 
-type lsrController struct {
+type LSRController struct {
 	myIP           net.IP
 	neighborsTable *NeighborsTable
 	topology       *Topology
+	zoneFlooder    *ZoneFlooder
+	globalFlooder  *GlobalFlooder
 	dirtyTopology  bool
 }
 
-func newLSR(myIP net.IP, neighborsTable *NeighborsTable, t *Topology) *lsrController {
-	return &lsrController{myIP: myIP, neighborsTable: neighborsTable, topology: t}
+func newLSR(iface *net.Interface, msec *MSecLayer, myIP net.IP, neighborsTable *NeighborsTable, t *Topology) (*LSRController, error) {
+	zoneFlooder, err := NewZoneFlooder(iface, myIP, msec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate flooder, err: %#v", err)
+	}
+
+	return &LSRController{myIP: myIP, neighborsTable: neighborsTable, topology: t, zoneFlooder: zoneFlooder}, nil
 }
 
-func (lsr *lsrController) sendLSRPacket(flooder *ZoneFlooder, neighborsTable *NeighborsTable) {
-	flooder.Flood(neighborsTable.MarshalBinary())
+func (lsr *LSRController) Start() {
+	go lsr.zoneFlooder.ListenForFloodedMsgs(lsr.handleLSRPacket)
 }
 
-func (lsr *lsrController) handleLSRPacket(srcIP net.IP, payload []byte) {
+func (lsr *LSRController) Close() {
+	lsr.zoneFlooder.Close()
+}
+
+func (lsr *LSRController) onNeighborhoodUpdate() {
+	lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
+	lsr.zoneFlooder.Flood(lsr.neighborsTable.MarshalBinary())
+}
+
+func (lsr *LSRController) handleLSRPacket(srcIP net.IP, payload []byte) {
 	srcNeighborsTable, valid := UnmarshalNeighborsTable(payload)
 
 	if !valid {
@@ -34,7 +52,7 @@ func (lsr *lsrController) handleLSRPacket(srcIP net.IP, payload []byte) {
 	lsr.dirtyTopology = true
 }
 
-func (lsr *lsrController) updateForwardingTable(forwardingTable *UniForwardTable) {
+func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable) {
 	if !lsr.dirtyTopology {
 		return
 	}
@@ -96,7 +114,7 @@ func (lsr *lsrController) updateForwardingTable(forwardingTable *UniForwardTable
 	lsr.dirtyTopology = false
 }
 
-func (lsr *lsrController) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
+func (lsr *LSRController) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
 	log.Println("----------- Sink Tree -------------")
 	for dst, parent := range sinkTreeParents {
 		if dst == nil {

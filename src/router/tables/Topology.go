@@ -137,7 +137,7 @@ func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
 	return
 }
 
-func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborszones []NodeID) {
+func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborZones []NodeID) {
 	if srcNodeID.isZone() {
 		log.Panic("Trying to find neighbour zones of zone vertex")
 	}
@@ -162,7 +162,7 @@ func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborszones []NodeID)
 			visited[currentVertex.id] = true
 		}
 
-		for vertexID, _ := range currentVertex.outTo {
+		for vertexID := range currentVertex.outTo {
 			vertex, notExist := t.g.GetVertex(vertexID)
 			if notExist != nil {
 				log.Panic("Incorrect topology")
@@ -170,7 +170,7 @@ func (t *Topology) GetNeighborsZones(srcNodeID NodeID) (neighborszones []NodeID)
 			if vertex.(*myVertex).id.isZone() {
 				_, marked := markedAsNeighbourZone[vertex.(*myVertex).id]
 				if !marked {
-					neighborszones = append(neighborszones, vertex.(*myVertex).id)
+					neighborZones = append(neighborZones, vertex.(*myVertex).id)
 					markedAsNeighbourZone[vertex.(*myVertex).id] = true
 				}
 			} else {
