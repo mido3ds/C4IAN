@@ -90,7 +90,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
 
-	dzdCont.SetForwarderCallbacks(forwarder.GetUnicastNextHop, forwarder.SendUnicast)
+	dzdCont.SetGetNextHopCallback(forwarder.GetUnicastNextHop)
 
 	return &Router{
 		iface:     iface,

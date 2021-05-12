@@ -131,7 +131,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 					// If the IP is not found in the forwarding table (my zone)
 					// although the src claims that it is
 					// then the dest may have moved out of this zone
-					// and the src have an old value for the dst zone
+					// or the src have an old cached value for the dst zone
 					// discover its new zone
 					dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
 					if cached {
@@ -145,7 +145,20 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 						// if dst zone isn't cached, search for it
 						// and buffer this msg to be sent when dst zone response arrive
 						f.dzdController.FindDstZone(ip.DestIP)
-						f.dzdController.BufferPacket(ip.DestIP, packet)
+						f.dzdController.BufferPacket(ip.DestIP, packet, func(packet []byte, dstIP net.IP) {
+							dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
+							if cached {
+								nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+								if !reachable {
+									// TODO: Should we do anything else here?
+									log.Println("Destination zone is unreachable:", zid.DstZID)
+									return
+								}
+								f.zidMacConn.Write(packet, nextHopMAC)
+							} else {
+								log.Panicln("Dst Zone must be cached here")
+							}
+						})
 						continue
 					}
 				}

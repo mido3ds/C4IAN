@@ -12,6 +12,9 @@ import (
 const BufferAge = 10
 const MaxNumOfSearches = 3
 
+type SendPacketCallback = func([]byte, net.IP)
+type PacketsQueue = []*PacketEntry
+
 // PacketsBugger is lock-free thread-safe hash table
 // optimized for fastest read access
 // key: 4 bytes dst IPv4, value: queue for msgs
@@ -20,8 +23,17 @@ type PacketsBuffer struct {
 	findDstZoneCallback func(dstIP net.IP)
 }
 
+type PacketEntry struct {
+	payload  []byte
+	callback SendPacketCallback
+}
+
+func (p *PacketEntry) Send(dstIP net.IP) {
+	p.callback(p.payload, dstIP)
+}
+
 type BufferEntry struct {
-	packetsQueue     [][]byte
+	packetsQueue     PacketsQueue
 	ageTimer         *time.Timer
 	numOfDstSearches uint8
 }
@@ -34,7 +46,7 @@ func NewPacketsBuffer(findDstZoneCallback func(dstIP net.IP)) *PacketsBuffer {
 
 // Get returns value associated with the given key
 // and whether the key existed or not
-func (p *PacketsBuffer) Get(dstIP net.IP) ([][]byte, bool) {
+func (p *PacketsBuffer) Get(dstIP net.IP) (PacketsQueue, bool) {
 	v, ok := p.m.Get(IPv4ToUInt32(dstIP))
 	if !ok {
 		return nil, false
@@ -47,13 +59,13 @@ func (p *PacketsBuffer) Get(dstIP net.IP) ([][]byte, bool) {
 	return v.(*BufferEntry).packetsQueue, true
 }
 
-func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte) {
+func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte, sendCallback SendPacketCallback) {
 	v, ok := p.m.Get(IPv4ToUInt32(dstIP))
-	var queue [][]byte
+	var queue PacketsQueue
 	if ok {
 		// enqueue the new packet
 		queue = v.(*BufferEntry).packetsQueue
-		queue = append(queue, packet)
+		queue = append(queue, &PacketEntry{payload: packet, callback: sendCallback})
 		timer := v.(*BufferEntry).ageTimer
 		numOfDstSearches := v.(*BufferEntry).numOfDstSearches
 
@@ -65,8 +77,8 @@ func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte) {
 		newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
 
 		// make new queue for upcoming messages to the same destination
-		queue = make([][]byte, 0)
-		queue = append(queue, packet)
+		queue = make([]*PacketEntry, 0)
+		queue = append(queue, &PacketEntry{payload: packet, callback: sendCallback})
 		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer, numOfDstSearches: 0})
 	}
 }

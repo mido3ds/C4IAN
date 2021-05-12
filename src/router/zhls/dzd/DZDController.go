@@ -17,7 +17,6 @@ type DZDController struct {
 	topology                  *Topology
 	myIP                      net.IP
 	getUnicastNextHopCallback func(dst NodeID) (net.HardwareAddr, bool)
-	sendUnicastCallback       func(packet []byte, dstIP net.IP)
 }
 
 func NewDZDController(ip net.IP, iface *net.Interface, topology *Topology) (*DZDController, error) {
@@ -49,11 +48,8 @@ func NewDZDController(ip net.IP, iface *net.Interface, topology *Topology) (*DZD
 	return dzdController, nil
 }
 
-func (d *DZDController) SetForwarderCallbacks(
-	getUnicastNextHopCallback func(dst NodeID) (net.HardwareAddr, bool),
-	sendUnicastCallback func(packet []byte, dstIP net.IP)) {
+func (d *DZDController) SetGetNextHopCallback(getUnicastNextHopCallback func(dst NodeID) (net.HardwareAddr, bool)) {
 	d.getUnicastNextHopCallback = getUnicastNextHopCallback
-	d.sendUnicastCallback = sendUnicastCallback
 }
 
 func (d *DZDController) Start() {
@@ -65,8 +61,8 @@ func (d *DZDController) CachedDstZone(dstIP net.IP) (ZoneID, bool) {
 	return d.dzCahce.Get(dstIP)
 }
 
-func (d *DZDController) BufferPacket(dstIP net.IP, packet []byte) {
-	d.packetsBuffer.AppendPacket(dstIP, packet)
+func (d *DZDController) BufferPacket(dstIP net.IP, packet []byte, sendCallback SendPacketCallback) {
+	d.packetsBuffer.AppendPacket(dstIP, packet, sendCallback)
 }
 
 func (d *DZDController) FindDstZone(dstIP net.IP) {
@@ -258,7 +254,7 @@ func (d *DZDController) sendBufferedMsgs(dstIP net.IP) {
 	}
 
 	for _, packet := range bufferQueue {
-		d.sendUnicastCallback(packet, dstIP)
+		packet.Send(dstIP)
 	}
 
 	d.packetsBuffer.Del(dstIP)
