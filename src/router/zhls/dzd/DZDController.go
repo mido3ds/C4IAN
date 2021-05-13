@@ -72,7 +72,6 @@ func (d *DZDController) FindDstZone(dstIP net.IP) {
 	}
 
 	neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
-	log.Println("Neighbor zones: ", neighborsZones)
 	for _, zone := range neighborsZones {
 		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone().ID, zone, dstIP, []ZoneID{MyZone().ID})
 		nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
@@ -114,7 +113,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 		d.reqMacConn.Write(packet, nextHopMAC)
 		return
 	} else {
-		log.Println(d.myIP, "Received ", dzRequestHeader)
+		//log.Println(d.myIP, "Received ", dzRequestHeader)
 		// Check if the required dstIP exist in my zone
 		_, inMyZone := d.getUnicastNextHopCallback(ToNodeID(dzRequestHeader.requiredDstIP))
 		if inMyZone {
@@ -159,7 +158,7 @@ func (d *DZDController) receiveDZResponsePackets() {
 func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	zidHeader, dzResponseHeader := d.unpackDZResponsePacket(packet)
 
-	log.Println(d.myIP, "Received ", dzResponseHeader)
+	//log.Println(d.myIP, "Received ", dzResponseHeader)
 
 	d.dzCahce.Set(dzResponseHeader.requiredDstIP, dzResponseHeader.requiredDstZone)
 	go d.sendBufferedMsgs(dzResponseHeader.requiredDstIP)

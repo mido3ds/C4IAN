@@ -10,7 +10,6 @@ import (
 )
 
 func BenchmarkDZDController(t *testing.B) {
-
 	myIP := UInt32ToIPv4(15)
 	requiredDstIP := UInt32ToIPv4(2)
 
