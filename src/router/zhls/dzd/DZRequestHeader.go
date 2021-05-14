@@ -13,14 +13,12 @@ import (
 const (
 	DZRequestChecksumLen = 2
 	DZRequestIPsLen      = 8 // src IP and dst IP
-	DzRequestSrcZoneLen  = 4
 	numOfVisitedZonesLen = 4
-	DZRequestHeaderLen   = DZRequestChecksumLen + DZRequestIPsLen + DzRequestSrcZoneLen + numOfVisitedZonesLen
+	DZRequestHeaderLen   = DZRequestChecksumLen + DZRequestIPsLen + numOfVisitedZonesLen
 )
 
 type DZRequestHeader struct {
 	srcIP         net.IP
-	srcZone       ZoneID
 	requiredDstIP net.IP
 	visitedZones  []ZoneID
 }
@@ -36,16 +34,15 @@ func UnmarshalDZRequestHeader(packet []byte) (*DZRequestHeader, bool) {
 	}
 
 	visitedZones := make([]ZoneID, numOfVisistedZones)
-	start := DZRequestIPsLen + numOfVisitedZonesLen + DzRequestSrcZoneLen
+	start := numOfVisitedZonesLen + DZRequestIPsLen
 	for i := uint32(0); i < numOfVisistedZones; i++ {
 		visitedZones[i] = ZoneID(binary.BigEndian.Uint32(packet[start : start+4]))
 		start += 4
 	}
 
 	return &DZRequestHeader{
-		srcZone:       ZoneID(binary.BigEndian.Uint32(packet[4:8])),
-		srcIP:         net.IP(packet[8:12]),
-		requiredDstIP: net.IP(packet[12:16]),
+		srcIP:         net.IP(packet[4:8]),
+		requiredDstIP: net.IP(packet[8:12]),
 		visitedZones:  visitedZones,
 	}, true
 }
@@ -58,10 +55,6 @@ func (d *DZRequestHeader) MarshalBinary() []byte {
 
 	for i := 24; i >= 0; i -= 8 {
 		buffer.WriteByte(byte(numOfVisistedZones >> i))
-	}
-
-	for i := 24; i >= 0; i -= 8 {
-		buffer.WriteByte(byte(d.srcZone >> i))
 	}
 
 	buffer.Write(d.srcIP.To4())
@@ -85,7 +78,6 @@ func (d *DZRequestHeader) MarshalBinary() []byte {
 func (d DZRequestHeader) String() string {
 	s := "DZRequestMsg: "
 	s += "srcIP=" + d.srcIP.String()
-	s += ", srcZone=" + d.srcZone.String()
 	s += ", requiredDstIP=" + d.requiredDstIP.String() + "\n"
 	s += fmt.Sprint(d.visitedZones) + "\n"
 	return s

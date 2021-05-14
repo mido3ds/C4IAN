@@ -52,17 +52,17 @@ func (d *DZDController) SetGetNextHopCallback(getUnicastNextHopCallback func(dst
 	d.getUnicastNextHopCallback = getUnicastNextHopCallback
 }
 
-func (d *DZDController) Start() {
-	go d.receiveDZRequestPackets()
-	go d.receiveDZResponsePackets()
-}
-
 func (d *DZDController) CachedDstZone(dstIP net.IP) (ZoneID, bool) {
 	return d.dzCahce.Get(dstIP)
 }
 
 func (d *DZDController) BufferPacket(dstIP net.IP, packet []byte, sendCallback SendPacketCallback) {
 	d.packetsBuffer.AppendPacket(dstIP, packet, sendCallback)
+}
+
+func (d *DZDController) Start() {
+	go d.receiveDZRequestPackets()
+	go d.receiveDZResponsePackets()
 }
 
 func (d *DZDController) FindDstZone(dstIP net.IP) {
@@ -73,12 +73,8 @@ func (d *DZDController) FindDstZone(dstIP net.IP) {
 
 	neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
 	for _, zone := range neighborsZones {
-		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone().ID, zone, dstIP, []ZoneID{MyZone().ID})
-		nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
-		if !reachable {
-			log.Panicln(zone, "is unreachable")
-		}
-		d.reqMacConn.Write(dzRequestPacket, nextHopMAC)
+		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone(), zone, dstIP, []ZoneID{MyZone().ID})
+		d.sendDZRequestPackets(dzRequestPacket, zone)
 	}
 }
 
@@ -92,60 +88,52 @@ func (d *DZDController) receiveDZRequestPackets() {
 func (d *DZDController) handleDZRequestPackets(packet []byte) {
 	zidHeader, dzRequestHeader := d.unpackDZRequestPacket(packet)
 
+	// Cache the src IP/Zone information
+	d.dzCahce.Set(dzRequestHeader.srcIP, zidHeader.SrcZID)
+	go d.sendBufferedMsgs(dzRequestHeader.srcIP)
+
+	// I'm the required destination
 	if dzRequestHeader.requiredDstIP.Equal(d.myIP) {
-		d.sendDZResponsePackets(dzRequestHeader, MyZone().ID)
+		d.sendDZResponsePackets(zidHeader, dzRequestHeader, MyZone().ID)
 		return
 	}
 
+	// The required destination is cahced
 	requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
 	if exist {
-		d.sendDZResponsePackets(dzRequestHeader, requiredDstZoneID)
+		d.sendDZResponsePackets(zidHeader, dzRequestHeader, requiredDstZoneID)
 		return
 	}
 
+	// Check if this msg is forwarded to my zone
 	dstZone := &Zone{ID: zidHeader.DstZID, Len: zidHeader.ZLen}
-	if !MyZone().Equal(dstZone) {
-		nextHopMAC, reachable := d.getUnicastNextHopCallback(ToNodeID(dstZone.ID))
-		if !reachable {
-			log.Panicln(ToNodeID(dstZone.ID), "is unreachable")
-		}
-		//	Forward tha packet as is
-		d.reqMacConn.Write(packet, nextHopMAC)
-		return
-	} else {
+	if MyZone().Equal(dstZone) {
 		//log.Println(d.myIP, "Received ", dzRequestHeader)
-		// Check if the required dstIP exist in my zone
+		// The msg is forwarded to my zone
+		// is the required dstIP exist in my zone ?
 		_, inMyZone := d.getUnicastNextHopCallback(ToNodeID(dzRequestHeader.requiredDstIP))
 		if inMyZone {
-			d.sendDZResponsePackets(dzRequestHeader, MyZone().ID)
+			// It's here, send the response
+			d.sendDZResponsePackets(zidHeader, dzRequestHeader, MyZone().ID)
 			return
 		} else {
+			// The required destination isn't here, forward to the neighbors zones
+			// but discard the already visited zones
 			neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
 			nextZones := discardVisitedZones(dzRequestHeader.visitedZones, neighborsZones)
 			visitedZones := append(dzRequestHeader.visitedZones, MyZone().ID)
-			for _, zone := range nextZones {
-				dzRequestPacket := d.createDZRequestPacket(dzRequestHeader.srcIP, dzRequestHeader.srcZone, zone, dzRequestHeader.requiredDstIP, visitedZones)
-				nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
-				if !reachable {
-					log.Panicln(zone, "is unreachable")
-				}
-				d.reqMacConn.Write(dzRequestPacket, nextHopMAC)
+			for _, dstZoneID := range nextZones {
+				srcZone := Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+				dzRequestPacket := d.createDZRequestPacket(dzRequestHeader.srcIP, srcZone, dstZoneID, dzRequestHeader.requiredDstIP, visitedZones)
+				d.sendDZRequestPackets(dzRequestPacket, dstZoneID)
 			}
 			return
 		}
+	} else {
+		// Forward it to the right zone in the zidHeader
+		d.sendDZRequestPackets(packet, ToNodeID(dstZone.ID))
+		return
 	}
-
-}
-
-func (d *DZDController) sendDZResponsePackets(dzRequestHeader *DZRequestHeader, requiredDstZoneID ZoneID) {
-	dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, requiredDstZoneID, dzRequestHeader.srcIP, dzRequestHeader.srcZone)
-	nextHopMAC, reachable := d.getUnicastNextHopCallback(ToNodeID(dzRequestHeader.srcZone))
-	// TODO: Do we need to handle requests coming from the same zone?
-	if !reachable {
-		log.Panicln(dzRequestHeader.srcZone, "is unreachable")
-	}
-	//	Forward tha packet as is
-	d.resMacConn.Write(dzResponsePacket, nextHopMAC)
 }
 
 func (d *DZDController) receiveDZResponsePackets() {
@@ -182,13 +170,13 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	d.resMacConn.Write(packet, nextHopMAC)
 }
 
-func (d *DZDController) createDZRequestPacket(srcIP net.IP, srcZone ZoneID, nextZone NodeID, dstIP net.IP, visitedZones []ZoneID) []byte {
+func (d *DZDController) createDZRequestPacket(srcIP net.IP, srcZone Zone, nextZone NodeID, dstIP net.IP, visitedZones []ZoneID) []byte {
 	nextZoneID, valid := nextZone.ToZoneID()
 	if !valid {
 		log.Panicln("Invalid next zoneID in dzd request packet")
 	}
-	zidHeader := MyZIDHeader(nextZoneID)
-	dzRequestHeader := &DZRequestHeader{srcIP: srcIP, srcZone: srcZone, requiredDstIP: dstIP, visitedZones: visitedZones}
+	zidHeader := &ZIDHeader{SrcZID: srcZone.ID, ZLen: srcZone.Len, DstZID: nextZoneID}
+	dzRequestHeader := &DZRequestHeader{srcIP: srcIP, requiredDstIP: dstIP, visitedZones: visitedZones}
 	return append(zidHeader.MarshalBinary(), dzRequestHeader.MarshalBinary()...)
 }
 
@@ -204,6 +192,14 @@ func (d *DZDController) unpackDZRequestPacket(dzRequestPacket []byte) (*ZIDHeade
 	}
 
 	return zidHeader, dzRequestHeader
+}
+
+func (d *DZDController) sendDZRequestPackets(dzRequestPacket []byte, zone NodeID) {
+	nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
+	if !reachable {
+		log.Panicln(zone, "is unreachable")
+	}
+	d.reqMacConn.Write(dzRequestPacket, nextHopMAC)
 }
 
 func (d *DZDController) createDZResponsePacket(requiredDstIP net.IP, requiredDstZone ZoneID, dstIP net.IP, dstZone ZoneID) []byte {
@@ -224,6 +220,22 @@ func (d *DZDController) unpackDZResponsePacket(dzResponsePacket []byte) (*ZIDHea
 	}
 
 	return zidHeader, dzResponseHeader
+}
+
+func (d *DZDController) sendDZResponsePackets(zidHeader *ZIDHeader, dzRequestHeader *DZRequestHeader, requiredDstZoneID ZoneID) {
+	srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
+	var srcNodeID NodeID
+	if MyZone().Equal(srcZone) {
+		srcNodeID = ToNodeID(dzRequestHeader.srcIP)
+	} else {
+		srcNodeID = ToNodeID(srcZone.ID)
+	}
+	dzResponsePacket := d.createDZResponsePacket(dzRequestHeader.requiredDstIP, requiredDstZoneID, dzRequestHeader.srcIP, srcZone.ID)
+	nextHopMAC, reachable := d.getUnicastNextHopCallback(srcNodeID)
+	if !reachable {
+		log.Panicln(srcNodeID, "is unreachable")
+	}
+	d.resMacConn.Write(dzResponsePacket, nextHopMAC)
 }
 
 func discardVisitedZones(visitedZones []ZoneID, neighborsZones []NodeID) (nextZones []NodeID) {

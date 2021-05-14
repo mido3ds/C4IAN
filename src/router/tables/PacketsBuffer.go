@@ -85,6 +85,12 @@ func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte, sendCallback S
 
 // Del silently fails if key doesn't exist
 func (p *PacketsBuffer) Del(dstIP net.IP) {
+	v, ok := p.m.Get(IPv4ToUInt32(dstIP))
+	if !ok {
+		return
+	}
+
+	v.(*BufferEntry).ageTimer.Stop()
 	p.m.Del(IPv4ToUInt32(dstIP))
 }
 
