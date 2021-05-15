@@ -12,11 +12,6 @@ func imDestination(ip, destIP net.IP, destZoneID ZoneID) bool {
 	return destIP.Equal(ip) || destIP.IsLoopback()
 }
 
-func imInMulticastGrp(destGrpIP net.IP) bool {
-	// TODO
-	return false
-}
-
 func getUnicastNextHop(destIP net.IP, forwarder *Forwarder) (*UniForwardingEntry, bool) {
 	// TODO: Get destination zone to check if we should look for its zone or ip in the forwarding table
 	// Destination is a direct neighbor
