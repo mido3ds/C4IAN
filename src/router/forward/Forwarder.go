@@ -206,38 +206,40 @@ func (f *Forwarder) forwardFromIPLayer() {
 
 	for {
 		p := f.ipConn.Read()
-		packet := p.Packet.Data()
 
-		// TODO: speed up by goroutine workers
-		// TODO: speed up by fanout netfilter feature
+		go func() {
+			packet := p.Packet.Data()
 
-		ip, valid := UnmarshalIPHeader(packet)
+			// TODO: speed up by fanout netfilter feature
 
-		if !valid {
-			log.Println("ip6 is not supported, drop packet")
-			p.SetVerdict(netfilter.NF_DROP)
-		} else if imDestination(f.ip, ip.DestIP, 0) || f.isInMCastGroup(ip.DestIP) {
-			p.SetVerdict(netfilter.NF_ACCEPT)
-		} else { // to out
-			// sender shall know the papcket is sent
-			p.SetVerdict(netfilter.NF_DROP)
+			ip, valid := UnmarshalIPHeader(packet)
 
-			// reset ttl if ip layer, weirdly, gave low ttl
-			// doesn't work for traceroute
-			IPv4ResetTTL(packet)
-			IPv4UpdateChecksum(packet)
+			if !valid {
+				log.Println("ip6 is not supported, drop packet")
+				p.SetVerdict(netfilter.NF_DROP)
+			} else if imDestination(f.ip, ip.DestIP, 0) || f.isInMCastGroup(ip.DestIP) {
+				p.SetVerdict(netfilter.NF_ACCEPT)
+			} else { // to out
+				// sender shall know the papcket is sent
+				p.SetVerdict(netfilter.NF_DROP)
 
-			switch iptype := GetIPAddrType(ip.DestIP); iptype {
-			case UnicastIPAddr:
-				go f.sendUnicast(packet, ip.DestIP)
-			case MulticastIPAddr:
-				go f.sendMulticast(packet, ip.DestIP)
-			case BroadcastIPAddr:
-				go f.sendBroadcast(packet)
-			default:
-				log.Panic("got invalid ip address from ip layer")
+				// reset ttl if ip layer, weirdly, gave low ttl
+				// doesn't work for traceroute
+				IPv4ResetTTL(packet)
+				IPv4UpdateChecksum(packet)
+
+				switch iptype := GetIPAddrType(ip.DestIP); iptype {
+				case UnicastIPAddr:
+					go f.sendUnicast(packet, ip.DestIP)
+				case MulticastIPAddr:
+					go f.sendMulticast(packet, ip.DestIP)
+				case BroadcastIPAddr:
+					go f.sendBroadcast(packet)
+				default:
+					log.Panic("got invalid ip address from ip layer")
+				}
 			}
-		}
+		}()
 	}
 }
 
