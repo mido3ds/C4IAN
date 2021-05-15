@@ -74,8 +74,10 @@ func (lsr *LSRController) sendInterzoneLSR() {
 	}
 }
 
-func (lsr *LSRController) onNeighborhoodUpdate() {
-	lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
+func (lsr *LSRController) sendIntrazoneLSR(isUpdated bool) {
+	if isUpdated {
+		lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
+	}
 	lsr.zoneFlooder.Flood(lsr.neighborsTable.MarshalBinary())
 }
 

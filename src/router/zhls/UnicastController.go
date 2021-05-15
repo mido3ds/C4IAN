@@ -37,8 +37,8 @@ func (c *UnicastController) Start() {
 
 func (c *UnicastController) listenForNeighborhoodChanges() {
 	for {
-		<-c.neighborhoodUpdateSignal
-		c.lsr.onNeighborhoodUpdate()
+		isUpdated := <-c.neighborhoodUpdateSignal
+		c.lsr.sendIntrazoneLSR(isUpdated)
 	}
 }
 

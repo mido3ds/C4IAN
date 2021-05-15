@@ -79,10 +79,7 @@ func (s *SARPController) sendMsgs() {
 
 		// Check if the new table contains new data
 		newTableHash := s.NeighborsTable.GetTableHash()
-		if !bytes.Equal(tableHash, newTableHash) {
-			//log.Println(s.NeighborsTable)
-			s.NeighborhoodUpdateSignal <- true
-		}
+		s.NeighborhoodUpdateSignal <- !bytes.Equal(tableHash, newTableHash)
 		tableHash = newTableHash
 	}
 }
