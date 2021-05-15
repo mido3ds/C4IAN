@@ -6,6 +6,7 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
 type UnicastController struct {
@@ -40,6 +41,10 @@ func (c *UnicastController) listenForNeighborhoodChanges() {
 		isUpdated := <-c.neighborhoodUpdateSignal
 		c.lsr.sendIntrazoneLSR(isUpdated)
 	}
+}
+
+func (c *UnicastController) OnZoneChange(newZoneID ZoneID) {
+	c.lsr.OnZoneChange(newZoneID)
 }
 
 func (c *UnicastController) Close() {

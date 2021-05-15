@@ -23,7 +23,15 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 		dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
 		if cached {
 			zid = MyZIDHeader(dstZoneID)
-			nextHopMac, _ = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+			var reachable bool
+			log.Println("Sending a msg to: ", dstIP, " in zone: ", dstZoneID)
+			nextHopMac, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+			if !reachable {
+				// If dst zone is cached but unreachable, it may have moved to a reachable zone -> rediscover
+				f.dzdController.FindDstZone(dstIP)
+				f.dzdController.BufferPacket(dstIP, packet, f.SendUnicast)
+				return
+			}
 		} else {
 			// if dst zone isn't cached, search for it
 			// and buffer this msg to be sent when dst zone response arrive

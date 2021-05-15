@@ -58,7 +58,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
-	topology := NewTopology()
+	topology := NewTopology(ip)
 	timers := NewTimersQueue()
 
 	log.Println("ZLen =", zlen, ", Zone Max Area =", ZLenToAreaKMs(zlen), "km^2")
@@ -93,6 +93,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
 
+	zidAgent.AddZoneChangeCallback(unicCont.OnZoneChange)
 	dzdCont.SetGetNextHopCallback(forwarder.GetUnicastNextHop)
 
 	return &Router{

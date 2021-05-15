@@ -3,6 +3,7 @@ package tables
 import (
 	"fmt"
 	"log"
+	"net"
 	"sync"
 
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
@@ -14,8 +15,9 @@ type Topology struct {
 	lock sync.RWMutex
 }
 
-func NewTopology() *Topology {
+func NewTopology(myIP net.IP) *Topology {
 	g := goraph.NewGraph()
+	g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64)})
 	return &Topology{g: g}
 }
 
@@ -47,6 +49,11 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 		edges = append(edges, &myEdge{from, vertex.id, weight})
 	}
 	return
+}
+
+func (t *Topology) Clear(myIP net.IP) {
+	t.g = goraph.NewGraph()
+	t.g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64)})
 }
 
 func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {

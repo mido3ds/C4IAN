@@ -8,9 +8,10 @@ import (
 )
 
 type ZoneIDAgent struct {
-	conn      *net.UnixConn
-	zlen      byte
-	locSocket string
+	conn                *net.UnixConn
+	zlen                byte
+	locSocket           string
+	zoneChangeCallbacks []func(ZoneID)
 }
 
 func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
@@ -40,9 +41,10 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 	myZoneMutex.Unlock()
 
 	return &ZoneIDAgent{
-		conn:      l,
-		zlen:      zlen,
-		locSocket: locSocket,
+		conn:                l,
+		zlen:                zlen,
+		locSocket:           locSocket,
+		zoneChangeCallbacks: make([]func(ZoneID), 0),
 	}, nil
 }
 
@@ -62,6 +64,9 @@ func (a *ZoneIDAgent) Start() {
 		myZoneMutex.Lock()
 		if id != myZone.ID {
 			myZone.ID = id
+			for _, cb := range a.zoneChangeCallbacks {
+				cb(id)
+			}
 			log.Println("New Zone =", &myZone)
 		}
 		myZoneMutex.Unlock()
@@ -71,4 +76,8 @@ func (a *ZoneIDAgent) Start() {
 func (a *ZoneIDAgent) Close() {
 	a.conn.Close()
 	os.RemoveAll(a.locSocket)
+}
+
+func (a *ZoneIDAgent) AddZoneChangeCallback(cb func(ZoneID)) {
+	a.zoneChangeCallbacks = append(a.zoneChangeCallbacks, cb)
 }

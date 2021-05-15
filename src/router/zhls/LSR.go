@@ -45,6 +45,10 @@ func (lsr *LSRController) Start() {
 	go lsr.sendInterzoneLSR()
 }
 
+func (lsr *LSRController) OnZoneChange(newZoneID ZoneID) {
+	lsr.topology.Clear(lsr.myIP)
+}
+
 func (lsr *LSRController) Close() {
 	lsr.zoneFlooder.Close()
 }
@@ -161,7 +165,7 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
 			neighborEntry, exists := lsr.neighborsTable.Get(nextHop.(NodeID))
 			if !exists {
-				log.Println(lsr.neighborsTable)
+				//log.Println(lsr.neighborsTable)
 				log.Panicln("Attempting to make a next hop through a non-neighbor, dst: ", nextHop.(NodeID))
 			}
 			dirtyForwardingTable.Set(dst.(NodeID), neighborEntry.MAC)
