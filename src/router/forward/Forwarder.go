@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
+	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
@@ -26,16 +27,22 @@ type Forwarder struct {
 	dzdController  *DZDController
 
 	// multicast controller callback
-	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool)
+	mcGetMissingEntries func(grpIP net.IP) bool
+	isInMCastGroup      func(grpIP net.IP) bool
 
 	// Unicast controller callbacks
 	updateUnicastForwardingTable func(ft *UniForwardTable)
+
+	// braodcast
+	bcFlooder *GlobalFlooder
 }
 
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable, dzdController *DZDController,
-	mcGetMissingEntries func(grpIP net.IP) (*MultiForwardingEntry, bool),
-	updateUnicastForwardingTable func(ft *UniForwardTable)) (*Forwarder, error) {
+	mcGetMissingEntries func(grpIP net.IP) bool,
+	isInMCastGroup func(grpIP net.IP) bool,
+	updateUnicastForwardingTable func(ft *UniForwardTable),
+	timers *TimersQueue) (*Forwarder, error) {
 	// connect to mac layer for ZID packets
 	zidMacConn, err := NewMACLayerConn(iface, ZIDDataEtherType)
 	if err != nil {
@@ -55,7 +62,8 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	}
 
 	UniForwTable := NewUniForwardTable()
-	MultiForwTable := NewMultiForwardTable()
+	MultiForwTable := NewMultiForwardTable(timers)
+
 	log.Println("initalized forwarder")
 
 	return &Forwarder{
@@ -71,6 +79,8 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 		MultiForwTable:               MultiForwTable,
 		mcGetMissingEntries:          mcGetMissingEntries,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
+		isInMCastGroup:               isInMCastGroup,
+		bcFlooder:                    NewGlobalFlooder(ip, iface, ZIDBroadcastEtherType, msec),
 	}, nil
 }
 
@@ -78,6 +88,7 @@ func (f *Forwarder) Start() {
 	go f.forwardFromIPLayer()
 	go f.forwardZIDFromMACLayer()
 	go f.forwardIPFromMACLayer()
+	go f.forwardBroadcastMessages()
 }
 
 // forwardZIDFromMACLayer continuously receives messages from the interface,
@@ -115,9 +126,10 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			}
 		} else { // i'm a forwarder
 			if valid := IPv4DecrementTTL(ipHdr); !valid {
-				log.Println("ttl < 0, drop packet")
+				log.Println("ttl <= 0, drop packet")
 				continue
 			}
+			IPv4UpdateChecksum(ipHdr)
 
 			// re-encrypt ip hdr
 			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
@@ -187,44 +199,49 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 	for {
 		packet := f.ipMacConn.Read()
+		log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 		// TODO: speed up by goroutine workers
 
 		// decrypt and verify
 		ipHdr := f.msec.Decrypt(packet[:IPv4HeaderLen])
 		ip, valid := UnmarshalIPHeader(ipHdr)
 		if !valid {
+			log.Printf("NOT valid header") // TODO delete
 			continue
 		}
+		log.Printf("valid header") // TODO delete
 
-		if imInMulticastGrp(ip.DestIP) { // i'm destination,
+		if f.isInMCastGroup(ip.DestIP) { // i'm destination,
 			ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
 			ipPacket := append(ipHdr, ipPayload...)
 
 			// receive message by injecting it in loopback
 			err := f.ipConn.Write(ipPacket)
+			log.Println("recieved and destination") // TODO remove this
 			if err != nil {
 				log.Panic("failed to write to lo interface: ", err)
 			}
+		} else { // TODO remove
+			log.Println("recieved but not destination")
 		}
 
 		if valid := IPv4DecrementTTL(ipHdr); !valid {
-			log.Println("ttl < 0, drop packet")
+			log.Println("ttl <= 0, drop packet")
 			continue
 		}
-
-		// re-encrypt ip hdr
-		copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+		IPv4UpdateChecksum(ipHdr)
 
 		// even if im destination, i may forward it
-		es, ok := f.MultiForwTable.Get(ip.DestIP)
-		if !ok {
-			// TODO: call controller
-			return
-		}
+		es, exist := f.MultiForwTable.Get(ip.DestIP)
 
-		// write to device driver
-		for i := 0; i < len(es.NextHopMACs); i++ {
-			f.ipMacConn.Write(packet, es.NextHopMACs[i])
+		if exist {
+			// re-encrypt ip hdr
+			copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+			// write to device driver
+			for item := range es.Items.Iter() {
+				log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
+				f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
+			}
 		}
 	}
 }
@@ -242,25 +259,68 @@ func (f *Forwarder) forwardFromIPLayer() {
 		// TODO: speed up by fanout netfilter feature
 
 		ip, valid := UnmarshalIPHeader(packet)
-		if !valid {
-			log.Panic("ip header must have been valid from ip layer!")
-		}
 
-		if imDestination(f.ip, ip.DestIP) {
+		if !valid {
+			log.Println("ip6 is not supported, drop packet")
+			p.SetVerdict(netfilter.NF_DROP)
+		} else if imDestination(f.ip, ip.DestIP) || f.isInMCastGroup(ip.DestIP) {
 			p.SetVerdict(netfilter.NF_ACCEPT)
 		} else { // to out
-			if ip.DestIP.IsGlobalUnicast() {
-				go f.SendUnicast(packet, ip.DestIP)
-			} else if ip.DestIP.IsMulticast() {
-				go f.sendMulticast(packet, ip.DestIP)
-			} else {
-				go f.sendBroadcast(packet)
-			}
-
 			// sender shall know the papcket is sent
 			p.SetVerdict(netfilter.NF_DROP)
+
+			// reset ttl if ip layer, weirdly, gave low ttl
+			// doesn't work for traceroute
+			IPv4ResetTTL(packet)
+			IPv4UpdateChecksum(packet)
+
+			switch iptype := GetIPAddrType(ip.DestIP); iptype {
+			case UnicastIPAddr:
+				go f.SendUnicast(packet, ip.DestIP)
+			case MulticastIPAddr:
+				go f.SendMulticast(packet, ip.DestIP)
+			case BroadcastIPAddr:
+				go f.SendBroadcast(packet)
+			default:
+				log.Panic("got invalid ip address from ip layer")
+			}
 		}
 	}
+}
+
+func (f *Forwarder) forwardBroadcastMessages() {
+	f.bcFlooder.ListenForFloodedMsgs(f.onReceiveBroadcastMessage)
+}
+
+func (f *Forwarder) onReceiveBroadcastMessage(encryptedPacket []byte) []byte {
+	zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
+	zid, ok := UnmarshalZIDHeader(zidhdr)
+	if !ok {
+		// invalid zid header, stop here
+		return nil
+	}
+
+	iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+	ip, ok := UnmarshalIPHeader(iphdr)
+	if !ok {
+		// invalid ip header, stop here
+		return nil
+	}
+
+	r1 := BroadcastRadius(ip.DestIP)
+	r2 := MyZone().ID.DistTo(zid.SrcZID)
+	if r2 > r1 {
+		// out of zone broadcast, stop here
+		return nil
+	}
+
+	// inject it into my ip layer
+	payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
+	IPv4SetDest(iphdr, f.ip)
+	f.ipConn.Write(append(iphdr, payload...))
+
+	// continue flooding
+	return encryptedPacket
 }
 
 func (f *Forwarder) Close() {

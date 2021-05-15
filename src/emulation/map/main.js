@@ -13,7 +13,9 @@ import { Draw, Translate, Select } from "ol/interaction"
 import { getCenter as getExtentCenter } from 'ol/extent'
 import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer"
 import { METERS_PER_UNIT } from 'ol/proj/Units'
-import Overlay from 'ol/Overlay';
+import Overlay from 'ol/Overlay'
+import { shiftKeyOnly } from "ol/events/condition"
+import ExtentInteraction from "ol/interaction/Extent";
 
 let prefix = ''
 let mode = ''
@@ -91,11 +93,23 @@ function updateViewLabels() {
 view.on('change', updateViewLabels)
 function updateView() {
   view.setZoom(bestZoom(getZLen()))
-  view.setMaxZoom(getMaxZoom(getZLen()))
-  view.setMinZoom(getMinZoom(getZLen()))
+  if (document.getElementById('zoomBoundry').checked) {
+    view.setMaxZoom(getMaxZoom(getZLen()))
+    view.setMinZoom(getMinZoom(getZLen()))
+  }
   updateViewLabels()
 }
 updateView()
+
+document.getElementById('zoomBoundry').addEventListener('change', () => {
+  if (document.getElementById('zoomBoundry').checked) {
+    view.setMaxZoom(getMaxZoom(getZLen()))
+    view.setMinZoom(getMinZoom(getZLen()))
+  } else {
+    view.setMaxZoom(17)
+    view.setMinZoom(.5)
+  }
+})
 
 document.getElementById('lonlatBtn').addEventListener('click', () => {
   const lon = document.getElementById('lonInput').value
@@ -140,6 +154,9 @@ const vector = new VectorLayer({
 })
 
 let select = new Select({
+  filter: (f) => {
+    return f.getId() !== undefined
+  },
   style: (f) => [
     new Style({
       stroke: new Stroke({
@@ -452,20 +469,10 @@ document.getElementById('range').addEventListener('change', () => {
   })
 })
 
-document.getElementById('reset').addEventListener('click', () => {
-  source.clear()
-  numUnits = 1
-  numCmds = 1
-  document.getElementById('zlen').value = 16
-  onZlenChanged()
-  view.setZoom(bestZoom(16))
-  view.animate({ center: START_CENTER })
-  updateViewLabels()
-})
-
 function onSendMsg(socket) {
   if (selectedFeature) {
-    socket.send(JSON.stringify(featureToJSON(selectedFeature)))
+    const json = { type: 'setNodePosition', ...featureToJSON(selectedFeature) }
+    socket.send(JSON.stringify(json))
   }
 }
 
@@ -485,11 +492,31 @@ function onReceiveMsg(msg) {
   }
 }
 
-const cnctBtn = document.getElementById('connect')
+let minVel = 10
+let maxVel = 30
+let aggregation = 0.9
+
 let socket = null
-let inter = null
+let mobStarted = false
+let extent = null
+
+const mobBtn = document.getElementById('startMobility')
+mobBtn.addEventListener('click', () => {
+  const type = 'setMobility'
+  if (mobStarted) {
+    mobBtn.textContent = 'Start'
+    mobStarted = false
+    socket.send(JSON.stringify({ type, action: 'stop' }))
+  } else {
+    mobBtn.textContent = 'Stop'
+    socket.send(JSON.stringify({ type, action: 'start', aggregation, minVel, maxVel, extent }))
+    mobStarted = true
+  }
+})
 
 function isOpen(ws) { return ws && ws.readyState === ws.OPEN }
+
+const cnctBtn = document.getElementById('connect')
 
 function disconnect() {
   console.log("disconnecting")
@@ -505,8 +532,17 @@ function disconnect() {
   document.getElementById('add-cmd').disabled = false
   document.getElementById('delete').disabled = false
   firstReceive = true
+
+  mobBtn.textContent = 'Start'
+  mobStarted = false
+  document.getElementById('mob-fieldset').disabled = true
+  document.getElementById('range').disabled = false
+
+  map.removeInteraction(extentInter)
+  document.getElementById('extentTip').className = 'hidden'
 }
 
+let inter = null
 function connect() {
   const UPDATE_RATE = 1 / 15.0 * 1000 // 15fps
 
@@ -532,6 +568,11 @@ function connect() {
     document.getElementById('delete').disabled = true
     document.getElementById('move').checked = true
     onActionChange()
+    document.getElementById('mob-fieldset').disabled = false
+    document.getElementById('range').disabled = true
+
+    map.addInteraction(extentInter)
+    document.getElementById('extentTip').className = ''
   }
   socket.onerror = disconnect
   socket.onmessage = onReceiveMsg
@@ -544,3 +585,81 @@ cnctBtn.addEventListener('click', () => {
     connect()
   }
 })
+
+document.getElementById('reset').addEventListener('click', () => {
+  disconnect()
+  source.clear()
+  numUnits = 1
+  numCmds = 1
+  extent = null
+  document.getElementById('zlen').value = 16
+  onZlenChanged()
+  view.setZoom(bestZoom(16))
+  view.animate({ center: START_CENTER })
+  updateViewLabels()
+})
+
+function onMobChange() {
+  if (mobStarted) {
+    socket.send(JSON.stringify({ type: 'setMobility', action: 'change', aggregation, minVel, maxVel, extent }))
+  }
+}
+
+const upInput = document.getElementById('minVelocity')
+const downInput = document.getElementById('maxVelocity')
+function onVelocityChanged() {
+  const v1 = parseFloat(upInput.value)
+  const v2 = parseFloat(downInput.value)
+
+  maxVel = v1 > v2 ? v1 : v2
+  document.getElementById('maxVelocityText').textContent = maxVel
+
+  minVel = v1 < v2 ? v1 : v2
+  document.getElementById('minVelocityText').textContent = minVel
+
+  onMobChange()
+}
+
+upInput.addEventListener('input', onVelocityChanged)
+downInput.addEventListener('input', onVelocityChanged)
+
+addEventListener('input', e => {
+  let _t = e.target;
+  _t.parentNode.style.setProperty(`--${_t.id}`, +_t.value)
+}, false);
+
+document.getElementById('aggregInput').addEventListener('input', () => {
+  aggregation = document.getElementById('aggregInput').value / 100
+  document.getElementById('aggregText').textContent = aggregation.toFixed(2)
+  onMobChange()
+})
+
+const extentInter = new ExtentInteraction({
+  condition: shiftKeyOnly,
+  boxStyle: (f) => [
+    new Style({
+      stroke: new Stroke({
+        width: 2,
+        color: [0, 0, 0, 1],
+      }),
+      fill: new Fill({
+        color: [255, 255, 255, .1],
+      }),
+    })
+  ]
+});
+
+extentInter.on("extentchanged", (e) => {
+  if (e.extent) {
+    const [x1, y2, x2, y1] = e.extent
+    const [lon1, lat1] = transform([x1, y1], 'EPSG:3857', 'EPSG:4326')
+    const [lon2, lat2] = transform([x2, y2], 'EPSG:3857', 'EPSG:4326')
+    extent = {
+      lon1, lat1,
+      lon2, lat2,
+    }
+    onMobChange()
+  } else {
+    extent = null
+  }
+});

@@ -27,15 +27,8 @@ type LSRController struct {
 }
 
 func newLSR(iface *net.Interface, msec *MSecLayer, myIP net.IP, neighborsTable *NeighborsTable, t *Topology) *LSRController {
-	zoneFlooder, err := NewZoneFlooder(iface, myIP, msec)
-	if err != nil {
-		log.Panic("failed to initiate LSR global flooder, err: ", err)
-	}
-
-	globalFlooder, err := NewGlobalFlooder(myIP, iface, InterzoneLSREtherType, msec)
-	if err != nil {
-		log.Panic("failed to initiate LSR global flooder, err: ", err)
-	}
+	zoneFlooder := NewZoneFlooder(iface, myIP, msec)
+	globalFlooder := NewGlobalFlooder(myIP, iface, InterzoneLSREtherType, msec)
 
 	return &LSRController{
 		myIP:           myIP,
@@ -96,7 +89,7 @@ func (lsr *LSRController) handleIntrazoneLSRPacket(srcIP net.IP, payload []byte)
 	lsr.dirtyTopology = true
 }
 
-func (lsr *LSRController) handleInterzoneLSRPacket(payload []byte) ([]byte, bool) {
+func (lsr *LSRController) handleInterzoneLSRPacket(payload []byte) []byte {
 	zidHeader, valid := UnmarshalZIDHeader(payload[:ZIDHeaderLen])
 	if !valid {
 		log.Panicln("Corrupted ZID header in interzone LSR packet received")
@@ -113,7 +106,7 @@ func (lsr *LSRController) handleInterzoneLSRPacket(payload []byte) ([]byte, bool
 
 	lsr.topology.Update(ToNodeID(zidHeader.SrcZID), zoneNeighborsTable)
 	lsr.dirtyTopology = true
-	return payload, true
+	return payload
 }
 
 func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable) {

@@ -24,6 +24,7 @@ type Router struct {
 
 	msec      *MSecLayer
 	forwarder *Forwarder
+	timers    *TimersQueue
 
 	// controllers
 	zidAgent *ZoneIDAgent
@@ -58,6 +59,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 	msec := NewMSecLayer(passphrase)
 
 	topology := NewTopology()
+	timers := NewTimersQueue()
 
 	log.Println("ZLen =", zlen, ", Zone Max Area =", ZLenToAreaKMs(zlen), "km^2")
 	zidAgent, err := NewZoneIDAgent(locSocket, zlen)
@@ -75,7 +77,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	multCont, err := NewMulticastController(iface, ip, iface.HardwareAddr, msec, mgrpFilePath)
+	multCont, err := NewMulticastController(iface, ip, iface.HardwareAddr, msec, mgrpFilePath, timers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -85,7 +87,8 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize dzd controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, dzdCont, multCont.GetMissingEntries, unicCont.UpdateUnicastForwardingTable)
+	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, dzdCont, multCont.GetMissingEntries,
+		multCont.IsDest, unicCont.UpdateUnicastForwardingTable, timers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
@@ -98,6 +101,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		ip:        ip,
 		zlen:      zlen,
 		forwarder: forwarder,
+		timers:    timers,
 		zidAgent:  zidAgent,
 		unicCont:  unicCont,
 		multCont:  multCont,
@@ -107,6 +111,8 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 }
 
 func (r *Router) Start() {
+	go r.timers.Start()
+
 	// zid agent
 	go r.zidAgent.Start()
 

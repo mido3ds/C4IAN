@@ -9,24 +9,27 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
-type JoinReply struct {
+const costSize = 16
+
+type joinReply struct {
 	SeqNo    uint64
 	DestIP   net.IP
 	GrpIP    net.IP
 	PrevHop  net.HardwareAddr
 	SrcIPs   []net.IP
 	NextHops []net.HardwareAddr
+	Cost     uint16
 }
 
-func (jr *JoinReply) MarshalBinary() []byte {
+func (jr *joinReply) marshalBinary() []byte {
 	extraBytes := 4
 	seqNoSize := 8
 
 	if len(jr.SrcIPs) != len(jr.NextHops) {
-		log.Panic("Join query SrcIPs should have the same length as NextHops")
+		log.Panic("JoinReply SrcIPs should have the same length as NextHops, " + jr.String()) // TODO remove
 	}
 
-	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops) + costSize
 	payload := make([]byte, totalSize+extraBytes)
 	// 0:1 => number of NextHops & SrcIPs
 	payload[0] = byte(uint16(len(jr.NextHops)) >> bitsInByte)
@@ -49,7 +52,7 @@ func (jr *JoinReply) MarshalBinary() []byte {
 	}
 
 	for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-		payload[start] = byte(hwAddrToUInt64(jr.PrevHop) >> shift)
+		payload[start] = byte(HwAddrToUInt64(jr.PrevHop) >> shift)
 		start++
 	}
 
@@ -62,9 +65,14 @@ func (jr *JoinReply) MarshalBinary() []byte {
 
 	for i := 0; i < len(jr.NextHops); i++ {
 		for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-			payload[start] = byte(hwAddrToUInt64(jr.NextHops[i]) >> shift)
+			payload[start] = byte(HwAddrToUInt64(jr.NextHops[i]) >> shift)
 			start++
 		}
+	}
+
+	for shift := costSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		payload[start] = byte(jr.Cost >> shift)
+		start++
 	}
 
 	// add checksum
@@ -75,18 +83,18 @@ func (jr *JoinReply) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// UnmarshalJoinReply returns false if packet is invalid
-func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
+// unmarshalJoinReply returns false if packet is invalid
+func unmarshalJoinReply(b []byte) (*joinReply, bool) {
 	extraBytes := 4
 	seqNoSize := 8
 
-	var jr JoinReply
+	var jr joinReply
 
 	count := uint16(b[0])<<bitsInByte | uint16(b[1])
 	jr.SrcIPs = make([]net.IP, count)
 	jr.NextHops = make([]net.HardwareAddr, count)
 
-	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops)
+	totalSize := seqNoSize + net.IPv4len + net.IPv4len + hwAddrLen + net.IPv4len*len(jr.SrcIPs) + hwAddrLen*len(jr.NextHops) + costSize
 
 	// extract checksum
 	csum := uint16(b[2])<<bitsInByte | uint16(b[3])
@@ -120,6 +128,11 @@ func UnmarshalJoinReply(b []byte) (*JoinReply, bool) {
 		start += hwAddrLen
 	}
 
+	for shift := costSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
+		jr.Cost |= (uint16(b[start]) << shift)
+		start++
+	}
+
 	return &jr, true
 }
 
@@ -145,6 +158,6 @@ func prettyMacIPs(ips []net.HardwareAddr) string {
 	return s + "}"
 }
 
-func (j *JoinReply) String() string {
-	return fmt.Sprintf("JoinReply { SeqNo: %d, SrcIPs: %v, GrpIP: %v, NextHops: %v }", j.SeqNo, prettyIPs(j.SrcIPs), j.GrpIP.String(), prettyMacIPs(j.NextHops))
+func (j *joinReply) String() string {
+	return fmt.Sprintf("JoinReply { SeqNo: %d, DestIP: %#v, GrpIP: %v, SrcIPs: %v, NextHops: %v, Cost:%d }", j.SeqNo, j.DestIP.String(), j.GrpIP.String(), prettyIPs(j.SrcIPs), prettyMacIPs(j.NextHops), j.Cost)
 }

@@ -5,15 +5,17 @@ import threading
 import time
 from typing import List, NamedTuple
 
-from mininet.log import setLogLevel
+from mininet.log import setLogLevel, debug
 from mininet.util import ipAdd
 from mn_wifi.cli import CLI
 from mn_wifi.link import adhoc, wmediumd
 from mn_wifi.net import Mininet_wifi
 from mn_wifi.wmediumdConnector import interference
+from numpy import ERR_CALL
 from simple_websocket_server import WebSocket, WebSocketServer
 
 import location as loc
+import pymobility
 
 WIRELESS_CONF = {
     'cls': adhoc,
@@ -26,7 +28,11 @@ PROPAGATION_MODEL = {
     'model': 'logDistance',
     'exp': 4,
 }
+
 REFRESH_PERIOD = 1 / 15  # 15ms
+MOB_STEP_PERIOD = 1 / 30  # 30ms
+
+running = True
 
 
 class Position(NamedTuple):
@@ -42,6 +48,7 @@ class Position(NamedTuple):
 
 
 class Node(NamedTuple):
+    i: int
     name: str
     position: Position
 
@@ -62,9 +69,9 @@ def read_topo(path_to_json: str) -> List[Node]:
         topo = json.load(f)
 
     return [
-        Node(node['name'],
+        Node(i, node['name'],
              Position(node['lon'], node['lat']).to_mn())
-        for node in topo['nodes']
+        for i, node in enumerate(topo['nodes'])
     ], topo['range'], topo['zlen']
 
 
@@ -73,10 +80,6 @@ def parse_args():
         description='Virtualize a topology using mininet-wifi.'
     )
     parser.add_argument('topology', help='Path to .topo file to load')
-
-    parser.add_argument(
-        '--plot', help='Show plot of the topology', action='store_true'
-    )
 
     parser.add_argument(
         '-d', '--debug', help='Print debug level logs', action='store_true'
@@ -88,40 +91,77 @@ def parse_args():
     return parser.parse_args()
 
 
-def nodes_locations_thread(stations, nodes):
-    while True:
+def locations_thread():
+    print('locations', end=' ')
+    while running:
         for node in nodes:
             sock = node.get_sock()
             x, y, _ = stations[node.name].getxyz()
             lat, lon = loc.to_gps_coords(x, y)
             loc.send_location(sock, lon, lat)
         time.sleep(REFRESH_PERIOD)
+    print('locations', end=' ')
 
 
-def map_locations_thread(stations, rng, zlen, socket):
-    print('websocket-client has connected')
-    try:
-        while True:
-            nodes = []
-            for name, station in stations.items():
-                x, y, _ = station.getxyz()
-                lat, lon = loc.to_gps_coords(x, y)
-                nodes.append({'name': name, 'lon': lon, 'lat': lat})
-            socket.send_message(
-                json.dumps({'nodes': nodes, 'zlen': zlen, 'range': rng})
-            )
-            time.sleep(REFRESH_PERIOD)
-    except:
-        pass
+def get_node_by_name(name) -> Node:
+    for node in nodes:
+        if node.name == name:
+            return node
+    raise Exception(f'node with name = {name} is not found')
+
+
+def mobility_thread():
+    print('mobility', end=' ')
+
+    old_mob_enabled = mob_enabled
+    while True:
+        mob_signal.wait()
+        mob_signal.clear()
+        if not mob_enabled:
+            debug('mobility is disabled\n')
+            old_mob_enabled = mob_enabled
+            continue
+
+        if old_mob_enabled != mob_enabled:
+            debug('mobility is enabled\n')
+            old_mob_enabled = mob_enabled
+
+        while not mob_signal.is_set():
+            positions = next(mob_generator)
+            for name, sta in stations.items():
+                if not running:
+                    print('mobility', end=' ')
+                    return
+                if mob_signal.is_set() or not mob_enabled:
+                    break
+
+                i = get_node_by_name(name).i
+                x, y = positions[i][0], positions[i][1]
+                dx, dy = mob_offset
+                sta.setPosition(str(Position(y+dy, x+dx)))
+            time.sleep(MOB_STEP_PERIOD)
 
 
 args = parse_args()
 nodes, rng, zlen = read_topo(args.topology)
 
+
+def nodes_coords(offset):
+    names = {node.name: i for i, node in enumerate(nodes)}
+    xs = [None] * len(names)
+    ys = [None] * len(names)
+    dx, dy = offset
+    for name, i in names.items():
+        x, y, _ = stations[name].getxyz()
+        xs[i] = x - dx
+        ys[i] = y - dy
+    return xs, ys
+
+
 setLogLevel('debug' if args.debug else 'info')
 
 print("*** Creating mn-wifi net")
-net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference, plot=args.plot)
+net = Mininet_wifi(link=wmediumd, wmediumd_mode=interference)
 
 print("*** Creating nodes")
 stations = {}
@@ -144,46 +184,107 @@ for node in nodes:
     )
     stations[node.name].setIP(node.get_ip(), intf=intf)
 
-if args.plot:
-    print('*** Plotting topology')
-    net.plotGraph(max_x=500, max_y=500)
+# mobility variables
+mob_signal = threading.Event()  # set to signal mob settings changed
+mob_enabled = False
+mob_generator = None
+mob_extent = None
+mob_offset = (0, 0)
+
+
+def extent_to_dimensions(extent):
+    if extent:
+        x1, y1 = loc.to_mn_coords(extent['lon1'], extent['lat1'])
+        x2, y2 = loc.to_mn_coords(extent['lon2'], extent['lat2'])
+        return (abs(y1-y2), abs(x1-x2))
+    return (40030173.59204114, 40030173.59204114)
+
+
+def extent_to_offset(extent):
+    if extent:
+        return loc.to_mn_coords(extent['lat2'], extent['lon1'])
+    return (0, 0)
 
 
 class WSServer(WebSocket):
     def handle(self):
         data = json.loads(self.data)
 
-        pos = Position(data['lon'], data['lat']).to_mn()
-        station = stations[data['name']]
+        if data['type'] == 'setNodePosition':
+            pos = Position(data['lon'], data['lat']).to_mn()
+            station = stations[data['name']]
 
-        station.setPosition(str(pos))
+            station.setPosition(str(pos))
+        elif data['type'] == 'setMobility':
+            global mob_signal, mob_enabled, mob_generator, mob_offset, mob_extent
+
+            if data['action'] in ('start', 'change'):
+                mob_extent = data['extent']
+                mob_offset = extent_to_offset(mob_extent)
+                mob_generator = pymobility.tvc(
+                    coords=nodes_coords(mob_offset),
+                    dimensions=extent_to_dimensions(mob_extent),
+                    velocity=(
+                        loc.kmhour_to_msec(data['minVel']),
+                        loc.kmhour_to_msec(data['maxVel'])
+                    ),
+                    aggregation=[data['aggregation']],
+                    epoch=[1],
+                )
+
+                mob_enabled = True
+            elif data['action'] == 'stop':
+                mob_enabled = False
+
+            mob_signal.set()
+
+    def _send_thread(self):
+        try:
+            while running:
+                nodes = []
+                for name, station in stations.items():
+                    x, y, _ = station.getxyz()
+                    lat, lon = loc.to_gps_coords(x, y)
+                    nodes.append({'name': name, 'lon': lon, 'lat': lat})
+                self.send_message(
+                    json.dumps({'nodes': nodes, 'zlen': zlen, 'range': rng})
+                )
+                time.sleep(REFRESH_PERIOD)
+        except:
+            pass
 
     def connected(self):
-        threading.Thread(target=map_locations_thread,
-                         args=(stations, rng, zlen, self), daemon=True).start()
+        debug('websocket-client has connected\n')
+        threading.Thread(target=self._send_thread, daemon=True).start()
 
     def handle_close(self):
-        print('websocket-client has closed')
+        debug('websocket-client has closed\n')
+        global mob_enabled, mob_signal
+        mob_enabled = False
+        mob_signal.set()
 
+    @classmethod
+    def serve(cls):
+        print('server', end=' ')
+        WebSocketServer('', args.port, WSServer).serve_forever()
 
-def serve(port):
-    server = WebSocketServer('', port, WSServer)
-    server.serve_forever()
-
-
-print('*** Starting websocket server')
-threading.Thread(target=serve, args=(args.port,), daemon=True).start()
 
 print("*** Starting network")
 net.build()
 print()
 
-print('*** Starting to send nodes locations')
-threading.Thread(target=nodes_locations_thread, args=(
-    stations, nodes), daemon=True).start()
+print('*** Starting threads')
+for func in (WSServer.serve, locations_thread, mobility_thread):
+    threading.Thread(target=func, daemon=True).start()
+print()
 
 print("*** Running CLI")
 CLI(net)
+
+print('*** Stopping threads')
+running = False
+time.sleep(.5)  # wait for threads
+print()
 
 print("*** Stopping network")
 net.stop()

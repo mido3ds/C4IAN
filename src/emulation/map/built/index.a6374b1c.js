@@ -165,6 +165,9 @@ var _olLayer = require("ol/layer");
 var _olProjUnits = require('ol/proj/Units');
 var _olOverlay = require('ol/Overlay');
 var _olOverlayDefault = _parcelHelpers.interopDefault(_olOverlay);
+var _olEventsCondition = require("ol/events/condition");
+var _olInteractionExtent = require("ol/interaction/Extent");
+var _olInteractionExtentDefault = _parcelHelpers.interopDefault(_olInteractionExtent);
 let prefix = '';
 let mode = '';
 let numUnits = 1;
@@ -245,11 +248,22 @@ function updateViewLabels() {
 view.on('change', updateViewLabels);
 function updateView() {
   view.setZoom(bestZoom(getZLen()));
-  view.setMaxZoom(getMaxZoom(getZLen()));
-  view.setMinZoom(getMinZoom(getZLen()));
+  if (document.getElementById('zoomBoundry').checked) {
+    view.setMaxZoom(getMaxZoom(getZLen()));
+    view.setMinZoom(getMinZoom(getZLen()));
+  }
   updateViewLabels();
 }
 updateView();
+document.getElementById('zoomBoundry').addEventListener('change', () => {
+  if (document.getElementById('zoomBoundry').checked) {
+    view.setMaxZoom(getMaxZoom(getZLen()));
+    view.setMinZoom(getMinZoom(getZLen()));
+  } else {
+    view.setMaxZoom(17);
+    view.setMinZoom(.5);
+  }
+});
 document.getElementById('lonlatBtn').addEventListener('click', () => {
   const lon = document.getElementById('lonInput').value;
   const lat = document.getElementById('latInput').value;
@@ -294,6 +308,9 @@ const vector = new _olLayer.Vector({
   })]
 });
 let select = new _olInteraction.Select({
+  filter: f => {
+    return f.getId() !== undefined;
+  },
   style: f => [new _olStyle.Style({
     stroke: new _olStyleStrokeDefault.default({
       width: 2,
@@ -578,21 +595,13 @@ document.getElementById('range').addEventListener('change', () => {
     drawCircleInMeter(center, range, name);
   });
 });
-document.getElementById('reset').addEventListener('click', () => {
-  source.clear();
-  numUnits = 1;
-  numCmds = 1;
-  document.getElementById('zlen').value = 16;
-  onZlenChanged();
-  view.setZoom(bestZoom(16));
-  view.animate({
-    center: START_CENTER
-  });
-  updateViewLabels();
-});
 function onSendMsg(socket) {
   if (selectedFeature) {
-    socket.send(JSON.stringify(featureToJSON(selectedFeature)));
+    const json = {
+      type: 'setNodePosition',
+      ...featureToJSON(selectedFeature)
+    };
+    socket.send(JSON.stringify(json));
   }
 }
 let firstReceive = true;
@@ -608,12 +617,39 @@ function onReceiveMsg(msg) {
     importFromMininet(msg.data, false);
   }
 }
-const cnctBtn = document.getElementById('connect');
+let minVel = 10;
+let maxVel = 30;
+let aggregation = 0.9;
 let socket = null;
-let inter = null;
+let mobStarted = false;
+let extent = null;
+const mobBtn = document.getElementById('startMobility');
+mobBtn.addEventListener('click', () => {
+  const type = 'setMobility';
+  if (mobStarted) {
+    mobBtn.textContent = 'Start';
+    mobStarted = false;
+    socket.send(JSON.stringify({
+      type,
+      action: 'stop'
+    }));
+  } else {
+    mobBtn.textContent = 'Stop';
+    socket.send(JSON.stringify({
+      type,
+      action: 'start',
+      aggregation,
+      minVel,
+      maxVel,
+      extent
+    }));
+    mobStarted = true;
+  }
+});
 function isOpen(ws) {
   return ws && ws.readyState === ws.OPEN;
 }
+const cnctBtn = document.getElementById('connect');
 function disconnect() {
   console.log("disconnecting");
   cnctBtn.innerHTML = 'Connect';
@@ -626,7 +662,14 @@ function disconnect() {
   document.getElementById('add-cmd').disabled = false;
   document.getElementById('delete').disabled = false;
   firstReceive = true;
+  mobBtn.textContent = 'Start';
+  mobStarted = false;
+  document.getElementById('mob-fieldset').disabled = true;
+  document.getElementById('range').disabled = false;
+  map.removeInteraction(extentInter);
+  document.getElementById('extentTip').className = 'hidden';
 }
+let inter = null;
 function connect() {
   const UPDATE_RATE = 1 / 15.0 * 1000;
   // 15fps
@@ -650,6 +693,10 @@ function connect() {
     document.getElementById('delete').disabled = true;
     document.getElementById('move').checked = true;
     onActionChange();
+    document.getElementById('mob-fieldset').disabled = false;
+    document.getElementById('range').disabled = true;
+    map.addInteraction(extentInter);
+    document.getElementById('extentTip').className = '';
   };
   socket.onerror = disconnect;
   socket.onmessage = onReceiveMsg;
@@ -661,8 +708,84 @@ cnctBtn.addEventListener('click', () => {
     connect();
   }
 });
+document.getElementById('reset').addEventListener('click', () => {
+  disconnect();
+  source.clear();
+  numUnits = 1;
+  numCmds = 1;
+  extent = null;
+  document.getElementById('zlen').value = 16;
+  onZlenChanged();
+  view.setZoom(bestZoom(16));
+  view.animate({
+    center: START_CENTER
+  });
+  updateViewLabels();
+});
+function onMobChange() {
+  if (mobStarted) {
+    socket.send(JSON.stringify({
+      type: 'setMobility',
+      action: 'change',
+      aggregation,
+      minVel,
+      maxVel,
+      extent
+    }));
+  }
+}
+const upInput = document.getElementById('minVelocity');
+const downInput = document.getElementById('maxVelocity');
+function onVelocityChanged() {
+  const v1 = parseFloat(upInput.value);
+  const v2 = parseFloat(downInput.value);
+  maxVel = v1 > v2 ? v1 : v2;
+  document.getElementById('maxVelocityText').textContent = maxVel;
+  minVel = v1 < v2 ? v1 : v2;
+  document.getElementById('minVelocityText').textContent = minVel;
+  onMobChange();
+}
+upInput.addEventListener('input', onVelocityChanged);
+downInput.addEventListener('input', onVelocityChanged);
+addEventListener('input', e => {
+  let _t = e.target;
+  _t.parentNode.style.setProperty(`--${_t.id}`, +_t.value);
+}, false);
+document.getElementById('aggregInput').addEventListener('input', () => {
+  aggregation = document.getElementById('aggregInput').value / 100;
+  document.getElementById('aggregText').textContent = aggregation.toFixed(2);
+  onMobChange();
+});
+const extentInter = new _olInteractionExtentDefault.default({
+  condition: _olEventsCondition.shiftKeyOnly,
+  boxStyle: f => [new _olStyle.Style({
+    stroke: new _olStyleStrokeDefault.default({
+      width: 2,
+      color: [0, 0, 0, 1]
+    }),
+    fill: new _olStyle.Fill({
+      color: [255, 255, 255, .1]
+    })
+  })]
+});
+extentInter.on("extentchanged", e => {
+  if (e.extent) {
+    const [x1, y2, x2, y1] = e.extent;
+    const [lon1, lat1] = _olProj.transform([x1, y1], 'EPSG:3857', 'EPSG:4326');
+    const [lon2, lat2] = _olProj.transform([x2, y2], 'EPSG:3857', 'EPSG:4326');
+    extent = {
+      lon1,
+      lat1,
+      lon2,
+      lat2
+    };
+    onMobChange();
+  } else {
+    extent = null;
+  }
+});
 
-},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
+},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU","ol/events/condition":"5PXw5","ol/interaction/Extent":"5ou3q"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 var _CollectionJs = require('../Collection.js');

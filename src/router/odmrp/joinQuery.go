@@ -9,13 +9,13 @@ import (
 )
 
 const (
-	ODMRPDefaultTTL = 100
+	odmrpDefaultTTL = 100
 	ttlSize         = 1
 	bitsInByte      = 8
 	hwAddrLen       = 6
 )
 
-type JoinQuery struct {
+type joinQuery struct {
 	SeqNo   uint64
 	TTL     int8
 	SrcIP   net.IP
@@ -24,7 +24,7 @@ type JoinQuery struct {
 	Dests   []net.IP
 }
 
-func (j *JoinQuery) MarshalBinary() []byte {
+func (j *joinQuery) marshalBinary() []byte {
 	extraBytes := 4
 	seqNoSize := 8
 
@@ -48,7 +48,7 @@ func (j *JoinQuery) MarshalBinary() []byte {
 		start++
 	}
 	for shift := hwAddrLen*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
-		payload[start] = byte(hwAddrToUInt64(j.PrevHop) >> shift)
+		payload[start] = byte(HwAddrToUInt64(j.PrevHop) >> shift)
 		start++
 	}
 	for shift := net.IPv4len*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
@@ -70,15 +70,14 @@ func (j *JoinQuery) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// UnmarshalJoinQuery
-func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
+func unmarshalJoinQuery(b []byte) (*joinQuery, bool) {
 	extraBytes := int64(4)
 	seqNoSize := int64(8)
 	lenOfDests := uint16(b[0])<<bitsInByte | uint16(b[1])
 	destsSize := net.IPv4len * int64(lenOfDests)
 	totalSize := seqNoSize + ttlSize + net.IPv4len + hwAddrLen + net.IPv4len + destsSize
 
-	var jq JoinQuery
+	var jq joinQuery
 	start := extraBytes
 	for shift := seqNoSize*bitsInByte - bitsInByte; shift >= 0; shift -= bitsInByte {
 		jq.SeqNo |= (uint64(b[start]) << shift)
@@ -109,10 +108,6 @@ func UnmarshalJoinQuery(b []byte) (*JoinQuery, bool) {
 	return &jq, true
 }
 
-func (j *JoinQuery) String() string {
-	return fmt.Sprintf("JoinQuery { SeqNo: %d, TTL: %#v, SrcIP: %v, PrevHop: %v, GrpIP: %v }", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String())
-}
-
-func hwAddrToUInt64(a net.HardwareAddr) uint64 {
-	return uint64(a[0])<<40 | uint64(a[1])<<32 | uint64(a[2])<<24 | uint64(a[3])<<16 | uint64(a[4])<<8 | uint64(a[5])
+func (j *joinQuery) String() string {
+	return fmt.Sprintf("JoinQuery { SeqNo: %d, TTL: %#v, SrcIP: %v, PrevHop: %v, GrpIP: %v, Dests: %v }", j.SeqNo, j.TTL, j.SrcIP.String(), j.PrevHop.String(), j.GrpIP.String(), j.Dests)
 }

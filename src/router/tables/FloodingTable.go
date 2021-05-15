@@ -67,7 +67,6 @@ func (f *FloodingTable) String() string {
 	s := "&FloodingTable{"
 	for item := range f.m.Iter() {
 		s += fmt.Sprintf(" (ip=%#v,seq=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*FloodingEntry).seqNumber)
-
 	}
 	s += " }"
 	return s

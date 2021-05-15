@@ -22,5 +22,6 @@ const (
 
 	ZIDDataEtherType = EtherType(0x7031)
 
-	InterzoneLSREtherType = EtherType(0x7032)
+	InterzoneLSREtherType = EtherType(0x8007)
+	ZIDBroadcastEtherType = EtherType(0x7032)
 )

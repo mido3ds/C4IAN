@@ -2,10 +2,10 @@ package forward
 
 import (
 	"bytes"
+	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/ip"
-	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
@@ -43,11 +43,13 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
 }
 
-func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
-	es, ok := f.MultiForwTable.Get(grpIP)
+func (f *Forwarder) SendMulticast(packet []byte, grpIP net.IP) {
+	log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
+	_, ok := f.MultiForwTable.Get(grpIP)
 	if !ok {
-		es, ok = f.mcGetMissingEntries(grpIP)
+		ok = f.mcGetMissingEntries(grpIP)
 		if !ok {
+			log.Println("error")
 			return
 		}
 	}
@@ -59,18 +61,25 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	encryptedPacket := buffer.Bytes()
 
 	// write to device driver
-	for i := 0; i < len(es.NextHopMACs); i++ {
-		f.ipMacConn.Write(encryptedPacket, es.NextHopMACs[i])
+	es, exist := f.MultiForwTable.Get(grpIP)
+	log.Println(f.MultiForwTable.String())
+	if exist {
+		for item := range es.Items.Iter() {
+			log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
+			f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
+		}
 	}
 }
 
-func (f *Forwarder) sendBroadcast(packet []byte) {
+func (f *Forwarder) SendBroadcast(packet []byte) {
+	zid := MyZIDHeader(ZoneID(0))
+
 	// build packet
 	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
+	buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
 	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
 	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
 
-	// write to device driver
-	// TODO: for now ethernet broadcast
-	f.zidMacConn.Write(buffer.Bytes(), BroadcastMACAddr)
+	// flood packet
+	f.bcFlooder.Flood(buffer.Bytes())
 }

@@ -127,3 +127,24 @@ func TestZoneIDToLen(t *testing.T) {
 		t.Log(z1, z2)
 	}
 }
+
+func TestZoneID_DistTo(t *testing.T) {
+	tests := []struct {
+		name string
+		z1   ZoneID
+		z2   ZoneID
+		want uint16
+	}{
+		{"1", gridLocation{1, 1}.toZoneID(), gridLocation{1, 1}.toZoneID(), 0},
+		{"2", gridLocation{1, 1}.toZoneID(), gridLocation{1, 2}.toZoneID(), 1},
+		{"3", gridLocation{2, 1}.toZoneID(), gridLocation{1, 1}.toZoneID(), 1},
+		{"4", gridLocation{0, 0}.toZoneID(), gridLocation{50, 100}.toZoneID(), 150},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.z1.DistTo(tt.z2); got != tt.want {
+				t.Errorf("ZoneID.DistTo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
