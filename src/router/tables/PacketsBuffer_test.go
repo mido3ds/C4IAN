@@ -1,6 +1,7 @@
 package tables
 
 import (
+	"net"
 	"testing"
 	"time"
 
@@ -18,10 +19,12 @@ func BenchmarkBuffer(t *testing.B) {
 	packet3 := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 3}
 	packet4 := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4}
 
-	buffer.AppendPacket(dst1, packet1)
-	buffer.AppendPacket(dst1, packet2)
-	buffer.AppendPacket(dst2, packet3)
-	buffer.AppendPacket(dst2, packet4)
+	var callBack func([]byte, net.IP) 
+
+	buffer.AppendPacket(dst1, packet1, callBack)
+	buffer.AppendPacket(dst1, packet2, callBack)
+	buffer.AppendPacket(dst2, packet3, callBack)
+	buffer.AppendPacket(dst2, packet4, callBack)
 
 	print(buffer.String(), "\n")
 
