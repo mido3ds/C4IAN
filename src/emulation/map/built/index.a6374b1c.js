@@ -162,7 +162,7 @@ var _olStyle = require("ol/style");
 var _olInteraction = require("ol/interaction");
 var _olExtent = require('ol/extent');
 var _olLayer = require("ol/layer");
-var _olProjUnits = require('ol/proj/Units');
+require('ol/proj/Units');
 var _olOverlay = require('ol/Overlay');
 var _olOverlayDefault = _parcelHelpers.interopDefault(_olOverlay);
 var _olEventsCondition = require("ol/events/condition");
@@ -406,13 +406,9 @@ function onZlenChanged() {
 }
 document.getElementById('zlen').addEventListener('change', onZlenChanged);
 function drawCircleInMeter(center, range, name) {
-  let view = map.getView();
-  let projection = view.getProjection();
-  let resolutionAtEquator = view.getResolution();
-  let pointResolution = projection.getPointResolutionFunc()(resolutionAtEquator, center);
-  let resolutionFactor = resolutionAtEquator / pointResolution;
-  range = range / _olProjUnits.METERS_PER_UNIT.m * resolutionFactor;
-  const f = new _olFeatureDefault.default(new _olGeom.Circle(center, getRange()));
+  console.log(range);
+  range /= 2;
+  const f = new _olFeatureDefault.default(new _olGeom.Circle(center, range));
   f.setId(name);
   source.addFeature(f);
 }
@@ -424,7 +420,7 @@ map.on('singleclick', e => {
     } else if (prefix === 'c') {
       name = `${prefix}${numCmds++}`;
     }
-    drawCircleInMeter(e.coordinate, range, name);
+    drawCircleInMeter(e.coordinate, getRange(), name);
   }
 });
 function onActionChange() {
@@ -785,7 +781,7 @@ extentInter.on("extentchanged", e => {
   }
 });
 
-},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU","ol/events/condition":"5PXw5","ol/interaction/Extent":"5ou3q"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
+},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","ol/events/condition":"5PXw5","ol/interaction/Extent":"5ou3q","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 var _CollectionJs = require('../Collection.js');

@@ -261,14 +261,10 @@ function onZlenChanged() {
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
 
 function drawCircleInMeter(center, range, name) {
-  let view = map.getView()
-  let projection = view.getProjection()
-  let resolutionAtEquator = view.getResolution()
-  let pointResolution = projection.getPointResolutionFunc()(resolutionAtEquator, center)
-  let resolutionFactor = resolutionAtEquator / pointResolution
-  range = (range / METERS_PER_UNIT.m) * resolutionFactor
+  console.log(range)
+  range /= 2
 
-  const f = new Feature(new Circle(center, getRange()))
+  const f = new Feature(new Circle(center, range))
   f.setId(name)
   source.addFeature(f)
 }
@@ -282,7 +278,7 @@ map.on('singleclick', (e) => {
       name = `${prefix}${numCmds++}`
     }
 
-    drawCircleInMeter(e.coordinate, range, name)
+    drawCircleInMeter(e.coordinate, getRange(), name)
   }
 })
 
