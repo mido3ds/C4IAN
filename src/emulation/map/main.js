@@ -21,6 +21,7 @@ let prefix = ''
 let mode = ''
 let numUnits = 1
 let numCmds = 1
+let halfRange = true
 
 const START_CENTER = fromLonLat([6.7318473939, 0.3320770836])
 
@@ -261,14 +262,11 @@ function onZlenChanged() {
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
 
 function drawCircleInMeter(center, range, name) {
-  let view = map.getView()
-  let projection = view.getProjection()
-  let resolutionAtEquator = view.getResolution()
-  let pointResolution = projection.getPointResolutionFunc()(resolutionAtEquator, center)
-  let resolutionFactor = resolutionAtEquator / pointResolution
-  range = (range / METERS_PER_UNIT.m) * resolutionFactor
+  if (halfRange) {
+    range /= 2
+  }
 
-  const f = new Feature(new Circle(center, getRange()))
+  const f = new Feature(new Circle(center, range))
   f.setId(name)
   source.addFeature(f)
 }
@@ -282,7 +280,7 @@ map.on('singleclick', (e) => {
       name = `${prefix}${numCmds++}`
     }
 
-    drawCircleInMeter(e.coordinate, range, name)
+    drawCircleInMeter(e.coordinate, getRange(), name)
   }
 })
 
@@ -451,7 +449,7 @@ document.getElementById('file-input').addEventListener('change', () => {
   }
 })
 
-document.getElementById('range').addEventListener('change', () => {
+function onRangeChanged() {
   let range = getRange()
   if (range < 50) {
     document.getElementById('range').value = 50
@@ -459,14 +457,20 @@ document.getElementById('range').addEventListener('change', () => {
     document.getElementById('range').value = 50000
   }
   range = getRange()
-
+  
   source.getFeatures().forEach(f => {
     source.removeFeature(f)
-
+  
     const center = getExtentCenter(f.getGeometry().getExtent())
     const name = f.getId()
     drawCircleInMeter(center, range, name)
   })
+}
+
+document.getElementById('range').addEventListener('change', onRangeChanged)
+document.getElementById('halfRange').addEventListener('change', () => {
+  halfRange = document.getElementById('halfRange').checked
+  onRangeChanged()
 })
 
 function onSendMsg(socket) {
