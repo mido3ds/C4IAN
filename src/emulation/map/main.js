@@ -21,6 +21,7 @@ let prefix = ''
 let mode = ''
 let numUnits = 1
 let numCmds = 1
+let halfRange = true
 
 const START_CENTER = fromLonLat([6.7318473939, 0.3320770836])
 
@@ -261,8 +262,9 @@ function onZlenChanged() {
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
 
 function drawCircleInMeter(center, range, name) {
-  console.log(range)
-  range /= 2
+  if (halfRange) {
+    range /= 2
+  }
 
   const f = new Feature(new Circle(center, range))
   f.setId(name)
@@ -447,7 +449,7 @@ document.getElementById('file-input').addEventListener('change', () => {
   }
 })
 
-document.getElementById('range').addEventListener('change', () => {
+function onRangeChanged() {
   let range = getRange()
   if (range < 50) {
     document.getElementById('range').value = 50
@@ -455,14 +457,20 @@ document.getElementById('range').addEventListener('change', () => {
     document.getElementById('range').value = 50000
   }
   range = getRange()
-
+  
   source.getFeatures().forEach(f => {
     source.removeFeature(f)
-
+  
     const center = getExtentCenter(f.getGeometry().getExtent())
     const name = f.getId()
     drawCircleInMeter(center, range, name)
   })
+}
+
+document.getElementById('range').addEventListener('change', onRangeChanged)
+document.getElementById('halfRange').addEventListener('change', () => {
+  halfRange = document.getElementById('halfRange').checked
+  onRangeChanged()
 })
 
 function onSendMsg(socket) {
