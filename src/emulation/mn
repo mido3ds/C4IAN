@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 import argparse
 import json
+import math
 import threading
 import time
 from typing import List, NamedTuple
 
-from mininet.log import setLogLevel, debug
+from mininet.log import debug, setLogLevel
 from mininet.util import ipAdd
 from mn_wifi.cli import CLI
 from mn_wifi.link import adhoc, wmediumd
@@ -26,13 +27,60 @@ WIRELESS_CONF = {
 }
 PROPAGATION_MODEL = {
     'model': 'logDistance',
-    'exp': 4,
+    'exp': 3
 }
 
 REFRESH_PERIOD = 1 / 15  # 15ms
 MOB_STEP_PERIOD = 1 / 30  # 30ms
+GAIN = 5.0
 
 running = True
+
+
+def log_distance_txpower_to_rng(txpower, freq, gain):
+    ppm_sL = 1
+
+    f = freq * 10 ** 9  # Convert Ghz to Hz
+    c = 299792458.0
+    lambda_ = c / f  # lambda: wavelength (m)
+    denominator = lambda_ ** 2
+    numerator = (4 * math.pi * 1) ** 2 * ppm_sL
+    pl = 10 * math.log10(numerator / denominator)
+
+    txpower = int(txpower)
+    gains = txpower + (gain * 2)
+    ref_d = 1
+    ppm_exp = 3
+    ppm_noise_th = -91
+
+    range = math.pow(10, ((-ppm_noise_th - pl + gains) /
+                          (10 * ppm_exp))) * ref_d
+
+    return range
+
+
+def log_distance_rng_to_txpower(rng, freq, gain):
+    f = freq * 10 ** 9  # Convert Ghz to Hz
+    c = 299792458.0
+    lambda_ = c / f  # lambda: wavelength (m)
+    denominator = lambda_ ** 2
+    ppm_sL = 1
+    numerator = (4 * math.pi) ** 2 * ppm_sL
+    pl = 10 * math.log10(numerator / denominator)
+
+    ppm_exp = 3
+    ppm_noise_th = -91
+    dist = rng
+    g_fixed = (gain * 2)
+    ref_d = 1
+    numerator = math.pow(dist / ref_d, 10 * ppm_exp) * 10 ** pl
+    denominator = 10 ** - ppm_noise_th
+
+    txpower = int(math.ceil(math.log10(numerator / denominator) - g_fixed))
+    if txpower < 0:
+        txpower = 1
+
+    return txpower
 
 
 class Position(NamedTuple):
@@ -167,7 +215,7 @@ print("*** Creating nodes")
 stations = {}
 for node in nodes:
     stations[node.name] = net.addStation(
-        node.name, position=str(node.position), range=rng
+        node.name, position=str(node.position)
     )
 
 print("*** Configuring wifi nodes")
@@ -177,12 +225,21 @@ net.setPropagationModel(**PROPAGATION_MODEL)
 print("*** Creating links")
 for node in nodes:
     intf = f'{node.name}-wlan0'
-    net.addLink(
+    stations[node.name].setIP(node.get_ip(), intf=intf)
+
+    link = net.addLink(
         stations[node.name],
         intf=intf,
         **WIRELESS_CONF
     )
-    stations[node.name].setIP(node.get_ip(), intf=intf)
+    txpower = log_distance_rng_to_txpower(rng, link.freq, GAIN)
+    newrng = log_distance_txpower_to_rng(txpower, link.freq, GAIN)
+
+    link.setAntennaGain(GAIN)
+    link.setTxPower(txpower)
+
+print(f'range = {newrng:.2f} m')
+print(f'txpower = {txpower}dBm')
 
 # mobility variables
 mob_signal = threading.Event()  # set to signal mob settings changed
