@@ -1,6 +1,7 @@
 package forward
 
 import (
+	"log"
 	"net"
 
 	. "github.com/mido3ds/C4IAN/src/router/tables"
@@ -21,8 +22,8 @@ func (forwarder *Forwarder) GetUnicastNextHop(dst NodeID) (net.HardwareAddr, boo
 	if ok {
 		return ne.MAC, true
 	}
-
-	// Otherwise look for the next hop in the forwarding table
+	log.Println("Get nextHop of", dst)
+	// Otherwise look for the n, ext hop in the forwarding table
 	forwarder.updateUnicastForwardingTable(forwarder.UniForwTable)
 	//log.Println(forwarder.UniForwTable)
 	nextHopMAC, ok := forwarder.UniForwTable.Get(dst)

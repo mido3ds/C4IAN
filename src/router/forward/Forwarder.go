@@ -150,7 +150,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 						if !reachable {
 							// TODO: Should we do anything else here?
-							log.Println("Destination zone is unreachable:", zid.DstZID)
+							log.Println(zid.DstZID, "is unreachable (Forwarder)")
 							continue
 						}
 					} else {
@@ -163,7 +163,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 								nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 								if !reachable {
 									// TODO: Should we do anything else here?
-									log.Println("Destination zone is unreachable:", zid.DstZID)
+									log.Println(zid.DstZID , "is unreachable (Forwarder)")
 									return
 								}
 								f.zidMacConn.Write(packet, nextHopMAC)
@@ -180,7 +180,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(zid.DstZID))
 				if !reachable {
 					// TODO: Should we do anything else here?
-					log.Println("Destination zone is unreachable:", zid.DstZID)
+					log.Println(zid.DstZID , "is unreachable (Forwarder)")
 					continue
 				}
 			}

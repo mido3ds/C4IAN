@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	interzoneLSRDelay = 5 * time.Second // Time between sending interzone LSR packets
+	interzoneLSRDelay = 3 * time.Second // Time between sending interzone LSR packets
 )
 
 type LSRController struct {
@@ -46,7 +46,7 @@ func (lsr *LSRController) Start() {
 }
 
 func (lsr *LSRController) OnZoneChange(newZoneID ZoneID) {
-	lsr.topology.Clear(lsr.myIP)
+	lsr.topology.Clear()
 }
 
 func (lsr *LSRController) Close() {
@@ -80,8 +80,9 @@ func (lsr *LSRController) sendInterzoneLSR() {
 
 func (lsr *LSRController) sendIntrazoneLSR(isUpdated bool) {
 	if isUpdated {
-		lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
+		log.Println(lsr.neighborsTable)
 	}
+	lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
 	lsr.zoneFlooder.Flood(lsr.neighborsTable.MarshalBinary())
 }
 
@@ -134,7 +135,8 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 		// Dst in unreachable
 		// TODO : to be handled
 		if parent == nil {
-			log.Println(dst, "is unreachable")
+			log.Println(dst, "is unreachable (LSR)")
+			lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 			continue
 		}
 
@@ -165,7 +167,8 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
 			neighborEntry, exists := lsr.neighborsTable.Get(nextHop.(NodeID))
 			if !exists {
-				//log.Println(lsr.neighborsTable)
+				log.Println(lsr.neighborsTable)
+				lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 				log.Panicln("Attempting to make a next hop through a non-neighbor, dst: ", nextHop.(NodeID))
 			}
 			dirtyForwardingTable.Set(dst.(NodeID), neighborEntry.MAC)
@@ -176,22 +179,4 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 	// will be deleted by the garbage collector
 	*forwardingTable = *dirtyForwardingTable
 	lsr.dirtyTopology = false
-}
-
-func (lsr *LSRController) displaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
-	log.Println("----------- Sink Tree -------------")
-	for dst, parent := range sinkTreeParents {
-		if dst == nil {
-			log.Println("Dst: ", dst, "Parent: ", parent.(NodeID))
-			continue
-		}
-		if parent == nil {
-			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent)
-			lsr.topology.DisplayVertex(dst.(NodeID))
-			continue
-		}
-		log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
-		lsr.topology.DisplayVertex(dst.(NodeID))
-	}
-	log.Println("-----------------------------------")
 }

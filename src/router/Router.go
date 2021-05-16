@@ -123,6 +123,8 @@ func (r *Router) Start() {
 	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start()
 	go r.dzdCont.Start()
+
+	log.Println(r.ip, ":", r.iface.HardwareAddr)
 }
 
 func (r *Router) Close() {

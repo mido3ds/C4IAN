@@ -5,26 +5,31 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 	"github.com/starwander/goraph"
 )
 
+const topologyVertexAge = 4 * time.Second
+
 type Topology struct {
 	g    *goraph.Graph
 	lock sync.RWMutex
+	myIP net.IP
 }
 
 func NewTopology(myIP net.IP) *Topology {
 	g := goraph.NewGraph()
 	g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64)})
-	return &Topology{g: g}
+	return &Topology{g: g, myIP: myIP}
 }
 
 type myVertex struct {
-	id     NodeID
-	outTo  map[NodeID]float64
-	inFrom map[NodeID]float64
+	id       NodeID
+	outTo    map[NodeID]float64
+	inFrom   map[NodeID]float64
+	ageTimer *time.Timer
 }
 
 func (vertex *myVertex) ID() goraph.ID {
@@ -51,9 +56,12 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 	return
 }
 
-func (t *Topology) Clear(myIP net.IP) {
+func (t *Topology) Clear() {
 	t.g = goraph.NewGraph()
-	t.g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64)})
+	// Start new Timer
+	fireFunc := topologyFireTimer(ToNodeID(t.myIP), t.g, t)
+	newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+	t.g.AddVertexWithEdges(&myVertex{id: ToNodeID(t.myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64), ageTimer: newTimer})
 }
 
 func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
@@ -87,7 +95,10 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 		} else {
 			neighborInFromEdges := make(map[NodeID]float64)
 			neighborInFromEdges[srcID] = float64(n.Value.(*NeighborEntry).Cost)
-			t.g.AddVertexWithEdges(&myVertex{id: nodeID, outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges})
+			// Start new Timer
+			fireFunc := topologyFireTimer(nodeID, t.g, t)
+			newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+			t.g.AddVertexWithEdges(&myVertex{id: nodeID, outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges, ageTimer: newTimer})
 		}
 
 		outToEdges[nodeID] = float64(n.Value.(*NeighborEntry).Cost)
@@ -96,12 +107,19 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 	vertex, notExist := t.g.GetVertex(srcID)
 	if notExist == nil {
 		vertex.(*myVertex).outTo = outToEdges
+		vertex.(*myVertex).ageTimer.Stop()
+		fireFunc := topologyFireTimer(srcID, t.g, t)
+		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+		vertex.(*myVertex).ageTimer = newTimer
 		// Remove the old src vertex
 		t.g.DeleteVertex(srcID)
 		// Add the src vertex with new outTo edges
 		return t.g.AddVertexWithEdges(vertex.(*myVertex))
 	} else {
-		return t.g.AddVertexWithEdges(&myVertex{id: srcID, outTo: outToEdges, inFrom: make(map[NodeID]float64)})
+		// Start new Timer
+		fireFunc := topologyFireTimer(srcID, t.g, t)
+		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+		return t.g.AddVertexWithEdges(&myVertex{id: srcID, outTo: outToEdges, inFrom: make(map[NodeID]float64), ageTimer: newTimer})
 	}
 }
 
@@ -190,7 +208,9 @@ func (t *Topology) GetNeighborZones(srcNodeID NodeID) (neighborZones []NodeID, i
 		for vertexID := range currentVertex.outTo {
 			vertex, notExist := t.g.GetVertex(vertexID)
 			if notExist != nil {
-				log.Panic("Incorrect topology")
+				log.Println(currentVertex.id, vertexID, currentVertex.outTo)
+				log.Println("Incorrect topology")
+				continue
 			}
 			if vertex.(*myVertex).id.isZone() {
 				_, marked := markedAsNeighbourZone[vertex.(*myVertex).id]
@@ -241,4 +261,38 @@ func (t *Topology) DisplayEdge(fromID goraph.ID, toID goraph.ID) {
 	}
 
 	log.Println(s)
+}
+
+func topologyFireTimerHelper(nodeID NodeID, g *goraph.Graph, t *Topology) {
+	if(t.g == g) {
+		log.Println(nodeID, "is deleted from topology")
+		g.DeleteVertex(nodeID)
+		t.DisplaySinkTreeParents(t.CalculateSinkTree(ToNodeID(t.myIP)))
+	} else {
+		g.DeleteVertex(nodeID)
+	}
+}
+
+func topologyFireTimer(nodeID NodeID, g *goraph.Graph, t *Topology) func() {
+	return func() {
+		topologyFireTimerHelper(nodeID, g, t)
+	}
+}
+
+func (t *Topology) DisplaySinkTreeParents(sinkTreeParents map[goraph.ID]goraph.ID) {
+	log.Println("----------- Sink Tree -------------")
+	for dst, parent := range sinkTreeParents {
+		if dst == nil {
+			log.Println("Dst: ", dst, "Parent: ", parent.(NodeID))
+			continue
+		}
+		if parent == nil {
+			log.Println("Dst: ", dst.(NodeID), "Parent: ", parent)
+			t.DisplayVertex(dst.(NodeID))
+			continue
+		}
+		log.Println("Dst: ", dst.(NodeID), "Parent: ", parent.(NodeID))
+		t.DisplayVertex(dst.(NodeID))
+	}
+	log.Println("-----------------------------------")
 }
