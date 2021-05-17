@@ -107,6 +107,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 	vertex, notExist := t.g.GetVertex(srcID)
 	if notExist == nil {
 		vertex.(*myVertex).outTo = outToEdges
+		vertex.(*myVertex).inFrom = t.validateInFromEdges(vertex.(*myVertex))
 		vertex.(*myVertex).ageTimer.Stop()
 		fireFunc := topologyFireTimer(srcID, t.g, t)
 		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
@@ -117,6 +118,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 		return t.g.AddVertexWithEdges(vertex.(*myVertex))
 	} else {
 		// Start new Timer
+		log.Println(srcID, "is added to the topology")
 		fireFunc := topologyFireTimer(srcID, t.g, t)
 		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
 		return t.g.AddVertexWithEdges(&myVertex{id: srcID, outTo: outToEdges, inFrom: make(map[NodeID]float64), ageTimer: newTimer})
@@ -175,6 +177,19 @@ func (t *Topology) GetGateways(srcNodeID NodeID) (gateways []NodeID) {
 		}
 	}
 	return
+}
+
+func (t *Topology) validateInFromEdges(vertex *myVertex) map[NodeID]float64 {
+	newInFrom := make(map[NodeID]float64)
+	for from, cost := range vertex.inFrom {
+		fromVertex, notExist := t.g.GetVertex(from)
+		if notExist == nil {
+			if _, ok := fromVertex.(* myVertex).outTo[vertex.id]; ok {
+				newInFrom[from] = cost
+			}
+		}
+	}
+	return newInFrom
 }
 
 func (t *Topology) GetNeighborZones(srcNodeID NodeID) (neighborZones []NodeID, isMaxIP bool) {
@@ -242,7 +257,7 @@ func (t *Topology) DisplayVertex(id goraph.ID) {
 			s += fmt.Sprintf("Edge to %v with cost %v, ", to, cost)
 		}
 
-		for from, cost := range vertex.(*myVertex).outTo {
+		for from, cost := range vertex.(*myVertex).inFrom {
 			s += fmt.Sprintf("Edge from %v with cost %v, ", from, cost)
 		}
 	}
@@ -267,7 +282,7 @@ func topologyFireTimerHelper(nodeID NodeID, g *goraph.Graph, t *Topology) {
 	if(t.g == g) {
 		log.Println(nodeID, "is deleted from topology")
 		g.DeleteVertex(nodeID)
-		t.DisplaySinkTreeParents(t.CalculateSinkTree(ToNodeID(t.myIP)))
+		//t.DisplaySinkTreeParents(t.CalculateSinkTree(ToNodeID(t.myIP)))
 	} else {
 		g.DeleteVertex(nodeID)
 	}

@@ -42,7 +42,7 @@ func NewDZDController(ip net.IP, iface *net.Interface, topology *Topology) (*DZD
 		myIP:       ip,
 	}
 
-	packetsBuffer := NewPacketsBuffer(dzdController.FindDstZone)
+	packetsBuffer := NewPacketsBuffer(dzdController.forwardToNeighborZones)
 	dzdController.packetsBuffer = packetsBuffer
 
 	return dzdController, nil
@@ -65,17 +65,22 @@ func (d *DZDController) Start() {
 	go d.receiveDZResponsePackets()
 }
 
+func (d *DZDController) forwardToNeighborZones(dstIP net.IP) {
+	log.Println("Searching for", dstIP)
+	neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
+	for _, zone := range neighborsZones {
+		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone(), zone, dstIP, []ZoneID{MyZone().ID})
+		d.sendDZRequestPackets(dzRequestPacket, zone)
+	}
+}
+
 func (d *DZDController) FindDstZone(dstIP net.IP) {
 	_, inSearch := d.packetsBuffer.Get(dstIP)
 	if inSearch {
 		return
 	}
 
-	neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
-	for _, zone := range neighborsZones {
-		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone(), zone, dstIP, []ZoneID{MyZone().ID})
-		d.sendDZRequestPackets(dzRequestPacket, zone)
-	}
+	d.forwardToNeighborZones(dstIP)
 }
 
 func (d *DZDController) receiveDZRequestPackets() {
