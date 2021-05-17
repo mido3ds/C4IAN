@@ -1,9 +1,7 @@
 ## Edit Toplogies
-To create a new toplogy or edit and existing one, use `edit`.
-
-For example:
+Use `edit` to create a new toplogy, edit an existing one connect to mininet-wifi and start nodes mobility.
 ```
-$ ./edit topos/simple.topo
+$ ./edit
 ```
 
 ## Start Network Virtualisation
