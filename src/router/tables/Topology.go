@@ -75,7 +75,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 
 	vertex, notExist := t.g.GetVertex(srcID)
 	if notExist == nil {
-		t.removeOldInFromEdges(vertex.(*myVertex))
+		t.removeOldInFromEdges(vertex.(*myVertex), t.g)
 	}
 
 	outToEdges := make(map[NodeID]float64)
@@ -197,13 +197,13 @@ func (t *Topology) validateInFromEdges(vertex *myVertex) map[NodeID]float64 {
 	return newInFrom
 }
 
-func (t *Topology) removeOldInFromEdges(vertex *myVertex) {
+func (t *Topology) removeOldInFromEdges(vertex *myVertex, g *goraph.Graph) {
 	for to, _ := range vertex.outTo {
 		toVertex, toVertexNonExist := t.g.GetVertex(to)
 		if toVertexNonExist == nil {
 			delete(toVertex.(*myVertex).inFrom, vertex.id)
-			t.g.DeleteVertex(toVertex.(*myVertex).id)
-			t.g.AddVertexWithEdges(toVertex.(*myVertex))
+			g.DeleteVertex(toVertex.(*myVertex).id)
+			g.AddVertexWithEdges(toVertex.(*myVertex))
 		}
 	}
 }
@@ -304,7 +304,7 @@ func topologyFireTimerHelper(nodeID NodeID, g *goraph.Graph, t *Topology) {
 	}
 	vertex, notExist := t.g.GetVertex(nodeID)
 	if notExist == nil {
-		t.removeOldInFromEdges(vertex.(*myVertex))
+		t.removeOldInFromEdges(vertex.(*myVertex), g)
 	}
 
 	g.DeleteVertex(nodeID)
