@@ -28,6 +28,9 @@ const START_CENTER = fromLonLat([6.7318473939, 0.3320770836])
 function getRange() {
   return parseFloat(document.getElementById('range').value)
 }
+function setRange(range) {
+  document.getElementById('range').value = range
+}
 
 function calcInterval(zlen) {
   let d = 1.0 / (1 << zlen) // [0, 1]
@@ -261,14 +264,18 @@ function onZlenChanged() {
 
 document.getElementById('zlen').addEventListener('change', onZlenChanged)
 
-function drawCircleInMeter(center, range, name) {
+function newCirlceFeature(center, range, name) {
   if (halfRange) {
     range /= 2
   }
 
   const f = new Feature(new Circle(center, range))
   f.setId(name)
-  source.addFeature(f)
+  return f;
+}
+
+function drawCircleInMeter(center, range, name) {
+  source.addFeature(newCirlceFeature(center, range, name));
 }
 
 map.on('singleclick', (e) => {
@@ -318,6 +325,7 @@ function importFile(fileContent) {
 
   let avgCenter = [0, 0]
   let total = 0
+  setRange(json.range)
 
   let features = json.nodes.map(n => {
     const center = fromLonLat([n.lon, n.lat])
@@ -325,9 +333,7 @@ function importFile(fileContent) {
     avgCenter[1] += center[1]
     total++
 
-    const f = new Feature(new Circle(center, json.range))
-    f.setId(n.name)
-    return f
+    return newCirlceFeature(center, json.range, n.name);
   })
 
   if (total === 0) {
@@ -365,6 +371,7 @@ function importFromMininet(data, change) {
 
   let avgCenter = [0, 0]
   let total = 0
+  setRange(json.range)
 
   let features = json.nodes.filter(n => {
     if (selectedFeature && n.name === selectedFeature.getId()) {
@@ -377,9 +384,7 @@ function importFromMininet(data, change) {
     avgCenter[1] += center[1]
     total++
 
-    const f = new Feature(new Circle(center, json.range))
-    f.setId(n.name)
-    return f
+    return newCirlceFeature(center, json.range, n.name);
   })
 
   replaceFeatures(features)
@@ -452,9 +457,9 @@ document.getElementById('file-input').addEventListener('change', () => {
 function onRangeChanged() {
   let range = getRange()
   if (range < 50) {
-    document.getElementById('range').value = 50
+    setRange(50)
   } else if (range > 50000) {
-    document.getElementById('range').value = 50000
+    setRange(50000)
   }
   range = getRange()
   
