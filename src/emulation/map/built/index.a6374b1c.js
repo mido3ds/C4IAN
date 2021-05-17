@@ -177,6 +177,9 @@ const START_CENTER = _olProj.fromLonLat([6.7318473939, 0.3320770836]);
 function getRange() {
   return parseFloat(document.getElementById('range').value);
 }
+function setRange(range) {
+  document.getElementById('range').value = range;
+}
 function calcInterval(zlen) {
   let d = 1.0 / (1 << zlen);
   // [0, 1]
@@ -406,13 +409,16 @@ function onZlenChanged() {
   document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase();
 }
 document.getElementById('zlen').addEventListener('change', onZlenChanged);
-function drawCircleInMeter(center, range, name) {
+function newCirlceFeature(center, range, name) {
   if (halfRange) {
     range /= 2;
   }
   const f = new _olFeatureDefault.default(new _olGeom.Circle(center, range));
   f.setId(name);
-  source.addFeature(f);
+  return f;
+}
+function drawCircleInMeter(center, range, name) {
+  source.addFeature(newCirlceFeature(center, range, name));
 }
 map.on('singleclick', e => {
   if (mode === 'add') {
@@ -456,14 +462,13 @@ function importFile(fileContent) {
   const json = JSON.parse(fileContent);
   let avgCenter = [0, 0];
   let total = 0;
+  setRange(json.range);
   let features = json.nodes.map(n => {
     const center = _olProj.fromLonLat([n.lon, n.lat]);
     avgCenter[0] += center[0];
     avgCenter[1] += center[1];
     total++;
-    const f = new _olFeatureDefault.default(new _olGeom.Circle(center, json.range));
-    f.setId(n.name);
-    return f;
+    return newCirlceFeature(center, json.range, n.name);
   });
   if (total === 0) {
     avgCenter = START_CENTER;
@@ -496,6 +501,7 @@ function importFromMininet(data, change) {
   const json = JSON.parse(data);
   let avgCenter = [0, 0];
   let total = 0;
+  setRange(json.range);
   let features = json.nodes.filter(n => {
     if (selectedFeature && n.name === selectedFeature.getId()) {
       return false;
@@ -506,9 +512,7 @@ function importFromMininet(data, change) {
     avgCenter[0] += center[0];
     avgCenter[1] += center[1];
     total++;
-    const f = new _olFeatureDefault.default(new _olGeom.Circle(center, json.range));
-    f.setId(n.name);
-    return f;
+    return newCirlceFeature(center, json.range, n.name);
   });
   replaceFeatures(features);
   if (change) {
@@ -581,9 +585,9 @@ document.getElementById('file-input').addEventListener('change', () => {
 function onRangeChanged() {
   let range = getRange();
   if (range < 50) {
-    document.getElementById('range').value = 50;
+    setRange(50);
   } else if (range > 50000) {
-    document.getElementById('range').value = 50000;
+    setRange(50000);
   }
   range = getRange();
   source.getFeatures().forEach(f => {
