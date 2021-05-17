@@ -171,6 +171,7 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	nextHopMAC, reachable := d.getUnicastNextHopCallback(dstNodeID)
 	if !reachable {
 		log.Println(dstNodeID, "is unreachable (DZD)")
+		return
 	}
 	//	Forward tha packet as is
 	d.resMacConn.Write(packet, nextHopMAC)
@@ -204,6 +205,7 @@ func (d *DZDController) sendDZRequestPackets(dzRequestPacket []byte, zone NodeID
 	nextHopMAC, reachable := d.getUnicastNextHopCallback(zone)
 	if !reachable {
 		log.Println(zone, "is unreachable (DZD)")
+		return
 	}
 	d.reqMacConn.Write(dzRequestPacket, nextHopMAC)
 }
@@ -240,6 +242,7 @@ func (d *DZDController) sendDZResponsePackets(zidHeader *ZIDHeader, dzRequestHea
 	nextHopMAC, reachable := d.getUnicastNextHopCallback(srcNodeID)
 	if !reachable {
 		log.Println(srcNodeID, "is unreachable (DZD)")
+		return
 	}
 	d.resMacConn.Write(dzResponsePacket, nextHopMAC)
 }

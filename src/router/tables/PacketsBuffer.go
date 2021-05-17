@@ -9,8 +9,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-const BufferAge = 10
-const MaxNumOfSearches = 3
+const SearchAge = 3
+const MaxNumOfSearches = 2
 
 type SendPacketCallback = func([]byte, net.IP)
 type PacketsQueue = []*PacketEntry
@@ -52,10 +52,6 @@ func (p *PacketsBuffer) Get(dstIP net.IP) (PacketsQueue, bool) {
 		return nil, false
 	}
 
-	// Stop the timer
-	timer := v.(*BufferEntry).ageTimer
-	timer.Stop()
-
 	return v.(*BufferEntry).packetsQueue, true
 }
 
@@ -74,7 +70,7 @@ func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte, sendCallback S
 	} else {
 		// Start new Timer
 		fireFunc := bufferFireTimer(dstIP, p)
-		newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
+		newTimer := time.AfterFunc(SearchAge*time.Second, fireFunc)
 
 		// make new queue for upcoming messages to the same destination
 		queue = make([]*PacketEntry, 0)
@@ -122,7 +118,7 @@ func bufferFireTimerHelper(dstIP net.IP, p *PacketsBuffer) {
 		p.findDstZoneCallback(dstIP)
 		// Start new Timer
 		fireFunc := bufferFireTimer(dstIP, p)
-		newTimer := time.AfterFunc(BufferAge*time.Second, fireFunc)
+		newTimer := time.AfterFunc(SearchAge*time.Second, fireFunc)
 		queue := v.(*BufferEntry).packetsQueue
 
 		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer, numOfDstSearches: numOfDstSearches + 1})
