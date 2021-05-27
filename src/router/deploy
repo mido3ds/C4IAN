@@ -20,8 +20,6 @@ function cleanup() {
 }
 
 trap cleanup INT
-trap cleanup EXIT
-trap cleanup ERR
 
 # stop net manager
 if systemctl status --no-pager network-manager.service >/dev/null 2>&1; then
@@ -41,7 +39,6 @@ iw dev "$IFACE" ibss join "$SSID" 2432
 ip address flush "$IFACE"
 ip address add "$IP" broadcast + dev "$IFACE"
 
-
 # wait
 sleep 10s
 iw dev
@@ -52,5 +49,6 @@ if iw dev | grep -q "$SSID"; then
     ./router -i "$IFACE" -l /tmp/local.router.lsock -p "$PASS"
 else
     echo failure
+    cleanup
     exit 1
 fi
