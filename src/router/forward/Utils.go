@@ -16,7 +16,7 @@ func getUnicastNextHop(destIP net.IP, forwarder *Forwarder) (*UniForwardingEntry
 	// TODO: Get destination zone to check if we should look for its zone or ip in the forwarding table
 	// Destination is a direct neighbor
 	if ne, ok := forwarder.neighborsTable.Get(ToNodeID(destIP)); ok {
-		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: uint32(MyZone().ID)}, true
+		return &UniForwardingEntry{NextHopMAC: ne.MAC, DestZoneID: MyZone().ID}, true
 	}
 	forwarder.updateUnicastForwardingTable(forwarder.UniForwTable)
 	if fe, ok := forwarder.UniForwTable.Get(ToNodeID(destIP)); ok {
