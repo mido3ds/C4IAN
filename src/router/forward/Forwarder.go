@@ -145,6 +145,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 					// then the dest may have moved out of this zone
 					// or the src have an old cached value for the dst zone
 					// discover its new zone
+					log.Println("Search for the real dst  zone for", ip.DestIP)
 					dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
 					if cached {
 						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))

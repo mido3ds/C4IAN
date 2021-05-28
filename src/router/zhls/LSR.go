@@ -80,7 +80,7 @@ func (lsr *LSRController) sendInterzoneLSR() {
 
 func (lsr *LSRController) sendIntrazoneLSR(isUpdated bool) {
 	if isUpdated {
-		log.Println(lsr.neighborsTable)
+		//log.Println(lsr.neighborsTable)
 	}
 	lsr.topology.Update(ToNodeID(lsr.myIP), lsr.neighborsTable)
 	lsr.zoneFlooder.Flood(lsr.neighborsTable.MarshalBinary())
@@ -136,7 +136,7 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 		// TODO : to be handled
 		if parent == nil {
 			log.Println(dst, "is unreachable (LSR)")
-			lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
+			//lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 			continue
 		}
 
@@ -167,8 +167,8 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 			// Get the neighbor MAC using the neighbors table and construct its forwarding entry
 			neighborEntry, exists := lsr.neighborsTable.Get(nextHop.(NodeID))
 			if !exists {
-				log.Println(lsr.neighborsTable)
-				lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
+				//log.Println(lsr.neighborsTable)
+				//lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 				log.Panicln("Attempting to make a next hop through a non-neighbor, dst: ", nextHop.(NodeID))
 			}
 			dirtyForwardingTable.Set(dst.(NodeID), neighborEntry.MAC)

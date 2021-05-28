@@ -123,7 +123,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 		return t.g.AddVertexWithEdges(vertex.(*myVertex))
 	} else {
 		// Start new Timer
-		log.Println(srcID, "is added to the topology")
+		//log.Println(srcID, "is added to the topology")
 		fireFunc := topologyFireTimer(srcID, t.g, t)
 		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
 		return t.g.AddVertexWithEdges(&myVertex{id: srcID, outTo: outToEdges, inFrom: make(map[NodeID]float64), ageTimer: newTimer})
@@ -239,8 +239,8 @@ func (t *Topology) GetNeighborZones(srcNodeID NodeID) (neighborZones []NodeID, i
 		for vertexID := range currentVertex.outTo {
 			vertex, notExist := t.g.GetVertex(vertexID)
 			if notExist != nil {
-				log.Println(currentVertex.id, vertexID, currentVertex.outTo)
-				log.Println("Incorrect topology")
+				//log.Println(currentVertex.id, vertexID, currentVertex.outTo)
+				//log.Println("Incorrect topology")
 				continue
 			}
 			if vertex.(*myVertex).id.isZone() {
@@ -298,7 +298,7 @@ func topologyFireTimerHelper(nodeID NodeID, g *goraph.Graph, t *Topology) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	if t.g == g {
-		log.Println(nodeID, "is deleted from topology")
+		//log.Println(nodeID, "is deleted from topology")
 
 		//t.DisplaySinkTreeParents(t.CalculateSinkTree(ToNodeID(t.myIP)))
 	}

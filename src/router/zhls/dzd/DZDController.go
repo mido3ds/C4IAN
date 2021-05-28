@@ -104,11 +104,11 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 	}
 
 	// The required destination is cahced
-	requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
+	/*requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
 	if exist {
 		d.sendDZResponsePackets(zidHeader, dzRequestHeader, requiredDstZoneID)
 		return
-	}
+	}*/
 
 	// Check if this msg is forwarded to my zone
 	dstZone := &Zone{ID: zidHeader.DstZID, Len: zidHeader.ZLen}
