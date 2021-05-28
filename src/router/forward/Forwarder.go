@@ -118,10 +118,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			ipPacket := append(ipHdr, ipPayload...)
 
 			// receive message by injecting it in loopback
-			err := f.ipConn.Write(ipPacket)
-			if err != nil {
-				log.Panic("failed to write to lo interface: ", err)
-			}
+			f.ipConn.Write(ipPacket)
 		} else { // i'm a forwarder
 			if valid := IPv4DecrementTTL(ipHdr); !valid {
 				log.Println("ttl <= 0, drop packet")
@@ -169,11 +166,8 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 			ipPacket := append(ipHdr, ipPayload...)
 
 			// receive message by injecting it in loopback
-			err := f.ipConn.Write(ipPacket)
+			f.ipConn.Write(ipPacket)
 			log.Println("recieved and destination") // TODO remove this
-			if err != nil {
-				log.Panic("failed to write to lo interface: ", err)
-			}
 		} else { // TODO remove
 			log.Println("recieved but not destination")
 		}
