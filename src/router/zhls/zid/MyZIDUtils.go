@@ -12,5 +12,7 @@ func MyZone() Zone {
 }
 
 func MyZIDHeader(dstZID ZoneID) *ZIDHeader {
+	myZoneMutex.RLock()
+	defer myZoneMutex.RUnlock()
 	return &ZIDHeader{ZLen: myZone.Len, SrcZID: myZone.ID, DstZID: dstZID}
 }
