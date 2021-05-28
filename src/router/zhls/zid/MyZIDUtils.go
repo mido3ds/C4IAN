@@ -2,7 +2,6 @@ package zid
 
 import "sync"
 
-// TODO: Is it okay to use global variables (package-level) here?
 var myZoneMutex sync.RWMutex
 var myZone Zone
 
