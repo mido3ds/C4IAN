@@ -14,21 +14,19 @@ func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
 	e, reachable := getUnicastNextHop(destIP, f)
 
 	if !reachable {
-		// TODO: Should we do anything else here?
 		log.Println("Destination unreachable:", destIP)
-		return
+	} else {
+		zid := MyZIDHeader(ZoneID(e.DestZoneID))
+
+		// build packet
+		buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
+		buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
+		buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
+		buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
+
+		// write to device driver
+		f.zidMacConn.Write(buffer.Bytes(), e.NextHopMAC)
 	}
-
-	zid := MyZIDHeader(ZoneID(e.DestZoneID))
-
-	// build packet
-	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
-	buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
-	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
-	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
-
-	// write to device driver
-	f.zidMacConn.Write(buffer.Bytes(), e.NextHopMAC)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
