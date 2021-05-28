@@ -6,15 +6,14 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
-	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
 type GlobalFlooder struct {
-	seqNumber uint32
-	fTable    *FloodingTable
-	macConn   *MACLayerConn
-	ip        net.IP
-	msec      *MSecLayer
+	seqNumber   uint32
+	floodingTbl *floodingTable
+	macConn     *MACLayerConn
+	ip          net.IP
+	msec        *MSecLayer
 }
 
 func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec *MSecLayer) *GlobalFlooder {
@@ -24,16 +23,14 @@ func NewGlobalFlooder(ip net.IP, iface *net.Interface, etherType EtherType, msec
 		log.Panic("failed to create device connection, err: ", err)
 	}
 
-	fTable := NewFloodingTable()
-
 	log.Println("initalized global flooder")
 
 	return &GlobalFlooder{
-		seqNumber: 0,
-		fTable:    fTable,
-		macConn:   macConn,
-		ip:        ip,
-		msec:      msec,
+		seqNumber:   0,
+		floodingTbl: newFloodingTable(),
+		macConn:     macConn,
+		ip:          ip,
+		msec:        msec,
 	}
 }
 
@@ -66,18 +63,14 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 		return
 	}
 
-	tableSeq, exist := f.fTable.Get(floodHeader.SrcIP)
+	if f.floodingTbl.isHighestSeqNum(floodHeader.SrcIP, floodHeader.SeqNum) {
+		f.floodingTbl.set(floodHeader.SrcIP, floodHeader.SeqNum)
 
-	if exist && floodHeader.SeqNum <= tableSeq {
-		return
-	}
-
-	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
-
-	encryptedPayload := msg[floodHeaderLen:]
-	newEncryptedPayload := payloadProcessor(floodHeader, encryptedPayload)
-	if newEncryptedPayload != nil {
-		f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
+		encryptedPayload := msg[floodHeaderLen:]
+		newEncryptedPayload := payloadProcessor(floodHeader, encryptedPayload)
+		if newEncryptedPayload != nil {
+			f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
+		}
 	}
 }
 
