@@ -18,13 +18,13 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 	mac3 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0x10, 0x11, 0x12})
 	mac4 := net.HardwareAddr([]byte{0x0F, 0xFF, 0x0F, 0xAA, 0xCC, 0xC2})
 
-	jr.SeqNo = 215
-	jr.DestIP = ip3
-	jr.GrpIP = ip0
-	jr.Cost = 5
-	jr.PrevHop = mac4
-	jr.SrcIPs = []net.IP{ip1, ip2, ip3}
-	jr.NextHops = []net.HardwareAddr{mac1, mac2, mac3}
+	jr.seqNum = 215
+	jr.destIP = ip3
+	jr.grpIP = ip0
+	jr.cost = 5
+	jr.prevHop = mac4
+	jr.srcIPs = []net.IP{ip1, ip2, ip3}
+	jr.nextHops = []net.HardwareAddr{mac1, mac2, mac3}
 
 	payload := jr.marshalBinary()
 	newJr, ok := unmarshalJoinReply(payload)
@@ -33,39 +33,39 @@ func TestJoinReplyMarshalAndUnmarshal(t *testing.T) {
 		t.Errorf("Unmarshal should return no erros")
 	}
 
-	if jr.SeqNo != newJr.SeqNo {
+	if jr.seqNum != newJr.seqNum {
 		t.Errorf("SeqNo are not equal")
 	}
 
-	if HwAddrToUInt64(jr.PrevHop) != HwAddrToUInt64(newJr.PrevHop) {
-		t.Errorf("ips not equal: %#v != %#v", jr.PrevHop.String(), newJr.PrevHop.String())
+	if HwAddrToUInt64(jr.prevHop) != HwAddrToUInt64(newJr.prevHop) {
+		t.Errorf("ips not equal: %#v != %#v", jr.prevHop.String(), newJr.prevHop.String())
 	}
 
-	if !net.IP.Equal(jr.GrpIP, newJr.GrpIP) {
-		t.Errorf("ips not equal: %#v != %#v", jr.GrpIP.String(), newJr.GrpIP.String())
+	if !net.IP.Equal(jr.grpIP, newJr.grpIP) {
+		t.Errorf("ips not equal: %#v != %#v", jr.grpIP.String(), newJr.grpIP.String())
 	}
 
-	if len(jr.SrcIPs) != len(newJr.SrcIPs) {
+	if len(jr.srcIPs) != len(newJr.srcIPs) {
 		t.Errorf("SrcIPs length are not equal")
 	}
 
-	for i := 0; i < len(jr.SrcIPs); i++ {
-		if !net.IP.Equal(jr.SrcIPs[i], newJr.SrcIPs[i]) {
-			t.Errorf("ips not equal: %#v != %#v", jr.SrcIPs[i].String(), newJr.SrcIPs[i].String())
+	for i := 0; i < len(jr.srcIPs); i++ {
+		if !net.IP.Equal(jr.srcIPs[i], newJr.srcIPs[i]) {
+			t.Errorf("ips not equal: %#v != %#v", jr.srcIPs[i].String(), newJr.srcIPs[i].String())
 		}
 	}
 
-	if len(jr.NextHops) != len(newJr.NextHops) {
+	if len(jr.nextHops) != len(newJr.nextHops) {
 		t.Errorf("NextHops length are not equal")
 	}
 
-	if jr.Cost != newJr.Cost {
+	if jr.cost != newJr.cost {
 		t.Errorf("Cost are not equal")
 	}
 
-	for i := 0; i < len(jr.NextHops); i++ {
-		if HwAddrToUInt64(jr.NextHops[i]) != HwAddrToUInt64(newJr.NextHops[i]) {
-			t.Errorf("ips not equal: %#v != %#v", jr.NextHops[i].String(), newJr.NextHops[i].String())
+	for i := 0; i < len(jr.nextHops); i++ {
+		if HwAddrToUInt64(jr.nextHops[i]) != HwAddrToUInt64(newJr.nextHops[i]) {
+			t.Errorf("ips not equal: %#v != %#v", jr.nextHops[i].String(), newJr.nextHops[i].String())
 		}
 	}
 }

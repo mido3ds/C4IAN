@@ -12,16 +12,16 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	ip1 := net.IP([]byte{0x05, 0x06, 0x07, 0x08})
 	ip2 := net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
 	ip3 := net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
-	jq.SeqNo = 999
-	jq.TTL = 20
-	jq.SrcIP = net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
-	jq.GrpIP = net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
-	jq.Dests = []net.IP{ip0, ip1, ip2, ip3}
+	jq.seqNum = 999
+	jq.ttl = 20
+	jq.srcIP = net.IP([]byte{0x09, 0x0A, 0x0B, 0x0C})
+	jq.grpIP = net.IP([]byte{0x0D, 0x0E, 0x0F, 0x10})
+	jq.dests = []net.IP{ip0, ip1, ip2, ip3}
 	prevhop, err := net.ParseMAC("00:26:bb:15:31:dd")
 	if err != nil {
 		t.Error(err)
 	}
-	jq.PrevHop = prevhop
+	jq.prevHop = prevhop
 
 	payload := jq.marshalBinary()
 	newJq, ok := unmarshalJoinQuery(payload)
@@ -29,27 +29,27 @@ func TestJoinQueryMarshalAndUnmarshal(t *testing.T) {
 	if !ok {
 		t.Errorf("Unmarshal should return no erros")
 	}
-	if len(jq.Dests) != len(newJq.Dests) {
+	if len(jq.dests) != len(newJq.dests) {
 		t.Errorf("Dests ips length are not equal")
 	}
-	if jq.SeqNo != newJq.SeqNo {
+	if jq.seqNum != newJq.seqNum {
 		t.Errorf("SeqNo are not equal")
 	}
-	if jq.TTL != newJq.TTL {
+	if jq.ttl != newJq.ttl {
 		t.Errorf("TTL are not equal")
 	}
-	if !net.IP.Equal(jq.SrcIP, newJq.SrcIP) {
-		t.Errorf("src ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
+	if !net.IP.Equal(jq.srcIP, newJq.srcIP) {
+		t.Errorf("src ips not equal: %#v != %#v", jq.srcIP.String(), jq.grpIP.String())
 	}
-	if !net.IP.Equal(jq.GrpIP, newJq.GrpIP) {
-		t.Errorf("grp ips not equal: %#v != %#v", jq.SrcIP.String(), jq.GrpIP.String())
+	if !net.IP.Equal(jq.grpIP, newJq.grpIP) {
+		t.Errorf("grp ips not equal: %#v != %#v", jq.srcIP.String(), jq.grpIP.String())
 	}
-	if !bytes.Equal(jq.PrevHop, newJq.PrevHop) {
-		t.Errorf("prev hops not equal: %#v != %#v", jq.PrevHop, newJq.PrevHop)
+	if !bytes.Equal(jq.prevHop, newJq.prevHop) {
+		t.Errorf("prev hops not equal: %#v != %#v", jq.prevHop, newJq.prevHop)
 	}
-	for i := 0; i < len(jq.Dests); i++ {
-		if !net.IP.Equal(jq.Dests[i], newJq.Dests[i]) {
-			t.Errorf("ips not equal: %#v != %#v", jq.Dests[i].String(), newJq.Dests[i].String())
+	for i := 0; i < len(jq.dests); i++ {
+		if !net.IP.Equal(jq.dests[i], newJq.dests[i]) {
+			t.Errorf("ips not equal: %#v != %#v", jq.dests[i].String(), newJq.dests[i].String())
 		}
 	}
 }
