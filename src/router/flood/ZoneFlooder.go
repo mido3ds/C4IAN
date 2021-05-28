@@ -10,7 +10,6 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-// TODO: merge with global flooder
 type ZoneFlooder struct {
 	seqNumber uint32
 	fTable    *FloodingTable
