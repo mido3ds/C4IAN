@@ -25,7 +25,7 @@ func NewTopology(myIP net.IP) *Topology {
 	// Start new Timer
 	fireFunc := topologyFireTimer(ToNodeID(t.myIP), t.g, t)
 	newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
-	g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64), ageTimer: newTimer})
+	t.g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64), ageTimer: newTimer})
 	return t
 }
 
