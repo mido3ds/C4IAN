@@ -10,13 +10,13 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
+func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
 	// Get the next hop using the dstIP
 	// return true only if the dst inside my zone
 	nextHopMac, inMyZone := f.GetUnicastNextHop(ToNodeID(dstIP))
-	
-	log.Println(f.ip , "want to send unicast message to", dstIP)
-	
+
+	log.Println(f.ip, "want to send unicast message to", dstIP)
+
 	var zid *ZIDHeader
 	if inMyZone {
 		log.Println(dstIP, "is in", f.ip, "zone")
@@ -34,7 +34,7 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 				// If dst zone is cached but unreachable, it may have moved to a reachable zone -> rediscover
 				log.Println(dstIP, "cached zone isn't reachable")
 				f.dzdController.FindDstZone(dstIP)
-				f.dzdController.BufferPacket(dstIP, packet, f.SendUnicast)
+				f.dzdController.BufferPacket(dstIP, packet, f.sendUnicast)
 				return
 			}
 			log.Println(dstIP, "cached zone is reachable")
@@ -43,7 +43,7 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 			// and buffer this msg to be sent when dst zone response arrive
 			log.Println(dstIP, "zone isn't cached")
 			f.dzdController.FindDstZone(dstIP)
-			f.dzdController.BufferPacket(dstIP, packet, f.SendUnicast)
+			f.dzdController.BufferPacket(dstIP, packet, f.sendUnicast)
 			return
 		}
 	}
@@ -58,7 +58,7 @@ func (f *Forwarder) SendUnicast(packet []byte, dstIP net.IP) {
 	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
 }
 
-func (f *Forwarder) SendMulticast(packet []byte, grpIP net.IP) {
+func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 	_, ok := f.MultiForwTable.Get(grpIP)
 	if !ok {
@@ -86,7 +86,7 @@ func (f *Forwarder) SendMulticast(packet []byte, grpIP net.IP) {
 	}
 }
 
-func (f *Forwarder) SendBroadcast(packet []byte) {
+func (f *Forwarder) sendBroadcast(packet []byte) {
 	zid := MyZIDHeader(ZoneID(0))
 
 	// build packet

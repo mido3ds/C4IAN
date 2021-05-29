@@ -296,11 +296,11 @@ func (f *Forwarder) forwardFromIPLayer() {
 
 				switch iptype := GetIPAddrType(ip.DestIP); iptype {
 				case UnicastIPAddr:
-					f.SendUnicast(packet, ip.DestIP)
+					f.sendUnicast(packet, ip.DestIP)
 				case MulticastIPAddr:
-					f.SendMulticast(packet, ip.DestIP)
+					f.sendMulticast(packet, ip.DestIP)
 				case BroadcastIPAddr:
-					f.SendBroadcast(packet)
+					f.sendBroadcast(packet)
 				default:
 					log.Panic("got invalid ip address from ip layer")
 				}
