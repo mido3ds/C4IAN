@@ -21,8 +21,12 @@ type Topology struct {
 
 func NewTopology(myIP net.IP) *Topology {
 	g := goraph.NewGraph()
-	g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64)})
-	return &Topology{g: g, myIP: myIP}
+	t := &Topology{g: g, myIP: myIP}
+	// Start new Timer
+	fireFunc := topologyFireTimer(ToNodeID(t.myIP), t.g, t)
+	newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+	g.AddVertexWithEdges(&myVertex{id: ToNodeID(myIP), outTo: make(map[NodeID]float64), inFrom: make(map[NodeID]float64), ageTimer: newTimer})
+	return t
 }
 
 type myVertex struct {
