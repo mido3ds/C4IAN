@@ -1,25 +1,40 @@
 #!/bin/bash
+
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $0 interface ip"
+    echo "Deploys C4IAN router locally"
+    echo "Get the interface name from '$ iw dev'"
+    exit 1
+fi
+
 set -ex -o pipefail
 
+IFACE=${1}
+IP=${2}
+
 # you can override those env variables
-IP=${IP-10.0.0.1}
-IFACE=${IFACE-wlan0}
 SSID=${SSID-C4IAN-GLOBAL-SSID}
 PASS=${PASS-passphrase}
 
 HAD_NET_MNGR=0
+CLEANEDUP=0
 
 function cleanup() {
-    ip link set "$IFACE" down
-    iw dev "$IFACE" set type managed
-    ip link set "$IFACE" up
-    ethtool -K "$IFACE" gro on
-    if [[ $HAD_NET_MNGR -eq 1 ]]; then
-        systemctl start network-manager.service
+    if [[ $CLEANEDUP -eq 0 ]]; then
+        ip link set "$IFACE" down
+        iw dev "$IFACE" set type managed
+        ip link set "$IFACE" up
+        ethtool -K "$IFACE" gro on
+        if [[ $HAD_NET_MNGR -eq 1 ]]; then
+            systemctl start network-manager.service
+        fi
+
+        CLEANEDUP=1
     fi
 }
 
 trap cleanup INT
+trap cleanup ERR
 
 # stop net manager
 if systemctl status --no-pager network-manager.service >/dev/null 2>&1; then
@@ -49,6 +64,5 @@ if iw dev | grep -q "$SSID"; then
     ./router -i "$IFACE" -l /tmp/local.router.lsock -p "$PASS"
 else
     echo failure
-    cleanup
     exit 1
 fi

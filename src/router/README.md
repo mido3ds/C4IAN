@@ -13,11 +13,11 @@ $ go build
 ## Deployment
 To enter adhoc mode and run the router locally.
 ```
-# use defaults
-$ sudo ./deploy
+# assuming interface=wlan0 and ip=10.0.0.1
+$ sudo ./deploy wlan0 10.0.0.1
 
-# override defaults
-$ sudo IP=10.0.0.1 IFACE=wlan0 PASS=somePass SSID=someSSIDName ./deploy
+# override default env variables
+$ sudo PASS=somePass SSID=someSSIDName ./deploy wlan0 10.0.0.1
 ```
 
 ## Run
