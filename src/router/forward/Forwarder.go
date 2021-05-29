@@ -90,7 +90,7 @@ func (f *Forwarder) Start() {
 	go f.forwardFromIPLayer()
 	go f.forwardZIDFromMACLayer()
 	go f.forwardIPFromMACLayer()
-	go f.forwardBroadcastMessages()
+	go f.forwardFloodedBroadcastMessages()
 	go f.forwardFloodedUnicastMessages()
 }
 
@@ -310,80 +310,76 @@ func (f *Forwarder) forwardFromIPLayer() {
 	}
 }
 
-func (f *Forwarder) forwardBroadcastMessages() {
-	f.bcFlooder.ListenForFloodedMsgs(f.onReceiveBroadcastMessage)
-}
+func (f *Forwarder) forwardFloodedBroadcastMessages() {
+	f.bcFlooder.ListenForFloodedMsgs(func(encryptedPacket []byte) []byte {
+		zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
+		zid, ok := UnmarshalZIDHeader(zidhdr)
+		if !ok {
+			// invalid zid header, stop here
+			return nil
+		}
 
-func (f *Forwarder) onReceiveBroadcastMessage(encryptedPacket []byte) []byte {
-	zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
-	zid, ok := UnmarshalZIDHeader(zidhdr)
-	if !ok {
-		// invalid zid header, stop here
-		return nil
-	}
+		iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+		ip, ok := UnmarshalIPHeader(iphdr)
+		if !ok {
+			// invalid ip header, stop here
+			return nil
+		}
 
-	iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
-	ip, ok := UnmarshalIPHeader(iphdr)
-	if !ok {
-		// invalid ip header, stop here
-		return nil
-	}
+		r1 := BroadcastRadius(ip.DestIP)
+		r2 := MyZone().ID.DistTo(zid.SrcZID)
+		if r2 > r1 {
+			// out of zone broadcast, stop here
+			return nil
+		}
 
-	r1 := BroadcastRadius(ip.DestIP)
-	r2 := MyZone().ID.DistTo(zid.SrcZID)
-	if r2 > r1 {
-		// out of zone broadcast, stop here
-		return nil
-	}
-
-	go func() {
-		// inject it into my ip layer
-		payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
-		IPv4SetDest(iphdr, f.ip)
-		f.ipConn.Write(append(iphdr, payload...))
-	}()
-
-	// continue flooding
-	return encryptedPacket
-}
-
-func (f *Forwarder) forwardFloodedUnicastMessages() {
-	f.ucFlooder.ListenForFloodedMsgs(f.onReceiveFloodedUnicastMessage)
-}
-
-func (f *Forwarder) onReceiveFloodedUnicastMessage(encryptedPacket []byte) []byte {
-	zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
-	zid, ok := UnmarshalZIDHeader(zidhdr)
-	if !ok {
-		// invalid zid header, stop here
-		return nil
-	}
-
-	myzone := MyZone()
-	dstzone := Zone{ID: zid.DstZID, Len: zid.ZLen}
-	if _, intersects := myzone.Intersection(dstzone); !intersects {
-		// out of zone, stop here
-		return nil
-	}
-
-	iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
-	ip, ok := UnmarshalIPHeader(iphdr)
-	if !ok {
-		// invalid ip header, stop here
-		return nil
-	}
-
-	go func() {
-		if ip.DestIP.Equal(f.ip) {
+		go func() {
 			// inject it into my ip layer
 			payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
 			IPv4SetDest(iphdr, f.ip)
 			f.ipConn.Write(append(iphdr, payload...))
-		}
-	}()
+		}()
 
-	// continue flooding
-	return encryptedPacket
+		// continue flooding
+		return encryptedPacket
+	})
+}
+
+func (f *Forwarder) forwardFloodedUnicastMessages() {
+	f.ucFlooder.ListenForFloodedMsgs(func(encryptedPacket []byte) []byte {
+		zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
+		zid, ok := UnmarshalZIDHeader(zidhdr)
+		if !ok {
+			// invalid zid header, stop here
+			return nil
+		}
+
+		myzone := MyZone()
+		dstzone := Zone{ID: zid.DstZID, Len: zid.ZLen}
+		if _, intersects := myzone.Intersection(dstzone); !intersects {
+			// out of zone, stop here
+			return nil
+		}
+
+		iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+		ip, ok := UnmarshalIPHeader(iphdr)
+		if !ok {
+			// invalid ip header, stop here
+			return nil
+		}
+
+		go func() {
+			if ip.DestIP.Equal(f.ip) {
+				// inject it into my ip layer
+				payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
+				IPv4SetDest(iphdr, f.ip)
+				f.ipConn.Write(append(iphdr, payload...))
+			}
+		}()
+
+		// continue flooding
+		return encryptedPacket
+	})
 }
 
 func (f *Forwarder) Close() {
