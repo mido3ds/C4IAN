@@ -157,7 +157,7 @@ func (f *Forwarder) forwardZIDToNextHop(zid *ZIDHeader, ip *IPHeader, packet []b
 				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 				if !reachable {
 					// TODO: Should we do anything else here?
-					log.Println(zid.DstZID, "is unreachable (Forwarder)")
+					log.Println(dstZoneID, "is unreachable (Forwarder)")
 					return
 				}
 			} else {
@@ -170,7 +170,7 @@ func (f *Forwarder) forwardZIDToNextHop(zid *ZIDHeader, ip *IPHeader, packet []b
 						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 						if !reachable {
 							// TODO: Should we do anything else here?
-							log.Println(zid.DstZID, "is unreachable (Forwarder)")
+							log.Println(dstZoneID, "is unreachable (Forwarder)")
 							return
 						}
 						f.zidMacConn.Write(packet, nextHopMAC)
