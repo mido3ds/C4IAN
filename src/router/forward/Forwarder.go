@@ -25,6 +25,7 @@ type Forwarder struct {
 	MultiForwTable *MultiForwardTable
 	neighborsTable *NeighborsTable
 	dzdController  *DZDController
+	ucFlooder      *GlobalFlooder
 
 	// multicast controller callback
 	mcGetMissingEntries func(grpIP net.IP) bool
@@ -81,6 +82,7 @@ func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 		updateUnicastForwardingTable: updateUnicastForwardingTable,
 		isInMCastGroup:               isInMCastGroup,
 		bcFlooder:                    NewGlobalFlooder(ip, iface, ZIDBroadcastEtherType, msec),
+		ucFlooder:                    NewGlobalFlooder(ip, iface, ZIDFloodEtherType, msec),
 	}, nil
 }
 
@@ -89,6 +91,7 @@ func (f *Forwarder) Start() {
 	go f.forwardZIDFromMACLayer()
 	go f.forwardIPFromMACLayer()
 	go f.forwardBroadcastMessages()
+	go f.forwardFloodedUnicastMessages()
 }
 
 // forwardZIDFromMACLayer continuously receives messages from the interface,
@@ -134,38 +137,49 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 			// re-encrypt ip hdr
 			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
 
-			f.forwardZIDToNextHop(zid, ip, packet)
+			myZone := MyZone()
+			dstZone := Zone{ID: zid.DstZID, Len: zid.ZLen}
+
+			if dstZone.Len == myZone.Len {
+				f.forwardZIDToNextHop(packet, myZone.ID, dstZone.ID, ip.DestIP)
+			} else if castedDstZID, intersects := dstZone.Intersection(myZone); !intersects {
+				// not same area, but no intersection. safe to ignore difference in zlen
+				f.forwardZIDToNextHop(packet, myZone.ID, castedDstZID, ip.DestIP)
+			} else {
+				// flood in biggest(dstzone, myzone)
+				f.ucFlooder.Flood(packet)
+			}
 		}
 	}
 }
 
-func (f *Forwarder) forwardZIDToNextHop(zid *ZIDHeader, ip *IPHeader, packet []byte) {
+func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dstIP net.IP) {
 	var nextHopMAC net.HardwareAddr
 	var inMyZone, reachable bool
 
-	if zid.DstZID == MyZone().ID {
+	if dstZID == myZID {
 		// The destination is in my zone, search in the forwarding table by its ip
-		nextHopMAC, inMyZone = f.GetUnicastNextHop(ToNodeID(ip.DestIP))
+		nextHopMAC, inMyZone = f.GetUnicastNextHop(ToNodeID(dstIP))
 		if !inMyZone {
 			// If the IP is not found in the forwarding table (my zone)
 			// although the src claims that it is
 			// then the dest may have moved out of this zone
 			// or the src have an old cached value for the dst zone
 			// discover its new zone
-			dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
+			dstZID, cached := f.dzdController.CachedDstZone(dstIP)
 			if cached {
-				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZID))
 				if !reachable {
 					// TODO: Should we do anything else here?
-					log.Println(dstZoneID, "is unreachable (Forwarder)")
+					log.Println(dstZID, "is unreachable (Forwarder)")
 					return
 				}
 			} else {
 				// if dst zone isn't cached, search for it
 				// and buffer this msg to be sent when dst zone response arrive
-				f.dzdController.FindDstZone(ip.DestIP)
-				f.dzdController.BufferPacket(ip.DestIP, packet, func(packet []byte, dstIP net.IP) {
-					dstZoneID, cached := f.dzdController.CachedDstZone(ip.DestIP)
+				f.dzdController.FindDstZone(dstIP)
+				f.dzdController.BufferPacket(dstIP, packet, func(packet []byte, dstIP net.IP) {
+					dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
 					if cached {
 						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
 						if !reachable {
@@ -184,10 +198,10 @@ func (f *Forwarder) forwardZIDToNextHop(zid *ZIDHeader, ip *IPHeader, packet []b
 	} else {
 		// The dst is in a different zone,
 		// search in the forwarding table by its zone
-		nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(zid.DstZID))
+		nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZID))
 		if !reachable {
 			// TODO: Should we do anything else here?
-			log.Println(zid.DstZID, "is unreachable (Forwarder)")
+			log.Println(dstZID, "is unreachable (Forwarder)")
 			return
 		}
 	}
@@ -321,10 +335,51 @@ func (f *Forwarder) onReceiveBroadcastMessage(encryptedPacket []byte) []byte {
 		return nil
 	}
 
-	// inject it into my ip layer
-	payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
-	IPv4SetDest(iphdr, f.ip)
-	f.ipConn.Write(append(iphdr, payload...))
+	go func() {
+		// inject it into my ip layer
+		payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
+		IPv4SetDest(iphdr, f.ip)
+		f.ipConn.Write(append(iphdr, payload...))
+	}()
+
+	// continue flooding
+	return encryptedPacket
+}
+
+func (f *Forwarder) forwardFloodedUnicastMessages() {
+	f.ucFlooder.ListenForFloodedMsgs(f.onReceiveFloodedUnicastMessage)
+}
+
+func (f *Forwarder) onReceiveFloodedUnicastMessage(encryptedPacket []byte) []byte {
+	zidhdr := f.msec.Decrypt(encryptedPacket[:ZIDHeaderLen])
+	zid, ok := UnmarshalZIDHeader(zidhdr)
+	if !ok {
+		// invalid zid header, stop here
+		return nil
+	}
+
+	myzone := MyZone()
+	dstzone := Zone{ID: zid.DstZID, Len: zid.ZLen}
+	if _, intersects := myzone.Intersection(dstzone); !intersects {
+		// out of zone, stop here
+		return nil
+	}
+
+	iphdr := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+	ip, ok := UnmarshalIPHeader(iphdr)
+	if !ok {
+		// invalid ip header, stop here
+		return nil
+	}
+
+	go func() {
+		if ip.DestIP.Equal(f.ip) {
+			// inject it into my ip layer
+			payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
+			IPv4SetDest(iphdr, f.ip)
+			f.ipConn.Write(append(iphdr, payload...))
+		}
+	}()
 
 	// continue flooding
 	return encryptedPacket
@@ -332,5 +387,9 @@ func (f *Forwarder) onReceiveBroadcastMessage(encryptedPacket []byte) []byte {
 
 func (f *Forwarder) Close() {
 	f.zidMacConn.Close()
+	f.ipMacConn.Close()
 	f.ipConn.Close()
+
+	f.ucFlooder.Close()
+	f.bcFlooder.Close()
 }
