@@ -102,54 +102,55 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 
 	for {
 		packet := f.zidMacConn.Read()
-		// TODO: speed up by goroutine workers
 
-		// decrypt and verify
-		zid, valid := UnmarshalZIDHeader(f.msec.Decrypt(packet[:ZIDHeaderLen]))
-		if !valid {
-			log.Println("Received a packet with an invalid ZID header")
-			continue
-		}
-
-		ipHdr := f.msec.Decrypt(packet[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
-		ip, valid := UnmarshalIPHeader(ipHdr)
-		if !valid {
-			log.Println("Received a packet with an invalid IP header")
-			continue
-		}
-
-		if imDestination(f.ip, ip.DestIP) {
-			ipPayload := f.msec.Decrypt(packet[ZIDHeaderLen+IPv4HeaderLen:])
-			ipPacket := append(ipHdr, ipPayload...)
-
-			// receive message by injecting it in loopback
-			err := f.ipConn.Write(ipPacket)
-			if err != nil {
-				log.Panic("failed to write to lo interface: ", err)
+		go func() {
+			// decrypt and verify
+			zid, valid := UnmarshalZIDHeader(f.msec.Decrypt(packet[:ZIDHeaderLen]))
+			if !valid {
+				log.Println("Received a packet with an invalid ZID header")
+				return
 			}
-		} else { // i'm a forwarder
-			if valid := IPv4DecrementTTL(ipHdr); !valid {
-				log.Println("ttl <= 0, drop packet")
-				continue
+
+			ipHdr := f.msec.Decrypt(packet[ZIDHeaderLen : ZIDHeaderLen+IPv4HeaderLen])
+			ip, valid := UnmarshalIPHeader(ipHdr)
+			if !valid {
+				log.Println("Received a packet with an invalid IP header")
+				return
 			}
-			IPv4UpdateChecksum(ipHdr)
 
-			// re-encrypt ip hdr
-			copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+			if imDestination(f.ip, ip.DestIP) {
+				ipPayload := f.msec.Decrypt(packet[ZIDHeaderLen+IPv4HeaderLen:])
+				ipPacket := append(ipHdr, ipPayload...)
 
-			myZone := MyZone()
-			dstZone := Zone{ID: zid.DstZID, Len: zid.ZLen}
+				// receive message by injecting it in loopback
+				err := f.ipConn.Write(ipPacket)
+				if err != nil {
+					log.Panic("failed to write to lo interface: ", err)
+				}
+			} else { // i'm a forwarder
+				if valid := IPv4DecrementTTL(ipHdr); !valid {
+					log.Println("ttl <= 0, drop packet")
+					return
+				}
+				IPv4UpdateChecksum(ipHdr)
 
-			if dstZone.Len == myZone.Len {
-				f.forwardZIDToNextHop(packet, myZone.ID, dstZone.ID, ip.DestIP)
-			} else if castedDstZID, intersects := dstZone.Intersection(myZone); !intersects {
-				// not same area, but no intersection. safe to ignore difference in zlen
-				f.forwardZIDToNextHop(packet, myZone.ID, castedDstZID, ip.DestIP)
-			} else {
-				// flood in biggest(dstzone, myzone)
-				f.ucFlooder.Flood(packet)
+				// re-encrypt ip hdr
+				copy(packet[ZIDHeaderLen:ZIDHeaderLen+IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+
+				myZone := MyZone()
+				dstZone := Zone{ID: zid.DstZID, Len: zid.ZLen}
+
+				if dstZone.Len == myZone.Len {
+					f.forwardZIDToNextHop(packet, myZone.ID, dstZone.ID, ip.DestIP)
+				} else if castedDstZID, intersects := dstZone.Intersection(myZone); !intersects {
+					// not same area, but no intersection. safe to ignore difference in zlen
+					f.forwardZIDToNextHop(packet, myZone.ID, castedDstZID, ip.DestIP)
+				} else {
+					// flood in biggest(dstzone, myzone)
+					f.ucFlooder.Flood(packet)
+				}
 			}
-		}
+		}()
 	}
 }
 
