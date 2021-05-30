@@ -61,13 +61,14 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 }
 
 func (t *Topology) Clear() {
+	treeVertices := t.CalculateSinkTree(ToNodeID(t.myIP))
+	
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	treeVertices := t.CalculateSinkTree(ToNodeID(t.myIP))
-	for vertexID,_ := range treeVertices {
-		vertex, _ := t.g.GetVertex(ToNodeID(vertexID))
+	for vertexID, _ := range treeVertices {
+		vertex, _ := t.g.GetVertex(vertexID.(NodeID))
 		vertex.(*myVertex).ageTimer.Stop()
-		t.g.DeleteVertex(ToNodeID(vertex))
+		t.g.DeleteVertex(vertexID.(NodeID))
 	}
 
 	fireFunc := topologyFireTimer(ToNodeID(t.myIP), t)
@@ -311,6 +312,7 @@ func topologyFireTimerHelper(nodeID NodeID, t *Topology) {
 
 	vertex, notExist := t.g.GetVertex(nodeID)
 	if notExist == nil {
+		log.Println(nodeID, "is deleted from the topology")
 		t.removeOldInFromEdges(vertex.(*myVertex))
 		t.g.DeleteVertex(nodeID)
 	}

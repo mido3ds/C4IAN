@@ -70,6 +70,7 @@ func (a *ZoneIDAgent) Start() {
 			log.Println("New Zone =", &myZone)
 		}
 		myZoneMutex.Unlock()
+
 	}
 }
 
