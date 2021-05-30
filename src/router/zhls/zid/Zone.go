@@ -133,22 +133,17 @@ type Zone struct {
 }
 
 // ToLen returns new ZoneID as this zone but with given Len
-func (z *Zone) ToLen(len byte) ZoneID {
-	if len == z.Len {
-		return z.ID
-	}
-
-	mask16 := zlenMask(len) & zlenMask(z.Len)
+func (z ZoneID) ToLen(len byte) ZoneID {
+	mask16 := zlenMask(len)
 	mask := ZoneID(mask16)<<16 | ZoneID(mask16)
-
-	return z.ID & mask
+	return z & mask
 }
 
 // Intersects casts z2 to z1 area
 // and returns true if z2 & z1 are the same zone
 // or one is part of the other
 func (z1 Zone) Intersection(z2 Zone) (ZoneID, bool) {
-	z3 := z2.ToLen(z1.Len)
+	z3 := z2.ID.ToLen(z1.Len)
 	return z3, z3 == z2.ID
 }
 

@@ -161,13 +161,15 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 		return
 	}
 
-	dstZone := &Zone{ID: zidHeader.DstZID, Len: zidHeader.ZLen}
 	var dstNodeID NodeID
-	if MyZone().Equal(dstZone) {
+	myZone := MyZone()
+	dstZID := zidHeader.DstZID.ToLen(myZone.Len)
+	if myZone.ID == dstZID {
 		dstNodeID = ToNodeID(dzResponseHeader.dstIP)
 	} else {
-		dstNodeID = ToNodeID(dstZone.ID)
+		dstNodeID = ToNodeID(dstZID)
 	}
+
 	nextHopMAC, reachable := d.getUnicastNextHopCallback(dstNodeID)
 	if !reachable {
 		log.Println(dstNodeID, "is unreachable (DZD)")

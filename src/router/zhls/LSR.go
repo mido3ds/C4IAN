@@ -111,7 +111,7 @@ func (lsr *LSRController) handleInterzoneLSRPacket(payload []byte) []byte {
 	//log.Println(zoneNeighborsTable)
 	//lsr.displaySinkTreeParents(lsr.topology.CalculateSinkTree(ToNodeID(lsr.myIP)))
 
-	lsr.topology.Update(ToNodeID(zidHeader.SrcZID), zoneNeighborsTable)
+	lsr.topology.Update(ToNodeID(zidHeader.SrcZID.ToLen(MyZone().Len)), zoneNeighborsTable)
 	lsr.dirtyTopology = true
 	return payload
 }

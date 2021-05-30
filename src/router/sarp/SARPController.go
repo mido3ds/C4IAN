@@ -98,14 +98,14 @@ func (s *SARPController) receiveMsgs() {
 			log.Panicln("Received sARP Packet with invalid sARP header")
 		}
 
-		// TODO: Handle zones of different sizes
 		// Construct NodeID based on whether the neighbor is in the same zone or not
 		var nodeID NodeID
-		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
-		if MyZone().Equal(srcZone) {
+		myZone := MyZone()
+		srcZID := zidHeader.SrcZID.ToLen(myZone.Len)
+		if myZone.ID == srcZID {
 			nodeID = ToNodeID(sarpHeader.IP)
 		} else {
-			nodeID = ToNodeID(srcZone.ID)
+			nodeID = ToNodeID(srcZID)
 		}
 
 		// Calculate the delay, which is the link cost in the topology
