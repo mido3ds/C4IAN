@@ -57,6 +57,7 @@ func (a *ZoneIDAgent) Start() {
 		var loc gpsLocation
 		err := d.Decode(&loc)
 		if err != nil {
+			log.Println("err in loc decoding")
 			continue
 		}
 

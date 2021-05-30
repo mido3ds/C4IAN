@@ -171,28 +171,19 @@ func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dst
 			if cached {
 				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZID))
 				if !reachable {
-					// TODO: Should we do anything else here?
+					// if dst zone is cached, but the cahced zone is unreachable
+					// try to search one more time
+					// and buffer this msg to be sent when dst zone response arrive
 					log.Println(dstZID, "is unreachable (Forwarder)")
+					f.dzdController.FindDstZone(dstIP)
+					f.dzdController.BufferPacket(dstIP, packet, f.forwardBufferedPacketDirectly)
 					return
 				}
 			} else {
 				// if dst zone isn't cached, search for it
 				// and buffer this msg to be sent when dst zone response arrive
 				f.dzdController.FindDstZone(dstIP)
-				f.dzdController.BufferPacket(dstIP, packet, func(packet []byte, dstIP net.IP) {
-					dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
-					if cached {
-						nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
-						if !reachable {
-							// TODO: Should we do anything else here?
-							log.Println(dstZoneID, "is unreachable (Forwarder)")
-							return
-						}
-						f.zidMacConn.Write(packet, nextHopMAC)
-					} else {
-						log.Panicln("Dst Zone must be cached here")
-					}
-				})
+				f.dzdController.BufferPacket(dstIP, packet, f.forwardBufferedPacketDirectly)
 				return
 			}
 		}
@@ -209,6 +200,24 @@ func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dst
 
 	// hand it directly to the interface
 	f.zidMacConn.Write(packet, nextHopMAC)
+}
+
+func (f *Forwarder) forwardBufferedPacketDirectly(packet []byte, dstIP net.IP) {
+	dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
+	if cached {
+		nextHopMAC, reachable := f.GetUnicastNextHop(ToNodeID(dstZoneID))
+		if !reachable {
+			// TODO: Should we do anything else here?
+			// TODO: Here I think we have to terminate the search process
+			// Search for A, A in zone x, x is unreachable(How? I succeded to know that A in x so x must be reachable)
+			// Unless the nodes moves very quickly, so we can repeat the search process again but how many times?
+			log.Println(dstZoneID, "is unreachable (Forwarder)")
+			return
+		}
+		f.zidMacConn.Write(packet, nextHopMAC)
+	} else {
+		log.Panicln("Dst Zone must be cached here")
+	}
 }
 
 // forwardIPFromMACLayer continuously receives messages from the interface,

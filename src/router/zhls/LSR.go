@@ -136,7 +136,7 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 		// TODO : to be handled
 		if parent == nil {
 			log.Println(dst, "is unreachable (LSR)")
-			lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
+			//lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 			continue
 		}
 
