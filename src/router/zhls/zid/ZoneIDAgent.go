@@ -15,7 +15,10 @@ type ZoneIDAgent struct {
 }
 
 func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
+	myZoneMutex.Lock()
+	myZone.ID = 0
 	myZone.Len = zlen
+	myZoneMutex.Unlock()
 
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
@@ -36,10 +39,6 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
-	myZoneMutex.Lock()
-	myZone.Len = zlen
-	myZoneMutex.Unlock()
-
 	return &ZoneIDAgent{
 		conn:                l,
 		zlen:                zlen,
@@ -49,6 +48,13 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 }
 
 func (a *ZoneIDAgent) Start() {
+	myZoneMutex.Lock()
+	for _, cb := range a.zoneChangeCallbacks {
+		cb(myZone.ID)
+	}
+	log.Println("Initial Zone =", &myZone)
+	myZoneMutex.Unlock()
+
 	log.Println("started ZoneIDAgent")
 
 	d := json.NewDecoder(a.conn)
