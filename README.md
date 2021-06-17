@@ -2,7 +2,7 @@
 ![C4IAN Logo](./docs/figures/logo.png)
 > Pronounced "Kaian"
 Tactical Mobile ad-hoc network.
-Build a network on the go for tactical teams in war and emeregency situations.
+Build a network on the go for tactical teams in war and emergency situations.
 
 Supports video/audio streaming and messaging with unicast, multicast and broadcast cababilities.
 
