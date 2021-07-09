@@ -128,6 +128,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 					log.Panic("failed to write to lo interface: ", err)
 				}
 			} else { // i'm a forwarder
+				//log.Println("Forward msg from: ", ip.SrcIP, "to: ", ip.DestIP, "ttl: ", ip.TTL)
 				if valid := IPv4DecrementTTL(ipHdr); !valid {
 					log.Println("ttl <= 0, drop packet")
 					return
@@ -214,6 +215,14 @@ func (f *Forwarder) forwardBufferedPacketDirectly(packet []byte, dstIP net.IP) {
 			log.Println(dstZoneID, "is unreachable (Forwarder)")
 			return
 		}
+		// Update destination zone ID in ZID Header
+		zid, ok := UnmarshalZIDHeader(f.msec.Decrypt(packet[:ZIDHeaderLen]))
+		if !ok {
+			return
+		}
+		zid.DstZID = dstZoneID
+		copy(packet[:ZIDHeaderLen], f.msec.Encrypt(zid.MarshalBinary()))
+		// Send to the next hop for the original destination
 		f.zidMacConn.Write(packet, nextHopMAC)
 	} else {
 		log.Panicln("Dst Zone must be cached here")
