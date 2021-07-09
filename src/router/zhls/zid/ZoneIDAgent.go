@@ -12,6 +12,7 @@ type ZoneIDAgent struct {
 	zlen                byte
 	locSocket           string
 	zoneChangeCallbacks []func(ZoneID)
+	decoder             *json.Decoder
 }
 
 func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
@@ -37,48 +38,51 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 		return nil, err
 	}
 
+	d := json.NewDecoder(l)
+
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
-	return &ZoneIDAgent{
+	zidAgent := ZoneIDAgent{
 		conn:                l,
 		zlen:                zlen,
 		locSocket:           locSocket,
 		zoneChangeCallbacks: make([]func(ZoneID), 0),
-	}, nil
+		decoder:             d,
+	}
+
+	// Make sure ZID in initialised correctly
+	zidAgent.updateZone()
+
+	return &zidAgent, nil
 }
 
 func (a *ZoneIDAgent) Start() {
-	myZoneMutex.Lock()
-	for _, cb := range a.zoneChangeCallbacks {
-		cb(myZone.ID)
-	}
-	log.Println("Initial Zone =", &myZone)
-	myZoneMutex.Unlock()
-
 	log.Println("started ZoneIDAgent")
 
-	d := json.NewDecoder(a.conn)
-
 	for {
-		var loc gpsLocation
-		err := d.Decode(&loc)
-		if err != nil {
-			log.Println("err in loc decoding")
-			continue
-		}
-
-		id := newZoneID(loc, a.zlen)
-		myZoneMutex.Lock()
-		if id != myZone.ID {
-			myZone.ID = id
-			for _, cb := range a.zoneChangeCallbacks {
-				cb(id)
-			}
-			log.Println("New Zone =", &myZone)
-		}
-		myZoneMutex.Unlock()
-
+		a.updateZone()
 	}
+}
+
+func (a *ZoneIDAgent) updateZone() {
+	var loc gpsLocation
+	err := a.decoder.Decode(&loc)
+	if err != nil {
+		log.Println("err in loc decoding")
+		return
+	}
+
+	id := newZoneID(loc, a.zlen)
+	myZoneMutex.Lock()
+	if id != myZone.ID {
+		myZone.ID = id
+		for _, cb := range a.zoneChangeCallbacks {
+			cb(id)
+		}
+		log.Println("New Zone =", &myZone)
+	}
+	myZoneMutex.Unlock()
+
 }
 
 func (a *ZoneIDAgent) Close() {
