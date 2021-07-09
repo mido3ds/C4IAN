@@ -11,7 +11,7 @@ import (
 	"github.com/starwander/goraph"
 )
 
-const topologyVertexAge = 4 * time.Second
+const topologyVertexAge = 3 * time.Second
 
 type Topology struct {
 	g    *goraph.Graph
@@ -62,7 +62,7 @@ func (vertex *myVertex) Edges() (edges []goraph.Edge) {
 
 func (t *Topology) Clear() {
 	treeVertices := t.CalculateSinkTree(ToNodeID(t.myIP))
-	
+
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	for vertexID, _ := range treeVertices {
@@ -115,6 +115,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 			// Start new Timer
 			fireFunc := topologyFireTimer(nodeID, t)
 			newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
+			//log.Println("New msg from: ",srcID , "That added ", nodeID)
 			t.g.AddVertexWithEdges(&myVertex{id: nodeID, outTo: make(map[NodeID]float64), inFrom: neighborInFromEdges, ageTimer: newTimer})
 		}
 
@@ -129,6 +130,7 @@ func (t *Topology) Update(srcID NodeID, srcNeighbors *NeighborsTable) error {
 		fireFunc := topologyFireTimer(srcID, t)
 		newTimer := time.AfterFunc(topologyVertexAge, fireFunc)
 		vertex.(*myVertex).ageTimer = newTimer
+		//log.Println("New msg from: ", srcID)
 		// Remove the old src vertex
 		t.g.DeleteVertex(srcID)
 		// Add the src vertex with new outTo edges
