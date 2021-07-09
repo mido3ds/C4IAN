@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	interzoneLSRDelay = 3 * time.Second // Time between sending interzone LSR packets
+	interzoneLSRDelay = 1 * time.Second // Time between sending interzone LSR packets
 )
 
 type LSRController struct {
