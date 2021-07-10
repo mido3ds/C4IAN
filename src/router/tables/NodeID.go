@@ -24,6 +24,30 @@ func ToNodeID(ID interface{}) (nodeID NodeID) {
 	return
 }
 
+func (nodeID NodeID) ToZoneID() (ZoneID, bool) {
+	if (nodeID & (1 << 63)) != 0 {
+		return 0, false
+	} else {
+		return ZoneID(uint32(nodeID)), true
+	}
+}
+
+func (nodeID NodeID) ToIP() (net.IP, bool) {
+	if (nodeID & (1 << 63)) != 1 {
+		return net.IP{}, false
+	} else {
+		return UInt32ToIPv4(uint32(nodeID)), true
+	}
+}
+
+func (nodeID NodeID) isZone() bool {
+	return (nodeID & (1 << 63)) == 0
+}
+
+func (nodeID NodeID) isIP() bool {
+	return (nodeID & (1 << 63)) == 1
+}
+
 func (nodeID NodeID) String() string {
 	s := ""
 	if nodeID>>63 == 1 {

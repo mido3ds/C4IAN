@@ -16,6 +16,8 @@ type NeighborsTable struct {
 	m *hashmap.HashMap
 }
 
+// 8 bytes (NodeID) + 2 bytes (Cost)
+// The MAC addresses are not transfered in LSR packets, so they are not marshalled
 const neighborEntryLen = 10
 
 type NeighborEntry struct {
@@ -111,7 +113,7 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 
 	start := 4
 	for item := range n.m.Iter() {
-		// Insert IP: 4 bytes
+		// Insert Node ID: 8 bytes
 		nodeID := item.Key.(uint64)
 		payload[start] = byte(nodeID >> 56)
 		payload[start+1] = byte(nodeID >> 48)
@@ -138,12 +140,27 @@ func (n *NeighborsTable) MarshalBinary() []byte {
 	return payload[:]
 }
 
-// The table hash depends on who the neighbors are, disregarding the costs
-// TODO: hash should be based on the order of the neighbors based on their cost
+// The table hash depends on who the neighbors are, regardless of the costs and the MAC addresses
 func (n *NeighborsTable) GetTableHash() []byte {
-	s := ""
+	// Create a list of node ids in the table
+	nodeIDs := make([]uint64, 0, n.m.Len())
 	for item := range n.m.Iter() {
-		s += fmt.Sprint(item.Key) + item.Value.(*NeighborEntry).MAC.String()
+		nodeIDs = append(nodeIDs, item.Key.(uint64))
 	}
-	return HashSHA3([]byte(s))
+
+	// Convert to a bytes slice to hash
+	b := make([]byte, len(nodeIDs)*8)
+	start := 0
+	for _, nodeID := range nodeIDs {
+		b[start] = byte(nodeID >> 56)
+		b[start+1] = byte(nodeID >> 48)
+		b[start+2] = byte(nodeID >> 40)
+		b[start+3] = byte(nodeID >> 32)
+		b[start+4] = byte(nodeID >> 24)
+		b[start+5] = byte(nodeID >> 16)
+		b[start+6] = byte(nodeID >> 8)
+		b[start+7] = byte(nodeID)
+		start += 8
+	}
+	return HashSHA3(b)
 }

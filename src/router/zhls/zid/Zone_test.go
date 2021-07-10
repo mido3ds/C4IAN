@@ -119,7 +119,7 @@ func TestZoneIDToLen(t *testing.T) {
 	zid := newZoneID(l, len)
 	z := Zone{ID: zid, Len: len}
 	for i := 0; i < 16; i++ {
-		z1 := z.ToLen(byte(i))
+		z1 := z.ID.ToLen(byte(i))
 		z2 := newZoneID(l, byte(i))
 		if z1 != z2 {
 			t.Error("mismatch", z1, z2)

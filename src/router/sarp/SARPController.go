@@ -14,7 +14,7 @@ import (
 
 const (
 	sARPHoldTime = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
-	sARPDelay    = 3 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
+	sARPDelay    = 1 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
 )
 
 type SARPController struct {
@@ -65,6 +65,7 @@ func (s *SARPController) sendMsgs() {
 		// Create a new table to collect sARP responses
 		s.dirtyNeighborsTable = NewNeighborsTable()
 
+		//log.Println("Sending sARP ", MyZone().ID)
 		// Broadcast sARP request
 		s.macConn.Write(s.createSARPPacket(SARPReq), BroadcastMACAddr)
 
@@ -79,9 +80,7 @@ func (s *SARPController) sendMsgs() {
 
 		// Check if the new table contains new data
 		newTableHash := s.NeighborsTable.GetTableHash()
-		if !bytes.Equal(tableHash, newTableHash) {
-			s.NeighborhoodUpdateSignal <- true
-		}
+		s.NeighborhoodUpdateSignal <- !bytes.Equal(tableHash, newTableHash)
 		tableHash = newTableHash
 	}
 }
@@ -100,14 +99,16 @@ func (s *SARPController) receiveMsgs() {
 			log.Panicln("Received sARP Packet with invalid sARP header")
 		}
 
-		// TODO: Handle zones of different sizes
 		// Construct NodeID based on whether the neighbor is in the same zone or not
 		var nodeID NodeID
-		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
-		if MyZone().Equal(srcZone) {
+		myZone := MyZone()
+		srcZID := zidHeader.SrcZID.ToLen(myZone.Len)
+		if myZone.ID == srcZID {
 			nodeID = ToNodeID(sarpHeader.IP)
+			//log.Println("sARP received from same zone: ", sarpHeader.IP, "srcZID: ", zidHeader.SrcZID)
 		} else {
-			nodeID = ToNodeID(srcZone.ID)
+			nodeID = ToNodeID(srcZID)
+			//log.Println("sARP received from different zone: ", sarpHeader.IP, "srcZID: ", zidHeader.SrcZID)
 		}
 
 		// Calculate the delay, which is the link cost in the topology

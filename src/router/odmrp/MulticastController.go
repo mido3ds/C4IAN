@@ -209,7 +209,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	})
 }
 
-func (c *MulticastController) onRecvJoinQuery(fldHdr *FloodHeader, encryptedPayload []byte) []byte {
+func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	payload := c.msec.Decrypt(encryptedPayload)
 
 	jq, valid := unmarshalJoinQuery(payload)

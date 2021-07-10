@@ -17,11 +17,11 @@ type ZoneFlooder struct {
 	msec        *MSecLayer
 }
 
-func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) (*ZoneFlooder, error) {
+func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) *ZoneFlooder {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(iface, ZoneFloodEtherType)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to create device connection, err: ", err)
 	}
 
 	log.Println("initalized zone flooder")
@@ -32,7 +32,7 @@ func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) (*ZoneFloo
 		macConn:     macConn,
 		ip:          ip,
 		msec:        msec,
-	}, nil
+	}
 }
 
 func (f *ZoneFlooder) Flood(msg []byte) {

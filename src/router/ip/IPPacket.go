@@ -12,6 +12,8 @@ const (
 type IPHeader struct {
 	Version byte
 	DestIP  net.IP
+	SrcIP   net.IP
+	TTL     int8
 }
 
 func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
@@ -35,6 +37,8 @@ func UnmarshalIPHeader(buffer []byte) (*IPHeader, bool) {
 	return &IPHeader{
 		Version: version,
 		DestIP:  net.IPv4(buffer[16], buffer[17], buffer[18], buffer[19]).To4(),
+		SrcIP:   net.IPv4(buffer[12], buffer[13], buffer[14], buffer[15]).To4(),
+		TTL:     ttl,
 	}, true
 }
 

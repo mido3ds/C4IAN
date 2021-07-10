@@ -10,23 +10,52 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func (f *Forwarder) sendUnicast(packet []byte, destIP net.IP) {
-	e, reachable := getUnicastNextHop(destIP, f)
+func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
+	// Get the next hop using the dstIP
+	// return true only if the dst inside my zone
+	nextHopMac, inMyZone := f.GetUnicastNextHop(ToNodeID(dstIP))
 
-	if !reachable {
-		log.Println("Destination unreachable:", destIP)
+	log.Println(f.ip, "want to send unicast message to", dstIP)
+
+	var zid *ZIDHeader
+	if inMyZone {
+		log.Println(dstIP, "is in", f.ip, "zone")
+		zid = MyZIDHeader(MyZone().ID)
 	} else {
-		zid := MyZIDHeader(ZoneID(e.DestZoneID))
-
-		// build packet
-		buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
-		buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
-		buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
-		buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
-
-		// write to device driver
-		f.zidMacConn.Write(buffer.Bytes(), e.NextHopMAC)
+		// Check if this dst zone is cached
+		log.Println(dstIP, "isn't in", f.ip, "zone")
+		dstZoneID, cached := f.dzdController.CachedDstZone(dstIP)
+		if cached {
+			zid = MyZIDHeader(dstZoneID)
+			var reachable bool
+			log.Println(dstIP, "zone is cahced")
+			nextHopMac, reachable = f.GetUnicastNextHop(ToNodeID(dstZoneID))
+			if !reachable {
+				// If dst zone is cached but unreachable, it may have moved to a reachable zone -> rediscover
+				log.Println(dstIP, "cached zone isn't reachable")
+				f.dzdController.FindDstZone(dstIP)
+				f.dzdController.BufferPacket(dstIP, packet, f.sendUnicast)
+				return
+			}
+			log.Println(dstIP, "cached zone is reachable")
+		} else {
+			// if dst zone isn't cached, search for it
+			// and buffer this msg to be sent when dst zone response arrive
+			log.Println(dstIP, "zone isn't cached")
+			f.dzdController.FindDstZone(dstIP)
+			f.dzdController.BufferPacket(dstIP, packet, f.sendUnicast)
+			return
+		}
 	}
+
+	// build packet
+	buffer := bytes.NewBuffer(make([]byte, 0, f.iface.MTU))
+	buffer.Write(f.msec.Encrypt(zid.MarshalBinary()))    // zid
+	buffer.Write(f.msec.Encrypt(packet[:IPv4HeaderLen])) // ip header
+	buffer.Write(f.msec.Encrypt(packet[IPv4HeaderLen:])) // ip payload
+
+	// write to device driver
+	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {

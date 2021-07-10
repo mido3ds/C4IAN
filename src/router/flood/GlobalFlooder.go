@@ -46,14 +46,14 @@ func (f *GlobalFlooder) Flood(encryptedPayload []byte) {
 // ListenForFloodedMsgs inf loop that receives any flooded msgs
 // calls `payloadProcessor` when it receives the message, it gives it the header and the payload
 // and returns whether to continue flooding or not
-func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func(*FloodHeader, []byte) []byte) {
+func (f *GlobalFlooder) ListenForFloodedMsgs(payloadProcessor func([]byte) []byte) {
 	for {
 		msg := f.macConn.Read()
 		go f.handleFloodedMsg(msg, payloadProcessor)
 	}
 }
 
-func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*FloodHeader, []byte) []byte) {
+func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func([]byte) []byte) {
 	floodHeader, ok := UnmarshalFloodedHeader(f.msec.Decrypt(msg[:floodHeaderLen]))
 	if !ok {
 		return
@@ -65,9 +65,8 @@ func (f *GlobalFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(*Floo
 
 	if f.floodingTbl.isHighestSeqNum(floodHeader.SrcIP, floodHeader.SeqNum) {
 		f.floodingTbl.set(floodHeader.SrcIP, floodHeader.SeqNum)
-
 		encryptedPayload := msg[floodHeaderLen:]
-		newEncryptedPayload := payloadProcessor(floodHeader, encryptedPayload)
+		newEncryptedPayload := payloadProcessor(encryptedPayload)
 		if newEncryptedPayload != nil {
 			f.macConn.Write(append(msg[:floodHeaderLen], newEncryptedPayload...), BroadcastMACAddr)
 		}

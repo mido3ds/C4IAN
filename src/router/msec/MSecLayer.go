@@ -36,11 +36,13 @@ func NewMSecLayer(pass string) *MSecLayer {
 }
 
 func (msec *MSecLayer) Encrypt(in []byte) []byte {
-	cipher.NewCFBEncrypter(msec.block, iv[:]).XORKeyStream(in, in)
-	return in
+	out := make([]byte, len(in))
+	cipher.NewCFBEncrypter(msec.block, iv[:]).XORKeyStream(out, in)
+	return out
 }
 
 func (msec *MSecLayer) Decrypt(in []byte) []byte {
-	cipher.NewCFBDecrypter(msec.block, iv[:]).XORKeyStream(in, in)
-	return in
+	out := make([]byte, len(in))
+	cipher.NewCFBDecrypter(msec.block, iv[:]).XORKeyStream(out, in)
+	return out
 }
