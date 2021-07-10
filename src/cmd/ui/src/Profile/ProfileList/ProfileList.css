@@ -28,6 +28,18 @@
     color:   rgba(102, 103, 109, 0.144);
 }
 
+.down-arrow {
+    margin-top: 12px;
+    font-size: 50px;
+    color:   rgba(102, 103, 109, 0.144);
+
+}
+
+.active-arrow {
+    color:  rgb(25, 158, 154);
+}
+
+
 .list-item {
     position: relative;
 }
@@ -130,11 +142,5 @@
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.down-arrow {
-    margin-top: 12px;
-    font-size: 50px;
-    color:  rgba(220, 222, 228, 0.363);
 }
 
