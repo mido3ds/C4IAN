@@ -8,7 +8,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-func BenchmarkDZCahce(t *testing.B) {
+func BenchmarkDZCache(t *testing.B) {
 	zoneCache := NewDZCache()
 
 	dst1 := UInt32ToIPv4(1)

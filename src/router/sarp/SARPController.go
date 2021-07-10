@@ -57,15 +57,12 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.NeighborsTable.GetTableHash()
 	for {
-		// TODO: Replace with scheduling if necessary
+		// TODO (low priority): Replace with scheduling if necessary
 		time.Sleep(sARPDelay - sARPHoldTime)
-		//log.Println(s.NeighborsTable)
-		//log.Println(MyZone())
 
 		// Create a new table to collect sARP responses
 		s.dirtyNeighborsTable = NewNeighborsTable()
 
-		//log.Println("Sending sARP ", MyZone().ID)
 		// Broadcast sARP request
 		s.macConn.Write(s.createSARPPacket(SARPReq), BroadcastMACAddr)
 

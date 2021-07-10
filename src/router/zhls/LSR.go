@@ -56,7 +56,6 @@ func (lsr *LSRController) Close() {
 
 func (lsr *LSRController) sendInterzoneLSR() {
 	for {
-		// TODO: Replace with scheduling if necessary
 		time.Sleep(interzoneLSRDelay)
 		// Get a list of neighbor zones
 		neighborZones, isMaxIP := lsr.topology.GetNeighborZones(ToNodeID(lsr.myIP))
@@ -133,10 +132,9 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 		}
 
 		// Dst in unreachable
-		// TODO : to be handled
+		// It will eventually be removed from the topology when its timer fires
 		if parent == nil {
 			log.Println(dst, "is unreachable (LSR)")
-			//lsr.topology.DisplaySinkTreeParents(sinkTreeParents)
 			continue
 		}
 
@@ -148,8 +146,9 @@ func (lsr *LSRController) updateForwardingTable(forwardingTable *UniForwardTable
 
 		// Iterate till reaching one of the direct neighbors
 		// or one of the nodes that we have already known its nextHop
-		// TODO: Optimize by collecting nodes along a path and adding next hop for all of them together,
-		// 		 then removing them from the map
+		// TODO (low priority):
+		//		Optimize by collecting nodes along a path and adding next hop for all of them together,
+		// 		then removing them from the map
 		for parent != ToNodeID(lsr.myIP) {
 			// check if the dst parent shortest path is calculated before
 			forwardingEntry, exists := dirtyForwardingTable.Get(parent.(NodeID))

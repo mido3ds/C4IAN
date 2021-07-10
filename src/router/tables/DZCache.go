@@ -10,7 +10,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-const DZCahceAge = 20
+const DZCacheAge = 20
 
 // FloodingTable is lock-free thread-safe hash table
 // optimized for fastest read access
@@ -50,11 +50,9 @@ func (z *DZCache) Set(dstIP net.IP, zoneID ZoneID) {
 
 	// Start new Timer
 	fireFunc := zoneCacheFireTimer(dstIP, z)
-	newTimer := time.AfterFunc(DZCahceAge*time.Second, fireFunc)
+	newTimer := time.AfterFunc(DZCacheAge*time.Second, fireFunc)
 
 	z.m.Set(IPv4ToUInt32(dstIP), &DZEntry{zoneID: zoneID, ageTimer: newTimer})
-
-	// TODO: Send all msgs in Buffer for this dst IP
 }
 
 // Del silently fails if key doesn't exist
@@ -67,7 +65,7 @@ func (z *DZCache) Len() int {
 }
 
 func (z *DZCache) String() string {
-	s := "&DZCahce{"
+	s := "&DZCache{"
 	for item := range z.m.Iter() {
 		s += fmt.Sprintf(" (ip=%#v,zoneId=%#v)", UInt32ToIPv4(item.Key.(uint32)).String(), item.Value.(*DZEntry).zoneID)
 	}

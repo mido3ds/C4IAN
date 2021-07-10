@@ -12,7 +12,7 @@ import (
 type DZDController struct {
 	reqMacConn                *MACLayerConn
 	resMacConn                *MACLayerConn
-	dzCahce                   *DZCache
+	dzCache                   *DZCache
 	packetsBuffer             *PacketsBuffer
 	topology                  *Topology
 	myIP                      net.IP
@@ -30,14 +30,14 @@ func NewDZDController(ip net.IP, iface *net.Interface, topology *Topology) (*DZD
 		return nil, err
 	}
 
-	dzCahce := NewDZCache()
+	dzCache := NewDZCache()
 
 	log.Println("initalized dzd controller")
 
 	dzdController := &DZDController{
 		reqMacConn: reqMacConn,
 		resMacConn: resMacConn,
-		dzCahce:    dzCahce,
+		dzCache:    dzCache,
 		topology:   topology,
 		myIP:       ip,
 	}
@@ -53,7 +53,7 @@ func (d *DZDController) SetGetNextHopCallback(getUnicastNextHopCallback func(dst
 }
 
 func (d *DZDController) CachedDstZone(dstIP net.IP) (ZoneID, bool) {
-	return d.dzCahce.Get(dstIP)
+	return d.dzCache.Get(dstIP)
 }
 
 func (d *DZDController) BufferPacket(dstIP net.IP, packet []byte, sendCallback SendPacketCallback) {
@@ -94,7 +94,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 	zidHeader, dzRequestHeader := d.unpackDZRequestPacket(packet)
 
 	// Cache the src IP/Zone information
-	d.dzCahce.Set(dzRequestHeader.srcIP, zidHeader.SrcZID)
+	d.dzCache.Set(dzRequestHeader.srcIP, zidHeader.SrcZID)
 	go d.sendBufferedMsgs(dzRequestHeader.srcIP)
 
 	// I'm the required destination
@@ -103,7 +103,7 @@ func (d *DZDController) handleDZRequestPackets(packet []byte) {
 		return
 	}
 
-	// The required destination is cahced
+	// The required destination is cached
 	/*requiredDstZoneID, exist := d.CachedDstZone(dzRequestHeader.requiredDstIP)
 	if exist {
 		d.sendDZResponsePackets(zidHeader, dzRequestHeader, requiredDstZoneID)
@@ -153,7 +153,7 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 
 	//log.Println(d.myIP, "Received ", dzResponseHeader)
 
-	d.dzCahce.Set(dzResponseHeader.requiredDstIP, dzResponseHeader.requiredDstZone)
+	d.dzCache.Set(dzResponseHeader.requiredDstIP, dzResponseHeader.requiredDstZone)
 	go d.sendBufferedMsgs(dzResponseHeader.requiredDstIP)
 
 	if dzResponseHeader.dstIP.Equal(d.myIP) {

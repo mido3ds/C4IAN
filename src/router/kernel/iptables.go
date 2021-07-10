@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-// TODO: support parallelism and fan-out
+// TODO (low priority): support parallelism and fan-out
 
 func AddIPTablesRule() {
 	exec.Command("iptables", "-t", "filter", "-D", "OUTPUT", "-j", "NFQUEUE", "-w").Run()

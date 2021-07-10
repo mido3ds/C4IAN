@@ -169,7 +169,7 @@ func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dst
 			if cached {
 				nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZID))
 				if !reachable {
-					// if dst zone is cached, but the cahced zone is unreachable
+					// if dst zone is cached, but the cached zone is unreachable
 					// try to search one more time
 					// and buffer this msg to be sent when dst zone response arrive
 					log.Println(dstZID, "is unreachable (Forwarder)")
@@ -289,7 +289,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 		go func() {
 			packet := p.Packet.Data()
 
-			// TODO (high priority): speed up by fanout netfilter feature
+			// TODO (low priority): speed up by fanout netfilter feature
 
 			ip, valid := UnmarshalIPHeader(packet)
 

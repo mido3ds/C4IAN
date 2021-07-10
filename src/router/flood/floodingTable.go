@@ -63,7 +63,7 @@ func (f *floodingTable) set(srcIP net.IP, seq uint32) {
 		timer.Stop()
 	}
 
-	// TODO: use TimerQueue
+	// TODO (low priority): use TimerQueue
 	// Start new Timer
 	fireFunc := fireTimer(srcIP, f)
 	newTimer := time.AfterFunc(age*time.Second, fireFunc)
