@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
-
-const age = 60
 
 // floodingTable is lock-free thread-safe hash table
 // optimized for fastest read access
@@ -66,7 +65,7 @@ func (f *floodingTable) set(srcIP net.IP, seq uint32) {
 	// TODO (low priority): use TimerQueue
 	// Start new Timer
 	fireFunc := fireTimer(srcIP, f)
-	newTimer := time.AfterFunc(age*time.Second, fireFunc)
+	newTimer := time.AfterFunc(FloodingTableEntryAge*time.Second, fireFunc)
 	entry := &floodingEntry{seqNumber: seq, ageTimer: newTimer}
 	f.m.Set(IPv4ToUInt32(srcIP), entry)
 }

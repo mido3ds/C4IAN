@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
-
-const DZCacheAge = 20
 
 // FloodingTable is lock-free thread-safe hash table
 // optimized for fastest read access
@@ -50,7 +49,7 @@ func (z *DZCache) Set(dstIP net.IP, zoneID ZoneID) {
 
 	// Start new Timer
 	fireFunc := zoneCacheFireTimer(dstIP, z)
-	newTimer := time.AfterFunc(DZCacheAge*time.Second, fireFunc)
+	newTimer := time.AfterFunc(DZCacheAge, fireFunc)
 
 	z.m.Set(IPv4ToUInt32(dstIP), &DZEntry{zoneID: zoneID, ageTimer: newTimer})
 }

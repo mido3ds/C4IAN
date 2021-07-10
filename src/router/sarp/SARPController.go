@@ -6,15 +6,11 @@ import (
 	"net"
 	"time"
 
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
-)
-
-const (
-	sARPHoldTime = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
-	sARPDelay    = 1 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
 )
 
 type SARPController struct {
@@ -57,8 +53,7 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.NeighborsTable.GetTableHash()
 	for {
-		// TODO (low priority): Replace with scheduling if necessary
-		time.Sleep(sARPDelay - sARPHoldTime)
+		time.Sleep(SARPDelay - SARPHoldTime)
 
 		// Create a new table to collect sARP responses
 		s.dirtyNeighborsTable = NewNeighborsTable()
@@ -67,7 +62,7 @@ func (s *SARPController) sendMsgs() {
 		s.macConn.Write(s.createSARPPacket(SARPReq), BroadcastMACAddr)
 
 		// Wait for sARP responses (collected in dirtyNeighborsTable)
-		time.Sleep(sARPHoldTime)
+		time.Sleep(SARPHoldTime)
 
 		// Update NeighborsTable
 		// Shallow copy the forwarding table, this will make the hashmap pointer in s.NeighborsTable

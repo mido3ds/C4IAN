@@ -6,11 +6,9 @@ import (
 	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
-
-const SearchAge = 3
-const MaxNumOfSearches = 2
 
 type SendPacketCallback = func([]byte, net.IP)
 type PacketsQueue = []*PacketEntry
@@ -70,7 +68,7 @@ func (p *PacketsBuffer) AppendPacket(dstIP net.IP, packet []byte, sendCallback S
 	} else {
 		// Start new Timer
 		fireFunc := bufferFireTimer(dstIP, p)
-		newTimer := time.AfterFunc(SearchAge*time.Second, fireFunc)
+		newTimer := time.AfterFunc(DZDRetryTimeout, fireFunc)
 
 		// make new queue for upcoming messages to the same destination
 		queue = make([]*PacketEntry, 0)
@@ -114,11 +112,11 @@ func bufferFireTimerHelper(dstIP net.IP, p *PacketsBuffer) {
 		return
 	}
 	numOfDstSearches := v.(*BufferEntry).numOfDstSearches
-	if numOfDstSearches < MaxNumOfSearches {
+	if numOfDstSearches < DZDMaxRetry {
 		p.findDstZoneCallback(dstIP)
 		// Start new Timer
 		fireFunc := bufferFireTimer(dstIP, p)
-		newTimer := time.AfterFunc(SearchAge*time.Second, fireFunc)
+		newTimer := time.AfterFunc(DZDRetryTimeout, fireFunc)
 		queue := v.(*BufferEntry).packetsQueue
 
 		p.m.Set(IPv4ToUInt32(dstIP), &BufferEntry{packetsQueue: queue, ageTimer: newTimer, numOfDstSearches: numOfDstSearches + 1})
