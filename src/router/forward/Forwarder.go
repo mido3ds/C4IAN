@@ -193,7 +193,9 @@ func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dst
 		// search in the forwarding table by its zone
 		nextHopMAC, reachable = f.GetUnicastNextHop(ToNodeID(dstZID))
 		if !reachable {
-			// TODO: Should we do anything else here?
+			// TODO (low priority):
+			//		Buffer messages to unreachable zones for a short while and send them
+			//	    if the zone becomes reachable
 			log.Println(dstZID, "is unreachable (Forwarder)")
 			return
 		}
@@ -208,10 +210,10 @@ func (f *Forwarder) forwardBufferedPacketDirectly(packet []byte, dstIP net.IP) {
 	if cached {
 		nextHopMAC, reachable := f.GetUnicastNextHop(ToNodeID(dstZoneID))
 		if !reachable {
-			// TODO: Should we do anything else here?
-			// TODO: Here I think we have to terminate the search process
-			// Search for A, A in zone x, x is unreachable(How? I succeded to know that A in x so x must be reachable)
-			// Unless the nodes moves very quickly, so we can repeat the search process again but how many times?
+			// TODO (low priority):
+			// 		Here I think we have to terminate the search process
+			// 		Search for A, A in zone x, x is unreachable(How? I succeded to know that A in x so x must be reachable)
+			// 		Unless the nodes moves very quickly, so we can repeat the search process again but how many times?
 			log.Println(dstZoneID, "is unreachable (Forwarder)")
 			return
 		}
@@ -237,50 +239,48 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 
 	for {
 		packet := f.ipMacConn.Read()
-		log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
-		// TODO: speed up by goroutine workers
 
-		// decrypt and verify
-		ipHdr := f.msec.Decrypt(packet[:IPv4HeaderLen])
-		ip, valid := UnmarshalIPHeader(ipHdr)
-		if !valid {
-			log.Printf("NOT valid header") // TODO delete
-			continue
-		}
-		log.Printf("valid header") // TODO delete
+		go func() {
+			log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 
-		if f.isInMCastGroup(ip.DestIP) { // i'm destination,
-			ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
-			ipPacket := append(ipHdr, ipPayload...)
-
-			// receive message by injecting it in loopback
-			err := f.ipConn.Write(ipPacket)
-			log.Println("recieved and destination") // TODO remove this
-			if err != nil {
-				log.Panic("failed to write to lo interface: ", err)
+			// decrypt and verify
+			ipHdr := f.msec.Decrypt(packet[:IPv4HeaderLen])
+			ip, valid := UnmarshalIPHeader(ipHdr)
+			if !valid {
+				log.Println("Received a packet with an invalid IP header")
+				return
 			}
-		} else { // TODO remove
-			log.Println("recieved but not destination")
-		}
 
-		if valid := IPv4DecrementTTL(ipHdr); !valid {
-			log.Println("ttl <= 0, drop packet")
-			continue
-		}
-		IPv4UpdateChecksum(ipHdr)
+			if f.isInMCastGroup(ip.DestIP) { // i'm destination,
+				ipPayload := f.msec.Decrypt(packet[IPv4HeaderLen:])
+				ipPacket := append(ipHdr, ipPayload...)
 
-		// even if im destination, i may forward it
-		es, exist := f.MultiForwTable.Get(ip.DestIP)
-
-		if exist {
-			// re-encrypt ip hdr
-			copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
-			// write to device driver
-			for item := range es.Items.Iter() {
-				log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
-				f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
+				// receive message by injecting it in loopback
+				err := f.ipConn.Write(ipPacket)
+				if err != nil {
+					log.Panic("failed to write to lo interface: ", err)
+				}
 			}
-		}
+
+			if valid := IPv4DecrementTTL(ipHdr); !valid {
+				log.Println("ttl <= 0, drop packet")
+				return
+			}
+			IPv4UpdateChecksum(ipHdr)
+
+			// even if im destination, i may forward it
+			es, exist := f.MultiForwTable.Get(ip.DestIP)
+
+			if exist {
+				// re-encrypt ip hdr
+				copy(packet[:IPv4HeaderLen], f.msec.Encrypt(ipHdr))
+				// write to device driver
+				for item := range es.Items.Iter() {
+					log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
+					f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
+				}
+			}
+		}()
 	}
 }
 
@@ -295,7 +295,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 		go func() {
 			packet := p.Packet.Data()
 
-			// TODO: speed up by fanout netfilter feature
+			// TODO (high priority): speed up by fanout netfilter feature
 
 			ip, valid := UnmarshalIPHeader(packet)
 

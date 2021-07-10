@@ -7,7 +7,6 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 )
 
-// TODO: make it package private
 type FloodHeader struct {
 	// [0:2] checksum here
 	SrcIP  net.IP // [2:6]
