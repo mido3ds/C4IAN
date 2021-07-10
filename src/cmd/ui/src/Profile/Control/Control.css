@@ -1,0 +1,40 @@
+
+.control-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+svg {
+  height: 60%;
+  width: 60%;
+}
+
+.st0, .st1, .st2, .st3 {
+  fill: none;
+  stroke: rgb(25, 158, 154);
+  stroke-width: 42;
+  stroke-miterlimit: 10;
+}
+
+.st0 {
+  stroke-dasharray: 12.1947,12.1947,12.1947,12.1947,12.1947,12.1947;
+}
+
+.st1 {
+  stroke-dasharray: 50,90,200,30,40,0;
+}
+
+.st2 {
+  stroke-linecap: square;
+  stroke-dasharray: 120, 20, 110, 20, 140;
+}
+
+.st3 {
+  stroke-width: 16;
+  stroke-linecap: square;
+}
