@@ -1,0 +1,110 @@
+\documentclass[12pt,openany,twoside,a4paper]{book}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[left=2.90cm,right=2.30cm,top=2.90cm,bottom=2.30cm]{geometry}
+\usepackage{hyperref}
+\usepackage{arabtex}
+\usepackage{utf8}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\usepackage[table]{xcolor}
+\usepackage{pagecolor}
+\usepackage{afterpage}
+\usepackage{array}
+\usepackage[acronym,toc,section]{glossaries}
+\usepackage{nomencl}
+\usepackage[english]{babel}
+\usepackage[style=ieee]{biblatex}
+\usepackage[toc,page]{appendix}
+\usepackage{fancyhdr}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{listings-golang}
+
+\addbibresource{references.bib}
+
+\newcommand{\gpProject}{C4IAN}
+\newcommand{\gpYear}{2021}
+\newcommand{\gpDate}{July 23, \gpYear}
+\newcommand{\gpSupervisor}{Dr. Ahmed Hamdi}
+\newcommand{\gpSupervisorEmail}{ahamdy@eng.cu.edu.eg}
+\newcommand{\gpSupervisorMobile}{+2 01012697605}
+\newcommand{\gpStudentFirst}{Abdulrahman Khalid Hassan} % TODO
+\newcommand{\gpStudentFirstEmail}{xxx@example.com} % TODO
+\newcommand{\gpStudentFirstMobile}{+2 01xxxxxxxxx} % TODO
+\newcommand{\gpStudentSecond}{Ahmed Mahmoud AbdEl-Monaem} % TODO
+\newcommand{\gpStudentSecondEmail}{ahmed.afifi.cufe@gmail.com} % TODO
+\newcommand{\gpStudentSecondMobile}{+2 01003242713} % TODO
+\newcommand{\gpStudentThird}{Mahmoud Othman Adas}
+\newcommand{\gpStudentThirdEmail}{mahmoud.othman.adas@gmail.com}
+\newcommand{\gpStudentThirdMobile}{+2 01019426003}
+\newcommand{\gpStudentFourth}{Yosry Mohammad Yosry}
+\newcommand{\gpStudentFourthEmail}{yosrym93@gmail.com}
+\newcommand{\gpStudentFourthMobile}{+2 01149392716} % TODO
+\definecolor{gpCoverBGColor}{HTML}{013220}
+\definecolor{gpCoverTextColor}{HTML}{FFFFFF}
+
+\renewcommand*{\contentsname}{Table of Contents}
+\renewcommand{\familydefault}{\sfdefault}
+\newcommand\thefont{\expandafter\string\the\font}
+
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+\fancyhead[RO]{\gpProject{} | \gpYear{}}
+\fancyhead[LE]{\gpYear{} | \gpProject{}}
+\fancyhead[RE,LO]{}
+
+% list of abbreviations won't show if you don't declare and use one or more acronyms
+% for more info https://www.overleaf.com/learn/latex/Glossaries#Acronyms
+\makeglossaries
+
+% list of symbols won't show if you don't declare and use on or more symbols, but it will show in table of contents nevertheless, you may need to remve it from there
+% for more info https://www.overleaf.com/learn/latex/Nomenclatures#Basic_Syntax
+\makenomenclature
+\renewcommand{\nomname}{List of Symbols}
+
+% golang code listing preferences
+\newcommand{\setGolang}{\lstset{%
+    frame=single,
+    basicstyle=\footnotesize,
+    keywordstyle=\color{red},
+    numbers=left,
+    numbersep=5pt,
+    showstringspaces=false, 
+    stringstyle=\color{blue},
+    tabsize=4,
+    language=Golang,
+    escapechar=@,
+    captionpos=b
+}}
+\renewcommand{\lstlistingname}{Snippet}
+
+% General Guidelines
+%     • The document is intended to be a template for the graduation project report in the department of Computer Engineering, Cairo University
+%     •  After reading this page, you have to remove it from the report
+%     • Red texts should be removed and replaced by similar ones, related to your project
+%     • The color of the cover page should be green
+%     • Throughout your text, use the font type, font size, and spacing, as in this template. In general, Arial font should be used. Chapter headings should be of size 24. Sections should be of size 18, and regular text should be of size 12. Your text should be justified on both left and right sides.  
+%     • The reference list should be written using a font size of 10. Ensure that the references are written correctly and all fields are included. References should be ordered according to their appearance in the text “[1], [2], [3] … etc”
+%     • The table of content is a tentative one. You could add more sections as required. However, the mentioned sections should be included in your report
+%     • For the appendices, add any appendix you see necessary. Remove any appendix that is not applicable to your project. However, the feasibility study and user guide should be included 
+%     • Ensure that the report is clear and self-contained, such that any future interested reader could completely understand your project “to the extent of building another one similar to yours”
+%     • Use figures as much as possible to clarify and enrich your discussion. You have to draw all figures yourself. Ensure that the figures are clear and their size is suitable. 
+%     • Any figure caption should be inserted below the figure. Figures within any chapter should be numbered starting from 1. For example, the first figure of chapter 2 should be “Figure 2.1”. Similarly, the fourth figure of chapter 3 should be “Figure 3.4”
+%     • Any table caption should be inserted above the table. Tables within any chapter should be numbered starting from 1. For example, the first table of chapter 4 should be “Table 4.1”. Similarly, the seventh table of chapter 5 should be “Table 5.7”
+%     • Copy and paste from any other source is not allowed by any shape. Even for the background knowledge, you have to use your own wording.
+%     • The complete report should be submitted 48 hours before the final project demonstration day. Ensure that you would meet this deadline to avoid any late penalty
+
+\begin{document}
+\setcode{utf8}
+
+\input{chapters/0.pre-introduction.tex}
+\input{chapters/1.introduction.tex}
+\input{chapters/2.literature-survey.tex}
+\input{chapters/3.system-design-and-arch.tex}
+\input{chapters/4.system-testing-and-verification.tex}
+\input{chapters/5.conclusions-and-future-work.tex}
+\input{chapters/6.appendices.tex}
+
+\end{document}
