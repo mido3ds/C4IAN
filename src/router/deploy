@@ -1,0 +1,68 @@
+#!/bin/bash
+
+if [[ $# -lt 2 ]]; then
+    echo "Usage: $0 interface ip"
+    echo "Deploys C4IAN router locally"
+    echo "Get the interface name from '$ iw dev'"
+    exit 1
+fi
+
+set -ex -o pipefail
+
+IFACE=${1}
+IP=${2}
+
+# you can override those env variables
+SSID=${SSID-C4IAN-GLOBAL-SSID}
+PASS=${PASS-passphrase}
+
+HAD_NET_MNGR=0
+CLEANEDUP=0
+
+function cleanup() {
+    if [[ $CLEANEDUP -eq 0 ]]; then
+        ip link set "$IFACE" down
+        iw dev "$IFACE" set type managed
+        ip link set "$IFACE" up
+        ethtool -K "$IFACE" gro on
+        if [[ $HAD_NET_MNGR -eq 1 ]]; then
+            systemctl start network-manager.service
+        fi
+
+        CLEANEDUP=1
+    fi
+}
+
+trap cleanup INT
+trap cleanup ERR
+
+# stop net manager
+if systemctl status --no-pager network-manager.service >/dev/null 2>&1; then
+    systemctl stop network-manager.service
+    HAD_NET_MNGR=1
+fi
+rfkill unblock wifi
+ethtool -K "$IFACE" gro off
+
+# ibss
+ip link set "$IFACE" down
+iw dev "$IFACE" set type ibss
+ip link set "$IFACE" up
+iw dev "$IFACE" ibss join "$SSID" 2432
+
+# ip
+ip address flush "$IFACE"
+ip address add "$IP" broadcast + dev "$IFACE"
+
+# wait
+sleep 10s
+iw dev
+ip address show "$IFACE"
+
+if iw dev | grep -q "$SSID"; then
+    echo Successfully initialized adhoc mode
+    ./router -i "$IFACE" -l /tmp/local.router.lsock -p "$PASS"
+else
+    echo failure
+    exit 1
+fi

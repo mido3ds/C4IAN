@@ -8,12 +8,19 @@ import (
 )
 
 type ZoneIDAgent struct {
-	conn      *net.UnixConn
-	zlen      byte
-	locSocket string
+	conn                *net.UnixConn
+	zlen                byte
+	locSocket           string
+	zoneChangeCallbacks []func(ZoneID)
+	decoder             *json.Decoder
 }
 
 func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
+	myZoneMutex.Lock()
+	myZone.ID = 0
+	myZone.Len = zlen
+	myZoneMutex.Unlock()
+
 	// remove loc socket file
 	err := os.RemoveAll(locSocket)
 	if err != nil {
@@ -31,42 +38,58 @@ func NewZoneIDAgent(locSocket string, zlen byte) (*ZoneIDAgent, error) {
 		return nil, err
 	}
 
+	d := json.NewDecoder(l)
+
 	log.Println("initailized ZoneIDAgent, sock=", locSocket)
 
-	myZoneMutex.Lock()
-	myZone.Len = zlen
-	myZoneMutex.Unlock()
+	zidAgent := ZoneIDAgent{
+		conn:                l,
+		zlen:                zlen,
+		locSocket:           locSocket,
+		zoneChangeCallbacks: make([]func(ZoneID), 0),
+		decoder:             d,
+	}
 
-	return &ZoneIDAgent{
-		conn:      l,
-		zlen:      zlen,
-		locSocket: locSocket,
-	}, nil
+	// Make sure ZID in initialized correctly
+	zidAgent.updateZone()
+
+	return &zidAgent, nil
 }
 
 func (a *ZoneIDAgent) Start() {
 	log.Println("started ZoneIDAgent")
 
-	d := json.NewDecoder(a.conn)
-
 	for {
-		var loc gpsLocation
-		err := d.Decode(&loc)
-		if err != nil {
-			continue
-		}
-
-		id := newZoneID(loc, a.zlen)
-		myZoneMutex.Lock()
-		if id != myZone.ID {
-			myZone.ID = id
-			log.Println("New Zone =", &myZone)
-		}
-		myZoneMutex.Unlock()
+		a.updateZone()
 	}
+}
+
+func (a *ZoneIDAgent) updateZone() {
+	var loc gpsLocation
+	err := a.decoder.Decode(&loc)
+	if err != nil {
+		log.Println("err in loc decoding")
+		return
+	}
+
+	id := newZoneID(loc, a.zlen)
+	myZoneMutex.Lock()
+	if id != myZone.ID {
+		myZone.ID = id
+		for _, cb := range a.zoneChangeCallbacks {
+			cb(id)
+		}
+		log.Println("New Zone =", &myZone)
+	}
+	myZoneMutex.Unlock()
+
 }
 
 func (a *ZoneIDAgent) Close() {
 	a.conn.Close()
 	os.RemoveAll(a.locSocket)
+}
+
+func (a *ZoneIDAgent) AddZoneChangeCallback(cb func(ZoneID)) {
+	a.zoneChangeCallbacks = append(a.zoneChangeCallbacks, cb)
 }

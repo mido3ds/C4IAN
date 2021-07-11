@@ -1,0 +1,144 @@
+\pagenumbering{roman}
+\pagecolor{gpCoverBGColor}\afterpage{\nopagecolor}
+\thispagestyle{empty}
+{\color{gpCoverTextColor}
+\begin{figure}
+\hspace*{4.5em}\includegraphics[width=1.09in]{images/cu-logo.png}\\
+{\color{gpCoverTextColor} 
+\hspace*{4em} Cairo University\\
+\hspace*{3em}Faculty of Engineering\\
+Department of Computer Engineering
+}
+\vspace{30pt}
+\end{figure}
+
+\begin{center}
+    \vspace{20pt}
+    {\fontsize{42}{50} \selectfont \textbf{\gpProject{}}}
+    \vspace{15pt}
+    
+    % add logo if you want, unfortunately the background is green and it might not look right
+    
+    \vspace{10pt}
+    \textbf{A Graduation Project Report Submitted}
+    \vspace{3pt}\\
+    to
+    \vspace{3pt}\\
+    \textbf{Faculty of Engineering, Cairo University} 
+    \vspace{3pt}\\
+    \textbf{in Partial Fulfillment of the requirements of the degree}
+    \vspace{3pt}\\
+    of
+    \vspace{3pt}\\
+    \textbf{Bachelor of Science in Computer Engineering}
+    \vspace{10pt}
+    
+    \vspace{15pt}
+    {\Large \textbf{Presented by}}\\
+    \begin{center}
+    \begin{tabular}{ l c r }
+     \textbf{\gpStudentFirst} & \hspace{50pt} & \textbf{\gpStudentSecond} \\
+     \textbf{\gpStudentThird} & \hspace{50pt} & \textbf{\gpStudentFourth}
+    \end{tabular}
+    \end{center}
+    
+    \vspace{15pt}
+    {\Large \textbf{Supervised by}}\\
+    \vspace{5pt}
+    \textbf{\gpSupervisor}
+    
+    \vspace{15pt}
+    \textbf{\gpDate{}}
+    
+    \vspace{30pt}
+    All rights reserved. This report may not be reproduced in whole or in part, by photocopying or other means, without the permission of the authors/department.    
+\end{center}
+\newpage
+}
+
+\section*{Abstract}
+\label{sec:abstract}
+\addcontentsline{toc}{section}{\nameref{sec:abstract}}
+
+% The abstract should clearly and briefly describe the project objective(s) and outcome(s). In details, the abstract should include, but not limited to, all of the following:
+%     \begin{itemize}
+%         \item The problem(s) which is(are) addressed in the project
+%         \item The objective(s) of the project
+%         \item The approach that is followed to solve the problem
+%         \item The output(s) of the project
+%         \item Testing/development tools and summary of testing results
+%         \item The sponsor(s), if any
+%     \end{itemize}
+    
+Mobile Ad-hoc Networks (MANETs) is an evergrowing research field due to their numereous practical applications. MANETs provide means for infrastructure-less communications, which are utilized by tactical teams, military, emergency and rescue teams, drone swarms, etc.
+
+C4IAN (Command, Control, Communications, Computing \& Intelligence using Ad-hoc Networks) is a scalable communications solution for tactical teams. It builds a MANET on-the-go between command centers and units allowing them to communicate effectively and securely while moving freely, without the need for any infrastructure.
+
+Our system runs on handheld tactical devices, robots, drones, or any other Linux-based platform. It provides both a platform-independent network layer which routes data through dynamically changing and scalable topologies, and an application for tactical teams’ units and
+command centers.
+
+% TODO: Testing/development tools and summary of testing results
+\newpage
+
+\begin{arabtext}
+{\huge
+المُلَخَّص
+}\vspace{20pt}
+\input{arabic-abstract.txt}
+\end{arabtext}
+{\color{white} \tiny \section*{~} \addcontentsline{toc}{section}{\<المُلَخص>}}
+\newpage
+
+\section*{Acknowledgement}
+\addcontentsline{toc}{section}{Acknowledgement}
+Your acknowledgment and dedication should be written here
+\newpage
+
+\tableofcontents
+\addcontentsline{toc}{section}{\contentsname}
+
+\listoffigures
+\addcontentsline{toc}{section}{List of Figures}
+
+\listoftables
+\addcontentsline{toc}{section}{List of Tables}
+
+\printglossary[type=\acronymtype,title=List of Abbreviations]
+
+\printnomenclature
+\addcontentsline{toc}{section}{\nomname} % don't forget to remove this if you don't have any symbols in this document
+\clearpage
+
+\section*{Contacts}
+\label{sec:contacts}
+\addcontentsline{toc}{section}{\nameref{sec:contacts}}
+\subsubsection*{Team Members}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{|l | l | l|}
+\rowcolor{gray!50}
+    \hline
+    Name & Email & Phone Number\\\hline\hline
+    \gpStudentFirst & \gpStudentFirstEmail & \gpStudentFirstMobile\\\hline
+    \gpStudentSecond & \gpStudentSecondEmail & \gpStudentSecondMobile\\\hline
+    \gpStudentThird & \gpStudentThirdEmail & \gpStudentThirdMobile\\\hline
+    \gpStudentFourth & \gpStudentFourthEmail & \gpStudentFourthMobile\\\hline
+\end{tabular}
+
+\subsubsection*{Supervisor}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{|l | l | l|}
+\rowcolor{gray!50}
+    \hline
+    Name & Email & Phone Number\\\hline\hline
+    \gpSupervisor & \gpSupervisorEmail & \gpSupervisorMobile\\\hline
+\end{tabular}
+
+\clearpage
+\vspace*{\fill}
+\begin{center}
+\begin{minipage}{.45\textwidth}
+This page is left intentionally blank
+\end{minipage}
+\end{center}
+\vfill % equivalent to \vspace{\fill}
+\clearpage

@@ -2,6 +2,7 @@ package ip
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"syscall"
@@ -39,9 +40,11 @@ func NewIPLayerConn() (*IPLayerConn, error) {
 	}, nil
 }
 
-// TODO: don't return error, panic internally instead
-func (c *IPLayerConn) Write(packet []byte) error {
-	return syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
+func (c *IPLayerConn) Write(packet []byte) {
+	err := syscall.Sendto(c.fd4, packet, 0, &loopbackRawAddrIPv4)
+	if err != nil {
+		log.Panicln("failed to write to raw socket, err: ", err)
+	}
 }
 
 func (c *IPLayerConn) Read() netfilter.NFPacket {

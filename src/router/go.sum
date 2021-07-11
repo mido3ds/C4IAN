@@ -39,6 +39,7 @@ github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZ
 github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf h1:InctQoB89TIkmgIFQeIL4KXNvWc1iebQXdZggqPSwL8=
 github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/mido3ds/C4IAN v0.0.0-20210429230951-f525f578bfe2 h1:ypHrU4TFmX3afYej0Nm4j6JI7NfB+qidoVPUsDVl1OI=
+github.com/mido3ds/C4IAN v0.0.0-20210710174349-c14d803d8ebd h1:Jw9s1s8KVZ/PwWJge7YffUA//2NcmCp8NupRBk38D2I=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=

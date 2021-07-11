@@ -209,7 +209,7 @@
           Mininet
         </legend>
 
-        Port: <input value="2479" min="1000" type="number" id="portInput" style="width: 45px;
+        Port: <input value="2479" min="1000" type="number" id="portInput" style="width: 50px;
 ">
         <button class="toConnect" id="connect">Connect</button>
       </fieldset>
@@ -242,8 +242,13 @@
         <div style="margin-top: 10px;
 ">
           <label for="range">Range (in meters):</label>
-          <input type="number" id="range" name="range" min="50" max="50000" value="116" style="width: 47px;
+          <input type="number" id="range" name="range" min="50" max="50000" value="393" style="width: 47px;
 ">
+        </div>
+
+        <div>
+          <input type="checkbox" name="halfRange" id="halfRange" checked="">
+          <label for="halfRange">Show 50% of Real Range</label>
         </div>
       </fieldset>
     </div>
@@ -298,13 +303,13 @@
 
         <div>
           Velocity {
-          min: <span id="minVelocityText">10</span>,
-          max: <span id="maxVelocityText">30</span>
+          min: <span id="minVelocityText">5</span>,
+          max: <span id="maxVelocityText">10</span>
           } km/h
-          <div class="wrap" role="group" aria-labelledby="multi-lbl" style="--minVelocity: 10; --maxVelocity: 30; --min: 0; --max: 100
+          <div class="wrap" role="group" aria-labelledby="multi-lbl" style="--minVelocity: 5; --maxVelocity: 10; --min: 0; --max: 17
 ">
-            <input class="newRange" id="minVelocity" type="range" min="0" value="10" max="100">
-            <input class="newRange" id="maxVelocity" type="range" min="0" value="30" max="100">
+            <input class="newRange" id="minVelocity" type="range" min="0" value="5" max="17">
+            <input class="newRange" id="maxVelocity" type="range" min="0" value="10" max="17">
           </div>
         </div>
 

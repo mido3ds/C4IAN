@@ -13,6 +13,7 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/sarp"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls"
+	. "github.com/mido3ds/C4IAN/src/router/zhls/dzd"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
@@ -30,6 +31,7 @@ type Router struct {
 	unicCont *UnicastController
 	multCont *MulticastController
 	sarpCont *SARPController
+	dzdCont  *DZDController
 }
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
@@ -56,6 +58,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 
 	msec := NewMSecLayer(passphrase)
 
+	topology := NewTopology(ip)
 	timers := NewTimersQueue()
 
 	log.Println("ZLen =", zlen, ", Zone Max Area =", ZLenToAreaKMs(zlen), "km^2")
@@ -69,7 +72,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initiate sARP, err: %s", err)
 	}
 
-	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec)
+	unicCont, err := NewUnicastController(iface, ip, sarpCont.NeighborsTable, sarpCont.NeighborhoodUpdateSignal, msec, topology)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
@@ -79,10 +82,19 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to initialize unicast controller, err: %s", err)
 	}
 
-	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, multCont.GetMissingEntries, multCont.IsDest, unicCont.UpdateUnicastForwardingTable, timers)
+	dzdCont, err := NewDZDController(ip, iface, topology)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize dzd controller, err: %s", err)
+	}
+
+	forwarder, err := NewForwarder(iface, ip, msec, sarpCont.NeighborsTable, dzdCont, multCont.GetMissingEntries,
+		multCont.IsDest, unicCont.UpdateUnicastForwardingTable, timers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize forwarder, err: %s", err)
 	}
+
+	zidAgent.AddZoneChangeCallback(unicCont.OnZoneChange)
+	dzdCont.SetGetNextHopCallback(forwarder.GetUnicastNextHop)
 
 	return &Router{
 		iface:     iface,
@@ -95,6 +107,7 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		unicCont:  unicCont,
 		multCont:  multCont,
 		sarpCont:  sarpCont,
+		dzdCont:   dzdCont,
 	}, nil
 }
 
@@ -109,6 +122,9 @@ func (r *Router) Start() {
 	go r.unicCont.Start()
 	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start()
+	go r.dzdCont.Start()
+
+	log.Println(r.ip, ":", r.iface.HardwareAddr)
 }
 
 func (r *Router) Close() {
@@ -116,6 +132,7 @@ func (r *Router) Close() {
 	r.multCont.Close()
 	r.unicCont.Close()
 	r.sarpCont.Close()
+	r.dzdCont.Close()
 
 	r.zidAgent.Close()
 

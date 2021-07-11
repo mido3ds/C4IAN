@@ -162,7 +162,7 @@ var _olStyle = require("ol/style");
 var _olInteraction = require("ol/interaction");
 var _olExtent = require('ol/extent');
 var _olLayer = require("ol/layer");
-var _olProjUnits = require('ol/proj/Units');
+require('ol/proj/Units');
 var _olOverlay = require('ol/Overlay');
 var _olOverlayDefault = _parcelHelpers.interopDefault(_olOverlay);
 var _olEventsCondition = require("ol/events/condition");
@@ -172,9 +172,13 @@ let prefix = '';
 let mode = '';
 let numUnits = 1;
 let numCmds = 1;
+let halfRange = true;
 const START_CENTER = _olProj.fromLonLat([6.7318473939, 0.3320770836]);
 function getRange() {
   return parseFloat(document.getElementById('range').value);
+}
+function setRange(range) {
+  document.getElementById('range').value = range;
 }
 function calcInterval(zlen) {
   let d = 1.0 / (1 << zlen);
@@ -405,16 +409,16 @@ function onZlenChanged() {
   document.getElementById('zoneidLbl').textContent = getZoneID(coord[0], coord[1], getZLen()).toUpperCase();
 }
 document.getElementById('zlen').addEventListener('change', onZlenChanged);
-function drawCircleInMeter(center, range, name) {
-  let view = map.getView();
-  let projection = view.getProjection();
-  let resolutionAtEquator = view.getResolution();
-  let pointResolution = projection.getPointResolutionFunc()(resolutionAtEquator, center);
-  let resolutionFactor = resolutionAtEquator / pointResolution;
-  range = range / _olProjUnits.METERS_PER_UNIT.m * resolutionFactor;
-  const f = new _olFeatureDefault.default(new _olGeom.Circle(center, getRange()));
+function newCirlceFeature(center, range, name) {
+  if (halfRange) {
+    range /= 2;
+  }
+  const f = new _olFeatureDefault.default(new _olGeom.Circle(center, range));
   f.setId(name);
-  source.addFeature(f);
+  return f;
+}
+function drawCircleInMeter(center, range, name) {
+  source.addFeature(newCirlceFeature(center, range, name));
 }
 map.on('singleclick', e => {
   if (mode === 'add') {
@@ -424,7 +428,7 @@ map.on('singleclick', e => {
     } else if (prefix === 'c') {
       name = `${prefix}${numCmds++}`;
     }
-    drawCircleInMeter(e.coordinate, range, name);
+    drawCircleInMeter(e.coordinate, getRange(), name);
   }
 });
 function onActionChange() {
@@ -458,14 +462,13 @@ function importFile(fileContent) {
   const json = JSON.parse(fileContent);
   let avgCenter = [0, 0];
   let total = 0;
+  setRange(json.range);
   let features = json.nodes.map(n => {
     const center = _olProj.fromLonLat([n.lon, n.lat]);
     avgCenter[0] += center[0];
     avgCenter[1] += center[1];
     total++;
-    const f = new _olFeatureDefault.default(new _olGeom.Circle(center, json.range));
-    f.setId(n.name);
-    return f;
+    return newCirlceFeature(center, json.range, n.name);
   });
   if (total === 0) {
     avgCenter = START_CENTER;
@@ -498,6 +501,7 @@ function importFromMininet(data, change) {
   const json = JSON.parse(data);
   let avgCenter = [0, 0];
   let total = 0;
+  setRange(json.range);
   let features = json.nodes.filter(n => {
     if (selectedFeature && n.name === selectedFeature.getId()) {
       return false;
@@ -508,9 +512,7 @@ function importFromMininet(data, change) {
     avgCenter[0] += center[0];
     avgCenter[1] += center[1];
     total++;
-    const f = new _olFeatureDefault.default(new _olGeom.Circle(center, json.range));
-    f.setId(n.name);
-    return f;
+    return newCirlceFeature(center, json.range, n.name);
   });
   replaceFeatures(features);
   if (change) {
@@ -580,12 +582,12 @@ document.getElementById('file-input').addEventListener('change', () => {
     };
   }
 });
-document.getElementById('range').addEventListener('change', () => {
+function onRangeChanged() {
   let range = getRange();
   if (range < 50) {
-    document.getElementById('range').value = 50;
+    setRange(50);
   } else if (range > 50000) {
-    document.getElementById('range').value = 50000;
+    setRange(50000);
   }
   range = getRange();
   source.getFeatures().forEach(f => {
@@ -594,6 +596,11 @@ document.getElementById('range').addEventListener('change', () => {
     const name = f.getId();
     drawCircleInMeter(center, range, name);
   });
+}
+document.getElementById('range').addEventListener('change', onRangeChanged);
+document.getElementById('halfRange').addEventListener('change', () => {
+  halfRange = document.getElementById('halfRange').checked;
+  onRangeChanged();
 });
 function onSendMsg(socket) {
   if (selectedFeature) {
@@ -785,7 +792,7 @@ extentInter.on("extentchanged", e => {
   }
 });
 
-},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU","ol/events/condition":"5PXw5","ol/interaction/Extent":"5ou3q"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
+},{"ol/ol.css":"7KQGG","ol/layer/Graticule":"4u4gM","ol/Map":"6Q9NO","ol/style/Stroke":"5llkb","ol/style/Text":"1s0fB","ol/View":"5qaID","ol/proj":"2XI9V","ol/Feature":"7ZXLR","ol/geom":"74A72","ol/source":"3JeVX","ol/style":"VyIDT","ol/interaction":"5V1fH","ol/extent":"4Oj4u","ol/layer":"2lx9q","ol/proj/Units":"6r4AO","ol/Overlay":"4NwYi","ol/events/condition":"5PXw5","ol/interaction/Extent":"5ou3q","@parcel/transformer-js/lib/esmodule-helpers.js":"5J4vU"}],"7KQGG":[function() {},{}],"4u4gM":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 var _CollectionJs = require('../Collection.js');

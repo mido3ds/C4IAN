@@ -6,15 +6,11 @@ import (
 	"net"
 	"time"
 
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
-)
-
-const (
-	sARPHoldTime = time.Second     // Time allowed for sARP responses to arrive and neighborhood table to be updated
-	sARPDelay    = 3 * time.Second // Time between consequent sARP requests (neighborhood discoveries)
 )
 
 type SARPController struct {
@@ -57,10 +53,7 @@ func (s *SARPController) Start() {
 func (s *SARPController) sendMsgs() {
 	tableHash := s.NeighborsTable.GetTableHash()
 	for {
-		// TODO: Replace with scheduling if necessary
-		time.Sleep(sARPDelay - sARPHoldTime)
-		//log.Println(s.NeighborsTable)
-		//log.Println(MyZone())
+		time.Sleep(SARPDelay - SARPHoldTime)
 
 		// Create a new table to collect sARP responses
 		s.dirtyNeighborsTable = NewNeighborsTable()
@@ -69,7 +62,7 @@ func (s *SARPController) sendMsgs() {
 		s.macConn.Write(s.createSARPPacket(SARPReq), BroadcastMACAddr)
 
 		// Wait for sARP responses (collected in dirtyNeighborsTable)
-		time.Sleep(sARPHoldTime)
+		time.Sleep(SARPHoldTime)
 
 		// Update NeighborsTable
 		// Shallow copy the forwarding table, this will make the hashmap pointer in s.NeighborsTable
@@ -79,9 +72,7 @@ func (s *SARPController) sendMsgs() {
 
 		// Check if the new table contains new data
 		newTableHash := s.NeighborsTable.GetTableHash()
-		if !bytes.Equal(tableHash, newTableHash) {
-			s.NeighborhoodUpdateSignal <- true
-		}
+		s.NeighborhoodUpdateSignal <- !bytes.Equal(tableHash, newTableHash)
 		tableHash = newTableHash
 	}
 }
@@ -100,14 +91,16 @@ func (s *SARPController) receiveMsgs() {
 			log.Panicln("Received sARP Packet with invalid sARP header")
 		}
 
-		// TODO: Handle zones of different sizes
 		// Construct NodeID based on whether the neighbor is in the same zone or not
 		var nodeID NodeID
-		srcZone := &Zone{ID: zidHeader.SrcZID, Len: zidHeader.ZLen}
-		if MyZone().Equal(srcZone) {
+		myZone := MyZone()
+		srcZID := zidHeader.SrcZID.ToLen(myZone.Len)
+		if myZone.ID == srcZID {
 			nodeID = ToNodeID(sarpHeader.IP)
+			//log.Println("sARP received from same zone: ", sarpHeader.IP, "srcZID: ", zidHeader.SrcZID)
 		} else {
-			nodeID = ToNodeID(srcZone.ID)
+			nodeID = ToNodeID(srcZID)
+			//log.Println("sARP received from different zone: ", sarpHeader.IP, "srcZID: ", zidHeader.SrcZID)
 		}
 
 		// Calculate the delay, which is the link cost in the topology

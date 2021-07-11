@@ -17,7 +17,6 @@ type UniForwardTable struct {
 
 type UniForwardingEntry struct {
 	NextHopMAC net.HardwareAddr
-	DestZoneID uint32 // TODO: use ZoneID
 }
 
 func NewUniForwardTable() *UniForwardTable {
@@ -26,20 +25,21 @@ func NewUniForwardTable() *UniForwardTable {
 	}
 }
 
-// Get returns value associated with the given key, and whether the key existed or not
-func (f *UniForwardTable) Get(nodeID NodeID) (*UniForwardingEntry, bool) {
+// Get returns value associated with the given key,
+// and whether the key existed or not
+func (f *UniForwardTable) Get(nodeID NodeID) (net.HardwareAddr, bool) {
 	v, ok := f.m.Get(uint64(nodeID))
 	if !ok {
 		return nil, false
 	}
-	return v.(*UniForwardingEntry), true
+	return v.(*UniForwardingEntry).NextHopMAC, true
 }
 
-func (f *UniForwardTable) Set(nodeID NodeID, entry *UniForwardingEntry) {
-	if entry == nil {
+func (f *UniForwardTable) Set(nodeID NodeID, nextHopMAC net.HardwareAddr) {
+	if nextHopMAC == nil {
 		log.Panic("you can't enter nil entry")
 	}
-	f.m.Set(uint64(nodeID), entry)
+	f.m.Set(uint64(nodeID), &UniForwardingEntry{NextHopMAC: nextHopMAC})
 }
 
 // Del silently fails if key doesn't exist
@@ -59,7 +59,7 @@ func (f *UniForwardTable) Clear() {
 func (f *UniForwardTable) String() string {
 	s := "&ForwardTable{"
 	for item := range f.m.Iter() {
-		s += fmt.Sprintf(" (ip=%#v,mac=%#v)\n", fmt.Sprint(item.Key), item.Value.(*UniForwardingEntry).NextHopMAC.String())
+		s += fmt.Sprintf(" (%#v,mac=%#v)\n", NodeID(item.Key.(uint64)).String(), item.Value.(*UniForwardingEntry).NextHopMAC.String())
 
 	}
 	s += " }"

@@ -6,37 +6,33 @@ import (
 
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
-	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 )
 
-// TODO: merge with global flooder
 type ZoneFlooder struct {
-	seqNumber uint32
-	fTable    *FloodingTable
-	macConn   *MACLayerConn
-	ip        net.IP
-	msec      *MSecLayer
+	seqNumber   uint32
+	floodingTbl *floodingTable
+	macConn     *MACLayerConn
+	ip          net.IP
+	msec        *MSecLayer
 }
 
-func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) (*ZoneFlooder, error) {
+func NewZoneFlooder(iface *net.Interface, ip net.IP, msec *MSecLayer) *ZoneFlooder {
 	// connect to mac layer
 	macConn, err := NewMACLayerConn(iface, ZoneFloodEtherType)
 	if err != nil {
-		return nil, err
+		log.Panic("failed to create device connection, err: ", err)
 	}
-
-	fTable := NewFloodingTable()
 
 	log.Println("initalized zone flooder")
 
 	return &ZoneFlooder{
-		seqNumber: 0,
-		fTable:    fTable,
-		macConn:   macConn,
-		ip:        ip,
-		msec:      msec,
-	}, nil
+		seqNumber:   0,
+		floodingTbl: newFloodingTable(),
+		macConn:     macConn,
+		ip:          ip,
+		msec:        msec,
+	}
 }
 
 func (f *ZoneFlooder) Flood(msg []byte) {
@@ -82,19 +78,15 @@ func (f *ZoneFlooder) handleFloodedMsg(msg []byte, payloadProcessor func(net.IP,
 		return
 	}
 
-	tableSeq, exist := f.fTable.Get(floodHeader.SrcIP)
+	if f.floodingTbl.isHighestSeqNum(floodHeader.SrcIP, floodHeader.SeqNum) {
+		f.floodingTbl.set(floodHeader.SrcIP, floodHeader.SeqNum)
 
-	if exist && floodHeader.SeqNum <= tableSeq {
-		return
+		// Call the payload processor in a separate goroutine to avoid delays during flooding
+		go payloadProcessor(floodHeader.SrcIP, f.msec.Decrypt(msg[ZIDHeaderLen+floodHeaderLen:]))
+
+		// reflood the msg
+		f.macConn.Write(msg, BroadcastMACAddr)
 	}
-
-	f.fTable.Set(floodHeader.SrcIP, floodHeader.SeqNum)
-
-	// Call the payload processor in a separate goroutine to avoid delays during flooding
-	go payloadProcessor(floodHeader.SrcIP, f.msec.Decrypt(msg[ZIDHeaderLen+floodHeaderLen:]))
-
-	// reflood the msg
-	f.macConn.Write(msg, BroadcastMACAddr)
 }
 
 func (f *ZoneFlooder) Close() {

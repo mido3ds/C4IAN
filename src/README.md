@@ -1,12 +1,13 @@
 ## Edit Toplogies
-To create a new toplogy or edit and existing one, use `edit`.
-
-For example:
+Use `edit` to create a new toplogy, edit an existing one connect to mininet-wifi and start nodes mobility.
 ```
-$ ./edit topos/simple.topo
+$ ./edit
 ```
-
 ## Start Network Virtualisation
+```
+# First, install `watchgod`:
+$ sudo pip3 install simple_websocket_server
+```
 ```
 ## (1st terminal)
 # start mininet-wifi with a topology of 2 nodes
