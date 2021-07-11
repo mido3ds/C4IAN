@@ -27,8 +27,8 @@ class ProfileTab extends React.Component {
                         <UnitList></UnitList>
                         <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
                             <ProfileList></ProfileList>
-                            <Control></Control>
-                            {/*<Gallery></Gallery>*/}
+                            {/*<Control></Control>*/}
+                            <Gallery></Gallery>
                         </div>
                     </Content>
                 </Arwes>
