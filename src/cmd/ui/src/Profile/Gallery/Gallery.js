@@ -1,19 +1,21 @@
 import './Gallery.css';
 import React from 'react';
+import GalleryItem from './GalleryItem/GalleryItem'
+import Pagination from './Pagination/Pagination'
 
 function Gallery() {
     return (
         <div className="gallery-container">
-            <div className="gallery-header">
-
+            <div className="items-container">
+                <GalleryItem />
+                <GalleryItem />
+                <GalleryItem />
+                <GalleryItem />
             </div>
-            <div className="items-container"> 
-                <div data-augmented-ui="border" className="gallery-item"> </div>
-                <div data-augmented-ui="border" className="gallery-item"> </div>
-                <div data-augmented-ui="border" className="gallery-item"> </div>
-                <div data-augmented-ui="border" className="gallery-item"> </div>           
-            </div>
-            <div className="pagination"></div>
+            <Pagination
+                paginate={5}
+                hasNext={true}
+            />
         </div>
     );
 }

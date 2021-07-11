@@ -6,7 +6,7 @@ function Control() {
         <div className="control-container">
             <div data-augmented-ui="tr-clip br-clip bl-clip-y border" class="control-item"></div>
 
-            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+            <svg className="ctrl-svg" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
                 viewBox="0 0 1000 1000" styles="enable-background:new 0 0 1000 1000;" space="preserve">
                 <circle class="st0" cx="500" cy="500" r="302.8">
                     <animateTransform attributeType="xml"
