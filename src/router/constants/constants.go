@@ -16,10 +16,19 @@ const (
 	// The maximum number of attempts to find the destination zone
 	DZDMaxRetry = 2
 
-	// TODO: Add constants in odmrp & tables
-	ODMRPDefaultTTL          = 100
-	MembersTableTimeout      = 2 * time.Second
-	ForwardTableTimeout      = 2 * time.Second
-	CacheTimeout             = 2 * time.Second
-	MultiForwardTableTimeout = 2 * time.Second
+	// ODMRP
+	// Time to live of ODMRP packet
+	ODMRPDefaultTTL = 100
+	// The age of entries in the members table
+	MembersTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	// The age of entries in the forward table
+	ForwardTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	// The age of entries of ODMRP cache
+	ODMRPCacheTimeout = 2 * time.Second // 960 * time.Millisecond
+	// The age of entries in the multi forward table
+	MultiForwardTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	// The delay between consequent joinquery to maintain the multicast graph
+	JQRefreshTime = 400 * time.Millisecond
+	// The Timeout to fill the forward table to start sending the message
+	FillForwardTableTimeout = 5 * time.Second
 )
