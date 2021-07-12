@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
-
-// const cacheTimeout = 960 * time.Millisecond
-const cacheTimeout = 2 * time.Second
 
 type cacheEntry struct {
 	seqNo   uint64
@@ -57,7 +54,7 @@ func (f *cache) set(src net.IP, entry *cacheEntry) bool {
 		}
 		val.timer.Stop()
 	}
-	entry.timer = f.timers.Add(cacheTimeout, func() {
+	entry.timer = f.timers.Add(ODMRPCacheTimeout, func() {
 		// f.del(src)
 	})
 	f.m.Set(IPv4ToUInt32(src), entry)
