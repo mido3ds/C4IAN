@@ -17,4 +17,9 @@ const (
 	DZDMaxRetry = 2
 
 	// TODO: Add constants in odmrp & tables
+	ODMRPDefaultTTL          = 100
+	MembersTableTimeout      = 2 * time.Second
+	ForwardTableTimeout      = 2 * time.Second
+	CacheTimeout             = 2 * time.Second
+	MultiForwardTableTimeout = 2 * time.Second
 )
