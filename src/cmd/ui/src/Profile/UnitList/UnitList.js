@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import UnitItem from "../UnitItem/UnitItem.js"
 import './UnitList.css';
 import anime from 'animejs'
+import { units }  from '../../units'
 
 function UnitList() {
+    const [firstUnit, setFirstUnit] = useState(units[units.length - 1])
+    const [secondUnit, setSecondUnit] = useState(units[0])
+    const [thirdUnit, setThirdUnit] = useState(units[1])
+    const [activeUnit, setActiveUnit] = useState(0);
 
     var circularAddition = (Augend, Addend, len) => {
         return (Augend + Addend) % len;
@@ -13,47 +18,40 @@ function UnitList() {
         return (Minuend - Subtrahend + len) % len
     }
 
-    const [activeItem, setActiveItem] = useState(0);
     var down = () => {
         var cards = window.$('.unit-item-container').toArray()
-        for (var i = 0; i < cards.length; i++) {
-            window.$(cards[i]).css("visibility", "hidden");
-        }
-        setActiveItem(() => {
+        setActiveUnit(() => {
             anime({
-                targets: cards[circularSubtract(activeItem, 2, cards.length)],
+                targets: cards[2],
                 scaleX: 0.8,
                 scaleY: 0.8,
                 top: [-100, 50],
                 opacity: '40%',
-                begin: function() {
-                    window.$(cards[circularSubtract(activeItem, 2, cards.length)]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
+            setThirdUnit(units[circularSubtract(activeUnit, 2, units.length)])
+            
             anime({
-                targets: cards[circularSubtract(activeItem, 1, cards.length)],
+                targets: cards[0],
                 scaleX: 1,
                 scaleY: 1,
                 top: [50, 165],
                 opacity: '100%',
-                begin: function() {
-                    window.$(cards[circularSubtract(activeItem, 1, cards.length)]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
+            setFirstUnit(units[circularSubtract(activeUnit, 1, units.length)])
+
             anime({
-                targets: cards[activeItem],
+                targets: cards[1],
                 scaleX: 0.8,
                 scaleY: 0.8,
                 top: [165, 295],
                 opacity: '40%',
-                begin: function() {
-                    window.$(cards[activeItem]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
-            return circularSubtract(activeItem, 1, cards.length)
+            setSecondUnit(units[activeUnit])
+            
+            return circularSubtract(activeUnit, 1, units.length)
         })
     }
 
@@ -61,42 +59,39 @@ function UnitList() {
     var up = () => {
         var cards = window.$('.unit-item-container').toArray()
 
-        setActiveItem(() => {
+        setActiveUnit(() => {
             anime({
-                targets: cards[activeItem],
+                targets: cards[1],
                 scaleX: 0.8,
                 scaleY: 0.8,
                 top: [165, 50],
                 opacity: '40%',
-                begin: function() {
-                    window.$(cards[activeItem]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
+            setSecondUnit(units[activeUnit])
+
             anime({
-                targets: cards[circularAddition(activeItem, 1, cards.length)],
+                targets: cards[2],
                 scaleX: 1,
                 scaleY: 1,
                 top: [295, 165],
                 opacity: '100%',
-                begin: function() {
-                    window.$(cards[circularAddition(activeItem, 1, cards.length)]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
+            setThirdUnit(units[circularAddition(activeUnit, 1, units.length)])
+
             anime({
-                targets: cards[circularAddition(activeItem, 2, cards.length)],
+                targets: cards[0],
                 scaleX: 0.8,
                 scaleY: 0.8,
                 opacity: '40%',
                 top: [350, 295],
-                begin: function() {
-                    window.$(cards[circularAddition(activeItem, 2, cards.length)]).css("visibility", "visible");
-                },
                 duration: 3000,
             })
+            setFirstUnit(units[circularAddition(activeUnit, 2, units.length)])
+
             
-            return circularAddition(activeItem, 1, cards.length)
+            return circularAddition(activeUnit, 1, units.length)
         })
     }
 
@@ -107,14 +102,9 @@ function UnitList() {
                 <i onClick={up} className="fas fa-caret-up fa-lg unit-list-upper-arrow arrow-active"></i>
             </div>
             <div id="card-slider" className="unit-list-area">
-                <UnitItem name="One" />
-                <UnitItem name="Two" />
-                <UnitItem name="Three" />
-                <UnitItem name="Four" />
-                <UnitItem name="Five" />
-                <UnitItem name="Six" />
-                <UnitItem name="Seven" />
-                <UnitItem name="Eight" />
+                <UnitItem unit={firstUnit} />
+                <UnitItem unit={secondUnit} />
+                <UnitItem unit={thirdUnit} />
             </div>
             <div className="unit-list-lower-arrow-area area-active">
                 <i onClick={down} className="fas fa-caret-down fa-lg unit-list-lower-arrow arrow-active"></i>

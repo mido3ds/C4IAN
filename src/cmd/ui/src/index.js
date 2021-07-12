@@ -9,7 +9,7 @@ import './App.css';
 
 ReactDOM.render(
     <React.StrictMode>
-        <Home>   </Home>
+        <Profile>   </Profile>
     </React.StrictMode>,
     document.getElementById('root')
   );

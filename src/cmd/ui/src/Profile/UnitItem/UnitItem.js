@@ -14,8 +14,8 @@ class UnitItem extends React.Component {
                 <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                 <div className="unit-item-parent">
                     <div className="unit-item">
-                        <Words animate className="unit-item-name"> Ahmed Mahmoud</Words>
-                        <Words animate className="unit-item-ip"> 192.168.1.1 </Words>
+                        <Words className="unit-item-name"> {this.props.unit.name} </Words>
+                        <Words className="unit-item-ip"> {this.props.unit.ip} </Words>
                     </div>
                 </div>
             </div>

@@ -19,27 +19,23 @@
 .unit-item-container {
     position: absolute;
     left: -30px;
-    visibility: hidden;
 }
 
 .unit-item-container:nth-child(1) {
     transform: scale(0.8);
     top: 50px;
     opacity: 40%;
-    visibility: visible;
 }
 
 .unit-item-container:nth-child(2) {
     top: 165px;
     opacity: 100%;
-    visibility: visible;
 }
 
 .unit-item-container:nth-child(3) {
     transform: scale(0.8);
     top: 295px;
     opacity: 40%;
-    visibility: visible;
 }
  
 .unit-list-upper-arrow-area, .unit-list-lower-arrow-area {
