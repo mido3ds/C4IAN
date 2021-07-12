@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
-
-// const forwardEntryTimeout = 960 * time.Millisecond
-const forwardEntryTimeout = 2 * time.Second
 
 // forwardingTable is lock-free thread-safe hash table
 // for multicast forwarding
@@ -70,8 +67,8 @@ func (r *forwardingTable) set(destIP net.IP, entry *forwardingEntry) bool {
 	}
 
 	// Start new Timer
-	entry.timer = r.timers.Add(forwardEntryTimeout, func() {
-		// r.del(destIP)
+	entry.timer = r.timers.Add(ForwardTableTimeout, func() {
+		r.del(destIP)
 	})
 	r.m.Set(IPv4ToUInt32(destIP), entry)
 	return true
