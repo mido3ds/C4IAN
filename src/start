@@ -1,8 +1,8 @@
 #!/bin/bash
 set -eo pipefail
 
-usage() {
-echo "\
+function usage() {
+    echo "\
 Usage: $0 [mn|routers|units|cmds|-h|--help] | [<node> [<command...>]]
             C4IAN system virtualization utility.
 
@@ -14,7 +14,7 @@ Arguments:
  cmds                   Start cmds in all mininet-wifi nodes
  <node> <command...>    Run any command in the given node.
                             Example, to start bash in u3: $ $0 u3
-                            Example, to ping u1 from u2:  $ $0 u2 ping 10.0.0.1
+                            Example, to ping u1 from u2:  $ $0 u2 ping 10.0.0.1\
 " 
 }
 
