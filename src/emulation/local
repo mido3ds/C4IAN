@@ -1,0 +1,92 @@
+#!/bin/bash -e
+
+function usage() {
+    F=$(realpath --relative-to=. $0)
+    echo "Usage: ${F} (unit|cmd) [-w|--watch]"
+    echo "Runs local unit or cmd, pass -w|--watch to watch changes in executable"
+    echo "Pass any other options after -- to all units/cmds argv"
+}
+
+function invalid() {
+    echo Invalid params
+    usage
+    exit 1
+}
+
+IS_UNIT=0
+IS_CMD=0
+IS_RTR=0
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help)
+            usage
+            exit
+            ;;
+        -w | --watch)
+            WATCH=1
+            echo "running in watch mode"
+            ;;
+        unit)
+            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
+                invalid
+            fi
+            IS_UNIT=1
+            ;;
+        cmd)
+            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
+                invalid
+            fi
+            IS_CMD=1
+            ;;
+        router)
+            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
+                invalid
+            fi
+            IS_RTR=1
+            ;;
+        --)
+            shift
+            OPTS="$@"
+            break
+            ;;
+        *)
+            echo "Unknown parameter \"$1\""
+            usage
+            exit 1
+    esac
+    shift
+done
+
+LOG_PATH="/var/log/caian/local-"
+EXECUTABLE=""
+COMMAND=""
+
+if [[ $IS_UNIT -eq 1 ]]; then
+    LOG_PATH+="unit"
+    EXECUTABLE="./unit/daemon/daemon"
+    COMMAND="./unit/daemon/daemon -s /var/lib/caian/local-unit.store.sqllite "$OPTS
+elif [[ $IS_CMD -eq 1 ]]; then
+    LOG_PATH+="cmd"
+    EXECUTABLE="./cmd/daemon/daemon"
+    COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite "$OPTS
+elif [[ $IS_RTR -eq 1 ]]; then
+    LOG_PATH+="router"
+    EXECUTABLE="./router/router"
+    COMMAND="./router/deploy "$OPTS
+fi
+
+mkdir -p /var/log/caian/ /var/lib/caian/
+
+echo "DBs are in /var/lib/caian/"
+
+# copy all stdout/stderr to log
+echo "stdout+stderr is saved in "$LOG_PATH
+exec &> >(tee  -a $LOG_PATH)
+echo ------------------------
+
+if [[ $WATCH -eq 1 ]]; then
+    exec ./emulation/watchdog --file "$EXECUTABLE" --command "$COMMAND"
+else
+    exec $COMMAND
+fi
