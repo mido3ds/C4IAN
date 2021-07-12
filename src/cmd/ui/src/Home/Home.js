@@ -86,7 +86,6 @@ function Home() {
         map.current.fitBounds(getBounds(coordinates));
     });
 
-
     return (
         <>
             <MapPopup selectedUnit={selectedUnit} />
