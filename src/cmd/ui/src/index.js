@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import Profile from './Profile/Profile'
 import Home from './Home/Home'
-//import Test from './Test/Test'
+import LogIn from './LogIn/LogIn'
 import './index.css';
 import './App.css';
 
 ReactDOM.render(
     <React.StrictMode>
-        <Profile>   </Profile>
+        <LogIn>   </LogIn>
     </React.StrictMode>,
     document.getElementById('root')
   );
