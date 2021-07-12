@@ -22,7 +22,6 @@ func main() {
 
 	// TODO: open store db
 	// TODO: wrap writing to db
-	// TODO: get key
 	// TODO: open port
 	// TODO: define interface for ui
 	fmt.Println(args)
@@ -31,7 +30,6 @@ func main() {
 // Args store command line arguments
 type Args struct {
 	StorePath  string
-	Passphrase string
 	Port       int
 	UIPort     int
 }
@@ -40,7 +38,6 @@ func parseArgs() (*Args, error) {
 	parser := argparse.NewParser("cmd-daemon", "Command-Center client daemon")
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Required: true})
-	passphrase := parser.String("", "pass", &argparse.Options{Help: "Passphrase.", Required: true})
 
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
 	uiPort := parser.Int("", "ui-port", &argparse.Options{Help: "UI port the client will bind to, to connect with its UI.", Default: 3170})
@@ -52,7 +49,6 @@ func parseArgs() (*Args, error) {
 
 	return &Args{
 		StorePath:  *storePath,
-		Passphrase: *passphrase,
 		Port:       *port,
 		UIPort:     *uiPort,
 	}, nil

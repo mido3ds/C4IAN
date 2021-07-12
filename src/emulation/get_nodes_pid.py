@@ -35,14 +35,14 @@ elif kind == 'u':
         if 'u' in name:
             n += 1
             print(f'-t {pid} -n ./unit/daemon/daemon '
-                  f'-s /var/lib/caian/{name}.store.sqllite --pass app-pass')
+                  f'-s /var/lib/caian/{name}.store.sqllite')
 
 elif kind == 'c':
     for name, pid in get_nodes():
         if 'c' in name:
             n += 1
             print(f'-t {pid} -n ./cmd/daemon/daemon '
-                  f'-s /var/lib/caian/{name}.store.sqllite --pass app-pass')
+                  f'-s /var/lib/caian/{name}.store.sqllite')
 
 if n == 0:
     exit(1)

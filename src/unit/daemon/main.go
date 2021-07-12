@@ -22,7 +22,6 @@ func main() {
 
 	// TODO: open store db
 	// TODO: wrap writing to db
-	// TODO: get key
 	// TODO: open port
 	// TODO: define interface for virt
 	fmt.Println(args)
@@ -33,7 +32,6 @@ type Args struct {
 	// null if no store path
 	StorePath  string
 	KeysPath   string
-	PassPhrase string
 	Port       int
 	IsVirt     bool
 	UIPort     int
@@ -43,7 +41,6 @@ func parseArgs() (*Args, error) {
 	parser := argparse.NewParser("unit-daemon", "Unit client daemon")
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
-	passphrase := parser.String("", "pass", &argparse.Options{Help: "Passphrase.", Required: true})
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
 
 	virt := parser.NewCommand("virt", "Run in virtual mode")
@@ -56,7 +53,6 @@ func parseArgs() (*Args, error) {
 
 	return &Args{
 		StorePath:  *storePath,
-		PassPhrase: *passphrase,
 		Port:       *port,
 		IsVirt:     virt.Happened(),
 		UIPort:     *uiPort,
