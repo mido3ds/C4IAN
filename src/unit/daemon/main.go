@@ -23,18 +23,16 @@ func main() {
 	// TODO: open store db
 	// TODO: wrap writing to db
 	// TODO: open port
-	// TODO: define interface for virt
+	// TODO: open ctrl socket
 	fmt.Println(args)
 }
 
 // Args store command line arguments
 type Args struct {
 	// null if no store path
-	StorePath  string
-	KeysPath   string
-	Port       int
-	IsVirt     bool
-	UIPort     int
+	StorePath         string
+	Port              int
+	ControlSocketPath string
 }
 
 func parseArgs() (*Args, error) {
@@ -42,9 +40,7 @@ func parseArgs() (*Args, error) {
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
-
-	virt := parser.NewCommand("virt", "Run in virtual mode")
-	uiPort := virt.Int("", "ui-port", &argparse.Options{Default: 3070, Help: "UI port the client will bind to, to connect with its UI."})
+	ctrlSocketPath := parser.String("", "control-socket-path", &argparse.Options{Help: "Path to unix socket file to communicate over with controller.", Default: "/tmp/unit.ctrl.sock"})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -52,9 +48,8 @@ func parseArgs() (*Args, error) {
 	}
 
 	return &Args{
-		StorePath:  *storePath,
-		Port:       *port,
-		IsVirt:     virt.Happened(),
-		UIPort:     *uiPort,
+		StorePath:         *storePath,
+		Port:              *port,
+		ControlSocketPath: *ctrlSocketPath,
 	}, nil
 }

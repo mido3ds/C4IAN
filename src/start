@@ -3,7 +3,7 @@ set -eo pipefail
 
 function usage() {
     echo "\
-Usage: $0 [mn|routers|units|cmds|-h|--help] | [<node> [<command...>]]
+Usage: $0 [mn|routers|units|cmds|local (unit|cmd)|-h|--help] | [<node> [<command...>]]
             C4IAN system virtualization utility.
 
 Arguments:
@@ -12,6 +12,7 @@ Arguments:
  routers                Start routers in all mininet-wifi nodes
  units                  Start units in all mininet-wifi nodes
  cmds                   Start cmds in all mininet-wifi nodes
+ local                  Start local router/unit/cmd
  <node> <command...>    Run any command in the given node.
                             Example, to start bash in u3: $ $0 u3
                             Example, to ping u1 from u2:  $ $0 u2 ping 10.0.0.1\
@@ -24,9 +25,7 @@ if [[ "$#" -eq "0" ]]; then
 fi
 
 while [ "$1" != "" ]; do
-    PARAM=`echo $1 | awk -F= '{print $1}'`
-    VALUE=`echo $1 | awk -F= '{print $2}'`
-    case $PARAM in
+    case $1 in
         -h | --help)
             usage
             exit
@@ -47,6 +46,10 @@ while [ "$1" != "" ]; do
             shift
             exec ./emulation/cmds "$@"
             ;;
+        local)
+            shift
+            exec ./emulation/local "$@"
+            ;;
         *)
             if pgrep -u root -a bash | grep mininet:$1 1>&2 >/dev/null; then
                 NODE="$1"
@@ -60,7 +63,7 @@ while [ "$1" != "" ]; do
 
                 exec nsenter -t $PID -n env PS1="\w [${NODE}]# " ${CMD}
             else
-                echo "Unknown parameter \"$PARAM\""
+                echo "Unknown parameter \"$1\""
                 usage
                 exit 1
             fi

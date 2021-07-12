@@ -24,6 +24,10 @@ while [ "$1" != "" ]; do
             OPTS="$@"
             break
             ;;
+        *)
+            echo "Unknown parameter \"$1\""
+            usage
+            exit 1
     esac
     shift
 done
