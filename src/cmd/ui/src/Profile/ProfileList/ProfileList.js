@@ -11,13 +11,13 @@ function ProfileList() {
             window.$(window.$('.list-item .middle .list-item-text').toArray()[activeItem]).removeClass('text-active')
             
             var newItem = activeItem < 2? activeItem + 1: 2;
-            if(newItem == 0) {
+            if(newItem === 0) {
                 window.$('.upper-arrow').removeClass('active-arrow')
                 window.$('.down-arrow').addClass('active-arrow')
-            } else if (newItem == 1) {
+            } else if (newItem === 1) {
                 window.$('.down-arrow').addClass('active-arrow')
                 window.$('.upper-arrow').addClass('active-arrow')
-            } else if (newItem == 2) {
+            } else if (newItem === 2) {
                 window.$('.down-arrow').removeClass('active-arrow')
                 window.$('.upper-arrow').addClass('active-arrow')
             }
@@ -36,13 +36,13 @@ function ProfileList() {
             window.$(window.$('.list-item .middle .list-item-text').toArray()[activeItem]).removeClass('text-active')
             
             var newItem = activeItem > 0? activeItem - 1: 0
-            if(newItem == 0) {
+            if(newItem === 0) {
                 window.$('.upper-arrow').removeClass('active-arrow')
                 window.$('.down-arrow').addClass('active-arrow')
-            } else if (newItem == 1) {
+            } else if (newItem === 1) {
                 window.$('.down-arrow').addClass('active-arrow')
                 window.$('.upper-arrow').addClass('active-arrow')
-            } else if (newItem == 2) {
+            } else if (newItem === 2) {
                 window.$('.down-arrow').removeClass('active-arrow')
                 window.$('.upper-arrow').addClass('active-arrow')
             }
@@ -52,8 +52,8 @@ function ProfileList() {
             window.$(window.$('.list-item .middle .list-item-text').toArray()[newItem]).addClass('text-active')
             return activeItem > 0? activeItem - 1: 0
         })
-
     }
+    
     return (
         <div className="list-container">
             <div data-augmented-ui="bl-clip-x " className="upper-tap">
