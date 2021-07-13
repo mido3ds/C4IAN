@@ -8,7 +8,8 @@ import './App.css';
 
 const tabsComponents = {
   "Map": <Home />,
-  "Units": <Profile />,
+  "Units": <Profile type="unit"/>,
+  "Groups": <Profile type="group"/>,
 }
 
 function App() {

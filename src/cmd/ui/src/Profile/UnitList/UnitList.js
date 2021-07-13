@@ -4,7 +4,7 @@ import './UnitList.css';
 import anime from 'animejs'
 import { units }  from '../../units'
 
-function UnitList({onChange}) {
+function UnitList({onChange, type}) {
     const [firstUnit, setFirstUnit] = useState(units[units.length - 1])
     const [secondUnit, setSecondUnit] = useState(units[0])
     const [thirdUnit, setThirdUnit] = useState(units[1])
@@ -107,9 +107,9 @@ function UnitList({onChange}) {
                 <i onClick={up} className="fas fa-caret-up fa-lg unit-list-upper-arrow arrow-active"></i>
             </div>
             <div id="card-slider" className="unit-list-area">
-                <UnitItem unit={firstUnit} />
-                <UnitItem unit={secondUnit} />
-                <UnitItem unit={thirdUnit} />
+                <UnitItem unit={firstUnit} type={type}/>
+                <UnitItem unit={secondUnit} type={type}/>
+                <UnitItem unit={thirdUnit} type={type}/>
             </div>
             <div className="unit-list-lower-arrow-area area-active">
                 <i onClick={down} className="fas fa-caret-down fa-lg unit-list-lower-arrow arrow-active"></i>

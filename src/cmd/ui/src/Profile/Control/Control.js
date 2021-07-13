@@ -1,7 +1,7 @@
 import './Control.css';
 import React from 'react';
 
-function Control({unit}) {
+function Control({UnitOrGroup}) {
     return (
         <div className="control-container">
             <div data-augmented-ui="tr-clip br-clip bl-clip-y border" class="control-item"></div>

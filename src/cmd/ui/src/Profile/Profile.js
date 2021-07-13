@@ -26,7 +26,7 @@ const profileComponents = {
 class Profile extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { activatedTab: "videos", activatedUnit: {name: "hello"} };
+        this.state = { activatedTab: "videos", activatedUnitOrGroup: {name: "hello"} };
     }
 
     render() {
@@ -35,12 +35,12 @@ class Profile extends React.Component {
             <div>
                 <Arwes>
                     <Content className={`profile-root ${classes.root}`}>
-                        <UnitList onChange={activatedUnit => this.setState({ ...this.state, activatedUnit: activatedUnit })}></UnitList>
+                        <UnitList type={this.props.type} onChange={activatedUnitOrGroup => this.setState({ ...this.state, activatedUnitOrGroup: activatedUnitOrGroup })}></UnitList>
                         <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
                             <ProfileList onChange={activatedTab => this.setState({ ...this.state, activatedTab: activatedTab })}></ProfileList>
                             {React.cloneElement(
                                 profileComponents[this.state.activatedTab],
-                                { unit: this.state.activatedUnit }
+                                { UnitOrGroup: this.state.activatedUnitOrGroup }
                             )}
                         </div>
                     </Content>
