@@ -38,6 +38,11 @@
     border-style: solid;
 }
 
+.mapboxgl-ctrl-attrib {
+    display: hidden !important;
+    visibility: hidden;
+}
+
 .mapboxgl-ctrl-logo {
     display: hidden !important;
     visibility: hidden;

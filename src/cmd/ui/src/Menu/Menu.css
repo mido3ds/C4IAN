@@ -18,6 +18,7 @@
     font-family: 'Lato', sans-serif;
     color: rgba(255, 255, 255, 0.7);
     z-index: 500;
+    font-size: 18px;
   }
   .selected {
     color: rgba(35, 117, 211, 0.993);

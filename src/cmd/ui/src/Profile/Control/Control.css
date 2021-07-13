@@ -14,6 +14,7 @@
   position: absolute;
   width: 60px;
   height: 60px;
+  cursor: pointer;
 }
 
 .video-icon {
@@ -22,14 +23,16 @@
   position: absolute;
   width: 50px;
   height: 50px;
+  cursor: pointer;
 }
 
-.escape-icon {
+.audio-icon {
   right: 110px;  
   top: 110px;
   position: absolute;
   width: 60px;
   height: 60px;
+  cursor: pointer;
 }
 
 .attack-icon {
@@ -38,6 +41,7 @@
   position: absolute;
   width: 50px;
   height: 50px;
+  cursor: pointer;
 }
 
 .ctrl-svg {
