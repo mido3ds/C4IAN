@@ -9,7 +9,7 @@ const states = {
     DONE: "done"
 }
 
-function TextField() {
+function TextField({onLogIn}) {
     const [logInState, setLoginState] = useState(states.USERNAME)
 
     useEffect(() => {
@@ -105,6 +105,8 @@ function TextField() {
                 }
             )
         });
+        
+        setTimeout(function() {onLogIn()}, 4000)
     }
 
     var enterClick = (event) => {

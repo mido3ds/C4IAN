@@ -12,7 +12,7 @@ function Menu({onChange}) {
             <div className="item" onClick={() => {onChange("Units")}}><span>Units</span></div>
             <div className="item"><span>Groups</span></div>
             <div className="item"><span>Streams</span></div>
-            <div className="item"><span>Log Out</span></div>
+            <div className="item" onClick={() => {onChange("Log Out")}}><span>Log Out</span></div>
         </div>
     );
 }

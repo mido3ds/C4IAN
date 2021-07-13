@@ -30,7 +30,7 @@ class LogIn extends React.Component {
                         <Words  className="welcome-text">  </Words>
                         <Words animate className="access-text"> </Words>
                         <Words animate className="identification-text"> PLEASE IDENTIFY YOURSELF</Words>
-                        <TextField> </TextField>
+                        <TextField onLogIn={()=>{this.props.onLogIn()}}> </TextField>
                     </Content>
                 </Arwes>
             </div>
