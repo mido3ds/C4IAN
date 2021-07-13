@@ -12,6 +12,11 @@ import (
 	"github.com/mido3ds/C4IAN/src/unit/daemon/halapi"
 )
 
+type Context struct {
+	expectingVideoStream bool
+	args                 Args
+}
+
 func main() {
 	defer log.Println("finished cleaning up, closing")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
@@ -29,6 +34,8 @@ func main() {
 
 	// TODO: remove
 	fmt.Println(args)
+
+	context := Context{expectingVideoStream: false, args: *args}
 
 	// remove loc socket file
 	err = os.RemoveAll(args.HALSocketPath)
@@ -51,7 +58,7 @@ func main() {
 			log.Println("accept error:", err)
 		} else {
 			log.Println("HAL connected")
-			serve(conn)
+			serve(&context, conn)
 		}
 	}
 }
@@ -69,7 +76,7 @@ func simulateClient(HALSocketPath string) {
 	halapi.VideoPart{Video: []byte{5, 3}}.Send(enc)
 }
 
-func serve(conn net.Conn) {
+func serve(context *Context, conn net.Conn) {
 	dec := gob.NewDecoder(conn)
 
 	var video halapi.VideoPart
@@ -83,13 +90,13 @@ func serve(conn net.Conn) {
 		} else {
 			switch sentType {
 			case halapi.VideoPartType:
-				onVideoReceived(&video)
+				context.onVideoReceived(&video)
 				break
 			case halapi.HeartBeatType:
-				onHeartBeatReceived(&heartbeat)
+				context.onHeartBeatReceived(&heartbeat)
 				break
 			case halapi.LocationType:
-				onLocationReceived(&loc)
+				context.onLocationReceived(&loc)
 				break
 			default:
 				log.Panicf("received unkown msg type = %v", sentType)
@@ -99,19 +106,26 @@ func serve(conn net.Conn) {
 	}
 }
 
-// TODO
-func onVideoReceived(v *halapi.VideoPart) {
-	log.Println(v)
+func (c *Context) onVideoReceived(v *halapi.VideoPart) {
+	fmt.Printf("VideoPart: %v\n", *v)
+
+	if !c.expectingVideoStream {
+		log.Println("error, not expecting video stream, but received packet from HAL")
+		return
+	}
+
+	// TODO: send packet to cmd
 }
 
-// TODO
-func onHeartBeatReceived(hb *halapi.HeartBeat) {
-	log.Println(hb)
+func (c *Context) onHeartBeatReceived(hb *halapi.HeartBeat) {
+	fmt.Printf("HeartBeat: %v\n", *hb)
+	// TODO: send heart beat to cmd
 }
 
-// TODO
-func onLocationReceived(loc *halapi.Location) {
-	log.Println(loc)
+func (c *Context) onLocationReceived(loc *halapi.Location) {
+	fmt.Printf("Location: %v\n", *loc)
+
+	// TODO: send location to cmd
 }
 
 // Args store command line arguments
