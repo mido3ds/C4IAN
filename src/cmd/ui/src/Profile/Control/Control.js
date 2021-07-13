@@ -1,7 +1,7 @@
 import './Control.css';
 import React from 'react';
 
-function Control() {
+function Control({unit}) {
     return (
         <div className="control-container">
             <div data-augmented-ui="tr-clip br-clip bl-clip-y border" class="control-item"></div>
@@ -37,7 +37,6 @@ function Control() {
                 </circle>
                 <circle class="st3" cx="500" cy="500" r="385.1" />
             </svg>
-
         </div>
     );
 }

@@ -4,11 +4,15 @@ import './UnitList.css';
 import anime from 'animejs'
 import { units }  from '../../units'
 
-function UnitList() {
+function UnitList({onChange}) {
     const [firstUnit, setFirstUnit] = useState(units[units.length - 1])
     const [secondUnit, setSecondUnit] = useState(units[0])
     const [thirdUnit, setThirdUnit] = useState(units[1])
     const [activeUnit, setActiveUnit] = useState(0);
+
+    useEffect(() => {
+       onChange(units[0])
+    },[])
 
     var circularAddition = (Augend, Addend, len) => {
         return (Augend + Addend) % len;
@@ -50,7 +54,8 @@ function UnitList() {
                 duration: 3000,
             })
             setSecondUnit(units[activeUnit])
-            
+
+            onChange(units[circularSubtract(activeUnit, 1, units.length)])
             return circularSubtract(activeUnit, 1, units.length)
         })
     }
@@ -90,7 +95,7 @@ function UnitList() {
             })
             setFirstUnit(units[circularAddition(activeUnit, 2, units.length)])
 
-            
+            onChange(units[circularAddition(activeUnit, 1, units.length)])
             return circularAddition(activeUnit, 1, units.length)
         })
     }

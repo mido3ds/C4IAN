@@ -18,16 +18,16 @@ const styles = theme => ({
 });
 
 const profileComponents = {
-    "videos": <Gallery type="video"/>,
-    "audios": <Gallery type="audio"/>,
-    "control":  <Control/>,
+    "videos": <Gallery type="video" />,
+    "audios": <Gallery type="audio" />,
+    "control": <Control />,
 }
 
 class Profile extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {selectedTab: "videos"};
-      }
+        this.state = { activatedTab: "videos", activatedUnit: {name: "hello"} };
+    }
 
     render() {
         const { classes } = this.props;
@@ -35,11 +35,13 @@ class Profile extends React.Component {
             <div>
                 <Arwes>
                     <Content className={`profile-root ${classes.root}`}>
-                        <UnitList></UnitList>
+                        <UnitList onChange={activatedUnit => this.setState({ ...this.state, activatedUnit: activatedUnit })}></UnitList>
                         <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
-                            <ProfileList onChange={selectedTab =>  this.setState({selectedTab: selectedTab})}></ProfileList>
-                            {profileComponents[this.state.selectedTab]}
-                            
+                            <ProfileList onChange={activatedTab => this.setState({ ...this.state, activatedTab: activatedTab })}></ProfileList>
+                            {React.cloneElement(
+                                profileComponents[this.state.activatedTab],
+                                { unit: this.state.activatedUnit }
+                            )}
                         </div>
                     </Content>
                 </Arwes>
