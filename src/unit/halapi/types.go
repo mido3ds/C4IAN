@@ -1,11 +1,11 @@
 package halapi
 
 const (
-	VideoPartType = iota
-	HeartBeatType
-	LocationType
-	StartVideoStreamType
-	EndVideoStreamType
-	ShowAudioMsgType
-	ShowCodeMsgType
+	VideoPartType        byte = 0
+	HeartBeatType        byte = 1
+	LocationType         byte = 2
+	StartVideoStreamType byte = 3
+	EndVideoStreamType   byte = 4
+	ShowAudioMsgType     byte = 5
+	ShowCodeMsgType      byte = 6
 )
