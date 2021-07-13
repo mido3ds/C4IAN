@@ -3,7 +3,7 @@ import React from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
 
-function Gallery() {
+function Gallery({type}) {
     return (
         <div className="gallery-container">
             <div className="items-container">
@@ -11,7 +11,7 @@ function Gallery() {
                 <GalleryItem />
                 <GalleryItem />
                 <GalleryItem />
-            </div>
+            </div> 
             <Pagination
                 paginate={5}
                 hasNext={true}

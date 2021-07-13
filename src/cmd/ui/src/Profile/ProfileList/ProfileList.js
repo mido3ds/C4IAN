@@ -2,7 +2,13 @@
 import React, {useState} from 'react';
 import './ProfileList.css';
 
-function ProfileList() {
+const profileTabs = {
+    0: "videos",
+    1: "audios",
+    2: "control",
+}
+
+function ProfileList({onChange}) {
     const[activeItem, setactiveItem] = useState(0);
     var down = () => {
         setactiveItem( () => {
@@ -11,6 +17,8 @@ function ProfileList() {
             window.$(window.$('.list-item .middle .list-item-text').toArray()[activeItem]).removeClass('text-active')
             
             var newItem = activeItem < 2? activeItem + 1: 2;
+            onChange(profileTabs[newItem])
+
             if(newItem === 0) {
                 window.$('.upper-arrow').removeClass('active-arrow')
                 window.$('.down-arrow').addClass('active-arrow')
@@ -36,6 +44,8 @@ function ProfileList() {
             window.$(window.$('.list-item .middle .list-item-text').toArray()[activeItem]).removeClass('text-active')
             
             var newItem = activeItem > 0? activeItem - 1: 0
+            onChange(profileTabs[newItem])
+
             if(newItem === 0) {
                 window.$('.upper-arrow').removeClass('active-arrow')
                 window.$('.down-arrow').addClass('active-arrow')

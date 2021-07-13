@@ -17,7 +17,18 @@ const styles = theme => ({
     },
 });
 
-class ProfileTab extends React.Component {
+const profileComponents = {
+    "videos": <Gallery type="video"/>,
+    "audios": <Gallery type="audio"/>,
+    "control":  <Control/>,
+}
+
+class Profile extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {selectedTab: "videos"};
+      }
+
     render() {
         const { classes } = this.props;
         return (
@@ -26,9 +37,9 @@ class ProfileTab extends React.Component {
                     <Content className={`profile-root ${classes.root}`}>
                         <UnitList></UnitList>
                         <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
-                            <ProfileList></ProfileList>
-                            {/*<Control></Control>*/}
-                            <Gallery></Gallery>
+                            <ProfileList onChange={selectedTab =>  this.setState({selectedTab: selectedTab})}></ProfileList>
+                            {profileComponents[this.state.selectedTab]}
+                            
                         </div>
                     </Content>
                 </Arwes>
@@ -36,4 +47,4 @@ class ProfileTab extends React.Component {
         )
     }
 }
-export default withTemplate(withStyles(styles)(ProfileTab));
+export default withTemplate(withStyles(styles)(Profile));
