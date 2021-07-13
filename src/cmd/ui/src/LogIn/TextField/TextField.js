@@ -30,7 +30,8 @@ function TextField() {
         window.$('input').css({
             'background': 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%)',
             'border-color': 'rgba(43,237,230,0.7)'
-        })
+        }).attr('type', 'text')
+
         window.$('.back-text').css({ 'visibility': 'hidden' })
         window.$('.identification-text').css({ 'color': '#30fffe' })
         window.$('.logIn-root').css({ 'background': 'radial-gradient(circle, rgba(14,63,87,0.9164040616246498) 0%, rgba(0,0,0,0.9472163865546218) 81%)' })
@@ -54,7 +55,7 @@ function TextField() {
         window.$('input').css({
             'background': 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%)',
             'border-color': 'rgba(43,237,230,0.7)'
-        })
+        }).attr('type', 'password')
         window.$('.back-text').css({ 'visibility': 'visible' })
         window.$('.identification-text').css({ 'color': '#30fffe' })
         window.$('.logIn-root').css({ 'background': 'radial-gradient(circle, rgba(14,63,87,0.9164040616246498) 0%, rgba(0,0,0,0.9472163865546218) 81%)' })
