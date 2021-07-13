@@ -1,0 +1,7 @@
+.gallery-item {
+    width: 160px;
+    height: 100px;
+    --aug-border-bg: linear-gradient(to bottom, rgba(43,237,230,0.25) 10%, rgba(43,237,230,0) 100%);
+    --aug-border-all: 1px;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}
