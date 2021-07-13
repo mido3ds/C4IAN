@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/akamensky/argparse"
 )
@@ -29,15 +30,15 @@ func main() {
 
 // Args store command line arguments
 type Args struct {
-	StorePath  string
-	Port       int
-	UIPort     int
+	StorePath string
+	Port      int
+	UIPort    int
 }
 
 func parseArgs() (*Args, error) {
 	parser := argparse.NewParser("cmd-daemon", "Command-Center client daemon")
 
-	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Required: true})
+	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.", Default: time.Now().Format(time.RFC3339) + ".db"})
 
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
 	uiPort := parser.Int("", "ui-port", &argparse.Options{Help: "UI port the client will bind to, to connect with its UI.", Default: 3170})
@@ -48,8 +49,8 @@ func parseArgs() (*Args, error) {
 	}
 
 	return &Args{
-		StorePath:  *storePath,
-		Port:       *port,
-		UIPort:     *uiPort,
+		StorePath: *storePath,
+		Port:      *port,
+		UIPort:    *uiPort,
 	}, nil
 }
