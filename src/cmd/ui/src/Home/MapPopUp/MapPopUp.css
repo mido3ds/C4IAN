@@ -39,13 +39,13 @@
     color: rgba(149, 153, 153, 0.952);
 }
 
-.first-info-header {
+.info-header {
     margin-top: 10px;
-    font-size: 9px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.952);
 }
 
-.first-info-bar {
+.info-bar {
     margin-top: -12px;
 } 
 

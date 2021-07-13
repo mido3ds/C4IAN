@@ -25,15 +25,15 @@ class MapPopUp extends React.Component {
                     <div className="map-unit-info">
                         <Words className="map-unit-name"> {this.props.selectedUnit.name} </Words>
                         <Words className="map-unit-ip"> {this.props.selectedUnit.ip} </Words>
-                        <div className="first-info">
-                            <Words animate className="first-info-header"> Power </Words>
-                            <div className="first-info-bar">
+                        <div className="info">
+                            <Words animate className="info-header"> Battery </Words>
+                            <div className="info-bar">
                                 <progress className="progress-bar" max="100" value="80"></progress>
                             </div>
                         </div>
-                        <div className="first-info">
-                            <Words animate className="first-info-header"> Speed </Words>
-                            <div className="first-info-bar">
+                        <div className="info">
+                            <Words animate className="info-header"> Health </Words>
+                            <div className="info-bar">
                                 <progress className="progress-bar" max="100" value="65"></progress>
                             </div>
                         </div>
