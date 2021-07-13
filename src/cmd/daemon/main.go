@@ -71,6 +71,9 @@ func InitializeDB(dbPath string) *sqlx.DB {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
 	// TODO: load any necessary config to the database (e.g. units ips)
-	sqlx.LoadFile(db, "schema.sql")
+	_, err := sqlx.LoadFile(db, "schema.sql")
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	return db
 }
