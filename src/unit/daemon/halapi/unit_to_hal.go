@@ -11,7 +11,7 @@ type StartVideoStream struct {
 	RefreshRate int
 }
 
-func (s *StartVideoStream) Send(enc *gob.Encoder) error {
+func (s StartVideoStream) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(StartVideoStreamType))
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func (s *StartVideoStream) Send(enc *gob.Encoder) error {
 // EndVideoStream
 type EndVideoStream struct{}
 
-func (s *EndVideoStream) Send(enc *gob.Encoder) error {
+func (s EndVideoStream) Send(enc *gob.Encoder) error {
 	return enc.Encode(byte(EndVideoStreamType))
 }
 
@@ -31,7 +31,7 @@ type ShowAudioMsg struct {
 	Audio []byte
 }
 
-func (s *ShowAudioMsg) Send(enc *gob.Encoder) error {
+func (s ShowAudioMsg) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(ShowAudioMsgType))
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ type ShowCodeMsg struct {
 	Code int
 }
 
-func (s *ShowCodeMsg) Send(enc *gob.Encoder) error {
+func (s ShowCodeMsg) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(ShowCodeMsgType))
 	if err != nil {
 		return err

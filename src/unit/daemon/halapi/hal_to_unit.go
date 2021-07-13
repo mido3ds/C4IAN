@@ -11,7 +11,7 @@ type VideoPart struct {
 	Video []byte
 }
 
-func (s *VideoPart) Send(enc *gob.Encoder) error {
+func (s VideoPart) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(VideoPartType))
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ type HeartBeat struct {
 	BeatsPerMinut int
 }
 
-func (s *HeartBeat) Send(enc *gob.Encoder) error {
+func (s HeartBeat) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(HeartBeatType))
 	if err != nil {
 		return err
@@ -43,12 +43,12 @@ type Location struct {
 	Lon, Lat float64
 }
 
-func (s *Location) Send(enc *gob.Encoder) error {
+func (s Location) Send(enc *gob.Encoder) error {
 	err := enc.Encode(byte(LocationType))
 	if err != nil {
 		return err
 	}
-	return enc.Encode(*s)
+	return enc.Encode(s)
 }
 
 func RecvFromHAL(dec *gob.Decoder, vp *VideoPart, hb *HeartBeat, loc *Location) (Type, error) {
