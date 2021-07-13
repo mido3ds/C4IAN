@@ -163,7 +163,7 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    fill: rgba(102, 103, 109, 0.144);
+    fill: rgb(25, 158, 154);
     cursor: pointer;
     transition: opacity 0.2s;
 }
@@ -174,7 +174,7 @@
 
 .custom-btn-disabled {
     position: absolute;
-    fill: rgb(25, 158, 154);
+    fill: rgba(102, 103, 109, 0.144);
     transform: translateY(-50%);
     cursor: inherit !important;
 }
