@@ -1,11 +1,13 @@
 package halapi
 
+type Type byte
+
 const (
-	VideoPartType        byte = 0
-	HeartBeatType        byte = 1
-	LocationType         byte = 2
-	StartVideoStreamType byte = 3
-	EndVideoStreamType   byte = 4
-	ShowAudioMsgType     byte = 5
-	ShowCodeMsgType      byte = 6
+	VideoPartType        Type = 0
+	HeartBeatType        Type = 1
+	LocationType         Type = 2
+	StartVideoStreamType Type = 3
+	EndVideoStreamType   Type = 4
+	ShowAudioMsgType     Type = 5
+	ShowCodeMsgType      Type = 6
 )
