@@ -3,7 +3,7 @@ package halapi
 type Type byte
 
 const (
-	VideoPartType        Type = 0
+	VideoFragmentType        Type = 0
 	HeartBeatType        Type = 1
 	LocationType         Type = 2
 	StartVideoStreamType Type = 3
