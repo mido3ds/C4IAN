@@ -90,8 +90,8 @@ CREATE TABLE received_videos (
             ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS received_sensor_data;
-CREATE TABLE received_sensor_data (
+DROP TABLE IF EXISTS received_sensors_data;
+CREATE TABLE received_sensors_data (
     time        int NOT NULL,
     src         text NOT NULL,
     heartbeat   int NOT NULL,
