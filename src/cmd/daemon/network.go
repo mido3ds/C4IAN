@@ -11,10 +11,10 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 )
 
-type onReceiveMsgCallback = func(string, models.Message)
-type onReceiveAudioCallback = func(string, models.Audio)
-type onReceiveVideoFragmentCallback = func(string, models.VideoFragment)
-type onReceiveSensorsDataCallback = func(string, models.SensorData)
+type onReceiveMsgCallback = func(models.Message)
+type onReceiveAudioCallback = func(models.Audio)
+type onReceiveVideoFragmentCallback = func(models.VideoFragment)
+type onReceiveSensorsDataCallback = func(models.SensorData)
 
 type NetworkManager struct {
 	onReceiveMsg           onReceiveMsgCallback
@@ -50,6 +50,7 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	}
 
 	// Connect to remote TCP socket
+	// TODO: Set timeout for dialing to abort
 	conn, err := net.DialTCP("tcp", nil, address)
 	if err != nil {
 		log.Panic(err)
@@ -129,14 +130,16 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 				if err != nil {
 					log.Panic(err)
 				}
-				netManager.onReceiveSensorsData(src.IP.String(), sensorsData)
+				sensorsData.Src = src.IP.String()
+				netManager.onReceiveSensorsData(sensorsData)
 			} else {
 				var videoFragment models.VideoFragment
 				err := decoder.Decode(&videoFragment)
 				if err != nil {
 					log.Panic(err)
 				}
-				netManager.onReceiveVideoFragment(src.IP.String(), videoFragment)
+				videoFragment.Src = src.IP.String()
+				netManager.onReceiveVideoFragment(videoFragment)
 			}
 		}
 	}
@@ -161,14 +164,16 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		if err != nil {
 			log.Panic(err)
 		}
-		netManager.onReceiveMsg(srcIP, msg)
+		msg.Src = srcIP
+		netManager.onReceiveMsg(msg)
 	} else {
 		var audio models.Audio
 		err := decoder.Decode(&audio)
 		if err != nil {
 			log.Panic(err)
 		}
-		netManager.onReceiveAudio(srcIP, audio)
+		audio.Src = srcIP
+		netManager.onReceiveAudio(audio)
 	}
 	conn.Close()
 }

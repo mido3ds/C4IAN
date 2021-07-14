@@ -27,28 +27,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: read config
+	// TODO: read config, add units and groups to database
 	dbManager := NewDatabaseManager(args.StorePath)
-	api := NewAPI(dbManager)
-	go api.Start(args.UIPort)
+	api := NewAPI()
 	netManager := NewNetworkManager(
-		func(addr string, msg models.Message) {
-			// TODO: replace with appropriate handling
-			log.Println("Received a msg: ", msg, " from: ", addr)
+		// onReceiveMessage
+		func(msg models.Message) {
+			api.SendEvent(&msg)
+			dbManager.AddReceivedMessage(&msg)
 		},
-		func(addr string, audio models.Audio) {
-			// TODO: replace with appropriate handling
-			log.Println("Received an audio: ", audio, " from: ", addr)
+		// onReceiveAudio
+		func(audio models.Audio) {
+			api.SendEvent(&audio)
+			dbManager.AddReceivedAudio(&audio)
 		},
-		func(addr string, frag models.VideoFragment) {
-			// TODO: replace with appropriate handling
-			log.Println("Received a video fragment: ", frag, " from: ", addr)
+		// onReceiveVideoFragment
+		func(frag models.VideoFragment) {
+			api.SendEvent(&frag)
+			// TODO: Handle received video fragment (create/append to file)
 		},
-		func(addr string, data models.SensorData) {
-			// TODO: replace with appropriate handling
-			log.Println("Received sensors data: ", data, " from: ", addr)
+		// onReceiveSensorsData
+		func(data models.SensorData) {
+			api.SendEvent(&data)
+			dbManager.AddReceivedSensorsData(&data)
 		},
 	)
+	go api.Start(args.UIPort, dbManager, netManager)
 	netManager.Listen(args.Port)
 	waitSIGINT()
 }

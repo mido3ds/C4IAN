@@ -7,6 +7,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/mattn/go-sqlite3 v1.14.7
-	github.com/mido3ds/C4IAN v0.0.0-20210714191723-e0956ff19b93
+	github.com/mido3ds/C4IAN v0.0.0-20210714214617-8ca448b4ce5c
 	gopkg.in/antage/eventsource.v1 v1.0.0-20150318155416-803f4c5af225
 )

@@ -22,8 +22,8 @@ type Event interface {
 
 // Time as int64 to store in db as Unix Time (SQLite3 does not support a time type)
 type Message struct {
-	Src       string `json:"src"`   // Only in SSEs between CMD Daemon & its UI
-	SentByCMD bool   `json: "sent"` // Only between CMD Daemon & its UI
+	Src       string `json:"src"`            // Only in SSEs between CMD Daemon & its UI
+	SentByCMD bool   `json:"sent" db:"sent"` // Only between CMD Daemon & its UI
 	Time      int64  `json:"time" db:"time"`
 	Code      int    `json:"code" db:"code"`
 }
