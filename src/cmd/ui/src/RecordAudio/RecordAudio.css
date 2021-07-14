@@ -1,0 +1,91 @@
+
+.record-audio-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    right: 50%;;
+    left: 50%;;
+    border-radius: 20px;;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 300px;
+    background-color: rgba(1, 51, 38, 0.911);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.record-icon {
+    background-image: url('../images/unit.png');
+    margin-bottom: 15px;
+}
+
+.record-msg {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: #2bede6;
+    margin-bottom: 25px;
+}
+
+.record-audio-player {
+    width: 400px;
+    height: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+}
+
+.close-audio-button {
+    width: 130px;
+    height: 50px;
+    padding: 5px !important;
+    display: flex;
+    justify-content: center;
+    font-size: 15px;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+    border: solid 2px #2bede6;
+    color: #2bede6;
+    margin-left: 50px;
+}
+
+.close-audio-button:hover {
+    background: linear-gradient(to bottom, rgba(237, 43, 43, 0.1) 0%, rgba(237, 43, 43, 0.3) 100%);
+}
+
+.send-audio-button:hover {
+    background: linear-gradient(to bottom, rgba(43, 127, 237, 0.1) 0%, rgba(43, 127, 237,  0.3) 100%);
+}
+
+.send-audio-button {
+    width: 130px;
+    height: 50px;
+    padding: 5px !important;
+    display: flex;
+    justify-content: center;
+    font-size: 15px;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+    border: solid 2px #2bede6;
+    color: #2bede6;
+}
+
+.audio-control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.record-audio-modal > .close {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    padding: 2px 5px;
+    line-height: 20px;
+    right: -10px;
+    top: -10px;
+    font-size: 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #cfcece;
+}
