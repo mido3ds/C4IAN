@@ -29,7 +29,7 @@ DROP TABLE IF EXISTS sent_msgs;
 CREATE TABLE sent_msgs (
     time    int NOT NULL,
     dst     text NOT NULL,
-    body    text NOT NULL,
+    code    int NOT NULL,
 
     PRIMARY KEY (time, dst),
     FOREIGN KEY (dst) 
@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS received_msgs;
 CREATE TABLE received_msgs (
     time    int NOT NULL,
     src     text NOT NULL,
-    body    text NOT NULL,
+    code    int NOT NULL,
 
     PRIMARY KEY (time, src),
     FOREIGN KEY (src) 
