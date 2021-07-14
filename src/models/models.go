@@ -3,7 +3,7 @@ package models
 const (
 	MESSAGE_EVENT      = "msg"
 	AUDIO_EVENT        = "audio"
-	VIDEO_FRAME_EVENT  = "video-frame"
+	VIDEO_FRAME_EVENT  = "video-fragment"
 	SENSORS_DATA_EVENT = "sensors-data"
 )
 
@@ -22,16 +22,20 @@ type Event interface {
 
 // Time as int64 to store in db as Unix Time (SQLite3 does not support a time type)
 type Message struct {
-	Time int64 `json:"time" db:"time"`
-	Code int   `json:"code" db:"code"`
+	Src       string `json:"src"`   // Only in SSEs between CMD Daemon & its UI
+	SentByCMD bool   `json: "sent"` // Only between CMD Daemon & its UI
+	Time      int64  `json:"time" db:"time"`
+	Code      int    `json:"code" db:"code"`
 }
 
 type Audio struct {
+	Src  string `json:"src"` // Only in SSEs between CMD Daemon & its UI
 	Time int64  `json:"time" db:"time"`
 	Body []byte `json:"body" db:"body"`
 }
 
 type VideoFragment struct {
+	Src  string `json:"src"` // Only in SSEs between CMD Daemon & its UI
 	Time int64  `json:"time" db:"time"`
 	Body []byte `json:"body" db:"body"`
 }
@@ -42,10 +46,11 @@ type Video struct {
 }
 
 type SensorData struct {
-	Time      int64 `json:"time" db:"time"`
-	Heartbeat int   `json:"heartbeat" db:"heartbeat"`
-	Loc_x     int   `json:"loc_x" db:"loc_x"`
-	Loc_y     int   `json:"loc_y" db:"loc_y"`
+	Src       string `json:"src"` // Only in SSEs between CMD Daemon & its UI
+	Time      int64  `json:"time" db:"time"`
+	Heartbeat int    `json:"heartbeat" db:"heartbeat"`
+	Loc_x     int    `json:"loc_x" db:"loc_x"`
+	Loc_y     int    `json:"loc_y" db:"loc_y"`
 }
 
 func (msg *Message) EventType() string {
