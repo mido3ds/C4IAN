@@ -29,19 +29,8 @@ func main() {
 	dbManager := NewDatabaseManager(args.StorePath)
 	api := NewAPI(dbManager)
 	go api.Start(args.UIPort)
-	// TODO: wrap writing to db
 	// TODO: open port
-	// TODO: define interface for ui
 	fmt.Println(args)
-	// id := 0
-	// for {
-	// 	api.SendEvent(&models.Message{Code: id})
-	// 	api.SendEvent(&models.Audio{Body: []byte(strconv.Itoa(id))})
-	// 	api.SendEvent(&models.VideoFrame{Body: []byte(strconv.Itoa(id + 100))})
-	// 	api.SendEvent(&models.SensorData{Heartbeat: id * 2, Loc_x: 5, Loc_y: 73})
-	// 	id++
-	// 	time.Sleep(time.Second)
-	// }
 }
 
 // Args store command line arguments
