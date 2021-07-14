@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/akamensky/argparse"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/mido3ds/C4IAN/src/cmd/daemon/api"
 )
 
 const storePathSuffix = ".db"
@@ -28,8 +26,8 @@ func main() {
 	}
 
 	// TODO: read config
-	db := InitializeDB(args.StorePath)
-	api := api.NewAPI(db)
+	dbManager := NewDatabaseManager(args.StorePath)
+	api := NewAPI(dbManager)
 	go api.Start(args.UIPort)
 	// TODO: wrap writing to db
 	// TODO: open port
@@ -77,15 +75,4 @@ func parseArgs() (*Args, error) {
 		Port:      *port,
 		UIPort:    *uiPort,
 	}, nil
-}
-
-func InitializeDB(dbPath string) *sqlx.DB {
-	db := sqlx.MustOpen("sqlite3", dbPath)
-
-	// TODO: load any necessary config to the database (e.g. units ips)
-	_, err := sqlx.LoadFile(db, "schema.sql")
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-	return db
 }

@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"encoding/json"
@@ -7,23 +7,22 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	"github.com/mido3ds/C4IAN/src/models"
 	"gopkg.in/antage/eventsource.v1"
 )
 
 type API struct {
-	db          *sqlx.DB
+	dbManager   *DatabaseManager
 	eventSource eventsource.EventSource
 }
 
-func NewAPI(db *sqlx.DB) *API {
+func NewAPI(dbManager *DatabaseManager) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
 			[]byte("Access-Control-Allow-Origin: *"),
 		}
 	})
-	return &API{db: db, eventSource: es}
+	return &API{dbManager: dbManager, eventSource: es}
 }
 
 func (api *API) Start(port int) {
