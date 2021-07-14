@@ -10,6 +10,7 @@ import {
 import withTemplate from '../withTemplate';
 import ProfileList from './ProfileList/ProfileList';
 import UnitList from './UnitList/UnitList'
+import Map from './Map/Map'
 
 const styles = theme => ({
     root: {
@@ -22,7 +23,7 @@ const profileComponents = {
     "Audios": <Gallery type="audio" />,
     "Videos": <Gallery type="video" />,
     "Messages": <h1> Messages </h1>,
-    "Locations": <h1> Locations </h1>,
+    "Locations": <Map/>,
     "Heartbeats": <h1> Heartbeats </h1>
 }
 
