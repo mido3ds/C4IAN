@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SSE test</title>
+    <script type="text/javascript">
+        window.addEventListener("DOMContentLoaded", function () {
+            var evsrc = new EventSource("http://localhost:3170/events");
+            evsrc.addEventListener("msg", ev => {
+                console.log("Received a message: ", JSON.parse(ev.data))
+            })
+            evsrc.addEventListener("audio", ev => {
+                console.log("Received an audio message: ", JSON.parse(ev.data))
+            })
+            evsrc.addEventListener("video-frame", ev => {
+                console.log("Received a video frame: ", JSON.parse(ev.data))
+            })
+            evsrc.addEventListener("sensors-data", ev => {
+                console.log("Received sensors data: ", JSON.parse(ev.data))
+            })
+            evsrc.onerror = function (ev) {
+                console.log("readyState = " + ev.currentTarget.readyState);
+            }
+        })
+    </script>
+</head>
+
+<body>
+    <h1>SSE test</h1>
+    <div>
+        <ul id="log">
+        </ul>
+    </div>
+</body>
+
+</html>
