@@ -22,7 +22,7 @@ type Audio struct {
 	Body []byte `json:"body" db:"body"`
 }
 
-type VideoFrame struct {
+type VideoFragment struct {
 	Time int    `json:"time" db:"time"`
 	Body []byte `json:"body" db:"body"`
 }
@@ -47,7 +47,7 @@ func (audio *Audio) EventType() string {
 	return AUDIO_EVENT
 }
 
-func (frame *VideoFrame) EventType() string {
+func (frame *VideoFragment) EventType() string {
 	return VIDEO_FRAME_EVENT
 }
 
