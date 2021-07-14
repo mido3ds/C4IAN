@@ -23,6 +23,7 @@ class HeartBeatChart extends React.Component {
                           download:false // <== line to add
                         }
                       },
+                      
                 },
                 dataLabels: {
                     enabled: false
@@ -40,7 +41,6 @@ class HeartBeatChart extends React.Component {
                         }
                     },   
                 },
-                
             },
         };
     }

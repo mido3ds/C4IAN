@@ -12,7 +12,7 @@
 .profile-frame {
     overflow: visible;
     position: relative;
-    width: 850px;
+    width: 900px;
     height: 500px;
     display: flex;
     justify-content: space-around;

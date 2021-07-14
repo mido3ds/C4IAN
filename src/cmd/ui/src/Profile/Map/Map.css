@@ -1,10 +1,11 @@
 .profile-map-container {
     position: absolute;
     z-index: 9;
-    right: 0px;
+    right: -10px;
     top: 0px;
     height: 550px !important;
     width: 850px !important;
+    zoom: 108%;
     filter: brightness(55%);
 }
 

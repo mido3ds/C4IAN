@@ -5,6 +5,7 @@ import UnitList from './UnitList/UnitList'
 import Gallery from './Gallery/Gallery'
 import Control from './Control/Control'
 import Map from './Map/Map'
+import ChatBox from './ChatBox/ChatBox'
 import HeartBeatChart from './HeartBeatChart/HearBeatChart'
 import {
     withStyles,
@@ -24,7 +25,7 @@ const profileComponents = {
     "Control": <Control />,
     "Audios": <Gallery type="audio" />,
     "Videos": <Gallery type="video" />,
-    "Messages": <h1> Messages </h1>,
+    "Messages": <ChatBox/>,
     "Locations": <Map/>,
     "Heartbeats": <HeartBeatChart/>
 }
