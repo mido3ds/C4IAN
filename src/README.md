@@ -24,6 +24,18 @@ $ sudo ./start u1 ping 10.0.0.2 -c5
 $ sudo ./start u2 ping 10.0.0.1 -c5
 ```
 
+## Start UNITs/CMDs in nodes
+```sh
+$ sudo ./start units
+$ sudo ./start cmds
+```
+
+## Start single UNIT/CMD locally
+```sh
+$ sudo ./start local unit
+$ sudo ./start local cmd
+```
+
 ## Watch mode
 Use watch mode to automatically rerun routers/units/cmds whenever a change happens to their executable file.
 
@@ -37,4 +49,12 @@ Then enter watch mode by passing `-w` or `--watch` like this:
 $ sudo ./start routers -w
 $ sudo ./start units -w
 $ sudo ./start cmds -w
+$ sudo ./start local unit -w
+$ sudo ./start local cmd -w
+```
+
+## Pass more options
+With `start` script you can always pass more options to routers/units/cmds, just put them after `--`:
+```sh
+$ sudo ./start local cmd -- <options to cmd executable...>
 ```

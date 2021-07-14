@@ -1,0 +1,58 @@
+
+.map-container {
+    height: 100vh;
+    width: 100vw;
+    margin-bottom: -100px;
+}
+
+.map-unit1 {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(199, 32, 32, 0.699);
+    border-style: solid;
+}
+
+.map-unit2 {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(3, 194, 3, 0.671);
+    border-style: solid;
+}
+
+.map-unit3 {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(0, 119, 255, 0.74);
+    border-style: solid;
+}
+
+.mapboxgl-ctrl-attrib {
+    display: hidden !important;
+    visibility: hidden;
+}
+
+.mapboxgl-ctrl-logo {
+    display: hidden !important;
+    visibility: hidden;
+}
+
+.hello {
+    width: 50px;
+    height: 50px;
+    background-color: yellow;
+}
+
+
+

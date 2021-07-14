@@ -1,0 +1,68 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.logIn-root{
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.identification-text {
+    position: absolute;
+    bottom: 26%;
+    margin-bottom: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+}
+
+.back-text {
+    position: absolute;
+    right: 44%;
+    bottom: 22%;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 30px;
+    color: white;
+    cursor: pointer;
+    visibility: hidden;
+}
+
+.access-text {
+    position: absolute;
+    left: 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 30px;
+    top: 6%;
+}
+
+.home-unit-image {
+    zoom: 25%;
+    opacity: 0;
+    visibility: hidden;
+    border: 2px solid rgba(43,237,230,0.28);
+    position: absolute;
+    top: 40%;
+}
+
+.hello-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    margin-bottom: 30px;
+    margin-top: 80px;
+    position: absolute;
+    bottom: 14%;
+}
+
+.welcome-text {
+    position: absolute;
+    bottom: 0%;
+    margin-top: 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+}
+

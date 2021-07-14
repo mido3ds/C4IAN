@@ -1,0 +1,23 @@
+.text-field {
+    width: 0px;
+    height: 30px;
+    border: 1px solid rgba(43,237,230,0.7);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%);
+    padding: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    color: white;
+    position: absolute;
+}
+
+.text-field:focus {
+    outline: none;
+    border: 1px solid #2bede6;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}
+
+.text-field:hover {
+    outline: none;
+    border: 1px solid #2bede6;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}

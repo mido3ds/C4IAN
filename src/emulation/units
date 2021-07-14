@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-usage() {
+function usage() {
     F=$(realpath --relative-to=. $0)
     echo "Usage: ${F} [-w|--watch] [-- <options to pass to all units>]"
     echo "Runs all units, pass -w|--watch to watch changes in executable"
@@ -24,6 +24,10 @@ while [ "$1" != "" ]; do
             OPTS="$@"
             break
             ;;
+        *)
+            echo "Unknown parameter \"$1\""
+            usage
+            exit 1
     esac
     shift
 done
@@ -35,7 +39,7 @@ mkdir -p /var/log/caian/ /var/lib/caian/
 
 echo "units DBs are in /var/lib/caian/"
 
-cleanup() {
+function cleanup() {
     pkill -u root -f ./emulation/watchdog
 }
 trap cleanup INT

@@ -1,0 +1,151 @@
+.list-container {
+    position: relative;
+    top: 0px;
+    right: 0px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-basis: auto;
+    margin-left: 70px;
+    margin-top: 60px;
+}
+
+.upper-tap {
+    width: 235px;
+    height: 50px;
+    background-color:  rgba(107, 110, 108, 0.158);
+    margin-bottom: -13px;
+    margin-left: -5px;
+
+    --aug-bl-inset2: 112px;
+    --aug-bl1-width: 25px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.upper-arrow {
+    margin-top: -15px;
+    font-size: 50px;
+    color:   rgba(102, 103, 109, 0.144);
+}
+
+.down-arrow {
+    margin-top: 12px;
+    font-size: 50px;
+    color:   rgba(102, 103, 109, 0.144);
+
+}
+
+.active-arrow {
+    color:  rgb(25, 158, 154);
+    cursor: pointer;
+}
+
+
+.list-item {
+    position: relative;
+}
+
+.square {
+    width: 8px;
+    height: 15px;
+    background-color:  rgba(149, 153, 153, 0.574);
+    position: absolute;
+    top: 5px;
+    
+}
+
+.upper {
+    width: 213px;
+    height: 20px;
+    --aug-border-all: 0px;
+    background-color:  rgba(149, 153, 153, 0.574);
+
+    margin: 5px;
+    margin-left: 8px;
+    margin-bottom: -16px;
+
+    --aug-tr-inset2: 90px;
+    --aug-tr1-width: 25px;
+
+    --aug-bl-inset2: 80px;
+    --aug-bl1-width: 25px;
+}
+
+.middle {
+    width: 203px;
+    height: 60px;
+    --aug-border-bg: rgba(43,237,230,0.05);
+    --aug-border-all: 0px;
+
+    margin: 5px;
+    margin-left: 12px;
+
+    --aug-tr-inset2: 103px;
+    --aug-tr1-width: 25px;
+
+    --aug-br-inset1: 58px;
+    --aug-br1-width: 25px;
+
+    display: flex;
+    align-items: center;
+}
+
+.right-arrow {
+    font-size: 27px;
+    color:  rgba(220, 222, 228, 0.363);
+    margin: 0 12px;
+}
+
+.list-item-text {
+    margin: 0 !important;
+    padding: 0;
+    color:  rgba(220, 222, 228, 0.363);
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.text-active {
+    color: white;
+}
+
+.item-active {
+    --aug-border-all: 1px;
+    --aug-border-bg: #FFF;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}
+
+.lower {
+    width: 220px;
+    height: 20px;
+    --aug-border-all: 0px;
+    background-color:  rgba(149, 153, 153, 0.574);
+    margin: 5px;
+    margin-top: -15px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+
+    --aug-tl-inset1: 132px;
+    --aug-tl1-width: 25px;
+
+    --aug-br-inset1: 42px;
+    --aug-br1-width: 25px;
+}
+
+.lower-tap {
+    width: 235px;
+    height: 50px;
+    background-color:  rgba(107, 110, 108, 0.158);
+    margin-top: -8px;
+    margin-left: -5px;
+
+    --aug-tl-inset1: 158px;
+    --aug-tl1-width: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
