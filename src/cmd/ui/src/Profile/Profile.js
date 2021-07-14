@@ -18,15 +18,18 @@ const styles = theme => ({
 });
 
 const profileComponents = {
-    "videos": <Gallery type="video" />,
-    "audios": <Gallery type="audio" />,
-    "control": <Control />,
+    "Control": <Control />,
+    "Audios": <Gallery type="audio" />,
+    "Videos": <Gallery type="video" />,
+    "Messages": <h1> Messages </h1>,
+    "Locations": <h1> Locations </h1>,
+    "Heartbeats": <h1> Heartbeats </h1>
 }
 
 class Profile extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { activatedTab: "videos", activatedUnit: {name: "hello"} };
+        this.state = { activatedTab: "Control", activatedUnit: {name: "hello"} };
     }
 
     render() {
