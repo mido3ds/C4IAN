@@ -1,0 +1,7 @@
+.hearbeat-chart {
+    position: relative;
+    z-index: 9;
+    right: 20px;
+    top: 20px;
+    width: 520px;
+}

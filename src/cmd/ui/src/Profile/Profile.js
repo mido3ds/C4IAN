@@ -1,16 +1,18 @@
 import './Profile.css';
 import React from 'react';
+import ProfileList from './ProfileList/ProfileList';
+import UnitList from './UnitList/UnitList'
 import Gallery from './Gallery/Gallery'
 import Control from './Control/Control'
+import Map from './Map/Map'
+import HeartBeatChart from './HeartBeatChart/HearBeatChart'
 import {
     withStyles,
     Arwes,
     Content
 } from 'arwes';
 import withTemplate from '../withTemplate';
-import ProfileList from './ProfileList/ProfileList';
-import UnitList from './UnitList/UnitList'
-import Map from './Map/Map'
+
 
 const styles = theme => ({
     root: {
@@ -24,7 +26,7 @@ const profileComponents = {
     "Videos": <Gallery type="video" />,
     "Messages": <h1> Messages </h1>,
     "Locations": <Map/>,
-    "Heartbeats": <h1> Heartbeats </h1>
+    "Heartbeats": <HeartBeatChart/>
 }
 
 class Profile extends React.Component {
