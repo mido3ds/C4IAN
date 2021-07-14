@@ -8,7 +8,7 @@ const (
 )
 
 type Event interface {
-	eventType() string
+	EventType() string
 }
 
 // Time as integer to store in db as Unix Time (SQLite3 does not support a time type)
@@ -39,18 +39,18 @@ type SensorData struct {
 	Loc_y     int `json:"loc_y" db:"loc_y"`
 }
 
-func (msg *Message) eventType() string {
+func (msg *Message) EventType() string {
 	return MESSAGE_EVENT
 }
 
-func (audio *Audio) eventType() string {
+func (audio *Audio) EventType() string {
 	return AUDIO_EVENT
 }
 
-func (frame *VideoFrame) eventType() string {
+func (frame *VideoFrame) EventType() string {
 	return VIDEO_FRAME_EVENT
 }
 
-func (sensors *SensorData) eventType() string {
+func (sensors *SensorData) EventType() string {
 	return SENSORS_DATA_EVENT
 }
