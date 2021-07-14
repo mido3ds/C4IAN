@@ -15,65 +15,80 @@ function ProfileList({ onChange }) {
     const [firstTab, setFirstTab] = useState(profileTabs[0])
     const [secondTab, setSecondTab] = useState(profileTabs[1])
     const [thirdTab, setThirdTab] = useState(profileTabs[2])
-    const [activeItem, setactiveItem] = useState(0);
+    const [selectedTab, setSelectedTab] = useState(0);
+    const [activeItem, setActiveItem] = useState(0);
 
     var down = () => {
-        setactiveItem(() => {
-            var newItem = activeItem < profileTabs.length - 1? activeItem + 1 : profileTabs.length - 1;
-            onChange(profileTabs[newItem])
+        setActiveItem(() => {
+            var newActiveItem = activeItem < 2 ? activeItem + 1 : 2;
+            setSelectedTab(() => {
+                var newSelectedTab = selectedTab < profileTabs.length - 1 ? selectedTab + 1 : profileTabs.length - 1;
+                onChange(profileTabs[newSelectedTab])
 
-            if (newItem > 2) {
-                setFirstTab(profileTabs[newItem - 2])
-                setSecondTab(profileTabs[newItem - 1])
-                setThirdTab(profileTabs[newItem])
-            } else {
-                window.$(window.$('.list-item .middle').toArray()[newItem]).addClass('item-active')
-                window.$(window.$('.list-item .middle .right-arrow').toArray()[newItem]).addClass('text-active')
-                window.$(window.$('.list-item .middle .list-item-text').toArray()[newItem]).addClass('text-active')
-                window.$(window.$('.list-item .middle').toArray()[newItem - 1]).removeClass('item-active')
-                window.$(window.$('.list-item .middle .right-arrow').toArray()[newItem - 1]).removeClass('text-active')
-                window.$(window.$('.list-item .middle .list-item-text').toArray()[newItem - 1]).removeClass('text-active')
-            }
+                if (newSelectedTab >= 1 && newSelectedTab < profileTabs.length - 1) {
+                    window.$('.down-arrow').addClass('active-arrow')
+                    window.$('.upper-arrow').addClass('active-arrow')
+                } else if (newSelectedTab === profileTabs.length - 1) {
+                    window.$('.down-arrow').removeClass('active-arrow')
+                    window.$('.upper-arrow').addClass('active-arrow')
+                }
 
-            if (newItem >= 1 && newItem < profileTabs.length - 1) {
-                window.$('.down-arrow').addClass('active-arrow')
-                window.$('.upper-arrow').addClass('active-arrow')
-            } else if (newItem === profileTabs.length - 1) {
-                window.$('.down-arrow').removeClass('active-arrow')
-                window.$('.upper-arrow').addClass('active-arrow')
-            }
+                if (newActiveItem !== activeItem) {
+                    window.$(window.$('.list-item .middle').toArray()[newActiveItem - 1]).removeClass('item-active')
+                    window.$(window.$('.list-item .middle .right-arrow').toArray()[newActiveItem - 1]).removeClass('text-active')
+                    window.$(window.$('.list-item .middle .list-item-text').toArray()[newActiveItem - 1]).removeClass('text-active')
+                    window.$(window.$('.list-item .middle').toArray()[newActiveItem]).addClass('item-active')
+                    window.$(window.$('.list-item .middle .right-arrow').toArray()[newActiveItem]).addClass('text-active')
+                    window.$(window.$('.list-item .middle .list-item-text').toArray()[newActiveItem]).addClass('text-active')
+                }
 
-            return newItem
+
+                if (newActiveItem === 2 && newSelectedTab !== selectedTab) {
+                    setFirstTab(profileTabs[newSelectedTab - 2])
+                    setSecondTab(profileTabs[newSelectedTab - 1])
+                    setThirdTab(profileTabs[newSelectedTab])
+                }
+
+                
+                return newSelectedTab;
+            })
+            return newActiveItem
         })
     }
 
     var up = () => {
-        setactiveItem(() => {
-            var newItem = activeItem > 0 ? activeItem - 1 : 0
-            onChange(profileTabs[newItem])
+        setActiveItem(() => {
+            var newActiveItem = activeItem > 0 ? activeItem - 1 : 0;
+            setSelectedTab(() => {
+                var newSelectedTab = selectedTab > 0 ? selectedTab - 1 : 0;
+                onChange(profileTabs[newSelectedTab])
 
-            if (newItem === 0) {
-                window.$('.upper-arrow').removeClass('active-arrow')
-                window.$('.down-arrow').addClass('active-arrow')
-            } if (newItem >= 1 && newItem < profileTabs.length - 1) {
-                window.$('.down-arrow').addClass('active-arrow')
-                window.$('.upper-arrow').addClass('active-arrow')
-            }
+                if (newSelectedTab === 0) {
+                    window.$('.upper-arrow').removeClass('active-arrow')
+                    window.$('.down-arrow').addClass('active-arrow')
+                } if (newSelectedTab >= 1 && newSelectedTab < profileTabs.length - 1) {
+                    window.$('.down-arrow').addClass('active-arrow')
+                    window.$('.upper-arrow').addClass('active-arrow')
+                }
 
-            if (newItem < profileTabs.length - 3) {
-                setFirstTab(profileTabs[newItem])
-                setSecondTab(profileTabs[newItem + 1])
-                setThirdTab(profileTabs[newItem + 2])
-            } else {
-                window.$(window.$('.list-item .middle').toArray()[newItem - 2]).removeClass('item-active')
-                window.$(window.$('.list-item .middle .right-arrow').toArray()[newItem - 2]).removeClass('text-active')
-                window.$(window.$('.list-item .middle .list-item-text').toArray()[newItem - 2]).removeClass('text-active')
-                window.$(window.$('.list-item .middle').toArray()[newItem - 3]).addClass('item-active')
-                window.$(window.$('.list-item .middle .right-arrow').toArray()[newItem - 3]).addClass('text-active')
-                window.$(window.$('.list-item .middle .list-item-text').toArray()[newItem - 3]).addClass('text-active')
-            }
+                if (newActiveItem !== activeItem) {
+                    window.$(window.$('.list-item .middle').toArray()[newActiveItem + 1]).removeClass('item-active')
+                    window.$(window.$('.list-item .middle .right-arrow').toArray()[newActiveItem + 1]).removeClass('text-active')
+                    window.$(window.$('.list-item .middle .list-item-text').toArray()[newActiveItem + 1]).removeClass('text-active')
+                    window.$(window.$('.list-item .middle').toArray()[newActiveItem]).addClass('item-active')
+                    window.$(window.$('.list-item .middle .right-arrow').toArray()[newActiveItem]).addClass('text-active')
+                    window.$(window.$('.list-item .middle .list-item-text').toArray()[newActiveItem]).addClass('text-active')
+                }
 
-            return newItem
+                if (newActiveItem === 0 && newSelectedTab !== selectedTab) {
+                    setFirstTab(profileTabs[newSelectedTab])
+                    setSecondTab(profileTabs[newSelectedTab + 1])
+                    setThirdTab(profileTabs[newSelectedTab + 2])
+                }
+
+                return newSelectedTab;
+            })
+            return newActiveItem
         })
     }
 
