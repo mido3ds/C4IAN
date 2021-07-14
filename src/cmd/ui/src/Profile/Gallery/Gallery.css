@@ -4,6 +4,8 @@
     align-items: center;
     height: 100%;
     margin-top: 20px;
+    width: 500px;
+    margin-right: 50px;
 }
 
 .items-container {

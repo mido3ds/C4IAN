@@ -9,7 +9,6 @@ import './App.css';
 const tabsComponents = {
   "Map": <Home />,
   "Units": <Profile type="unit"/>,
-  "Groups": <Profile type="group"/>,
 }
 
 function App() {
@@ -33,10 +32,11 @@ function App() {
   return (
     <>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      {selectedTab === "Log Out" ?
+      <Profile> </Profile>
+      {/*{selectedTab === "Log Out" ?
         <LogIn onLogIn={() => { onChange("Map") }} />
         : tabsComponents[selectedTab]
-      }
+      }*/}
     </>
   );
 }

@@ -3,7 +3,7 @@ import React from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
 
-function Gallery({type, UnitOrGroup}) {
+function Gallery({type, unit}) {
     return (
         <div className="gallery-container">
             <div className="items-container">

@@ -50,6 +50,7 @@
 
 .area-active {
     background: rgba(91, 215, 236, 0.151);
+    cursor: pointer;
 }
 
 .unit-list-upper-arrow, .unit-list-lower-arrow {

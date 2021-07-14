@@ -10,6 +10,7 @@
     "polished": "^1.9.3",
     "react": "^16.0.2",
     "react-anime": "^4.0.4",
+    "react-apexcharts": "^1.3.9",
     "react-dom": "^16.13.1",
     "react-scripts": "4.0.3",
     "sketch-js": "^1.1.3",

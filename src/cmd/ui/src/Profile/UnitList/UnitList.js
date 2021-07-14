@@ -107,9 +107,9 @@ function UnitList({onChange, type}) {
                 <i onClick={up} className="fas fa-caret-up fa-lg unit-list-upper-arrow arrow-active"></i>
             </div>
             <div id="card-slider" className="unit-list-area">
-                <UnitItem unit={firstUnit} type={type}/>
-                <UnitItem unit={secondUnit} type={type}/>
-                <UnitItem unit={thirdUnit} type={type}/>
+                <UnitItem unit={firstUnit}/>
+                <UnitItem unit={secondUnit}/>
+                <UnitItem unit={thirdUnit}/>
             </div>
             <div className="unit-list-lower-arrow-area area-active">
                 <i onClick={down} className="fas fa-caret-down fa-lg unit-list-lower-arrow arrow-active"></i>
