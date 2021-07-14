@@ -27,7 +27,8 @@ func main() {
 	}
 
 	// TODO: read config
-	InitializeDB(args.StorePath)
+	// InitializeDB(args.StorePath)
+	go serveRequests(args.UIPort)
 	// TODO: wrap writing to db
 	// TODO: open port
 	// TODO: define interface for ui
@@ -47,8 +48,8 @@ func parseArgs() (*Args, error) {
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.",
 		Default: time.Now().Format(time.RFC3339) + storePathSuffix})
 
-	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4170})
-	uiPort := parser.Int("", "ui-port", &argparse.Options{Help: "UI port the client will bind to, to connect with its UI.", Default: 3170})
+	port := parser.Int("p", "port", &argparse.Options{Default: 4170, Help: "Main port the client will bind to, to receive connections from other clients."})
+	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -71,6 +72,9 @@ func InitializeDB(dbPath string) *sqlx.DB {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
 	// TODO: load any necessary config to the database (e.g. units ips)
-	sqlx.LoadFile(db, "schema.sql")
+	_, err := sqlx.LoadFile(db, "schema.sql")
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	return db
 }
