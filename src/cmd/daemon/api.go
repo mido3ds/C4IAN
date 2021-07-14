@@ -41,7 +41,7 @@ func (api *API) Start(port int) {
 func (api *API) SendEvent(body models.Event) {
 	payload, err := json.Marshal(body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	api.eventSource.SendEventMessage(string(payload), body.EventType(), "")
 }

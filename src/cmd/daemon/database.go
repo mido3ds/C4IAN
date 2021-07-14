@@ -17,7 +17,7 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	// TODO: load any necessary config to the database (e.g. units ips)
 	_, err := sqlx.LoadFile(db, "schema.sql")
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Panic(err.Error())
 	}
 	return &DatabaseManager{db: db}
 }
@@ -67,7 +67,7 @@ func (dbManager *DatabaseManager) getReceivedMessages(srcIP string) []models.Mes
 		srcIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return msgs
 }
@@ -80,7 +80,7 @@ func (dbManager *DatabaseManager) getReceivedAudio(srcIP string) []models.Audio 
 		srcIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return audios
 }
@@ -93,7 +93,7 @@ func (dbManager *DatabaseManager) getReceivedSensorsData(srcIP string) []models.
 		srcIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return data
 }
