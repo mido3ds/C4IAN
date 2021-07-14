@@ -41,6 +41,7 @@
 
 .active-arrow {
     color:  rgb(25, 158, 154);
+    cursor: pointer;
 }
 
 
