@@ -1,6 +1,6 @@
 package main
 
 const (
-	StartVideoStreamingCode = 0
-	StopVideStreamingCode   = 1
+	StartVideoStreamingCode = 2
+	StopVideStreamingCode   = 3
 )
