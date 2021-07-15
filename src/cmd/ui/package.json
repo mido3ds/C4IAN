@@ -9,6 +9,7 @@
     "axios": "^0.21.1",
     "blob-to-buffer": "^1.2.9",
     "mapbox-gl": "^1.11.1",
+    "moment": "^2.29.1",
     "polished": "^1.9.3",
     "react": "^16.0.2",
     "react-anime": "^4.0.4",
