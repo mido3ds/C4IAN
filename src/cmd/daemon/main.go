@@ -61,7 +61,6 @@ func main() {
 			// Can this cause a race condition if fragments arrive fast enough?
 			// or will the file be locked by the OS anyway?
 			videoBuffer.Insert(&frag)
-			// videoFilesManager.AppendVideoFragment(&frag)
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
