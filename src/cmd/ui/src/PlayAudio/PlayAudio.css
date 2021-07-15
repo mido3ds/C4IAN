@@ -1,0 +1,41 @@
+.play-audio-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 20px;;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 200px;
+    background-color: rgba(1, 51, 38, 0.911);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.play-audio-msg {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: #2bede6;
+    margin-bottom: 25px;
+}
+
+.audio-player {
+    width: 400px;
+    height: 30px;
+    border-radius: 20px;
+}
+
+.play-audio-modal > .close {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    padding: 2px 5px;
+    line-height: 20px;
+    right: -10px;
+    top: -10px;
+    font-size: 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #cfcece;
+}

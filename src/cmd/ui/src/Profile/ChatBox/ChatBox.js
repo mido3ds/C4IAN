@@ -1,75 +1,48 @@
 import React, { useRef, useEffect, useState } from 'react';
 import uImage from '../../images/unit.png';
+import { getMsgs } from '../../Api/Api'
+import { messages } from '../../messages'
+import moment from 'moment';
 import './ChatBox.css'
 
-function ChatBox() {
+function ChatBox({ unit }) {
+    const [msgs, setMsgs] = useState(null)
 
     useEffect(() => {
+        //setMsgs(getMsgs(unit.ip))
+        setMsgs(messages);
+        console.log(messages)
         var element = document.querySelector(".chat-container");
         element.scrollTop = element.scrollHeight;
-    }, [])
+    })
 
 
     return (
-        <div class="content-wrapper">
-            <div class="chat-container">
-                <ul class="chat-box chatContainerScroll">
-                    <li class="chat-left">
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Russell</div>
-                        </div>
-                        <div class="chat-text"> Attack </div>
-                        <div class="chat-hour"> 08:55 </div>
-                    </li>
-                    <li class="chat-right">
-                        <div class="chat-hour"> 08:56 </div>
-                        <div class="chat-text"> Defense </div>
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name">Sam</div>
-                        </div>
-                    </li>
-                    <li class="chat-left">
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Russell</div>
-                        </div>
-                        <div class="chat-text"> Attack </div>
-                        <div class="chat-hour"> 08:57 </div>
-                    </li>
-                    <li class="chat-left">
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Russell</div>
-                        </div>
-                        <div class="chat-text"> Attack </div>
-                        <div class="chat-hour"> 08:57 </div>
-                    </li>
-                    <li class="chat-right">
-                        <div class="chat-hour"> 08:59 </div>
-                        <div class="chat-text"> Defense </div>
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Joyse </div>
-                        </div>
-                    </li>
-                    <li class="chat-right">
-                        <div class="chat-hour"> 08:59 </div>
-                        <div class="chat-text"> Defense </div>
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Joyse </div>
-                        </div>
-                    </li>
-                    <li class="chat-left">
-                        <div class="chat-avatar">
-                            <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                            <div class="chat-name"> Russell</div>
-                        </div>
-                        <div class="chat-text"> Attack </div>
-                        <div class="chat-hour"> 08:57 </div>
-                    </li>
+        <div className="content-wrapper">
+            <div className="chat-container">
+                <ul className="chat-box chatContainerScroll">
+                    {messages.map((msg, index) => {
+                        return <>
+                            {msg.sent ?
+                                <li className="chat-right">
+                                    <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
+                                    <div className="chat-text"> {msg.code} </div>
+                                    <div className="chat-avatar">
+                                        <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
+                                        <div className="chat-name"> Me </div>
+                                    </div>
+                                </li> :
+                                <li className="chat-left">
+                                    <div className="chat-avatar">
+                                        <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
+                                        <div className="chat-name"> {unit.name.substr(0,unit.name.indexOf(' '))} </div>
+                                    </div>
+                                    <div className="chat-text"> {msg.code} </div>
+                                    <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
+                                </li>
+                            }
+                        </>
+                    })}
                 </ul>
             </div>
         </div>

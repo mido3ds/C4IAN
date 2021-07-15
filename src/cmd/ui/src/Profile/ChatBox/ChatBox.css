@@ -26,10 +26,6 @@
     border-radius: 30px;
 }
 
-.chat-container li .chat-avatar {
-    margin-right: 20px;
-}
-
 .chat-container li.chat-right {
     justify-content: flex-end;
 }
@@ -52,7 +48,9 @@
     font-size: 0.75rem;
     color: #999999;
     text-align: center;
-    transform:  translate(-5px, 5px);
+    position: relative;
+    top: 10px;
+    right: 10px;
 }
 
 .chat-container li .chat-text {
@@ -110,6 +108,10 @@
 
 .chat-container li.chat-right > .chat-hour {
     margin: 0 15px 0 0;
+}
+
+.chat-container li.chat-left .chat-avatar {
+    margin: 0 20px 5px 10px;
 }
 
 @media (max-width: 767px) {
