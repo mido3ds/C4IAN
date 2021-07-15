@@ -118,11 +118,11 @@ func (r *Router) Start() {
 	go r.zidAgent.Start()
 
 	// start controllers
-	// go r.sarpCont.Start()
-	// go r.unicCont.Start()
+	go r.sarpCont.Start()
+	go r.unicCont.Start()
 	go r.multCont.Start(r.forwarder.MultiForwTable)
 	go r.forwarder.Start()
-	// go r.dzdCont.Start()
+	go r.dzdCont.Start()
 
 	log.Println(r.ip, ":", r.iface.HardwareAddr)
 }
