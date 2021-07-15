@@ -24,6 +24,9 @@ type OneVideoBuffer struct {
 	LastSeqNo uint64
 }
 
+// NewVideoBuffer create new VideoBuffer
+// it takes *VideoFilesManager
+// return *VideosBuffer
 func NewVideoBuffer(manager *VideoFilesManager) *VideosBuffer {
 	return &VideosBuffer{
 		Srcs:    &hashmap.HashMap{},
@@ -31,9 +34,12 @@ func NewVideoBuffer(manager *VideoFilesManager) *VideosBuffer {
 	}
 }
 
-// insert new video fragment with src, id, seqNo
+// Insert takes a video fragment
+// it appends video fragment with the same src, id to its video
 // where src is the source identifier and id is the id of the video and seqNo is the seqNo of the frame
-// when recieving a fragment with the same src and id it s
+// it buffers every pair of (src, id) in seperate sorted and unique buffer by seqNo
+// rejecting the new seqNo less than the LastSeqNo fragment appended to the video
+// and the duplicated seqNo fragments
 func (vb *VideosBuffer) Insert(frag *models.VideoFragment) {
 	srcVideos, ok := vb.Srcs.Get(frag.Src)
 	if !ok {
