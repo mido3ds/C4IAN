@@ -3,7 +3,7 @@ import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-load
 import MapPopup from './MapPopUp/MapPopUp'
 import GroupSelect from '../GroupsSelect/GroupSelect'
 import {NotificationManager} from 'react-notifications';
-
+import { unitsList } from '../units'
 
 import './Home.css'
 
@@ -55,7 +55,7 @@ function Home() {
     var onDataChange = (newData) => {
         setUnits(() => {
             var unitsCopy = JSON.parse(JSON.stringify(units));
-            if (newData.src in unitsCopy) {
+            if (unitsCopy[newData.src].hasOwnProperty("marker")) {
                 var oldPosition = [unitsCopy[newData.src].lng, unitsCopy[newData.src].lat]
                 var newPosition = [newData.loc_x, newData.loc_y]
                 onPositionChange(oldPosition, newPosition, unitsCopy[newData.src].marker)
@@ -136,6 +136,14 @@ function Home() {
 
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
+
+        setUnits(() => {
+            var unitsCopy = {}
+            unitsList.forEach(unit => {
+                unitsCopy[unit.ip] = {name: unit.name, groupID: unit.group}
+            });
+            return unitsCopy
+        })
     });
 
     return (
