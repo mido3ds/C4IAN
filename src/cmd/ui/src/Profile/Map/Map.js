@@ -21,6 +21,7 @@ function Map({unit}) {
 
     useEffect(() => {
         const coordinates = getCoordinates()
+        if(coordinates.length === 0) return
         if (map.current) return; 
         var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
         center[0] -= 0.005
@@ -66,7 +67,9 @@ function Map({unit}) {
     })
 
     return (
-        <>
+        <>  <div className="no-data-gallery-msg"> 
+                <p> No data to be previewed </p> 
+            </div>
             <div className="profile-map-wrapper">
                 <div ref={profileMapContainer} className="profile-map-container" />
             </div>
