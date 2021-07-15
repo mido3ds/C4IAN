@@ -67,7 +67,7 @@ func main() {
 			dbManager.AddReceivedSensorsData(&data)
 		},
 	)
-	go api.Start(args.UIPort, dbManager, netManager)
+	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
 	netManager.Listen(args.Port)
 	waitSIGINT()
 }
@@ -80,6 +80,7 @@ type Args struct {
 	GroupsPath string
 	Port       int
 	UIPort     int
+	UnitsPort  int
 }
 
 func parseArgs() (*Args, error) {
@@ -94,6 +95,7 @@ func parseArgs() (*Args, error) {
 
 	port := parser.Int("p", "port", &argparse.Options{Default: 4170, Help: "Main port the client will bind to, to receive connections from other clients."})
 	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
+	unitsPort := parser.Int("", "units-port", &argparse.Options{Default: 4070, Help: "Main port used in units."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -112,6 +114,7 @@ func parseArgs() (*Args, error) {
 		GroupsPath: *groupsPath,
 		Port:       *port,
 		UIPort:     *uiPort,
+		UnitsPort:  *unitsPort,
 	}, nil
 }
 
