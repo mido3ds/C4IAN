@@ -92,32 +92,47 @@ A command center computer has 3 programs:
 
 # Functional Requirements
 ## Units
-- Stream video from combat-cameras to command center(s) only if the latter requested them. Video streaming terminates if the unit received end stream request, or the start request wasn't refreshed after 1 minute.
-- Stream the heartbeat of the device owner and their position every 10 seconds.
-- Store all the recorded video and sensors data locally, in a rolling db, where new data override old data when there is no left space. This feature could be controlled in a configuration file.
-- If the owner requested:
-    + Send audio messages from microphone.
+- Stream video from combat cameras to command center(s) only if the latter requested them. Video streaming terminates if the unit received an end-stream request, or the start request wasn’t refreshed after 1 minute.
+- Stream the heartbeat & location of the device owner and their position every 10 seconds.
+- Store all the recorded video and sensors (location & heartbeat) data locally.
+- If the device user requested:
+    + Send audio messages from the microphone.
     + Send code messages (every code has its predefined meaning.)
 - Receive audio messages from command centers into a queue.
 - Play received audio messages from the queue instantly.
 - Receive and show code messages.
-- Temporarily store audio and code messages.
-- Access stored audio and code messages and delete them.
 
 ## Command Centers
-- Can be accessed from multiple computers.
-- Send audio commands and command codes (every code has its predefined meaning) to one (unicast), some (multicast) or all (boradcast) of the deployed units devices.
-- Store all received messages, video streams and other data (position and heartbeat).
-- Show old archieved data.
-- Play any audio message and video stream. Received messages don't autoplay, but the UI shows if a received message was already heard or not.
-- Group units.
-- Show map of all units, their group color.
-- If didn't receive heartbeat and position from some unit for 2 minutes, mark it as inactive, show list of inactive units and show their latest position on map with inactive color.
-- Show no-heartbeat warning, when some unit gives near-zero heartbeat for some time period. Color units with no heartbeat and show them clearly on map.
-- Show statistics about selected unit or group of units. Statistics include:
-    + their movement speed over time, 
-    + average/max/min/median speed,
-    + and connection outages with command center over time.
+- Send audio command & command codes to a single unit (TCP).
+- Send audio commands to a group (multicast) or everyone (unlimited-radius broadcast) (UDP).
+- Store all sent and received data.
+- Show old data (audio, messages, videos, sensor data)
+- Show notifications when an audio message is received and an option to play it.
+- Show video streams as they are received.
+- Show map with group color.
+- If sensor data isn’t received in 2 minutes, mark it as inactive.
+- If a unit’s heartbeat is below a threshold, mark it as in danger.
+
+### Internal Interface
+- API `(UI <-> Daemon)`:
+    + POST /audio-msg , /msg (dst_IP / group_id is a parameter, body is payload)
+    + GET /audio-msgs , /msgs , /videos , /sensors-data  (unit IP is a parameter)
+- Websocket `(Daemon -> UI)`: audio, msg, video (frame), sensor data 
+
+## Transfered Data
+### Command Center to Unit
+- Unicast (TCP): Audio message (recording), Code message (predefined integers).
+- Multicast / Broadcast (UDP): Audio command (addressed to all nodes or anyone in group), StartVideoStreaming request and EndVideoStreaming request.
+
+### Unit to Command Center
+- Unicast (TCP): Audio message (recording), Message code (predefined integers).
+- Unicast (UDP): Video stream, sensor data (heartbeat & location).
+
+### Required Models
+- Audio message.
+- Code message.
+- Sensor data (heartbeat & location).
+- Video fragment.
 
 # Non-functional Requirements
 ## Reliability
