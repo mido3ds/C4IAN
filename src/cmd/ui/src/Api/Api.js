@@ -37,15 +37,3 @@ export function getSensorsData(ip) {
         return response.data;
     });
 }
-
-export function getLocationHistory(ip) {
-    axios.get(baseURL + "videos"+ ip).then((response) => {
-        return response.data;
-    });
-}
-
-function getHeartBeatHistory(ip) {
-    axios.get(baseURL + "videos"+ ip).then((response) => {
-        return response.data;
-    });
-}
