@@ -3,8 +3,11 @@ Use `edit` to create a new toplogy, edit an existing one connect to mininet-wifi
 ```
 $ ./edit
 ```
-
 ## Start Network Virtualisation
+```
+# First, install `watchgod`:
+$ sudo pip3 install simple_websocket_server
+```
 ```
 ## (1st terminal)
 # start mininet-wifi with a topology of 2 nodes

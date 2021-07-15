@@ -3,14 +3,14 @@ package tables
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 )
 
-// const FWRD_SET_ENTRY_TIMEOUT = 960 * time.Millisecond
-const FWRD_SET_ENTRY_TIMEOUT = 2 * time.Second
+// const MultiForwardTableTimeout = 960 * time.Millisecond
+// const MultiForwardTableTimeout = 2 * time.Second
 
 // MultiForwardEntrySet is lock-free thread-safe set
 // for multicast forwarding
@@ -53,8 +53,8 @@ func (s *MultiForwardEntrySet) Set(nextHop net.HardwareAddr) {
 	// Start new Timer
 	entry := &NextHopEntry{
 		NextHop: nextHop,
-		timer: s.timers.Add(FWRD_SET_ENTRY_TIMEOUT, func() {
-			// s.Items.Del(nextHopKey)
+		timer: s.timers.Add(MultiForwardTableTimeout, func() {
+			s.Items.Del(nextHopKey)
 		}),
 	}
 	s.Items.Set(nextHopKey, entry)
