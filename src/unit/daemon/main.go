@@ -1,20 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"os/signal"
+	"time"
 
 	"database/sql"
 
-	"github.com/akamensky/argparse"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mido3ds/C4IAN/src/models"
 	"github.com/mido3ds/C4IAN/src/unit/daemon/halapi"
 )
+
+const VideoStreamingNoEndTimeout = 1 * time.Minute
 
 func main() {
 	defer log.Println("finished cleaning up, closing")
@@ -28,55 +29,50 @@ func main() {
 	}
 	fmt.Println(args)
 
-	context := newContext(args.StorePath)
+	context := newContext(args)
 	defer context.close()
 
-	go context.listenHAL(args.HALSocketPath)
-	go context.listenCmdTcp(args.Port)
-	go context.listenCmdUdp(args.Port)
+	go context.listenHAL()
+	go context.listenCmdTcp()
+	go context.listenCmdUdp()
 
 	waitSIGINT()
 }
 
-func fileExists(path string) bool {
-	_, err := os.Open(path)
-	return err == nil
-}
-
-func openDB(storePath string) *sql.DB {
-	if fileExists(storePath) {
-		log.Println("db exists, won't recreate it")
-	} else {
-		file, err := os.Create(storePath)
-		if err != nil {
-			log.Panic(err.Error())
-		}
-		file.Close()
-
-		log.Println("opened file for db")
-	}
-
-	sqliteDatabase, err := sql.Open("sqlite3", storePath)
-	if err != nil {
-		log.Panic(err)
-	}
-	return sqliteDatabase
-}
-
 type Context struct {
-	expectingVideoStream bool
-	storeDB              *sql.DB
+	Args
+	expectingVideoStream   bool
+	storeDB                *sql.DB
+	cmdUDPConn, cmdTCPConn net.Conn
+	videoSeqno             uint64
+	videoID                int
+	isConnectedToCMD       bool
+	halConn                net.Conn
+	isConnectedToHAL       bool
+	videoStreamTimer       *time.Timer
 }
 
-func newContext(storePath string) Context {
+func newContext(args *Args) Context {
 	context := Context{
+		Args:                 *args,
 		expectingVideoStream: false,
+		videoSeqno:           0,
+		videoID:              0,
+		isConnectedToCMD:     false,
+		isConnectedToHAL:     false,
 	}
 
-	if len(storePath) > 0 {
-		context.storeDB = openDB(storePath)
+	// db
+	if len(context.storePath) > 0 {
+		context.storeDB = openDB(context.storePath)
 		context.createTables()
 	}
+
+	udpConn, err := net.DialTimeout("udp", context.cmdAddress, context.timeout)
+	if err != nil {
+		log.Panic("couldn't open udp port, err:", err)
+	}
+	context.cmdUDPConn = udpConn
 
 	return context
 }
@@ -85,92 +81,30 @@ func (c *Context) close() {
 	if c.storeDB != nil {
 		c.storeDB.Close()
 	}
+	c.cmdUDPConn.Close()
+	c.closeConnectionWithCMD()
 }
 
-func (c *Context) createTables() {
-	tables := []string{
-		`CREATE TABLE IF NOT EXISTS HeartBeats (beatsPerMinute INT, time INT);`,
-		`CREATE TABLE IF NOT EXISTS Locations (lon REAL, lat REAL, time INT);`,
-		`CREATE TABLE IF NOT EXISTS VideoFragments (data BLOB, time INT);`,
+func (c *Context) closeConnectionWithCMD() {
+	if c.isConnectedToCMD {
+		c.isConnectedToCMD = false
+		c.cmdTCPConn.Close()
 	}
-
-	for _, v := range tables {
-		statement, err := c.storeDB.Prepare(v)
-		if err != nil {
-			log.Panic(err)
-		}
-		defer statement.Close()
-
-		_, err = statement.Exec()
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Println(v)
-	}
-
-	log.Println("created all tables")
 }
 
-func (c *Context) saveHeartbeat(beatsPerMinute int) error {
-	if c.storeDB == nil {
-		return nil
-	}
-
-	statement, err := c.storeDB.Prepare(`INSERT INTO HeartBeats (beatsPerMinute, time) VALUES(?, strftime('%s','now'));`)
+func (c *Context) tryConnectWithCMD() {
+	// tcp
+	tcpConn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
 	if err != nil {
-		return fmt.Errorf("couldn't insert beatsPerMinute, err: %v", err)
+		log.Println("couldn't open tcp port, err:", err)
+		return
 	}
-	defer statement.Close()
-
-	_, err = statement.Exec(beatsPerMinute)
-	if err != nil {
-		return fmt.Errorf("couldn't insert beatsPerMinute, err: %v", err)
-	}
-
-	return nil
+	c.cmdTCPConn = tcpConn
+	c.isConnectedToCMD = true
 }
 
-func (c *Context) saveLocation(lon, lat float64) error {
-	if c.storeDB == nil {
-		return nil
-	}
-
-	statement, err := c.storeDB.Prepare(`INSERT INTO Locations (lon, lat, time) VALUES(?, ?, strftime('%s','now'));`)
-	if err != nil {
-		return fmt.Errorf("couldn't insert location, err: %v", err)
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(lon, lat)
-	if err != nil {
-		return fmt.Errorf("couldn't insert location, err: %v", err)
-	}
-
-	return nil
-}
-
-// TODO: append video fragments to one row
-func (c *Context) saveVideoFragment(data []byte) error {
-	if c.storeDB == nil {
-		return nil
-	}
-
-	statement, err := c.storeDB.Prepare(`INSERT INTO VideoFragments (data, time) VALUES(?, strftime('%s','now'));`)
-	if err != nil {
-		return fmt.Errorf("couldn't insert heartbeat, err: %v", err)
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(data)
-	if err != nil {
-		return fmt.Errorf("couldn't insert heartbeat, err: %v", err)
-	}
-
-	return nil
-}
-
-func (c *Context) listenCmdTcp(port int) {
-	cmdLisener, err := net.Listen("tcp", fmt.Sprint("0.0.0.0:", port))
+func (c *Context) listenCmdTcp() {
+	cmdLisener, err := net.Listen("tcp", fmt.Sprint("0.0.0.0:", c.port))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -183,13 +117,18 @@ func (c *Context) listenCmdTcp(port int) {
 		}
 		defer conn.Close()
 
-		c.serveCmdTcp(conn)
+		if !c.isConnectedToCMD {
+			c.isConnectedToCMD = true
+			c.cmdTCPConn = conn
+		}
+
+		c.serveCmd(conn)
 	}
 }
 
-func (c *Context) listenCmdUdp(port int) {
+func (c *Context) listenCmdUdp() {
 	addr := net.UDPAddr{
-		Port: port,
+		Port: c.port,
 		IP:   net.ParseIP("0.0.0.0"),
 	}
 	conn, err := net.ListenUDP("udp", &addr)
@@ -197,146 +136,187 @@ func (c *Context) listenCmdUdp(port int) {
 		log.Panic(err)
 	}
 	defer conn.Close()
-	c.serveCmdUdp(conn)
+	c.serveCmd(conn)
 }
 
-func (c *Context) serveCmdTcp(conn net.Conn) {
-	// TODO: receive msgs
-}
-
-func (c *Context) serveCmdUdp(conn *net.UDPConn) {
-	// TODO: receive msgs/streams/reqeuestToStream
-}
-
-// TODO: remove
-func simulateHALClient(HALSocketPath string) {
-	conn, err := net.Dial("unix", HALSocketPath)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	enc := gob.NewEncoder(conn)
-	halapi.Location{Lon: 5, Lat: 2}.Send(enc)
-	halapi.HeartBeat{BeatsPerMinut: 5}.Send(enc)
-	halapi.VideoFragment{Video: []byte{5, 3}}.Send(enc)
-}
-
-func (c *Context) listenHAL(HALSocketPath string) {
-	// remove loc socket file
-	err := os.RemoveAll(HALSocketPath)
-	if err != nil {
-		log.Panic("failed to remove socket:", err)
-	}
-
-	halListener, err := net.Listen("unix", HALSocketPath)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	defer halListener.Close()
+func (c *Context) serveCmd(conn net.Conn) {
+	var packetType models.Type
+	var msg models.Message
+	var audio models.Audio
+	decoder := gob.NewDecoder(conn)
 
 	for {
-		go simulateHALClient(HALSocketPath)
-		conn, err := halListener.Accept()
-		defer conn.Close()
-
+		err := decoder.Decode(&packetType)
 		if err != nil {
-			log.Println("accept error:", err)
-		} else {
-			log.Println("HAL connected")
-			c.serveHAL(conn)
+			log.Panic(err)
 		}
-	}
-}
 
-func (context *Context) serveHAL(conn net.Conn) {
-	dec := gob.NewDecoder(conn)
-
-	var video halapi.VideoFragment
-	var heartbeat halapi.HeartBeat
-	var loc halapi.Location
-
-	for {
-		sentType, err := halapi.RecvFromHAL(dec, &video, &heartbeat, &loc)
-		if err != nil {
-			log.Println(err)
-		} else {
-			switch sentType {
-			case halapi.VideoFragmentType:
-				context.onVideoReceived(&video)
-				break
-			case halapi.HeartBeatType:
-				context.onHeartBeatReceived(&heartbeat)
-				break
-			case halapi.LocationType:
-				context.onLocationReceived(&loc)
-				break
-			default:
-				log.Panicf("received unkown msg type = %v", sentType)
-				break
+		if packetType == models.MessageType {
+			err := decoder.Decode(&msg)
+			if err != nil {
+				log.Println("error occurred, will close connection with cmd:", err)
+				return
 			}
+			c.onCodeMsgReceivedFromCMD(&msg)
+		} else if packetType == models.AudioType {
+			err := decoder.Decode(&audio)
+			if err != nil {
+				log.Println("error occurred, will close connection with cmd:", err)
+				return
+			}
+			c.onAudioMsgReceivedFromCMD(&audio)
+		} else {
+			log.Panic("received unrecognized msg type on tcp")
 		}
 	}
 }
 
-func (c *Context) onVideoReceived(v *halapi.VideoFragment) {
-	log.Printf("VideoFragment: %v\n", *v)
-	c.saveVideoFragment(v.Video)
-
-	if !c.expectingVideoStream {
-		log.Println("error, not expecting video stream, but received packet from HAL")
-		return
+func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
+	log.Println("Received a msg: ", msg)
+	switch msg.Code {
+	case StartVideoStreamingCode:
+		log.Println("start video streaming code")
+		c.expectingVideoStream = true
+		c.videoID++
+		c.videoSeqno = 0
+		c.videoStreamTimer = time.AfterFunc(VideoStreamingNoEndTimeout, func() {
+			log.Println("didn't receive end video streaming for 1 minute, closing video streaming")
+			c.expectingVideoStream = false
+		})
+		break
+	case StopVideStreamingCode:
+		log.Println("stop video streaming code")
+		if c.videoStreamTimer != nil {
+			c.videoStreamTimer.Stop()
+			c.videoStreamTimer = nil
+		}
+		c.expectingVideoStream = false
+		break
+	default:
+		log.Println("generic code msg")
+		break
 	}
-
-	// TODO: send packet to cmd
 }
 
-func (c *Context) onHeartBeatReceived(hb *halapi.HeartBeat) {
-	log.Printf("HeartBeat: %v\n", *hb)
-	c.saveHeartbeat(hb.BeatsPerMinut)
-
-	// TODO: send heart beat to cmd
+func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
+	log.Println("Received an audio with len= ", len(audio.Body))
+	if c.isConnectedToHAL {
+		enc := gob.NewEncoder(c.halConn)
+		err := halapi.ShowAudioMsg{Audio: audio.Body}.Send(enc)
+		if err != nil {
+			log.Println("error in sending show audio msg to HAL, err:", err)
+		}
+	} else {
+		log.Println("received msg but coudln't connect to HAL to play it, dropping msg")
+	}
 }
 
-func (c *Context) onLocationReceived(loc *halapi.Location) {
-	log.Printf("Location: %v\n", *loc)
-	c.saveLocation(loc.Lon, loc.Lat)
-
-	// TODO: send location to cmd
-}
-
-// Args store command line arguments
-type Args struct {
-	// null if no store path
-	StorePath     string
-	Port          int
-	HALSocketPath string
-}
-
-func (a *Args) String() string {
-	return fmt.Sprintf("&Args{StorePath: %v, Port: %v, HALSocketPath: %v}", a.StorePath, a.Port, a.HALSocketPath)
-}
-
-func parseArgs() (*Args, error) {
-	parser := argparse.NewParser("unit-daemon", "Unit client daemon")
-
-	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
-	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
-	ctrlSocketPath := parser.String("", "hal-socket-path", &argparse.Options{Help: "Path to unix socket file to communicate over with HAL.", Default: "/tmp/unit.hal.sock"})
-
-	err := parser.Parse(os.Args)
+func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(models.VideoFragmentType)
 	if err != nil {
-		return nil, errors.New(parser.Usage(err))
+		return fmt.Errorf("failed to encode type, error: %v", err)
 	}
 
-	return &Args{
-		StorePath:     *storePath,
-		Port:          *port,
-		HALSocketPath: *ctrlSocketPath,
-	}, nil
+	err = encoder.Encode(&models.VideoFragment{
+		ID:    c.videoID,
+		Time:  time.Now().Unix(),
+		Body:  fragment,
+		SeqNo: c.videoSeqno,
+	})
+	c.videoSeqno++
+
+	if err != nil {
+		return fmt.Errorf("failed to encode fragment, err: %v", err)
+	}
+
+	n, err := c.cmdUDPConn.Write(buffer.Bytes())
+	if n != len(buffer.Bytes()) {
+		return fmt.Errorf("failed to send all bytes")
+	} else if err != nil {
+		return fmt.Errorf("failed to send bytes, err: %v", err)
+	}
+
+	return nil
 }
 
-func waitSIGINT() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
+func (c *Context) sendAudioMessageTCP(fragment []byte) error {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(models.AudioType)
+	if err != nil {
+		return fmt.Errorf("failed to encode type, error: %v", err)
+	}
+
+	err = encoder.Encode(&models.Audio{
+		Time: time.Now().Unix(),
+		Body: fragment,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to encode fragment, err: %v", err)
+	}
+
+	n, err := c.cmdTCPConn.Write(buffer.Bytes())
+	if n != len(buffer.Bytes()) {
+		return fmt.Errorf("failed to send all bytes")
+	} else if err != nil {
+		return fmt.Errorf("failed to send bytes, err: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Context) sendCodeMessageTCP(code int) error {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(models.MessageType)
+	if err != nil {
+		return fmt.Errorf("failed to encode type, error: %v", err)
+	}
+
+	err = encoder.Encode(&models.Message{
+		Code: code,
+		Time: time.Now().Unix(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to encode code message, err: %v", err)
+	}
+
+	n, err := c.cmdTCPConn.Write(buffer.Bytes())
+	if n != len(buffer.Bytes()) {
+		return fmt.Errorf("failed to send all bytes")
+	} else if err != nil {
+		return fmt.Errorf("failed to send bytes, err: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(models.SensorDataType)
+	if err != nil {
+		return fmt.Errorf("failed to encode type, error: %v", err)
+	}
+
+	err = encoder.Encode(&models.SensorData{
+		Time:      time.Now().Unix(),
+		Heartbeat: beatsPerMinute,
+		Lat:       lat,
+		Lon:       lon,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to encode sensor data, err: %v", err)
+	}
+
+	n, err := c.cmdUDPConn.Write(buffer.Bytes())
+	if n != len(buffer.Bytes()) {
+		return fmt.Errorf("failed to send all bytes")
+	} else if err != nil {
+		return fmt.Errorf("failed to send bytes, err: %v", err)
+	}
+
+	return nil
 }

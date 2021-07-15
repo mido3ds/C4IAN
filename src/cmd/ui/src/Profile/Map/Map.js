@@ -13,7 +13,7 @@ function Map({unit}) {
         var sensorData = getSensorsData(unit.ip)
         var coordinates = []
         sensorData.forEach((item, index) => {
-            coordinates.push([item.loc_x, item.loc_y])
+            coordinates.push([item.lat, item.lon])
         })
         return coordinates
     }

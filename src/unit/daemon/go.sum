@@ -2,3 +2,9 @@ github.com/akamensky/argparse v1.3.0 h1:/y3NFl6Nhw6alHDWoI9tx3vSyrB5zRgs4y9jzHxt
 github.com/akamensky/argparse v1.3.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
 github.com/mattn/go-sqlite3 v1.14.7 h1:fxWBnXkxfM6sRiuH3bqJ4CfzZojMOLVc0UTsTglEghA=
 github.com/mattn/go-sqlite3 v1.14.7/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
+github.com/mattn/go-sqlite3 v1.14.8 h1:gDp86IdQsN/xWjIEmr9MF6o9mpksUgh0fu+9ByFxzIU=
+github.com/mattn/go-sqlite3 v1.14.8/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
+github.com/mido3ds/C4IAN v0.0.0-20210715195520-d7f09cade7e8 h1:4FAKtdKeYP9Pj+g6hQpQIR/z41jxGba2q4JkiDnpEzI=
+github.com/mido3ds/C4IAN v0.0.0-20210715195520-d7f09cade7e8/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
+github.com/mido3ds/C4IAN v0.0.0-20210715213003-54c6afcda8a7 h1:0X3ZpQkfJpjmScvBSsIkkjgdcWgRroQ/Eoo+nIxQHbU=
+github.com/mido3ds/C4IAN v0.0.0-20210715213003-54c6afcda8a7/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=

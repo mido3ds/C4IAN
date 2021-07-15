@@ -21,7 +21,7 @@ func TestUnit(*testing.T) {
 	for {
 		SendMessage(i, cmdPort)
 		SendAudio(i, cmdPort)
-		SendSensorsData(i, cmdPort)
+		SendSensorsData(float64(i), cmdPort)
 		SendVideoFragment(i%10, i, cmdPort)
 		i++
 		time.Sleep(time.Second)
@@ -74,7 +74,7 @@ func Listen(port int) {
 	}
 }
 
-func SendSensorsData(i int, port int) {
+func SendSensorsData(i float64, port int) {
 	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -91,8 +91,8 @@ func SendSensorsData(i int, port int) {
 	encoder.Encode(&models.SensorData{
 		Time:      time.Now().Unix(),
 		Heartbeat: i,
-		Loc_x:     i,
-		Loc_y:     i,
+		Lat:       i,
+		Lon:       i,
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()

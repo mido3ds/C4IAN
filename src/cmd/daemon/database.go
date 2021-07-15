@@ -69,7 +69,7 @@ func (dbManager *DatabaseManager) AddReceivedAudio(audio *models.Audio) {
 
 func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData) {
 	dbManager.db.MustExec("INSERT INTO received_sensors_data VALUES ($1, $2, $3, $4, $5)",
-		data.Time, data.Src, data.Heartbeat, data.Loc_x, data.Loc_y)
+		data.Time, data.Src, data.Heartbeat, data.Lat, data.Lon)
 }
 
 func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Video) {
@@ -112,7 +112,7 @@ func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.
 	var data []models.SensorData
 	err := dbManager.db.Select(
 		&data,
-		"SELECT time, heartbeat, loc_x, loc_y FROM received_sensors_data WHERE src = $1 ORDER BY time",
+		"SELECT time, heartbeat, lat, lon FROM received_sensors_data WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
