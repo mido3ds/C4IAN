@@ -15,8 +15,6 @@ type DatabaseManager struct {
 func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
-	// TODO: load any necessary config to the database (e.g. units ips)
-
 	// Make sure foreign key constraints are enabled
 	db.MustExec("PRAGMA foreign_keys = ON")
 
@@ -26,9 +24,16 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 		log.Panic(err.Error())
 	}
 
-	// TEST
-	db.MustExec("INSERT INTO units VALUES ('127.0.0.1')")
 	return &DatabaseManager{db: db}
+}
+
+func (dbManager *DatabaseManager) Initialize(units []string, groups map[string][]string) {
+	for _, unit := range units {
+		dbManager.AddUnit(unit)
+	}
+	for group, members := range groups {
+		dbManager.AddGroup(group, members)
+	}
 }
 
 func (dbManager *DatabaseManager) AddUnit(IP string) {
