@@ -5,6 +5,7 @@ import Home from './Home/Home'
 import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
+import Streams from './Streams/Streams'
 import 'react-notifications/lib/notifications.css';
 
 import './index.css';
@@ -60,7 +61,7 @@ function App() {
       <NotificationContainer/>
       <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      <Profile> </Profile>
+      <Streams> </Streams>
       {/*{selectedTab === "Log Out" ?
         <LogIn onLogIn={() => { onChange("Map") }} />
         : tabsComponents[selectedTab]

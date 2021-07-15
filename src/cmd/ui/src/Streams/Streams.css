@@ -1,0 +1,25 @@
+
+.video-root {
+    display:flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+}
+
+.streams-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    background: black;
+}
+
+.stream {
+    width: 25%;
+    height: 50%;
+    border: 1px solid black;
+    position: relative;
+}
+

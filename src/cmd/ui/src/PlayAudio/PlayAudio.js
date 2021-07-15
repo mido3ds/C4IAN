@@ -80,7 +80,6 @@ class PlayAudio extends React.Component {
                             className="audio-player"
                             src={this.state.audioUrl}
                         ></ReactAudioPlayer>
-
                         : <> </>
                     }
                 </Modal>
