@@ -10,8 +10,7 @@ function Menu({onChange}) {
             <div className="spacer"></div>
             <div className="item" onClick={() => {onChange("Map")}}><span className="selected">Map</span></div>
             <div className="item" onClick={() => {onChange("Units")}}><span>Units</span></div>
-            <div className="item" onClick={() => {onChange("Groups")}}><span>Groups</span></div>
-            <div className="item"><span>Streams</span></div>
+            <div className="item" onClick={() => {onChange("Streams")}}><span>Streams</span></div>
             <div className="item" onClick={() => {onChange("Log Out")}}><span>Log Out</span></div>
         </div>
     );

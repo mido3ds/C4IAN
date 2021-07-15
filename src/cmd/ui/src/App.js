@@ -14,6 +14,7 @@ import './App.css';
 const tabsComponents = {
   "Map": <Home />,
   "Units": <Profile type="unit"/>,
+  "Streams": <Streams/>
 }
 
 function App() {
@@ -61,11 +62,10 @@ function App() {
       <NotificationContainer/>
       <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      <Profile> </Profile>
-      {/*{selectedTab === "Log Out" ?
+      {selectedTab === "Log Out" ?
         <LogIn onLogIn={() => { onChange("Map") }} />
         : tabsComponents[selectedTab]
-      }*/}
+      }
     </>
   );
 }

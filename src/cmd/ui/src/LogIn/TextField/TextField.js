@@ -73,7 +73,7 @@ function TextField({onLogIn}) {
             'border-color': 'rgba(43,237,230,0.7)'
         })
         window.$('.identification-text').css({ 'color': '#30fffe' })
-        window.$('.logIn-root').css({ 'background': 'radial-gradient(circle, rgba(14,63,87,0.9164040616246498) 0%, rgba(0,0,0,0.9472163865546218) 81%);' })
+        window.$('.logIn-root').css({ 'background': 'radial-gradient(circle, rgba(14,63,87,0.9164040616246498) 0%, rgba(0,0,0,0.9472163865546218) 81%)' })
 
         window.$('.identification-text').animate({ 'opacity': 0 }).promise().then(function () {
             new Typewriter(document.querySelector('.access-text'), {

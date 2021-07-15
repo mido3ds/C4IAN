@@ -3,7 +3,6 @@ import ReactPlayer from 'react-player'
 import './Stream.css'
 import video from './v.mp4'
 
-
 class Stream extends React.Component {
     constructor(props) {
         super(props)
