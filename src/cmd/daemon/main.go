@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
 
 	"github.com/akamensky/argparse"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mido3ds/C4IAN/src/models"
 )
 
 const storePathSuffix = ".db"
@@ -25,12 +27,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: read config
+	// TODO: read config, add units and groups to database
 	dbManager := NewDatabaseManager(args.StorePath)
-	api := NewAPI(dbManager)
-	go api.Start(args.UIPort)
-	// TODO: open port
-	fmt.Println(args)
+	api := NewAPI()
+	netManager := NewNetworkManager(
+		// onReceiveMessage
+		func(msg models.Message) {
+			api.SendEvent(&msg)
+			dbManager.AddReceivedMessage(&msg)
+		},
+		// onReceiveAudio
+		func(audio models.Audio) {
+			api.SendEvent(&audio)
+			dbManager.AddReceivedAudio(&audio)
+		},
+		// onReceiveVideoFragment
+		func(frag models.VideoFragment) {
+			api.SendEvent(&frag)
+			// TODO: Handle received video fragment (create/append to file)
+		},
+		// onReceiveSensorsData
+		func(data models.SensorData) {
+			api.SendEvent(&data)
+			dbManager.AddReceivedSensorsData(&data)
+		},
+	)
+	go api.Start(args.UIPort, dbManager, netManager)
+	netManager.Listen(args.Port)
+	waitSIGINT()
 }
 
 // Args store command line arguments
@@ -64,4 +88,10 @@ func parseArgs() (*Args, error) {
 		Port:      *port,
 		UIPort:    *uiPort,
 	}, nil
+}
+
+func waitSIGINT() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
 }

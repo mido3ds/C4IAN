@@ -15,85 +15,106 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
 	// TODO: load any necessary config to the database (e.g. units ips)
+
+	// Make sure foreign key constraints are enabled
+	db.MustExec("PRAGMA foreign_keys = ON")
+	// Create database from schema script
 	_, err := sqlx.LoadFile(db, "schema.sql")
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Panic(err.Error())
 	}
 	return &DatabaseManager{db: db}
 }
 
-func (dbManager *DatabaseManager) addUnit(IP string) {
+func (dbManager *DatabaseManager) AddUnit(IP string) {
 	dbManager.db.MustExec("INSERT INTO units VALUES ($1)", IP)
 }
 
-func (dbManager *DatabaseManager) addGroup(groupIP string, memberIPs []string) {
+func (dbManager *DatabaseManager) AddGroup(groupIP string, memberIPs []string) {
 	dbManager.db.MustExec("INSERT INTO groups VALUES ($1)", groupIP)
 	for _, memberIP := range memberIPs {
 		dbManager.db.MustExec("INSERT INTO members VALUES ($1, $2)", groupIP, memberIP)
 	}
 }
 
-func (dbManager *DatabaseManager) addSentMessage(dstIP string, msg *models.Message) {
+func (dbManager *DatabaseManager) AddSentMessage(dstIP string, msg *models.Message) {
 	dbManager.db.MustExec("INSERT INTO sent_msgs VALUES ($1, $2, $3)",
 		msg.Time, dstIP, msg.Code)
 }
 
-func (dbManager *DatabaseManager) addSentAudio(dstIP string, audio *models.Audio) {
-	// TODO: check if body is inserted correctly
+func (dbManager *DatabaseManager) AddSentAudio(dstIP string, audio *models.Audio) {
 	dbManager.db.MustExec("INSERT INTO sent_audios VALUES ($1, $2, $3)",
 		audio.Time, dstIP, audio.Body)
 }
 
-func (dbManager *DatabaseManager) addReceivedMessage(srcIP string, msg *models.Message) {
+func (dbManager *DatabaseManager) AddReceivedMessage(msg *models.Message) {
 	dbManager.db.MustExec("INSERT INTO received_msgs VALUES ($1, $2, $3)",
-		msg.Time, srcIP, msg.Code)
+		msg.Time, msg.Src, msg.Code)
 }
 
-func (dbManager *DatabaseManager) addReceivedAudio(srcIP string, audio *models.Audio) {
+func (dbManager *DatabaseManager) AddReceivedAudio(audio *models.Audio) {
 	dbManager.db.MustExec("INSERT INTO received_audios VALUES ($1, $2, $3)",
-		audio.Time, srcIP, audio.Body)
+		audio.Time, audio.Src, audio.Body)
 }
 
-func (dbManager *DatabaseManager) addReceivedSensorsData(srcIP string, data *models.SensorData) {
+func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData) {
 	dbManager.db.MustExec("INSERT INTO received_sensors_data VALUES ($1, $2, $3, $4, $5)",
-		data.Time, srcIP, data.Heartbeat, data.Loc_x, data.Loc_y)
+		data.Time, data.Src, data.Heartbeat, data.Loc_x, data.Loc_y)
 }
 
-func (dbManager *DatabaseManager) getReceivedMessages(srcIP string) []models.Message {
+func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
 	var msgs []models.Message
 	err := dbManager.db.Select(
 		&msgs,
-		"SELECT time, code FROM received_msgs WHERE src = $1",
-		srcIP,
+		`
+		SELECT time, code, 0 as sent FROM received_msgs WHERE src = $1
+			UNION
+		SELECT time, code, 1 as sent FROM sent_msgs WHERE dst = $1
+		ORDER BY time
+		`,
+		unitIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return msgs
 }
 
-func (dbManager *DatabaseManager) getReceivedAudio(srcIP string) []models.Audio {
+func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio {
 	var audios []models.Audio
 	err := dbManager.db.Select(
 		&audios,
-		"SELECT time, body FROM received_audios WHERE src = $1",
+		"SELECT time, body FROM received_audios WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return audios
 }
 
-func (dbManager *DatabaseManager) getReceivedSensorsData(srcIP string) []models.SensorData {
+func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.SensorData {
 	var data []models.SensorData
 	err := dbManager.db.Select(
 		&data,
-		"SELECT time, heartbeat, loc_x, loc_y FROM received_sensors_data WHERE src = $1",
+		"SELECT time, heartbeat, loc_x, loc_y FROM received_sensors_data WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panic(err)
 	}
 	return data
+}
+
+func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video {
+	var videos []models.Video
+	err := dbManager.db.Select(
+		&videos,
+		"SELECT time, path FROM received_videos WHERE src = $1 ORDER BY time",
+		srcIP,
+	)
+	if err != nil {
+		log.Panic(err)
+	}
+	return videos
 }
