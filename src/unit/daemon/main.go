@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 
 	"database/sql"
 
@@ -31,7 +32,9 @@ func main() {
 	defer context.close()
 
 	go context.listenHAL(args.HALSocketPath)
-	context.listenCmdTcp(args.Port)
+	go context.listenCmdTcp(args.Port)
+
+	waitSIGINT()
 }
 
 func fileExists(path string) bool {
@@ -329,4 +332,10 @@ func parseArgs() (*Args, error) {
 		Port:          *port,
 		HALSocketPath: *ctrlSocketPath,
 	}, nil
+}
+
+func waitSIGINT() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
 }
