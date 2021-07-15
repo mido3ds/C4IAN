@@ -115,9 +115,9 @@ A command center computer has 3 programs:
 
 ### Internal Interface
 - API `(UI <-> Daemon)`:
-    + POST /audio-msg , /msg (dst_IP / group_id is a parameter, body is payload)
-    + GET /audio-msgs , /msgs , /videos , /sensors-data  (unit IP is a parameter)
-- Websocket `(Daemon -> UI)`: audio, msg, video (frame), sensor data 
+    + POST /audio-msg/{ip} , /msg/{ip}
+    + GET /audio-msgs/{ip} , /msgs , /videos/{ip} , /sensors-data/{ip}
+- SSEs `(Daemon -> UI)`: audio, msg, video fragment, sensors data 
 
 ## Transfered Data
 ### Command Center to Unit
