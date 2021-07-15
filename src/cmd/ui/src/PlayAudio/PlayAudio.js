@@ -64,7 +64,12 @@ class PlayAudio extends React.Component {
                     isOpen={this.state.isOpen}
                     onRequestClose={this.closeModal}
                     className="play-audio-modal">
-                    <button className="close" onClick={this.closeModal}>
+                    <button className="close" onClick={()=> {
+                        this.setState({
+                            audioUrl: null
+                        })
+                        this.closeModal()
+                        }}>
                         &times;
                     </button>
                     <p className="play-audio-msg"> {this.props.name + "'s audio message"}. </p>

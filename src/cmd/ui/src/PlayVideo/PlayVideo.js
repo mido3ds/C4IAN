@@ -40,7 +40,12 @@ class PlayVideo extends React.Component {
                     isOpen={this.state.isOpen}
                     onRequestClose={this.closeModal}
                     className="play-video-modal">
-                    <button className="close" onClick={this.closeModal}>
+                    <button className="close" onClick={() => {
+                        this.setState({
+                            videoUrl: null
+                        })
+                        this.closeModal()
+                        }}>
                         &times;
                     </button>
                     {this.props.videoUrl ?

@@ -34,8 +34,8 @@ class RecordAudio extends React.Component {
     _onRecordingComplete = (blob) => {
         blobToBuffer(blob, (err, buffer) => {
             if (err) {
-              console.error(err)
-              return
+                console.error(err)
+                return
             }
 
             this.setState({
@@ -43,15 +43,15 @@ class RecordAudio extends React.Component {
             })
 
             if (this.state.audioUrl) {
-              window.URL.revokeObjectURL(this.state.audioUrl)
+                window.URL.revokeObjectURL(this.state.audioUrl)
             }
-      
+
             this.setState({
                 audioUrl: window.URL.createObjectURL(blob)
             })
-          })
-      }
-     
+        })
+    }
+
     _onRecordingError = (err) => {
         console.log('recording error', err)
     }
@@ -70,23 +70,34 @@ class RecordAudio extends React.Component {
                     <Recorder
                         onRecordingComplete={this._onRecordingComplete}
                         onRecordingError={this._onRecordingError}
-                        className= "record-icon"
+                        className="record-icon"
                     />
-                     <p className="record-msg"> Click and hold to start recording. </p>
-                    { this.state.audioUrl ? 
-                    <>
-                    <ReactAudioPlayer
-                        id='audio'
-                        controls
-                        className="record-audio-player"
-                        src={this.state.audioUrl}
-                    ></ReactAudioPlayer> 
-                    <div className="audio-control">
-                        <button onClick={()=>this.props.onSend(this.state.audioBolb)} className="send-audio-button btn"> Send Audio </button>
-                        <button onClick={this.closeModal} className="close-audio-button btn"> Close </button>
-                    </div>
-                    </>
-                    : <> </>
+                    <p className="record-msg"> Click and hold to start recording. </p>
+                    {this.state.audioUrl ?
+                        <>
+                            <ReactAudioPlayer
+                                id='audio'
+                                controls
+                                className="record-audio-player"
+                                src={this.state.audioUrl}
+                            ></ReactAudioPlayer>
+                            <div className="audio-control">
+                                <button onClick={() => {
+                                    this.props.onSend(this.state.audioBolb)
+                                    this.setState({
+                                        audioUrl: null
+                                    })
+                                    this.closeModal()
+                                }} className="send-audio-button btn"> Send Audio </button>
+                                <button onClick={() => {
+                                    this.setState({
+                                        audioUrl: null
+                                    })
+                                    this.closeModal()
+                                }} className="close-audio-button btn"> Close </button>
+                            </div>
+                        </>
+                        : <> </>
                     }
                 </Modal>
             </div>

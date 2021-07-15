@@ -26,11 +26,6 @@ class ConfirmationModal extends React.Component {
         })
     }
 
-    componentDidMount() {
-        import(this.props.videoUrl)
-        .then(module => this.setState({ video: module.default }))  
-    }
-
     render() {
         return (
             <div>
@@ -43,7 +38,10 @@ class ConfirmationModal extends React.Component {
                     </button>
                     <p className="confirmation-msg"> Are you sure you want to send this message? </p>
                     <div className="confirmation-control">
-                        <button onClick={()=>this.props.onSend()} className="send-msg-button btn"> Send </button>
+                        <button onClick={() => {
+                            this.props.onSend();
+                            this.closeModal();
+                        }} className="send-msg-button btn"> Send </button>
                         <button onClick={this.closeModal} className="close-msg-button btn"> Close </button>
                     </div>
                 </Modal>
