@@ -81,17 +81,18 @@ DROP TABLE IF EXISTS received_videos;
 CREATE TABLE received_videos (
     time    int NOT NULL,
     src     text NOT NULL,
+    id      int NOT NULL,
     path    text NOT NULL,
 
-    PRIMARY KEY (time, src),
+    PRIMARY KEY (time, src, id),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
             ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS received_sensor_data;
-CREATE TABLE received_sensor_data (
+DROP TABLE IF EXISTS received_sensors_data;
+CREATE TABLE received_sensors_data (
     time        int NOT NULL,
     src         text NOT NULL,
     heartbeat   int NOT NULL,

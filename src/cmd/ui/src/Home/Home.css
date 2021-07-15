@@ -12,7 +12,7 @@
     height: 50px;
     border-radius: 50%;
     border-width: 4px;
-    border-color: rgba(199, 32, 32, 0.699);
+    border-color: rgba(211, 208, 12, 0.699);
     border-style: solid;
 }
 
@@ -35,6 +35,28 @@
     border-radius: 50%;
     border-width: 4px;
     border-color: rgba(0, 119, 255, 0.74);
+    border-style: solid;
+}
+
+.map-unit-danger {
+    background-image: url('../images/danger.jpg');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgb(255, 0, 0);
+    border-style: solid;
+}
+
+.map-unit-inactive {
+    background-image: url('../images/inactive.jpg');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgb(0, 0, 0);
     border-style: solid;
 }
 

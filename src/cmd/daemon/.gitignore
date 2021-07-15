@@ -16,4 +16,7 @@ daemon
 # Database files
 *.db
 
+# Video directory
+videos
+
 vendor

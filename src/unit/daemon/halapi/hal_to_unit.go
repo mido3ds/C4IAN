@@ -5,14 +5,14 @@ import (
 	"fmt"
 )
 
-// VideoPart is sent to unit periodically
+// VideoFragment is sent to unit periodically
 // as configured in StartVideoStream sent by unit
-type VideoPart struct {
+type VideoFragment struct {
 	Video []byte
 }
 
-func (s VideoPart) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(VideoPartType))
+func (s VideoFragment) Send(enc *gob.Encoder) error {
+	err := enc.Encode(byte(VideoFragmentType))
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s Location) Send(enc *gob.Encoder) error {
 	return enc.Encode(s)
 }
 
-func RecvFromHAL(dec *gob.Decoder, vp *VideoPart, hb *HeartBeat, loc *Location) (Type, error) {
+func RecvFromHAL(dec *gob.Decoder, vp *VideoFragment, hb *HeartBeat, loc *Location) (Type, error) {
 	var sentType Type
 	err := dec.Decode(&sentType)
 	if err != nil {
@@ -59,7 +59,7 @@ func RecvFromHAL(dec *gob.Decoder, vp *VideoPart, hb *HeartBeat, loc *Location) 
 	}
 
 	switch sentType {
-	case VideoPartType:
+	case VideoFragmentType:
 		err = dec.Decode(&vp.Video)
 		break
 	case HeartBeatType:

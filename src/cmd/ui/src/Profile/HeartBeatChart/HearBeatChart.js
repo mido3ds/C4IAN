@@ -1,14 +1,30 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts'
+import { getSensorsData } from '../../Api/Api'
+import moment from 'moment'
 import './HeartBeatChart.css'
 
 class HeartBeatChart extends React.Component {
+
+    getData() {
+        var sensorData = getSensorsData(this.props.unit.ip)
+        var data = []
+        var time = []
+        sensorData.forEach((item, index) => {
+            data.push(item.heartbeat)
+            time.push(moment.unix(item.time).format('hh:mm:ss'))
+        })
+        console.log(time)
+        return {data:data, time:time}
+    }
+
     constructor(props) {
         super(props);
-
+        var graphData = this.getData()
+        
         this.state = {
             series: [{
-                data: [10, 41, 35, 51, 49, 62, 69, 91, 148, 100, 150 ,170, 122,155 ,177 ,122 ,133 ,144 ,174]
+                data: graphData.data
             }],
             options: {
                 chart: {
@@ -41,15 +57,20 @@ class HeartBeatChart extends React.Component {
                         }
                     },   
                 },
+                xaxis: {
+                    categories: graphData.time,
+                }
             },
         };
     }
 
     render() {
         return (
+            <>
             <div id="chart">
                 <Chart options={this.state.options} series={this.state.series} type="line" height={400} className="hearbeat-chart"/>
             </div>
+            </>
         )
     }
 } export default HeartBeatChart;

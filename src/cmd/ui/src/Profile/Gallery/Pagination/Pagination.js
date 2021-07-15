@@ -2,18 +2,9 @@ import React, { useEffect, useState } from 'react';
 import './Pagination.css';
 
 
-function Pagination({ paginate, hasNext }) {
+function Pagination({ dataSize, paginate }) {
   const [pageNumber, setPageNumber] = useState(1);
-  var paginationWrapper = document.querySelector('.pagination-wrapper');
-
-  useEffect(() => {
-    let incButton = document.querySelector('#inc-btn');
-    if (hasNext) {
-      incButton.classList.replace('custom-btn-disabled', 'custom-btn');
-    } else {
-      incButton.classList.replace('custom-btn', 'custom-btn-disabled');
-    }
-  }, [hasNext]);
+  const [hasNext, setHasNext] = useState(pageNumber - Math.ceil(dataSize/4) < 0)
 
   useEffect(() => {
     let decButton = document.querySelector('#dec-btn');
@@ -22,31 +13,42 @@ function Pagination({ paginate, hasNext }) {
     } else {
       decButton.classList.replace('custom-btn', 'custom-btn-disabled');
     }
+
+    let incButton = document.querySelector('#inc-btn');
+    if (hasNext) {
+      incButton.classList.replace('custom-btn-disabled', 'custom-btn');
+    } else {
+      incButton.classList.replace('custom-btn', 'custom-btn-disabled');
+    }
     
   }, [pageNumber]);
 
   const btnClick = (inc) => {
+    var paginationWrapper = document.querySelector('.pagination-wrapper');
+
     if (!inc && pageNumber > 1) {
       paginationWrapper.classList.add('transition-prev');
-      setPageNumber(pageNumber => {
-        pageNumber = pageNumber - 1
-        //paginate(pageNumber);
-        return pageNumber;
+      setPageNumber(() => {
+        paginate(pageNumber - 1);
+        return pageNumber - 1
       });
+      setHasNext(pageNumber - Math.ceil(dataSize/4) < 0)
     }
     else if (inc && hasNext) {
       paginationWrapper.classList.add('transition-next');
-      setPageNumber(pageNumber => {
-        pageNumber = pageNumber + 1
-        //paginate(pageNumber);
-        return pageNumber;
+      setPageNumber(() => {
+        paginate(pageNumber + 1);
+        return pageNumber + 1
       });
+      setHasNext(pageNumber - Math.ceil(dataSize/4) < 0)
     }
 
     setTimeout(cleanClasses, 500);
   };
 
   function cleanClasses() {
+    var paginationWrapper = document.querySelector('.pagination-wrapper');
+
     if (paginationWrapper.classList.contains('transition-next')) {
       paginationWrapper.classList.remove('transition-next')
     } else if (paginationWrapper.classList.contains('transition-prev')) {
