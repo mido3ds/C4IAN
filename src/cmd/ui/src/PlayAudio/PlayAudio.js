@@ -52,7 +52,8 @@ class PlayAudio extends React.Component {
     }
 
     componentDidMount() {
-        //this.convertAudioToURL(this.props.audioBolb)
+        if(this.props.audioBolb)
+            this.convertAudioToURL(this.props.audioBolb)
     }
 
 

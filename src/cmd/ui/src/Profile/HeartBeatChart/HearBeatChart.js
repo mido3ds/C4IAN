@@ -1,14 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts'
 import { getSensorsData } from '../../Api/Api'
-import { sensorData } from '../../sensorData'
 import moment from 'moment'
 import './HeartBeatChart.css'
 
 class HeartBeatChart extends React.Component {
 
     getData() {
-        //var sensorData = getSensorsData(unit.ip)
+        var sensorData = getSensorsData(this.props.unit.ip)
         var data = []
         var time = []
         sensorData.forEach((item, index) => {
@@ -22,7 +21,7 @@ class HeartBeatChart extends React.Component {
     constructor(props) {
         super(props);
         var graphData = this.getData()
-
+        
         this.state = {
             series: [{
                 data: graphData.data
@@ -67,9 +66,11 @@ class HeartBeatChart extends React.Component {
 
     render() {
         return (
+            <>
             <div id="chart">
                 <Chart options={this.state.options} series={this.state.series} type="line" height={400} className="hearbeat-chart"/>
             </div>
+            </>
         )
     }
 } export default HeartBeatChart;

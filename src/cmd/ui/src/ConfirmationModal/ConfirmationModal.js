@@ -27,8 +27,8 @@ class ConfirmationModal extends React.Component {
     }
 
     componentDidMount() {
-        //import(this.props.videoUrl)
-        //.then(module => this.setState({ video: module.default }))  
+        import(this.props.videoUrl)
+        .then(module => this.setState({ video: module.default }))  
     }
 
     render() {

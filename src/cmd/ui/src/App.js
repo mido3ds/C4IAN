@@ -21,7 +21,7 @@ function App() {
   const [audioModalData, setAudioModalData] = useState(null)
 
   const [selectedTab, setSelectedTab] = useState("Log Out")
-  //const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
+  const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -30,14 +30,14 @@ function App() {
   }
 
   useEffect(() => {
-    /*eventSource.addEventListener("msg", ev => {
+    eventSource.addEventListener("msg", ev => {
         var data = JSON.parse(ev.data)
         NotificationManager.info(data.src + ": " + data.code);
     })
     eventSource.addEventListener("audio", ev => {
         var data = JSON.parse(ev.data)
         NotificationManager.info(data.src + " sends audio message, click here to play it!", '' , 3000, () => onPlayAudio(data.src, data.body), true);
-    })*/
+    })
   })
 
   var onChange = (selectedTab) => {
@@ -60,7 +60,7 @@ function App() {
       <NotificationContainer/>
       <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      <Profile> </Profile>
+      <Home> </Home>
       {/*{selectedTab === "Log Out" ?
         <LogIn onLogIn={() => { onChange("Map") }} />
         : tabsComponents[selectedTab]

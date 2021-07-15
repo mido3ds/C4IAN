@@ -33,7 +33,6 @@ class PlayVideo extends React.Component {
         .then(module => this.setState({ video: module.default }))  
     }
 
-
     render() {
         return (
             <div>

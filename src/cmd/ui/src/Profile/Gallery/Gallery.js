@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
 import { getAudioMsgs, getVideos } from '../../Api/Api'
-import { media } from "../../media";
 
 function Gallery({type, unit}) {
-    const [data, setData] = useState(media);
+    const [data, setData] = useState(null);
     const [startItem, setStartItem] = useState(0)
 
     var paginate = (pageNumber) => {
@@ -15,9 +14,9 @@ function Gallery({type, unit}) {
 
     useEffect(() => {
         if(type === "audio") {
-            //setData(getAudioMsgs(unit.ip))
+            setData(getAudioMsgs(unit.ip))
         } else if (type === "video") {
-            //setData(getVideos(unit.ip))
+            setData(getVideos(unit.ip))
         }
     })
 

@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import './Map.css'
-import { sensorData } from '../../sensorData'
 import { getSensorsData } from '../../Api/Api'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
@@ -11,7 +10,7 @@ function Map({unit}) {
     const map = useRef(null);
 
     var getCoordinates = () => {
-        //var sensorData = getSensorsData(unit.ip)
+        var sensorData = getSensorsData(unit.ip)
         var coordinates = []
         sensorData.forEach((item, index) => {
             coordinates.push([item.loc_x, item.loc_y])
