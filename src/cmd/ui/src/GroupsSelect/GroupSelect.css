@@ -1,0 +1,60 @@
+
+.circular-menu {
+  width: 250px;
+  height: 250px;
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  z-index: 20;
+}
+
+.circle {
+  width: 250px;
+  height: 250px;
+  opacity: 0;
+  z-index: 20;
+  transform: scale(0);
+  transition: all 0.4s ease-out;
+}
+
+.open.circle {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.circle img {
+  text-decoration: none;
+  display: block;
+  height: 40px;
+  width: 40px;
+  line-height: 40px;
+  margin-left: -20px;
+  margin-top: -20px;
+  position: absolute;
+  text-align: center;
+}
+
+.circle img:hover {
+  color: #eef;
+}
+
+.menu-button {
+  text-decoration: none;
+  text-align: center;
+  border-radius: 50%;
+  display: block;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  line-height: 40px;
+  padding: 10px;
+  background: #dde;
+  position: absolute;
+  left: 100px;
+  top: 100px;
+}
+
+.menu-button:hover {
+  background-color: #eef;
+}
+

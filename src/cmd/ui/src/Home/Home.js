@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import MapPopup from './MapPopUp/MapPopUp'
+import GroupSelect from '../GroupsSelect/GroupSelect'
 import {NotificationManager} from 'react-notifications';
+
 
 import './Home.css'
 
@@ -76,7 +78,7 @@ function Home() {
 
             if(unitsCopy[newData.src].heartbeat < HeartBeatThreshold)
                 onDanger(newData.src)
-                
+
             unitsCopy[newData.src].lng = newData.loc_x
             unitsCopy[newData.src].lat = newData.loc_y
             unitsCopy[newData.src].heartbeat = newData.heartbeat
@@ -138,6 +140,7 @@ function Home() {
 
     return (
         <>
+            <GroupSelect></GroupSelect>
             <MapPopup selectedUnit={units[selectedUnit]} />
             <div>
                 <div ref={mapContainer} className="map-container" />
