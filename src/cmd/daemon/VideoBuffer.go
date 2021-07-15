@@ -20,7 +20,8 @@ type SourceVideoBuffer struct {
 }
 
 type OneVideoBuffer struct {
-	Video *ordered_map.OrderedMap
+	Video     *ordered_map.OrderedMap
+	LastSeqNo uint64
 }
 
 func NewVideoBuffer(manager *VideoFilesManager) *VideosBuffer {
@@ -30,6 +31,9 @@ func NewVideoBuffer(manager *VideoFilesManager) *VideosBuffer {
 	}
 }
 
+// insert new video fragment with src, id, seqNo
+// where src is the source identifier and id is the id of the video and seqNo is the seqNo of the frame
+// when recieving a fragment with the same src and id it s
 func (vb *VideosBuffer) Insert(frag *models.VideoFragment) {
 	srcVideos, ok := vb.Srcs.Get(frag.Src)
 	if !ok {
@@ -52,14 +56,19 @@ func (vb *VideosBuffer) Insert(frag *models.VideoFragment) {
 		time.AfterFunc(BufferingTime, func() {
 			iter := video.IterFunc()
 			for videoFrag, ok := iter(); ok; videoFrag, ok = iter() {
-				vb.Manager.AppendVideoFragment(videoFrag.Value.(*models.VideoFragment))
+				vf := videoFrag.Value.(*models.VideoFragment)
+				videos.(*OneVideoBuffer).LastSeqNo = vf.SeqNo
+				vb.Manager.AppendVideoFragment(vf)
 			}
 			// clear buffer of this video
 			entry := &OneVideoBuffer{
-				Video: ordered_map.NewOrderedMap(),
+				Video:     ordered_map.NewOrderedMap(),
+				LastSeqNo: 0,
 			}
 			srcVideos.(*SourceVideoBuffer).Videos.Set(frag.ID, entry)
 		})
 	}
-	video.Set(frag.SeqNo, frag)
+	if videos.(*OneVideoBuffer).LastSeqNo <= frag.SeqNo {
+		video.Set(frag.SeqNo, frag)
+	}
 }
