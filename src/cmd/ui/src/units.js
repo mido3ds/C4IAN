@@ -1,4 +1,4 @@
-const units = [
+const unitsList = [
     {
         name: "Ahmed Mahmoud",
         ip: "10.0.0.1",
@@ -31,4 +31,4 @@ const units = [
     }
 ];
 
-export {units}
+export {unitsList}

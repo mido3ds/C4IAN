@@ -4,6 +4,8 @@ import './ConfirmationModal.css'
 
 Modal.setAppElement('#root');
 
+const msgs = {2: "stream start request", 3: "stream end request" , 4: "attack" }
+
 class ConfirmationModal extends React.Component {
     constructor(props) {
         super(props)
@@ -36,7 +38,7 @@ class ConfirmationModal extends React.Component {
                     <button className="close" onClick={this.closeModal}>
                         &times;
                     </button>
-                    <p className="confirmation-msg"> Are you sure you want to send this message? </p>
+                    <p className="confirmation-msg"> {"Are you sure you want to send " + msgs[this.props.msgCode] + " message to " + this.props.name + "?"} </p>
                     <div className="confirmation-control">
                         <button onClick={() => {
                             this.props.onSend();

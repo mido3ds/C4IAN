@@ -10,17 +10,21 @@ function Map({unit}) {
     const map = useRef(null);
 
     var getCoordinates = () => {
-        var sensorData = getSensorsData(unit.ip)
-        var coordinates = []
-        sensorData.forEach((item, index) => {
-            coordinates.push([item.loc_x, item.loc_y])
-        })
-        return coordinates
+        if (unit) { 
+            var sensorData = getSensorsData(unit.ip)
+            var coordinates = []
+            if(!sensorData || !sensorData.length) return null;
+            sensorData.forEach((item, index) => {
+                coordinates.push([item.loc_x, item.loc_y])
+            })
+            return coordinates
+        }
+        return null;
     }
 
     useEffect(() => {
         const coordinates = getCoordinates()
-        if(coordinates.length === 0) return
+        if(!coordinates || !coordinates.length) return
         if (map.current) return; 
         var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
         center[0] -= 0.005
@@ -66,7 +70,7 @@ function Map({unit}) {
     })
 
     return (
-        <>  <div className="no-data-gallery-msg"> 
+        <>  <div className="no-data-map-msg"> 
                 <p> No data to be previewed </p> 
             </div>
             <div className="profile-map-wrapper">

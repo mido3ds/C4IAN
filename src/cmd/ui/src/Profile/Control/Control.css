@@ -8,12 +8,12 @@
     align-items: center;
 }
 
-.defense-icon {
+.attack-icon {
   top: 110px;
   left: 410px;
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
 }
 
@@ -35,7 +35,7 @@
   cursor: pointer;
 }
 
-.attack-icon {
+.stop-icon {
   top: 370px;
   right: 110px;  
   position: absolute;

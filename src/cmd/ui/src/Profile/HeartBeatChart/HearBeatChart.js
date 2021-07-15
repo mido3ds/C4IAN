@@ -7,21 +7,24 @@ import './HeartBeatChart.css'
 class HeartBeatChart extends React.Component {
 
     getData() {
-        var sensorData = getSensorsData(this.props.unit.ip)
-        var data = []
-        var time = []
-        sensorData.forEach((item, index) => {
-            data.push(item.heartbeat)
-            time.push(moment.unix(item.time).format('hh:mm:ss'))
-        })
-        console.log(time)
-        return {data:data, time:time}
+        if(this.props.unit) {
+            var sensorData = getSensorsData(this.props.unit.ip)
+            if(!sensorData || !sensorData.length) return null;
+            var data = []
+            var time = []
+            sensorData.forEach((item, index) => {
+                data.push(item.heartbeat)
+                time.push(moment.unix(item.time).format('hh:mm:ss'))
+            })
+            return {data:data, time:time}
+        } 
+        return null;
     }
 
     constructor(props) {
         super(props);
         var graphData = this.getData()
-        
+        if (!graphData) return
         this.state = {
             series: [{
                 data: graphData.data
@@ -66,10 +69,14 @@ class HeartBeatChart extends React.Component {
 
     render() {
         return (
-            <>
-            <div id="chart">
-                <Chart options={this.state.options} series={this.state.series} type="line" height={400} className="hearbeat-chart"/>
-            </div>
+            <>{ !this.state ?
+                <div className="no-data-heartbeat-msg"> 
+                    <p> No data to be previewed </p> 
+                </div> : 
+                <div id="chart">
+                    <Chart options={this.state.options} series={this.state.series} type="line" height={400} className="hearbeat-chart"/>
+                </div>
+            }
             </>
         )
     }

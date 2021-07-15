@@ -9,6 +9,8 @@ import {
 class UnitItem extends React.Component {
     render() {
         return (
+            <>
+            {this.props.unit ? 
             <div className="unit-item-container">
                 <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                 <div className="unit-item-parent">
@@ -17,8 +19,9 @@ class UnitItem extends React.Component {
                         <Words className="unit-item-ip"> {this.props.unit.ip} </Words>
                     </div>
                 </div>
-            </div>
-            
+            </div> : <> </>
+            }
+            </>
         );
     }
 }

@@ -2,16 +2,28 @@ import React, { useState, useEffect } from 'react';
 import UnitItem from "../UnitItem/UnitItem.js"
 import './UnitList.css';
 import anime from 'animejs'
-import { units }  from '../../units'
+import { unitsList }  from '../../units'
 
 function UnitList({onChange, type}) {
-    const [firstUnit, setFirstUnit] = useState(units[units.length - 1])
-    const [secondUnit, setSecondUnit] = useState(units[0])
-    const [thirdUnit, setThirdUnit] = useState(units[1])
+    const [firstUnit, setFirstUnit] = useState(null)
+    const [secondUnit, setSecondUnit] = useState(null)
+    const [thirdUnit, setThirdUnit] = useState(null)
     const [activeUnit, setActiveUnit] = useState(0);
+    const [units, setUnits] = useState(null);
 
     useEffect(() => {
-       onChange(units[0])
+        setUnits(() => {
+            var unitsCopy = []
+            unitsList.forEach(unit => {
+                unitsCopy.push({name: unit.name, ip: unit.ip})
+                console.log({name: unit.name, ip: unit.ip})
+            });
+            onChange(unitsCopy[0])
+            setFirstUnit(unitsCopy[unitsCopy.length - 1])
+            setSecondUnit(unitsCopy[0])
+            setThirdUnit(unitsCopy[1])
+            return unitsCopy
+        })
     },[])
 
     var circularAddition = (Augend, Addend, len) => {

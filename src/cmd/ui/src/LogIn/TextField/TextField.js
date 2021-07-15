@@ -110,8 +110,8 @@ function TextField({onLogIn}) {
     }
 
     var enterClick = (event) => {
-        var name = "A"
-        var pass = "1"
+        var name = "Ahmed"
+        var pass = "12345"
         if (event.key === 'Enter') {
             setLoginState(() => {
                 switch (logInState) {

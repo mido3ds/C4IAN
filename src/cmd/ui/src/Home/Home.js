@@ -140,7 +140,7 @@ function Home() {
         setUnits(() => {
             var unitsCopy = {}
             unitsList.forEach(unit => {
-                unitsCopy[unit.ip] = {name: unit.name, groupID: unit.group}
+                unitsCopy[unit.ip] = {name: unit.name, groupID: unit.group, ip: unit.ip}
             });
             return unitsCopy
         })
