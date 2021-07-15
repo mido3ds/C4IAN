@@ -31,7 +31,7 @@ function Gallery({type, unit}) {
                 <div className="items-container">
                     {
                         [...Array(Math.min(data.length - startItem, 4))].map((x, i) => 
-                            <GalleryItem name= {unit.name} type="type" time={data[i + startItem].time} data={data[i].body} key={i} />
+                            <GalleryItem name= {unit.name} type={type} time={data[i + startItem].time} data={data[i].body} key={i} />
                         )
                     }
                 </div>

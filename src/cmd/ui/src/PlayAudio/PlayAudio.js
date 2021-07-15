@@ -18,6 +18,7 @@ class PlayAudio extends React.Component {
     }
 
     openModal = () => {
+        console.log("Hello")
         this.setState({
             isOpen: true
         })
@@ -51,7 +52,7 @@ class PlayAudio extends React.Component {
     }
 
     componentDidMount() {
-        this.convertAudioToURL(this.props.audioBolb)
+        //this.convertAudioToURL(this.props.audioBolb)
     }
 
 
