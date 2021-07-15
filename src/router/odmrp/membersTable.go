@@ -3,15 +3,15 @@ package odmrp
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/cornelk/hashmap"
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
-// const mteTimeout = 960 * time.Millisecond
-const mteTimeout = 2 * time.Second
+// const MembersTableTimeout = 960 * time.Millisecond
+// const MembersTableTimeout = 2 * time.Second
 
 // membersTable is lock-free thread-safe hash table
 // for multicast forwarding
@@ -47,8 +47,8 @@ func (mt *membersTable) set(grpIP net.IP) {
 		v.(*memberEntry).timer.Stop()
 	}
 	// Start new Timer
-	timer := mt.timers.Add(mteTimeout, func() {
-		// mt.del(grpIP)
+	timer := mt.timers.Add(MembersTableTimeout, func() {
+		mt.del(grpIP)
 	})
 	mt.m.Set(IPv4ToUInt32(grpIP), &memberEntry{timer: timer})
 }

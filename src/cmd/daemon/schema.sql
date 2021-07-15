@@ -81,9 +81,10 @@ DROP TABLE IF EXISTS received_videos;
 CREATE TABLE received_videos (
     time    int NOT NULL,
     src     text NOT NULL,
+    id      int NOT NULL,
     path    text NOT NULL,
 
-    PRIMARY KEY (time, src),
+    PRIMARY KEY (time, src, id),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -95,8 +96,8 @@ CREATE TABLE received_sensors_data (
     time        int NOT NULL,
     src         text NOT NULL,
     heartbeat   int NOT NULL,
-    loc_x       int NOT NULL,
-    loc_y       int NOT NULL,
+    lat       real NOT NULL,
+    lon       real NOT NULL,
 
     PRIMARY KEY (time, src),
     FOREIGN KEY (src) 

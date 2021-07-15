@@ -7,9 +7,12 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mido3ds/C4IAN/src/models"
 )
+
+const TCPDialTimeout = 3 * time.Second
 
 type onReceiveMsgCallback = func(models.Message)
 type onReceiveAudioCallback = func(models.Audio)
@@ -43,18 +46,11 @@ func (netManager *NetworkManager) Listen(port int) {
 }
 
 func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload interface{}) {
-	// Get remote TCP address
-	address, err := net.ResolveTCPAddr("tcp", dstAddrss+":"+strconv.Itoa(dstPort))
-	if err != nil {
-		log.Panic(err)
-	}
-
 	// Connect to remote TCP socket
-	// TODO: Set timeout for dialing to abort
-	conn, err := net.DialTCP("tcp", nil, address)
+	conn, err := net.DialTimeout("tcp", dstAddrss+":"+strconv.Itoa(dstPort), TCPDialTimeout)
 	if err != nil {
-		// TODO: do not panice if connection is refused
-		log.Panic(err)
+		log.Println("Could not connect to unit: ", dstAddrss, " over TCP port: ", dstPort)
+		return
 	}
 	defer conn.Close()
 

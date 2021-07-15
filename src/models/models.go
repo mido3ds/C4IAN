@@ -35,22 +35,25 @@ type Audio struct {
 }
 
 type VideoFragment struct {
-	Src  string `json:"src"` // Only in SSEs between CMD Daemon & its UI
-	Time int64  `json:"time" db:"time"`
-	Body []byte `json:"body" db:"body"`
+	Src   string `json:"src"` // Only in SSEs between CMD Daemon & its UI
+	ID    int    `json:"id" db:"id"`
+	SeqNo uint64 `json:"seqNo"`
+	Time  int64  `json:"time" db:"time"`
+	Body  []byte `json:"body" db:"body"`
 }
 
 type Video struct {
+	ID   int    `json:"id" db:"id"`
 	Time int64  `json:"time" db:"time"`
 	Path string `json:"path" db:"path"`
 }
 
 type SensorData struct {
-	Src       string `json:"src"` // Only in SSEs between CMD Daemon & its UI
-	Time      int64  `json:"time" db:"time"`
-	Heartbeat int    `json:"heartbeat" db:"heartbeat"`
-	Loc_x     int    `json:"loc_x" db:"loc_x"`
-	Loc_y     int    `json:"loc_y" db:"loc_y"`
+	Src       string  `json:"src"` // Only in SSEs between CMD Daemon & its UI
+	Time      int64   `json:"time" db:"time"`
+	Heartbeat int     `json:"heartbeat" db:"heartbeat"`
+	Lat       float64 `json:"lat" db:"lat"`
+	Lon       float64 `json:"lon" db:"lon"`
 }
 
 func (msg *Message) EventType() string {

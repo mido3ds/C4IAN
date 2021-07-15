@@ -12,10 +12,8 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-// TODO: Read from config or CLI
-const UnitsTCPPort = 4070
-
 type API struct {
+	unitsPort   int
 	dbManager   *DatabaseManager
 	netManager  *NetworkManager
 	eventSource eventsource.EventSource
@@ -30,8 +28,9 @@ func NewAPI() *API {
 	return &API{eventSource: es}
 }
 
-func (api *API) Start(port int, dbManager *DatabaseManager, netManager *NetworkManager) {
-	// Initialize database manager & network manager
+func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netManager *NetworkManager) {
+	// Initialize members
+	api.unitsPort = unitsPort
 	api.netManager = netManager
 	api.dbManager = dbManager
 
@@ -75,7 +74,7 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	}
 	audioMsg.Time = time.Now().Unix()
 	go api.dbManager.AddSentAudio(ip, &audioMsg)
-	go api.netManager.SendTCP(ip, UnitsTCPPort, audioMsg)
+	go api.netManager.SendTCP(ip, api.unitsPort, audioMsg)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -88,7 +87,7 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 	}
 	msg.Time = time.Now().Unix()
 	go api.dbManager.AddSentMessage(ip, &msg)
-	go api.netManager.SendTCP(ip, UnitsTCPPort, msg)
+	go api.netManager.SendTCP(ip, api.unitsPort, msg)
 	w.WriteHeader(http.StatusOK)
 }
 

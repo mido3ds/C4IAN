@@ -9,16 +9,12 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
-)
-
-const (
-	jqRefreshTime       = 400 * time.Millisecond
-	fillFwdTableTimeout = 5 * time.Second
 )
 
 type MulticastController struct {
@@ -35,6 +31,7 @@ type MulticastController struct {
 	ch              chan bool
 	refJoinQuery    *Timer
 	timers          *TimersQueue
+	startSending    bool
 	// TODO make dest doesn't send join reply if it doesn't want to this grpIP
 }
 
@@ -97,6 +94,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		ch:              make(chan bool),
 		packetSeqNo:     0,
 		timers:          timers,
+		startSending:    false,
 	}, nil
 }
 
@@ -155,25 +153,29 @@ func receiveUDPPackets(address string) {
 // it may return false in case it can't find any path to the grpIP
 // or can't find the grpIP itself
 func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
-	// TODO
 	destsIPs, ok := c.gmTable.Get(grpIP)
 	if !ok {
 		log.Panic("must have the destsIPs!")
 	}
 
+	// To get missing entries start sending join query from the source
 	c.sendJoinQuery(grpIP, destsIPs)
 
-	t1 := c.timers.Add(fillFwdTableTimeout, func() {
+	// Add max timeout to fill Forward Table
+	t1 := c.timers.Add(FillForwardTableTimeout, func() {
 		for i := 0; i < len(destsIPs); i++ {
 			c.ch <- false
 		}
 	})
+
+	// Wait until timeout or recieve join reply from a destination
 	flag := false
 	for i := 0; i < len(destsIPs); i++ {
 		flag = flag || <-c.ch
 	}
+	// stop timer
 	t1.Stop()
-	log.Println("finished")
+	// true if destination(s) is/are found, false if didn't recieve a join reply from a destination
 	return flag
 }
 
@@ -187,8 +189,8 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	c.packetSeqNo++
 	jq := joinQuery{
 		// TODO encode time to seqNo (Not Sure!!)
-		seqNum:   c.packetSeqNo,
-		ttl:     odmrpDefaultTTL,
+		seqNum:  c.packetSeqNo,
+		ttl:     ODMRPDefaultTTL,
 		srcIP:   c.ip,
 		prevHop: c.mac,
 		grpIP:   grpIP,
@@ -196,17 +198,22 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	}
 
 	// insert in cache in case it use broadcast
-	cached := &cacheEntry{seqNo: jq.seqNum, grpIP: jq.grpIP, prevHop: jq.prevHop, cost: odmrpDefaultTTL - jq.ttl}
+	cached := &cacheEntry{seqNo: jq.seqNum, grpIP: jq.grpIP, prevHop: jq.prevHop, cost: ODMRPDefaultTTL - jq.ttl}
 	c.cacheTable.set(jq.srcIP, cached)
 
 	encryptedJQ := c.msec.Encrypt(jq.marshalBinary())
 	c.queryFlooder.Flood(encryptedJQ)
 	log.Println("sent join query to", grpIP) // TODO remove
 
-	// TODO important stop timer when you want to stop sending to this grpIP
-	c.refJoinQuery = c.timers.Add(jqRefreshTime, func() {
-		// c.sendJoinQuery(grpIP, members)
+	// To keep table up to date consistantly send join query and recieve join replies to fill tables
+	// When you wants to stop call stopSending() func
+	c.refJoinQuery = c.timers.Add(JQRefreshTime, func() {
+		c.sendJoinQuery(grpIP, members)
 	})
+}
+
+func (c *MulticastController) stopSending() {
+	c.refJoinQuery.Stop()
 }
 
 func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
@@ -221,7 +228,7 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 
 	log.Println(jq) // TODO: remove this
 
-	// // if the join query allready sent
+	// // if the join query already sent
 	// // Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
 	// cache, ok := c.cacheTable.Get(jq.SrcIP)
 	// if ok && cache.SeqNo >= jq.SeqNo {
@@ -235,7 +242,7 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	}
 
 	// else insert join query in cache
-	cached := &cacheEntry{seqNo: jq.seqNum, grpIP: jq.grpIP, cost: odmrpDefaultTTL - jq.ttl}
+	cached := &cacheEntry{seqNo: jq.seqNum, grpIP: jq.grpIP, cost: ODMRPDefaultTTL - jq.ttl}
 	cached.prevHop = make(net.HardwareAddr, len(jq.prevHop))
 	copy(cached.prevHop, jq.prevHop)
 	isCached := c.cacheTable.set(jq.srcIP, cached)
@@ -268,7 +275,7 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
 	log.Println("Generate JoinReply")
 	jr := &joinReply{
-		seqNum:    jq.seqNum,
+		seqNum:   jq.seqNum,
 		destIP:   c.ip,
 		grpIP:    jq.grpIP,
 		prevHop:  c.mac,
@@ -370,11 +377,11 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 		}
 	}
 	log.Println("Cache After Recieve JoinReply")
-	log.Println(c.cacheTable.String())
+	log.Println(c.cacheTable)
 
 	log.Println("Forwarding Tables After Recieve JoinReply")
-	log.Println(c.forwardingTable.String())
-	log.Println(ft.String())
+	log.Println(c.forwardingTable)
+	log.Println(ft)
 }
 
 func (c *MulticastController) imInDests(jq *joinQuery) bool {

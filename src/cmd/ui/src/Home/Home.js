@@ -57,7 +57,7 @@ function Home() {
             var unitsCopy = JSON.parse(JSON.stringify(units));
             if (unitsCopy[newData.src].hasOwnProperty("marker")) {
                 var oldPosition = [unitsCopy[newData.src].lng, unitsCopy[newData.src].lat]
-                var newPosition = [newData.loc_x, newData.loc_y]
+                var newPosition = [newData.lon, newData.lat]
                 onPositionChange(oldPosition, newPosition, unitsCopy[newData.src].marker)
 
                 clearTimeout(unitsCopy[newData.src].timerID);
@@ -70,7 +70,7 @@ function Home() {
                     })
                 });
                 unitsCopy[newData.src].marker = new mapboxgl.Marker(el)
-                    .setLngLat([newData.loc_x, newData.loc_y])
+                    .setLngLat([newData.lon, newData.lat])
                     .addTo(map.current);
                 map.current.fitBounds(getBounds());
 
@@ -78,9 +78,9 @@ function Home() {
 
             if(unitsCopy[newData.src].heartbeat < HeartBeatThreshold)
                 onDanger(newData.src)
-
-            unitsCopy[newData.src].lng = newData.loc_x
-            unitsCopy[newData.src].lat = newData.loc_y
+                
+            unitsCopy[newData.src].lng = newData.lon
+            unitsCopy[newData.src].lat = newData.lat
             unitsCopy[newData.src].heartbeat = newData.heartbeat
             unitsCopy[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
         })
@@ -90,7 +90,7 @@ function Home() {
         var coordinates = []
         setUnits(() => {
             for (const [key, value] of Object.entries(units)) {
-                coordinates.push([value.loc_x, value.loc_y])
+                coordinates.push([value.lon, value.lat])
             }
             return units
         })

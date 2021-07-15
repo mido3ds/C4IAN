@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -14,16 +15,25 @@ type DatabaseManager struct {
 func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
-	// TODO: load any necessary config to the database (e.g. units ips)
-
 	// Make sure foreign key constraints are enabled
 	db.MustExec("PRAGMA foreign_keys = ON")
+
 	// Create database from schema script
 	_, err := sqlx.LoadFile(db, "schema.sql")
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
 	return &DatabaseManager{db: db}
+}
+
+func (dbManager *DatabaseManager) Initialize(units []string, groups map[string][]string) {
+	for _, unit := range units {
+		dbManager.AddUnit(unit)
+	}
+	for group, members := range groups {
+		dbManager.AddGroup(group, members)
+	}
 }
 
 func (dbManager *DatabaseManager) AddUnit(IP string) {
@@ -59,7 +69,12 @@ func (dbManager *DatabaseManager) AddReceivedAudio(audio *models.Audio) {
 
 func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData) {
 	dbManager.db.MustExec("INSERT INTO received_sensors_data VALUES ($1, $2, $3, $4, $5)",
-		data.Time, data.Src, data.Heartbeat, data.Loc_x, data.Loc_y)
+		data.Time, data.Src, data.Heartbeat, data.Lat, data.Lon)
+}
+
+func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Video) {
+	dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
+		video.Time, src, video.ID, video.Path)
 }
 
 func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
@@ -97,7 +112,7 @@ func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.
 	var data []models.SensorData
 	err := dbManager.db.Select(
 		&data,
-		"SELECT time, heartbeat, loc_x, loc_y FROM received_sensors_data WHERE src = $1 ORDER BY time",
+		"SELECT time, heartbeat, lat, lon FROM received_sensors_data WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
@@ -110,11 +125,27 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	var videos []models.Video
 	err := dbManager.db.Select(
 		&videos,
-		"SELECT time, path FROM received_videos WHERE src = $1 ORDER BY time",
+		"SELECT time, path, id FROM received_videos WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
 		log.Panic(err)
 	}
 	return videos
+}
+
+func (dbManager *DatabaseManager) GetReceivedVideo(srcIP string, id int) *models.Video {
+	var video models.Video
+	row := dbManager.db.QueryRowx(
+		"SELECT time, path, id FROM received_videos WHERE src = $1 AND id = $2",
+		srcIP, id,
+	)
+	err := row.StructScan(&video)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		log.Panic(err)
+	}
+	return &video
 }
