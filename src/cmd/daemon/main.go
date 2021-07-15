@@ -34,6 +34,7 @@ func main() {
 	dbManager.Initialize(units, groups)
 	api := NewAPI()
 	videoFilesManager := NewVideoFilesManager(args.VideosPath)
+	videoBuffer := NewVideoBuffer(videoFilesManager)
 	netManager := NewNetworkManager(
 		// onReceiveMessage
 		func(msg models.Message) {
@@ -59,7 +60,8 @@ func main() {
 			}
 			// Can this cause a race condition if fragments arrive fast enough?
 			// or will the file be locked by the OS anyway?
-			videoFilesManager.AppendVideoFragment(&frag)
+			videoBuffer.Insert(&frag)
+			// videoFilesManager.AppendVideoFragment(&frag)
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
