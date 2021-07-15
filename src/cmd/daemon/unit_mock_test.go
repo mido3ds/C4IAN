@@ -22,7 +22,7 @@ func TestUnit(*testing.T) {
 		SendMessage(i, cmdPort)
 		SendAudio(i, cmdPort)
 		SendSensorsData(i, cmdPort)
-		SendVideoFragment(i, cmdPort)
+		SendVideoFragment(i%10, i, cmdPort)
 		i++
 		time.Sleep(time.Second)
 	}
@@ -98,7 +98,7 @@ func SendSensorsData(i int, port int) {
 	conn.Close()
 }
 
-func SendVideoFragment(id int, port int) {
+func SendVideoFragment(id int, i int, port int) {
 	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -113,8 +113,9 @@ func SendVideoFragment(id int, port int) {
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.VideoFragmentType)
 	encoder.Encode(&models.VideoFragment{
+		ID:   id,
 		Time: time.Now().Unix(),
-		Body: []byte("video fragment" + strconv.Itoa(id)),
+		Body: []byte("video fragment" + strconv.Itoa(i) + " "),
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
@@ -137,7 +138,7 @@ func SendMessage(code int, port int) {
 	conn.Close()
 }
 
-func SendAudio(id int, port int) {
+func SendAudio(i int, port int) {
 	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -152,7 +153,7 @@ func SendAudio(id int, port int) {
 	encoder.Encode(models.AudioType)
 	encoder.Encode(&models.Audio{
 		Time: time.Now().Unix(),
-		Body: []byte("audio" + strconv.Itoa(id)),
+		Body: []byte("audio" + strconv.Itoa(i)),
 	})
 	conn.Close()
 }

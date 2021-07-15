@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -18,11 +19,15 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 
 	// Make sure foreign key constraints are enabled
 	db.MustExec("PRAGMA foreign_keys = ON")
+
 	// Create database from schema script
 	_, err := sqlx.LoadFile(db, "schema.sql")
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
+	// TEST
+	db.MustExec("INSERT INTO units VALUES ('127.0.0.1')")
 	return &DatabaseManager{db: db}
 }
 
@@ -60,6 +65,11 @@ func (dbManager *DatabaseManager) AddReceivedAudio(audio *models.Audio) {
 func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData) {
 	dbManager.db.MustExec("INSERT INTO received_sensors_data VALUES ($1, $2, $3, $4, $5)",
 		data.Time, data.Src, data.Heartbeat, data.Loc_x, data.Loc_y)
+}
+
+func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Video) {
+	dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
+		video.Time, src, video.ID, video.Path)
 }
 
 func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
@@ -110,11 +120,27 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	var videos []models.Video
 	err := dbManager.db.Select(
 		&videos,
-		"SELECT time, path FROM received_videos WHERE src = $1 ORDER BY time",
+		"SELECT time, path, id FROM received_videos WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {
 		log.Panic(err)
 	}
 	return videos
+}
+
+func (dbManager *DatabaseManager) GetReceivedVideo(srcIP string, id int) *models.Video {
+	var video models.Video
+	row := dbManager.db.QueryRowx(
+		"SELECT time, path, id FROM received_videos WHERE src = $1 AND id = $2",
+		srcIP, id,
+	)
+	err := row.StructScan(&video)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		log.Panic(err)
+	}
+	return &video
 }

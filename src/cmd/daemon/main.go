@@ -30,6 +30,7 @@ func main() {
 	// TODO: read config, add units and groups to database
 	dbManager := NewDatabaseManager(args.StorePath)
 	api := NewAPI()
+	videoFilesManager := NewVideoFilesManager(args.VideosPath)
 	netManager := NewNetworkManager(
 		// onReceiveMessage
 		func(msg models.Message) {
@@ -44,7 +45,16 @@ func main() {
 		// onReceiveVideoFragment
 		func(frag models.VideoFragment) {
 			api.SendEvent(&frag)
-			// TODO: Handle received video fragment (create/append to file)
+			video := dbManager.GetReceivedVideo(frag.Src, frag.ID)
+			if video == nil {
+				path := videoFilesManager.CreateVideoFile(frag.Src, frag.ID)
+				dbManager.AddReceivedVideo(frag.Src, &models.Video{
+					Time: time.Now().Unix(),
+					ID:   frag.ID,
+					Path: path,
+				})
+			}
+			videoFilesManager.AppendVideoFragment(&frag)
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
@@ -59,9 +69,10 @@ func main() {
 
 // Args store command line arguments
 type Args struct {
-	StorePath string
-	Port      int
-	UIPort    int
+	StorePath  string
+	VideosPath string
+	Port       int
+	UIPort     int
 }
 
 func parseArgs() (*Args, error) {
@@ -69,6 +80,8 @@ func parseArgs() (*Args, error) {
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.",
 		Default: time.Now().Format(time.RFC3339) + storePathSuffix})
+
+	videosPath := parser.String("v", "videos-path", &argparse.Options{Default: "videos", Help: "Path to store videos received from units."})
 
 	port := parser.Int("p", "port", &argparse.Options{Default: 4170, Help: "Main port the client will bind to, to receive connections from other clients."})
 	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
@@ -84,9 +97,10 @@ func parseArgs() (*Args, error) {
 	}
 
 	return &Args{
-		StorePath: *storePath,
-		Port:      *port,
-		UIPort:    *uiPort,
+		StorePath:  *storePath,
+		VideosPath: *videosPath,
+		Port:       *port,
+		UIPort:     *uiPort,
 	}, nil
 }
 

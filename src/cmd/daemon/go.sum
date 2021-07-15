@@ -24,6 +24,10 @@ github.com/mido3ds/C4IAN v0.0.0-20210714214617-8ca448b4ce5c h1:9oV+URXk6o0RnWkDD
 github.com/mido3ds/C4IAN v0.0.0-20210714214617-8ca448b4ce5c/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
 github.com/mido3ds/C4IAN v0.0.0-20210714233431-a1b9d3e5f645 h1:kcVEzbn4Tuf7AhI25B0ssxuxUOUFoqo6XINaD6RFos0=
 github.com/mido3ds/C4IAN v0.0.0-20210714233431-a1b9d3e5f645/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
+github.com/mido3ds/C4IAN v0.0.0-20210715135133-9dbe05a9075b h1:rURq36Uxc7Ow2UmIMoLpe8EFo/6WshktWyesJfTEhSw=
+github.com/mido3ds/C4IAN v0.0.0-20210715135133-9dbe05a9075b/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
+github.com/mido3ds/C4IAN v0.0.0-20210715150115-7ac0438b8b53 h1:5ecnVKoSb4WG4oh/teHAYupGpBijA2D0OxB7X7ZtiFU=
+github.com/mido3ds/C4IAN v0.0.0-20210715150115-7ac0438b8b53/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.7.0 h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
