@@ -33,6 +33,7 @@ func main() {
 
 	go context.listenHAL(args.HALSocketPath)
 	go context.listenCmdTcp(args.Port)
+	go context.listenCmdUdp(args.Port)
 
 	waitSIGINT()
 }
