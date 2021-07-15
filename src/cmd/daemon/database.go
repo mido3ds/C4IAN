@@ -15,6 +15,10 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
 	// TODO: load any necessary config to the database (e.g. units ips)
+
+	// Make sure foreign key constraints are enabled
+	db.MustExec("PRAGMA foreign_keys = ON")
+	// Create database from schema script
 	_, err := sqlx.LoadFile(db, "schema.sql")
 	if err != nil {
 		log.Panic(err.Error())

@@ -53,6 +53,7 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	// TODO: Set timeout for dialing to abort
 	conn, err := net.DialTCP("tcp", nil, address)
 	if err != nil {
+		// TODO: do not panice if connection is refused
 		log.Panic(err)
 	}
 	defer conn.Close()

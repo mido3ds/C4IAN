@@ -22,6 +22,8 @@ github.com/mido3ds/C4IAN v0.0.0-20210714191723-e0956ff19b93 h1:0rDC4o5aTGQ0z0ScH
 github.com/mido3ds/C4IAN v0.0.0-20210714191723-e0956ff19b93/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
 github.com/mido3ds/C4IAN v0.0.0-20210714214617-8ca448b4ce5c h1:9oV+URXk6o0RnWkDDkGFQ16UB7VZFp6sTVSRWWOFXq8=
 github.com/mido3ds/C4IAN v0.0.0-20210714214617-8ca448b4ce5c/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
+github.com/mido3ds/C4IAN v0.0.0-20210714233431-a1b9d3e5f645 h1:kcVEzbn4Tuf7AhI25B0ssxuxUOUFoqo6XINaD6RFos0=
+github.com/mido3ds/C4IAN v0.0.0-20210714233431-a1b9d3e5f645/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.7.0 h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
