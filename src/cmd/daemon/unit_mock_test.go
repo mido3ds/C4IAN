@@ -54,7 +54,6 @@ func Listen(port int) {
 				log.Panic(err)
 			}
 
-			// Decode the payload of the packet and make appropriate callbacks
 			if packetType == models.MessageType {
 				var msg models.Message
 				err := decoder.Decode(&msg)
