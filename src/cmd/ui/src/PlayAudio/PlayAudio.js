@@ -29,7 +29,7 @@ class PlayAudio extends React.Component {
         })
     }
 
-    onRecevingVideo = (blob) => {
+    convertAudioToURL = (blob) => {
         blobToBuffer(blob, (err, buffer) => {
             if (err) {
                 console.error(err)
@@ -51,7 +51,7 @@ class PlayAudio extends React.Component {
     }
 
     componentDidMount() {
-        //this.onRecevingVideo(this.props.audioBolb)
+        this.convertAudioToURL(this.props.audioBolb)
     }
 
 
