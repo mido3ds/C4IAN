@@ -16,6 +16,7 @@
     "react-audio-player": "^0.17.0",
     "react-dom": "^16.13.1",
     "react-modal": "^3.14.3",
+    "react-moment": "^1.1.1",
     "react-mp3-recorder": "^1.1.2",
     "react-notifications": "^1.7.2",
     "react-scripts": "4.0.3",
