@@ -36,12 +36,13 @@ type Audio struct {
 
 type VideoFragment struct {
 	Src  string `json:"src"` // Only in SSEs between CMD Daemon & its UI
-	ID   string `json:"id" db:"id"`
+	ID   int    `json:"id" db:"id"`
 	Time int64  `json:"time" db:"time"`
 	Body []byte `json:"body" db:"body"`
 }
 
 type Video struct {
+	ID   int    `json:"id" db:"id"`
 	Time int64  `json:"time" db:"time"`
 	Path string `json:"path" db:"path"`
 }
