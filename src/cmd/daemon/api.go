@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/mido3ds/C4IAN/src/models"
+	"github.com/rs/cors"
 	"gopkg.in/antage/eventsource.v1"
 )
 
@@ -45,11 +46,10 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router.Handle("/events", api.eventSource)
 
 	router.Use(api.jsonContentType)
-	router.Use(api.corseHandler)
 
 	// Listen for HTTP requests
 	address := ":" + strconv.Itoa(port)
-	log.Fatal(http.ListenAndServe(address, router))
+	log.Fatal(http.ListenAndServe(address, cors.Default().Handler(router)))
 }
 
 func (api *API) SendEvent(body models.Event) {
@@ -64,18 +64,6 @@ func (api *API) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
-	})
-}
-
-func (api *API) corseHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-		} else {
-			next.ServeHTTP(w, r)
-		}
 	})
 }
 
