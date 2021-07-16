@@ -1,0 +1,3 @@
+github.com/mido3ds/C4IAN v0.0.0-20210716172829-f9d8d7831f57 h1:jwPbxzXu1c9gfBAGBs0XB35c3L+WPCCRvRafIp3cCbo=
+github.com/mido3ds/C4IAN/src/unit/halapi v0.0.0-20210716182043-132e815eeea4 h1:PCmTlWps7vLQwUJPnsd2mjrKn1Mo+bDN3mlaoaS6f/w=
+github.com/mido3ds/C4IAN/src/unit/halapi v0.0.0-20210716182043-132e815eeea4/go.mod h1:6tTMAUoyKIACPay4hkEwV8XsPH0QOGBwJfl1xAxA1JY=

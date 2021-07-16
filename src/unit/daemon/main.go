@@ -13,7 +13,7 @@ import (
 	"database/sql"
 
 	"github.com/mido3ds/C4IAN/src/models"
-	"github.com/mido3ds/C4IAN/src/unit/daemon/halapi"
+	"github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
 const VideoStreamingNoEndTimeout = 1 * time.Minute
