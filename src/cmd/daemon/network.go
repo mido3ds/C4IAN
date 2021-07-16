@@ -146,6 +146,12 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 }
 
 func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
+	defer conn.Close()
+
+	// Extract the IP address of the source
+	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
+
+	for {
 	// Decode the type of the packet
 	decoder := gob.NewDecoder(conn)
 	var packetType models.Type
@@ -154,26 +160,31 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		log.Panic(err)
 	}
 
-	// Extract the IP address of the source
-	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
-
 	// Decode the payload of the packet and make appropriate callbacks
 	if packetType == models.MessageType {
 		var msg models.Message
 		err := decoder.Decode(&msg)
 		if err != nil {
-			log.Panic(err)
+				log.Print("failed to decode code msg from unit, err:", err)
+				return
 		}
+
 		msg.Src = srcIP
 		netManager.onReceiveMsg(msg)
+
+			log.Println("received code msg from unit:", msg) // TODO: remove
 	} else {
 		var audio models.Audio
 		err := decoder.Decode(&audio)
 		if err != nil {
-			log.Panic(err)
+				log.Print("failed to decode audio msg from unit, err:", err)
+				return
 		}
+
 		audio.Src = srcIP
 		netManager.onReceiveAudio(audio)
+
+			log.Println("received audio msg from unit:", audio) // TODO: remove
 	}
-	conn.Close()
+	}
 }
