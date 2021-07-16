@@ -36,12 +36,12 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 
 	// Initialize router
 	router := mux.NewRouter()
-	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost)
-	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost)
-	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet)
-	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet)
-	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet)
-	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet)
+	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet, http.MethodOptions)
 	router.Handle("/events", api.eventSource)
 
 	router.Use(api.jsonContentType)
