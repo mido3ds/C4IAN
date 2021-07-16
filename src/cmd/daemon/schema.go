@@ -34,7 +34,6 @@ CREATE TABLE sent_msgs (
     dst     text NOT NULL,
     code    int NOT NULL,
 
-    PRIMARY KEY (time, dst),
     FOREIGN KEY (dst) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -47,7 +46,6 @@ CREATE TABLE sent_audios (
     dst     text NOT NULL,
     body    blob NOT NULL,
 
-    PRIMARY KEY (time, dst),
     FOREIGN KEY (dst) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -60,7 +58,6 @@ CREATE TABLE received_msgs (
     src     text NOT NULL,
     code    int NOT NULL,
 
-    PRIMARY KEY (time, src),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -73,7 +70,6 @@ CREATE TABLE received_audios (
     src     text NOT NULL,
     body    blob NOT NULL,
 
-    PRIMARY KEY (time, src),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -87,7 +83,7 @@ CREATE TABLE received_videos (
     id      int NOT NULL,
     path    text NOT NULL,
 
-    PRIMARY KEY (time, src, id),
+    PRIMARY KEY (src, id),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
@@ -102,7 +98,6 @@ CREATE TABLE received_sensors_data (
     lat       real NOT NULL,
     lon       real NOT NULL,
 
-    PRIMARY KEY (time, src),
     FOREIGN KEY (src) 
         REFERENCES units (ip) 
             ON DELETE CASCADE 
