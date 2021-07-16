@@ -20,6 +20,20 @@ type Event interface {
 	EventType() string
 }
 
+type Unit struct {
+	Name      string  `json:"name" db:"name"`
+	IP        string  `json:"ip" db:"ip"`
+	Active    bool    `json:"active" db:"active"`
+	Heartbeat int     `json:"heartbeat" db:"heartbeat"`
+	Lat       float64 `json:"lat" db:"lat"`
+	Lon       float64 `json:"lon" db:"lon"`
+}
+
+type Membership struct {
+	GroupIP string   `json:"groupIP"`
+	UnitIP  []string `json:"unitIP"`
+}
+
 // Time as int64 to store in db as Unix Time (SQLite3 does not support a time type)
 type Message struct {
 	Src       string `json:"src"`            // Only in SSEs between CMD Daemon & its UI
