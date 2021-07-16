@@ -11,7 +11,7 @@ const HeartBeatThreshold = 60
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
-const numDeltas = 100;
+const numDeltas = 50;
 
 function Home() {
     const mapContainer = useRef(null);
@@ -28,6 +28,7 @@ function Home() {
         });
         
         setUnits(units => {
+            units[unitIP].inActive = true;
             units[unitIP].marker.remove()
             units[unitIP].marker = new mapboxgl.Marker(el)
                                                 .setLngLat([units[unitIP].lng, units[unitIP].lat])
@@ -46,7 +47,7 @@ function Home() {
             setSelectedUnit(unitIP)
         });
 
-        units[unitIP].InDangerReported = true;
+        units[unitIP].InDanger = true;
         units[unitIP].marker.remove()
         units[unitIP].marker = new mapboxgl.Marker(el)
                                             .setLngLat([units[unitIP].lng, units[unitIP].lat])
@@ -57,6 +58,20 @@ function Home() {
     var onDataChange = (newData) => {
         setUnits(units => {
             if (units[newData.src].hasOwnProperty("marker")) {
+                if(units[newData.src].hasOwnProperty("inActive") && units[newData.src].inActive) {
+                    var el = document.createElement('div');
+                    el.className = 'map-unit' + units[newData.src].groupID;
+                    window.$(el).bind("click", () => {
+                        setSelectedUnit(newData.src)
+                    });
+                    units[newData.src].inActive = false;
+                    units[newData.src].marker.remove()
+                    units[newData.src].marker = new mapboxgl.Marker(el)
+                        .setLngLat([newData.lon, newData.lat])
+                        .addTo(map.current);
+                    NotificationManager.info(units[newData.src].name + " is active now");
+                }
+
                 var oldPosition = [units[newData.src].lng, units[newData.src].lat]
                 var newPosition = [newData.lon, newData.lat]
                 onPositionChange(oldPosition, newPosition, units[newData.src].marker)
@@ -83,10 +98,22 @@ function Home() {
             units[newData.src].heartbeat = newData.heartbeat
             units[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
 
-            if(units[newData.src].heartbeat > HeartBeatThreshold)
-                units[newData.src].InDangerReported = false;
+            if(units[newData.src].heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
+                var el = document.createElement('div');
+                el.className = 'map-unit' + units[newData.src].groupID;
+                window.$(el).bind("click", () => {
+                    setSelectedUnit(newData.src)
+                });
+                units[newData.src].marker.remove()
+                units[newData.src].marker = new mapboxgl.Marker(el)
+                    .setLngLat([newData.lon, newData.lat])
+                    .addTo(map.current);
 
-            if(units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDangerReported)
+                units[newData.src].InDanger = false;
+                NotificationManager.info(units[newData.src].name + " is no more in danger");
+            }
+
+            if(units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger)
                 onDanger(newData.src, units)
                 
           
