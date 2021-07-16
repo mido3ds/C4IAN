@@ -1,3 +1,6 @@
+package main
+
+const schemaSQL = `
 -- time is stored as Unix Time (int)
 DROP TABLE IF EXISTS units;
 CREATE TABLE units (
@@ -105,3 +108,4 @@ CREATE TABLE received_sensors_data (
             ON DELETE CASCADE 
             ON UPDATE CASCADE
 );
+`

@@ -70,6 +70,7 @@ func main() {
 	)
 	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
 	netManager.Listen(args.Port)
+	log.Println("finished initalizing all")
 	waitSIGINT()
 }
 
@@ -122,7 +123,7 @@ func parseArgs() (*Args, error) {
 func parseConfig(unitsPath string, groupsPath string) (units []string, groups map[string][]string) {
 	data, err := ioutil.ReadFile(unitsPath)
 	if err != nil {
-		fmt.Print(err)
+		log.Println("failed to read units file, err:", err)
 	}
 	var result map[string][]string
 	json.Unmarshal(data, &result)
@@ -130,7 +131,7 @@ func parseConfig(unitsPath string, groupsPath string) (units []string, groups ma
 
 	data, err = ioutil.ReadFile(groupsPath)
 	if err != nil {
-		fmt.Print(err)
+		log.Println("failed to read groups file, err:", err)
 	}
 	json.Unmarshal(data, &groups)
 	return
