@@ -4,8 +4,8 @@ const schemaSQL = `
 -- time is stored as Unix Time (int)
 DROP TABLE IF EXISTS units;
 CREATE TABLE units (
-    ip text PRIMARY KEY
-    name text NOT NULL
+    ip text PRIMARY KEY,
+    name text NOT NULL,
     last_activity int NOT NULL
 );
 

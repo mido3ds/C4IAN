@@ -29,9 +29,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	units, groups := parseConfig(args.UnitsPath, args.GroupsPath)
+	units, groupMembers := parseConfig(args.UnitsPath, args.GroupsPath)
 	dbManager := NewDatabaseManager(args.StorePath)
-	dbManager.Initialize(units, groups)
+	dbManager.Initialize(units, groupMembers)
 	api := NewAPI()
 	videoFilesManager := NewVideoFilesManager(args.VideosPath)
 	videoBuffer := NewVideoBuffer(videoFilesManager)
@@ -73,6 +73,7 @@ func main() {
 		func(data models.SensorData) {
 			api.SendEvent(&data)
 			dbManager.AddReceivedSensorsData(&data)
+			dbManager.UpdateLastActivity(data.Src)
 		},
 	)
 	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
@@ -127,12 +128,12 @@ func parseArgs() (*Args, error) {
 	}, nil
 }
 
-func parseConfig(unitsPath string, groupsPath string) (units []string, groups map[string][]string) {
+func parseConfig(unitsPath string, groupsPath string) (units []models.Unit, groups map[string][]string) {
 	data, err := ioutil.ReadFile(unitsPath)
 	if err != nil {
 		log.Println("failed to read units file, err:", err)
 	}
-	var result map[string][]string
+	var result map[string][]models.Unit
 	json.Unmarshal(data, &result)
 	units = result["units"]
 

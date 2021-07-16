@@ -40,6 +40,9 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router := mux.NewRouter()
 	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost, http.MethodOptions)
 	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/units", api.getUnits).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/groups", api.getGroups).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/memberships", api.getMemberships).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet, http.MethodOptions)
@@ -93,6 +96,21 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 	go api.dbManager.AddSentMessage(ip, &msg)
 	go api.netManager.SendTCP(ip, api.unitsPort, msg)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (api *API) getUnits(w http.ResponseWriter, r *http.Request) {
+	units := api.dbManager.GetUnits()
+	json.NewEncoder(w).Encode(units)
+}
+
+func (api *API) getGroups(w http.ResponseWriter, r *http.Request) {
+	groups := api.dbManager.GetGroups()
+	json.NewEncoder(w).Encode(groups)
+}
+
+func (api *API) getMemberships(w http.ResponseWriter, r *http.Request) {
+	memberships := api.dbManager.GetMemberships()
+	json.NewEncoder(w).Encode(memberships)
 }
 
 func (api *API) getAudioMsgs(w http.ResponseWriter, r *http.Request) {
