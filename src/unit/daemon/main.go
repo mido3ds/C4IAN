@@ -279,10 +279,34 @@ func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
 		return fmt.Errorf("failed to encode fragment, err: %v", err)
 	}
 
-	n, err := c.cmdUDPConn.Write(buffer.Bytes())
-	if n != len(buffer.Bytes()) {
-		return fmt.Errorf("failed to send all bytes")
-	} else if err != nil {
+	_, err = c.cmdUDPConn.Write(buffer.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to send bytes, err: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(models.SensorDataType)
+	if err != nil {
+		return fmt.Errorf("failed to encode type, error: %v", err)
+	}
+
+	err = encoder.Encode(&models.SensorData{
+		Time:      time.Now().Unix(),
+		Heartbeat: beatsPerMinute,
+		Lat:       lat,
+		Lon:       lon,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to encode sensor data, err: %v", err)
+	}
+
+	_, err = c.cmdUDPConn.Write(buffer.Bytes())
+	if err != nil {
 		return fmt.Errorf("failed to send bytes, err: %v", err)
 	}
 
@@ -311,10 +335,8 @@ func (c *Context) sendAudioMessageTCP(fragment []byte) error {
 		return fmt.Errorf("failed to encode fragment, err: %v", err)
 	}
 
-	n, err := conn.Write(buffer.Bytes())
-	if n != len(buffer.Bytes()) {
-		return fmt.Errorf("failed to send all bytes")
-	} else if err != nil {
+	_, err = conn.Write(buffer.Bytes())
+	if err != nil {
 		return fmt.Errorf("failed to send bytes, err: %v", err)
 	}
 
@@ -343,38 +365,8 @@ func (c *Context) sendCodeMessageTCP(code int) error {
 		return fmt.Errorf("failed to encode code message, err: %v", err)
 	}
 
-	n, err := conn.Write(buffer.Bytes())
-	if n != len(buffer.Bytes()) {
-		return fmt.Errorf("failed to send all bytes")
-	} else if err != nil {
-		return fmt.Errorf("failed to send bytes, err: %v", err)
-	}
-
-	return nil
-}
-
-func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error {
-	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(models.SensorDataType)
+	_, err = conn.Write(buffer.Bytes())
 	if err != nil {
-		return fmt.Errorf("failed to encode type, error: %v", err)
-	}
-
-	err = encoder.Encode(&models.SensorData{
-		Time:      time.Now().Unix(),
-		Heartbeat: beatsPerMinute,
-		Lat:       lat,
-		Lon:       lon,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to encode sensor data, err: %v", err)
-	}
-
-	n, err := c.cmdUDPConn.Write(buffer.Bytes())
-	if n != len(buffer.Bytes()) {
-		return fmt.Errorf("failed to send all bytes")
-	} else if err != nil {
 		return fmt.Errorf("failed to send bytes, err: %v", err)
 	}
 

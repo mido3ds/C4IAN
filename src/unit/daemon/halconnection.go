@@ -136,13 +136,13 @@ func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
 	c.saveVideoFragment(v.Video)
 
 	if !c.expectingVideoStream() {
-		log.Println("error, not expecting video stream, but received packet from HAL")
+		log.Println("received video fragment from HAL, but CMD didn't ask for it, dropping it")
 		return
 	}
 
 	err := c.sendVideoFragmentUDP(v.Video)
 	if err != nil {
-		log.Panic("error in sending video frag:", err)
+		log.Println("error in sending video frag:", err)
 	}
 }
 
@@ -158,6 +158,6 @@ func (c *Context) onSensorDataReceivedFromHAL(s *halapi.SensorData) {
 
 	err := c.sendSensorDataUDP(loc.Lon, loc.Lat, hb.BeatsPerMinut)
 	if err != nil {
-		log.Panic("error in sending sensor data to cmd:", err)
+		log.Println("error in sending sensor data to cmd:", err)
 	}
 }
