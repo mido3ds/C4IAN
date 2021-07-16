@@ -12,7 +12,8 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 )
 
-const TCPDialTimeout = 3 * time.Second
+const RetryTimeout = 2 * time.Second
+const TCPDialTimeout = 2 * time.Second
 
 type onReceiveMsgCallback = func(models.Message)
 type onReceiveAudioCallback = func(models.Audio)
@@ -50,6 +51,8 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	conn, err := net.DialTimeout("tcp", dstAddrss+":"+strconv.Itoa(dstPort), TCPDialTimeout)
 	if err != nil {
 		log.Println("Could not connect to unit: ", dstAddrss, " over TCP port: ", dstPort)
+		log.Println("Retry in ", RetryTimeout)
+		time.AfterFunc(RetryTimeout, func() { netManager.SendTCP(dstAddrss, dstPort, payload) })
 		return
 	}
 	defer conn.Close()
