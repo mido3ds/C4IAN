@@ -16,7 +16,6 @@ function UnitList({onChange, type}) {
             var unitsCopy = []
             unitsList.forEach(unit => {
                 unitsCopy.push({name: unit.name, ip: unit.ip})
-                console.log({name: unit.name, ip: unit.ip})
             });
             onChange(unitsCopy[0])
             setFirstUnit(unitsCopy[unitsCopy.length - 1])

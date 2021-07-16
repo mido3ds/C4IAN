@@ -23,9 +23,23 @@ function Control({ unit }) {
         postMsg(unit.ip, {code: confirmationMsgCode,})
     }
 
+    var blobToBase64 = function(blob, callback) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            var dataUrl = reader.result;
+            var base64 = dataUrl.split(',')[1];
+            callback(base64);
+        };
+        reader.readAsDataURL(blob);
+    };
+
+    var sendAudio = (audio) => {
+        postAudioMsg(unit.ip, {body: audio,})
+    }
+
     var onSendAudio = (audio) => {
         NotificationManager.info("Your audio message will be sent to " + unit.name)
-        postAudioMsg(unit.ip, {body: audio,})
+        blobToBase64(audio, sendAudio)
     }
     
     return (

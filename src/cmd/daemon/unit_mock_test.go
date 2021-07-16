@@ -15,19 +15,6 @@ import (
 var cmdPort int = 4170
 var unitPort int = 4070
 
-func TestUnit(*testing.T) {
-	go Listen(unitPort)
-	i := 0
-	for {
-		SendMessage(i, cmdPort)
-		SendAudio(i, cmdPort)
-		SendSensorsData(float64(i), cmdPort)
-		SendVideoFragment(i%10, i, cmdPort)
-		i++
-		time.Sleep(time.Second)
-	}
-}
-
 func Listen(port int) {
 	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
@@ -74,6 +61,14 @@ func Listen(port int) {
 	}
 }
 
+func TestUnit(*testing.T) {
+	go Listen(unitPort)
+	SendSensorsData(float64(1), cmdPort)
+	//SendMessage(0, cmdPort)
+	//SendVideoFragment(4, 0, cmdPort)
+}
+
+
 func SendSensorsData(i float64, port int) {
 	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
@@ -89,10 +84,11 @@ func SendSensorsData(i float64, port int) {
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
+		Src:		"10.0.0.3",
 		Time:      time.Now().Unix(),
-		Heartbeat: int(i),
-		Lat:       i,
-		Lon:       i,
+		Heartbeat:  10.0,
+		Lat:       41.4568 + i * 0.2,
+		Lon:       -79.0512 + i * 0.3,
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
@@ -134,7 +130,7 @@ func SendMessage(code int, port int) {
 
 	encoder := gob.NewEncoder(conn)
 	encoder.Encode(models.MessageType)
-	encoder.Encode(&models.Message{Time: time.Now().Unix(), Code: code})
+	encoder.Encode(&models.Message{Src:"10.0.0.3", Time: time.Now().Unix(), Code: code})
 	conn.Close()
 }
 

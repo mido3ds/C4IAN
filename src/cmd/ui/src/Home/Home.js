@@ -116,8 +116,6 @@ function Home() {
             if(units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger)
                 onDanger(newData.src, units)
                 
-          
-            
             return units;
         })
     }
@@ -164,21 +162,19 @@ function Home() {
             container: mapContainer.current,
             style: 'mapbox://styles/ahmedafifi/ckr0krxez6p641ao9vl2p71vf',
         });
-
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
-
-        setUnits(units => {
-            unitsList.forEach(unit => {
-                units[unit.ip] = {name: unit.name, groupID: unit.group, ip: unit.ip}
-            });
-
-            return units
-        })
 
         eventSource.addEventListener("sensors-data", ev => {
             onDataChange(JSON.parse(ev.data))
         })
+
+        setUnits(units => {
+            unitsList.forEach(unit => {
+              units[unit.ip] = { name: unit.name, groupID: unit.group, ip: unit.ip }
+            });
+            return units
+          })
     });
 
     return (

@@ -28,7 +28,6 @@ function Map({unit}) {
         if (map.current) return; 
         var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
         center[0] -= 0.005
-        console.log(center)
         map.current = new mapboxgl.Map({
             container: profileMapContainer.current,
             style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',

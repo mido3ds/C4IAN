@@ -4,11 +4,24 @@ import Stream from './Stream/Stream'
 
 class Streams extends React.Component {
 
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            eventSource: new EventSource("http://localhost:3170/events"),
+            Streams: []
+        }
+
+        this.state.eventSource.addEventListener("video-fragment", ev => {
+            this.onReceiveFragment(JSON.parse(ev.data))
+        })
+    }
+
     onReceiveFragment(data) {
-        if(this.state.Streams.some(e => e.ID === data.ID)) {
+        if (this.state.Streams.some(e => e.ID === data.ID)) {
             // Add Fragment
         } else {
-            Streams.push({ID: Stream.ID})
+            this.state.Streams.push({ ID: data.ID })
         }
     }
 
@@ -18,25 +31,19 @@ class Streams extends React.Component {
         var rows = Math.ceil(number / columns);
         window.$('.stream').css("width", `${100 / columns}%`);
         window.$('.stream').css("height", `${100 / rows}%`);
-
-        this.state = {
-            eventSource: new EventSource("http://localhost:3170/events"),
-            Streams : []
-        }
-
-        this.state.eventSource.addEventListener("video-fragment", ev => {
-            this.onReceiveFragment(JSON.parse(ev.data))
-        })
     }
 
     render() {
         return (
             <div className="video-root">
                 <div className="streams-container">
-                    {Streams.map((value, index) => {
+                    <div className="stream">
+                        <Stream> </Stream>
+                    </div>
+                    {this.state.Streams.map((value, index) => {
                         return <div className="stream">
-                                     <Stream streamID={value.ID}> </Stream>
-                                </div>
+                            <Stream streamID={value.ID}> </Stream>
+                        </div>
                     })}
                 </div>
             </div>

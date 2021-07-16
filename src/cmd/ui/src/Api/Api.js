@@ -4,14 +4,12 @@ const baseURL = "http://localhost:3170/api/";
 
 export function postMsg(ip, msg) {
     axios.post(baseURL + "msg/"+ ip, msg).then((response) => {
-        console.log(response)
         return response;
     });
 }
 
 export function postAudioMsg(ip, audio) {
     axios.post(baseURL + "audio-msg/"+ ip, audio).then((response) => {
-        console.log(response)
         return response;
     });
 }

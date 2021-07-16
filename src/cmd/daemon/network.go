@@ -133,7 +133,7 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 				if err != nil {
 					log.Panic(err)
 				}
-				sensorsData.Src = src.IP.String()
+				//sensorsData.Src = src.IP.String()
 				netManager.onReceiveSensorsData(sensorsData)
 				log.Println("received sensor data:", sensorsData) // TODO: remoe
 			} else {

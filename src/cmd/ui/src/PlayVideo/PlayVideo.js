@@ -16,7 +16,6 @@ class PlayVideo extends React.Component {
     }
 
     openModal = () => {
-        console.log("Hello")
         this.setState({
             isOpen: true
         })

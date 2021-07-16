@@ -12,13 +12,13 @@ class Stream extends React.Component {
     }
 
     componentDidMount() {
-        import('./v.mp4')
-        .then(module => this.setState({ video: module.default })) 
+        /*import('./v.mp4')
+        .then(module => this.setState({ video: module.default }))*/
     }
 
     render() {
         return (
-            <ReactPlayer width="100%" height="100%" controls url={video} />          
+            <ReactPlayer width="100%" height="100%" controls url={video} />
         );
     }
 
