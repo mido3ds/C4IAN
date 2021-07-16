@@ -2,5 +2,3 @@ github.com/akamensky/argparse v1.3.0 h1:/y3NFl6Nhw6alHDWoI9tx3vSyrB5zRgs4y9jzHxt
 github.com/akamensky/argparse v1.3.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
 github.com/mattn/go-sqlite3 v1.14.8 h1:gDp86IdQsN/xWjIEmr9MF6o9mpksUgh0fu+9ByFxzIU=
 github.com/mattn/go-sqlite3 v1.14.8/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
-github.com/mido3ds/C4IAN v0.0.0-20210715223516-b94f8f5a8c83 h1:H/oHOQZNs0cvG68DqxJgTRXgql7LL6ggNBjmIQopnBI=
-github.com/mido3ds/C4IAN v0.0.0-20210715223516-b94f8f5a8c83/go.mod h1:pwKFpEQyoPz55HJUgiPIrG17d6F3rqTuLTcdRPGLVsA=
