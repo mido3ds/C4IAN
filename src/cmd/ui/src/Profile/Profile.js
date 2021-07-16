@@ -33,7 +33,7 @@ const profileComponents = {
 class Profile extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { activatedTab: "Control", activatedUnit: {name: "hello"} };
+        this.state = { activatedTab: "Control", activatedUnit: {name: ""} };
     }
 
     render() {
