@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 
 	_ "github.com/mido3ds/C4IAN/src/unit/halapi"
@@ -21,9 +22,13 @@ func main() {
 	fmt.Println(args)
 
 	context := newContext(args)
-	go context.send()
+
+	go context.sendAudioMsgs()
+	go context.sendCodeMsgs()
+	go context.sendSensorsData()
 	go context.streamVideo()
-	go context.showMsgs()
+
+	go context.receiveMsgs()
 
 	log.Println("finished initalizing all")
 
@@ -34,6 +39,7 @@ type Context struct {
 	Args
 	videosFiles []string
 	audiosFiles []string
+	halConn     net.Conn
 }
 
 func newContext(args *Args) Context {
@@ -43,29 +49,56 @@ func newContext(args *Args) Context {
 	audiosFiles := listDir(args.audiosDirPath)
 	log.Println("audios:", audiosFiles)
 
+	conn, err := net.Dial("unix", args.halSocketPath)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	return Context{
 		Args:        *args,
 		videosFiles: videosFiles,
 		audiosFiles: audiosFiles,
+		halConn:     conn,
 	}
 }
 
-func (c *Context) send() {
+func (c *Context) close() {
+	c.halConn.Close()
+}
+
+func (c *Context) sendAudioMsgs() {
 	// TODO
-	// open connection
 	// every rand(avg=2s, stdev=300ms): send(rand(audio msg))
-	// every rand(avg=3s, stdev=1s): send(rand(number for code msg))
-	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
-	// every 10s: toggle video streaming mode, video=rand(videos)
 }
 
 func (c *Context) streamVideo() {
 	// TODO
-	// in video streaming mode: send next fragment (what size?)
+	// every 10s: start video streaming mode (which lasts for 10s), video=rand(videos)
+	// in video streaming mode: iterate over fragment (what size?)
 }
 
-func (c *Context) showMsgs() {
+func (c *Context) sendCodeMsgs() {
+	// TODO
+	// every rand(avg=3s, stdev=1s): send(rand(number for code msg))
+}
+
+func (c *Context) sendSensorsData() {
+	// TODO
+	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
+}
+
+func (c *Context) receiveMsgs() {
+	for {
+		// TODO
+	}
+}
+
+func onReceivedCodeMsg(code int) {
 	// TODO
 	// print any code msg
+}
+
+func onRecievedAudioMsg(audio []byte) {
+	// TODO
 	// save any audio msg in getTmpFile() and print path
 }
