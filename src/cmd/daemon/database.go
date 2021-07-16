@@ -19,10 +19,7 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db.MustExec("PRAGMA foreign_keys = ON")
 
 	// Create database from schema script
-	_, err := sqlx.LoadFile(db, "schema.sql")
-	if err != nil {
-		log.Panic(err.Error())
-	}
+	db.MustExec(schemaSQL)
 
 	return &DatabaseManager{db: db}
 }
