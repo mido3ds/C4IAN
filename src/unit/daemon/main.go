@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 
 	"database/sql"
@@ -45,27 +46,26 @@ type Context struct {
 	Args
 	storeDB *sql.DB
 
-	cmdUDPConn, cmdTCPConn net.Conn
-	halConn                net.Conn
+	cmdUDPConn net.Conn
+	halConn    net.Conn
 
-	// TODO: protect from race conditions
-	expectingVideoStream bool
-	isConnectedToCMD     bool
-	isConnectedToHAL     bool
+	halMutex              sync.Mutex
+	_expectingVideoStream bool
+	_isConnectedToHAL     bool
 
-	videoSeqno       uint64
+	videoMutex       sync.Mutex
+	_videoSeqno      uint64
 	videoID          int
 	videoStreamTimer *time.Timer
 }
 
 func newContext(args *Args) Context {
 	context := Context{
-		Args:                 *args,
-		expectingVideoStream: false,
-		videoSeqno:           0,
-		videoID:              0,
-		isConnectedToCMD:     false,
-		isConnectedToHAL:     false,
+		Args:                  *args,
+		_videoSeqno:           0,
+		videoID:               0,
+		_expectingVideoStream: false,
+		_isConnectedToHAL:     false,
 	}
 
 	// db
@@ -88,26 +88,44 @@ func (c *Context) close() {
 		c.storeDB.Close()
 	}
 	c.cmdUDPConn.Close()
-	c.closeConnectionWithCMD()
 }
 
-func (c *Context) closeConnectionWithCMD() {
-	if c.isConnectedToCMD {
-		c.isConnectedToCMD = false
-		c.cmdTCPConn.Close()
-	}
+func (c *Context) expectingVideoStream() bool {
+	c.halMutex.Lock()
+	defer c.halMutex.Unlock()
+	return c._expectingVideoStream
 }
 
-func (c *Context) tryConnectWithCMD() bool {
-	// tcp
-	tcpConn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
-	if err != nil {
-		log.Println("couldn't open tcp port, err:", err)
-		return false
-	}
-	c.cmdTCPConn = tcpConn
-	c.isConnectedToCMD = true
-	return true
+func (c *Context) setExpectingVideoStream(v bool) {
+	c.halMutex.Lock()
+	defer c.halMutex.Unlock()
+	c._expectingVideoStream = v
+}
+
+func (c *Context) isConnectedToHAL() bool {
+	c.halMutex.Lock()
+	defer c.halMutex.Unlock()
+	return c._isConnectedToHAL
+}
+
+func (c *Context) setIsConnectedToHAL(v bool) {
+	c.halMutex.Lock()
+	defer c.halMutex.Unlock()
+	c._isConnectedToHAL = v
+}
+
+func (c *Context) resetVideoSeqNo() {
+	c.videoMutex.Lock()
+	defer c.videoMutex.Unlock()
+	c._videoSeqno = 0
+}
+
+func (c *Context) incrementAndGetVideoSeqNo() uint64 {
+	c.videoMutex.Lock()
+	defer c.videoMutex.Unlock()
+	v := c._videoSeqno
+	c._videoSeqno++
+	return v
 }
 
 func (c *Context) listenCmdTcp() {
@@ -121,17 +139,43 @@ func (c *Context) listenCmdTcp() {
 	for {
 		conn, err := cmdLisener.Accept()
 		if err != nil {
-			log.Println("failed to accept, err:", err)
+			log.Panic("failed to accept, err:", err)
 		}
-		defer conn.Close()
 
-		if !c.isConnectedToCMD {
-			c.isConnectedToCMD = true
-			c.cmdTCPConn = conn
-		}
 		log.Println("connected to cmd")
 
-		c.serveCmd(conn)
+		go func() {
+			defer conn.Close()
+
+			var packetType models.Type
+			var msg models.Message
+			var audio models.Audio
+			decoder := gob.NewDecoder(conn)
+
+			err := decoder.Decode(&packetType)
+			if err != nil {
+				log.Println("failed to decode type, err:", err)
+				return
+			}
+
+			if packetType == models.MessageType {
+				err := decoder.Decode(&msg)
+				if err != nil {
+					log.Println("error occurred, will close connection with cmd:", err)
+					return
+				}
+				c.onCodeMsgReceivedFromCMD(&msg)
+			} else if packetType == models.AudioType {
+				err := decoder.Decode(&audio)
+				if err != nil {
+					log.Println("error occurred, will close connection with cmd:", err)
+					return
+				}
+				c.onAudioMsgReceivedFromCMD(&audio)
+			} else {
+				log.Panic("received unrecognized msg type on tcp")
+			}
+		}()
 	}
 }
 
@@ -147,10 +191,6 @@ func (c *Context) listenCmdUdp() {
 	defer conn.Close()
 	log.Println("listening for cmd on udp port:", c.port)
 
-	c.serveCmd(conn)
-}
-
-func (c *Context) serveCmd(conn net.Conn) {
 	var packetType models.Type
 	var msg models.Message
 	var audio models.Audio
@@ -159,21 +199,19 @@ func (c *Context) serveCmd(conn net.Conn) {
 	for {
 		err := decoder.Decode(&packetType)
 		if err != nil {
-			log.Panic(err)
+			log.Panic("failed to decode type, err:", err)
 		}
 
 		if packetType == models.MessageType {
 			err := decoder.Decode(&msg)
 			if err != nil {
-				log.Println("error occurred, will close connection with cmd:", err)
-				return
+				log.Panic("error occurred, will close connection with cmd:", err)
 			}
 			c.onCodeMsgReceivedFromCMD(&msg)
 		} else if packetType == models.AudioType {
 			err := decoder.Decode(&audio)
 			if err != nil {
-				log.Println("error occurred, will close connection with cmd:", err)
-				return
+				log.Panic("error occurred, will close connection with cmd:", err)
 			}
 			c.onAudioMsgReceivedFromCMD(&audio)
 		} else {
@@ -187,12 +225,12 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 	switch msg.Code {
 	case StartVideoStreamingCode:
 		log.Println("start video streaming code")
-		c.expectingVideoStream = true
+		c.setExpectingVideoStream(true)
 		c.videoID++
-		c.videoSeqno = 0
+		c.resetVideoSeqNo()
 		c.videoStreamTimer = time.AfterFunc(VideoStreamingNoEndTimeout, func() {
 			log.Println("didn't receive end video streaming for 1 minute, closing video streaming")
-			c.expectingVideoStream = false
+			c.setExpectingVideoStream(false)
 		})
 		break
 	case StopVideStreamingCode:
@@ -201,7 +239,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 			c.videoStreamTimer.Stop()
 			c.videoStreamTimer = nil
 		}
-		c.expectingVideoStream = false
+		c.setExpectingVideoStream(false)
 		break
 	default:
 		log.Println("generic code msg")
@@ -211,7 +249,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 
 func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 	log.Println("Received an audio with len= ", len(audio.Body))
-	if c.isConnectedToHAL {
+	if c.isConnectedToHAL() {
 		enc := gob.NewEncoder(c.halConn)
 		err := halapi.ShowAudioMsg{Audio: audio.Body}.Send(enc)
 		if err != nil {
@@ -234,9 +272,8 @@ func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
 		ID:    c.videoID,
 		Time:  time.Now().Unix(),
 		Body:  fragment,
-		SeqNo: c.videoSeqno,
+		SeqNo: c.incrementAndGetVideoSeqNo(),
 	})
-	c.videoSeqno++
 
 	if err != nil {
 		return fmt.Errorf("failed to encode fragment, err: %v", err)
@@ -253,9 +290,15 @@ func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
 }
 
 func (c *Context) sendAudioMessageTCP(fragment []byte) error {
+	conn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
+	if err != nil {
+		return fmt.Errorf("couldn't open tcp port, err: %v", err)
+	}
+	defer conn.Close()
+
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(models.AudioType)
+	err = encoder.Encode(models.AudioType)
 	if err != nil {
 		return fmt.Errorf("failed to encode type, error: %v", err)
 	}
@@ -268,7 +311,7 @@ func (c *Context) sendAudioMessageTCP(fragment []byte) error {
 		return fmt.Errorf("failed to encode fragment, err: %v", err)
 	}
 
-	n, err := c.cmdTCPConn.Write(buffer.Bytes())
+	n, err := conn.Write(buffer.Bytes())
 	if n != len(buffer.Bytes()) {
 		return fmt.Errorf("failed to send all bytes")
 	} else if err != nil {
@@ -279,9 +322,15 @@ func (c *Context) sendAudioMessageTCP(fragment []byte) error {
 }
 
 func (c *Context) sendCodeMessageTCP(code int) error {
+	conn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
+	if err != nil {
+		return fmt.Errorf("couldn't open tcp port, err: %v", err)
+	}
+	defer conn.Close()
+
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(models.MessageType)
+	err = encoder.Encode(models.MessageType)
 	if err != nil {
 		return fmt.Errorf("failed to encode type, error: %v", err)
 	}
@@ -294,7 +343,7 @@ func (c *Context) sendCodeMessageTCP(code int) error {
 		return fmt.Errorf("failed to encode code message, err: %v", err)
 	}
 
-	n, err := c.cmdTCPConn.Write(buffer.Bytes())
+	n, err := conn.Write(buffer.Bytes())
 	if n != len(buffer.Bytes()) {
 		return fmt.Errorf("failed to send all bytes")
 	} else if err != nil {

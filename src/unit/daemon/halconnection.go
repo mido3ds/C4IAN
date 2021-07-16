@@ -51,16 +51,14 @@ func (c *Context) listenHAL() {
 		go simulateHALClient(c.halSocketPath)
 		conn, err := halListener.Accept()
 		c.halConn = conn
-		c.isConnectedToHAL = true
 		defer conn.Close()
-		defer func() {
-			c.isConnectedToHAL = false
-			conn.Close()
-		}()
 
 		if err != nil {
 			log.Println("accept error:", err)
 		} else {
+			c.setIsConnectedToHAL(true)
+			defer c.setIsConnectedToHAL(false)
+
 			log.Println("HAL connected")
 			c.serveHAL(conn)
 		}
@@ -104,21 +102,14 @@ func (context *Context) serveHAL(conn net.Conn) {
 func (c *Context) onCodeMsgReceivedFromHAL(cm *halapi.CodeMsg) {
 	log.Printf("From HAL:: CodeMsg= %v\n", *cm)
 
-	if !c.isConnectedToCMD {
-		if !c.tryConnectWithCMD() {
-			return
-		}
-	}
-
 	err := c.sendCodeMessageTCP(cm.Code)
 	if err != nil {
 		log.Println("failed to send code message, err:", err)
-		log.Println("will try again or close connection")
+		log.Println("will try again")
 		time.AfterFunc(c.retryOrCloseTimeout, func() {
 			err := c.sendCodeMessageTCP(cm.Code)
 			if err != nil {
-				log.Println("failed to send code message, will close socket, err:", err)
-				c.closeConnectionWithCMD()
+				log.Println("failed to send code message, err:", err)
 			}
 		})
 	}
@@ -127,21 +118,14 @@ func (c *Context) onCodeMsgReceivedFromHAL(cm *halapi.CodeMsg) {
 func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
 	log.Printf("From HAL:: AudioMsg= %v\n", *a)
 
-	if !c.isConnectedToCMD {
-		if !c.tryConnectWithCMD() {
-			return
-		}
-	}
-
 	err := c.sendAudioMessageTCP(a.Audio)
 	if err != nil {
 		log.Println("failed to send audio message, err:", err)
-		log.Println("will try again or close connection")
+		log.Println("will try again")
 		time.AfterFunc(c.retryOrCloseTimeout, func() {
 			err := c.sendAudioMessageTCP(a.Audio)
 			if err != nil {
-				log.Println("failed to send audio message, will close socket, err:", err)
-				c.closeConnectionWithCMD()
+				log.Println("failed to send audio message, err:", err)
 			}
 		})
 	}
@@ -151,15 +135,14 @@ func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
 	log.Printf("From HAL:: VideoFragment= %v\n", *v)
 	c.saveVideoFragment(v.Video)
 
-	if !c.expectingVideoStream {
+	if !c.expectingVideoStream() {
 		log.Println("error, not expecting video stream, but received packet from HAL")
 		return
 	}
 
 	err := c.sendVideoFragmentUDP(v.Video)
 	if err != nil {
-		log.Println("error in sending video frag:", err)
-		c.isConnectedToCMD = false
+		log.Panic("error in sending video frag:", err)
 	}
 }
 
@@ -175,7 +158,6 @@ func (c *Context) onSensorDataReceivedFromHAL(s *halapi.SensorData) {
 
 	err := c.sendSensorDataUDP(loc.Lon, loc.Lat, hb.BeatsPerMinut)
 	if err != nil {
-		log.Println("error in sending sensor data to cmd:", err)
-		c.isConnectedToCMD = false
+		log.Panic("error in sending sensor data to cmd:", err)
 	}
 }
