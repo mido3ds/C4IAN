@@ -38,6 +38,7 @@ func (c *Context) listenHAL() {
 		log.Fatal("listen error:", err)
 	}
 	defer halListener.Close()
+	log.Println("listening for HAL connection over unix socket:", c.halSocketPath)
 
 	for {
 		go simulateHALClient(c.halSocketPath)
