@@ -1,5 +1,7 @@
 package models
 
+import "database/sql"
+
 const (
 	MESSAGE_EVENT      = "msg"
 	AUDIO_EVENT        = "audio"
@@ -21,12 +23,16 @@ type Event interface {
 }
 
 type Unit struct {
-	Name      string  `json:"name" db:"name"`
-	IP        string  `json:"ip" db:"ip"`
-	Active    bool    `json:"active" db:"active"`
-	Heartbeat int     `json:"heartbeat" db:"heartbeat"`
-	Lat       float64 `json:"lat" db:"lat"`
-	Lon       float64 `json:"lon" db:"lon"`
+	Name      string          `json:"name" db:"name"`
+	IP        string          `json:"ip" db:"ip"`
+	Active    bool            `json:"active" db:"active"`
+	Heartbeat sql.NullInt32   `json:"heartbeat" db:"heartbeat"`
+	Lat       sql.NullFloat64 `json:"lat" db:"lat"`
+	Lon       sql.NullFloat64 `json:"lon" db:"lon"`
+}
+
+type Group struct {
+	IP string
 }
 
 type Membership struct {
