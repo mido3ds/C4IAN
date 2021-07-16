@@ -136,7 +136,7 @@ func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
 	c.saveVideoFragment(v.Video)
 
 	if !c.expectingVideoStream() {
-		log.Println("error, not expecting video stream, but received packet from HAL")
+		log.Println("received video fragment from HAL, but CMD didn't ask for it, dropping it")
 		return
 	}
 
