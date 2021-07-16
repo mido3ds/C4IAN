@@ -5,16 +5,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/mido3ds/C4IAN/src/unit/halapi"
+	_ "github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
 func main() {
 	defer log.Println("finished cleaning up, closing")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
-
-	log.Println("hello simulation")
-	log.Println(halapi.VideoFragment{Video: []byte{1, 2, 3}})
 
 	args, err := parseArgs()
 	if err != nil {
