@@ -87,6 +87,7 @@ func (netManager *NetworkManager) ListenTCP(port int) {
 		log.Panic(err)
 	}
 	defer listener.Close()
+	log.Println("listening on tcp port:", port)
 
 	for {
 		// Handle any incoming connections
@@ -95,6 +96,8 @@ func (netManager *NetworkManager) ListenTCP(port int) {
 			log.Println(err)
 			continue
 		}
+		log.Println("received tcp connection from unit, address:", conn.RemoteAddr()) // TODO: remove
+
 		go netManager.handleTCPConnection(conn)
 	}
 }
@@ -132,6 +135,7 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 				}
 				sensorsData.Src = src.IP.String()
 				netManager.onReceiveSensorsData(sensorsData)
+				log.Println("received sensor data:", sensorsData) // TODO: remoe
 			} else {
 				var videoFragment models.VideoFragment
 				err := decoder.Decode(&videoFragment)
@@ -140,40 +144,52 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 				}
 				videoFragment.Src = src.IP.String()
 				netManager.onReceiveVideoFragment(videoFragment)
+				log.Println("received videofragment:", videoFragment) // TODO: remoe
 			}
 		}
 	}
 }
 
 func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
-	// Decode the type of the packet
-	decoder := gob.NewDecoder(conn)
-	var packetType models.Type
-	err := decoder.Decode(&packetType)
-	if err != nil {
-		log.Panic(err)
-	}
+	defer conn.Close()
 
 	// Extract the IP address of the source
 	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
 
-	// Decode the payload of the packet and make appropriate callbacks
-	if packetType == models.MessageType {
-		var msg models.Message
-		err := decoder.Decode(&msg)
+	for {
+		// Decode the type of the packet
+		decoder := gob.NewDecoder(conn)
+		var packetType models.Type
+		err := decoder.Decode(&packetType)
 		if err != nil {
 			log.Panic(err)
 		}
-		msg.Src = srcIP
-		netManager.onReceiveMsg(msg)
-	} else {
-		var audio models.Audio
-		err := decoder.Decode(&audio)
-		if err != nil {
-			log.Panic(err)
+
+		// Decode the payload of the packet and make appropriate callbacks
+		if packetType == models.MessageType {
+			var msg models.Message
+			err := decoder.Decode(&msg)
+			if err != nil {
+				log.Print("failed to decode code msg from unit, err:", err)
+				return
+			}
+
+			msg.Src = srcIP
+			netManager.onReceiveMsg(msg)
+
+			log.Println("received code msg from unit:", msg) // TODO: remove
+		} else {
+			var audio models.Audio
+			err := decoder.Decode(&audio)
+			if err != nil {
+				log.Print("failed to decode audio msg from unit, err:", err)
+				return
+			}
+
+			audio.Src = srcIP
+			netManager.onReceiveAudio(audio)
+
+			log.Println("received audio msg from unit:", audio) // TODO: remove
 		}
-		audio.Src = srcIP
-		netManager.onReceiveAudio(audio)
 	}
-	conn.Close()
 }

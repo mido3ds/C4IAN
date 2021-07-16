@@ -90,7 +90,7 @@ func SendSensorsData(i float64, port int) {
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
 		Time:      time.Now().Unix(),
-		Heartbeat: i,
+		Heartbeat: int(i),
 		Lat:       i,
 		Lon:       i,
 	})
