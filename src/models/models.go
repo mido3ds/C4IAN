@@ -34,8 +34,8 @@ type Group struct {
 }
 
 type Membership struct {
-	GroupIP string   `json:"groupIP" db:"group_ip"`
-	UnitIP  []string `json:"unitIP" db:"unit_ip"`
+	GroupIP string `json:"groupIP" db:"group_ip"`
+	UnitIP  string `json:"unitIP" db:"unit_ip"`
 }
 
 // Time as int64 to store in db as Unix Time (SQLite3 does not support a time type)
