@@ -5,6 +5,17 @@
     margin-bottom: -100px;
 }
 
+.map-unit0 {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(211, 12, 178, 0.699);
+    border-style: solid;
+}
+
 .map-unit1 {
     background-image: url('../images/unit.png');
     background-size: cover;
@@ -12,7 +23,7 @@
     height: 50px;
     border-radius: 50%;
     border-width: 4px;
-    border-color: rgba(211, 208, 12, 0.699);
+    border-color: rgba(192, 111, 6, 0.795);
     border-style: solid;
 }
 
@@ -23,7 +34,7 @@
     height: 50px;
     border-radius: 50%;
     border-width: 4px;
-    border-color: rgba(3, 194, 3, 0.671);
+    border-color: rgba(0, 119, 255, 0.74);
     border-style: solid;
 }
 
@@ -34,12 +45,23 @@
     height: 50px;
     border-radius: 50%;
     border-width: 4px;
-    border-color: rgba(0, 119, 255, 0.74);
+    border-color: rgba(228, 224, 3, 0.822);
+    border-style: solid;
+}
+
+.map-unit4 {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-color: rgba(40, 219, 4, 0.74);
     border-style: solid;
 }
 
 .map-unit-danger {
-    background-image: url('../images/danger.jpg');
+    background-image: url('../images/danger.png');
     background-size: cover;
     width: 50px;
     height: 50px;
@@ -50,7 +72,7 @@
 }
 
 .map-unit-inactive {
-    background-image: url('../images/inactive.jpg');
+    background-image: url('../images/inactive.png');
     background-size: cover;
     width: 50px;
     height: 50px;
