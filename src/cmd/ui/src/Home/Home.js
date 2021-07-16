@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import MapPopup from './MapPopUp/MapPopUp'
-import GroupSelect from '../GroupsSelect/GroupSelect'
+import GroupSelect from '../GroupSelect/GroupSelect'
 import {NotificationManager} from 'react-notifications';
 import { unitsList } from '../units'
 

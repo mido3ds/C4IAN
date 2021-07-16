@@ -4,6 +4,8 @@ import { getMsgs } from '../../Api/Api'
 import moment from 'moment';
 import './ChatBox.css'
 
+const msgs = {2: "Start Streming", 3: "End Streaming" , 4: "Attack" }
+
 function ChatBox({ unit }) {
     const [msgs, setMsgs] = useState(null)
 
@@ -32,7 +34,7 @@ function ChatBox({ unit }) {
                                 {msg.sent ?
                                     <li className="chat-right">
                                         <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
-                                        <div className="chat-text"> {msg.code} </div>
+                                        <div className="chat-text"> {msgs[msg.code]} </div>
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> Me </div>
@@ -43,7 +45,7 @@ function ChatBox({ unit }) {
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> {unit.name.substr(0, unit.name.indexOf(' '))} </div>
                                         </div>
-                                        <div className="chat-text"> {msg.code} </div>
+                                        <div className="chat-text"> {msgs[msg.code]} </div>
                                         <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
                                     </li>
                                 }

@@ -2,7 +2,7 @@ import './Control.css';
 import React, { useRef, useState } from 'react';
 import RecordAudio from '../../RecordAudio/RecordAudio'
 import ConfirmationModal from '../../ConfirmationModal/ConfirmationModal'
-import {NotificationManager} from 'react-notifications';
+import { NotificationManager } from 'react-notifications';
 import { postAudioMsg, postMsg } from '../../Api/Api'
 
 const msgsCode = {"StartVideo":2, "StopVideo": 3, "Attack": 4}
