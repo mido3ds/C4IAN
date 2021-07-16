@@ -36,6 +36,8 @@ func main() {
 	go context.listenCmdTcp()
 	go context.listenCmdUdp()
 
+	log.Println("finished initalizing all")
+
 	waitSIGINT()
 }
 
@@ -109,6 +111,7 @@ func (c *Context) listenCmdTcp() {
 		log.Panic(err)
 	}
 	defer cmdLisener.Close()
+	log.Println("listening for cmd on tcp port:", c.port)
 
 	for {
 		conn, err := cmdLisener.Accept()
@@ -136,6 +139,8 @@ func (c *Context) listenCmdUdp() {
 		log.Panic(err)
 	}
 	defer conn.Close()
+	log.Println("listenign for cmd on udp port:", c.port)
+
 	c.serveCmd(conn)
 }
 
