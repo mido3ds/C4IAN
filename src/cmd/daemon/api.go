@@ -36,14 +36,16 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 
 	// Initialize router
 	router := mux.NewRouter()
-	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost)
-	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost)
-	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet)
-	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet)
-	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet)
-	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet)
+	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet, http.MethodOptions)
 	router.Handle("/events", api.eventSource)
+
 	router.Use(api.jsonContentType)
+	router.Use(api.corseHandler)
 
 	// Listen for HTTP requests
 	address := ":" + strconv.Itoa(port)
@@ -62,6 +64,18 @@ func (api *API) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (api *API) corseHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			next.ServeHTTP(w, r)
+		}
 	})
 }
 
