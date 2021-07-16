@@ -16,7 +16,7 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	db := sqlx.MustOpen("sqlite3", dbPath)
 
 	// Make sure foreign key constraints are enabled
-	//db.MustExec("PRAGMA foreign_keys = ON")
+	// db.MustExec("PRAGMA foreign_keys = ON")
 
 	// Create database from schema script
 	db.MustExec(schemaSQL)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -71,7 +70,6 @@ func (api *API) jsonContentType(next http.Handler) http.Handler {
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	audioMsg := models.Audio{}
 	ip := mux.Vars(r)["ip"]
-	fmt.Println(r.Body)
 	err := json.NewDecoder(r.Body).Decode(&audioMsg)
 	if err != nil {
 		log.Panic(err)
