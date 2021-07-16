@@ -3,13 +3,15 @@ import axios from "axios";
 const baseURL = "http://localhost:3170/api/";
 
 export function postMsg(ip, msg) {
-    axios.post(baseURL + "msgs"+ ip, msg).then((response) => {
+    axios.post(baseURL + "msgs/"+ ip, msg).then((response) => {
+        console.log(response)
         return response;
     });
 }
 
 export function postAudioMsg(ip, audio) {
-    axios.post(baseURL + "audio-msgs"+ ip, audio).then((response) => {
+    axios.post(baseURL + "audio-msgs/"+ ip, audio).then((response) => {
+        console.log(response)
         return response;
     });
 }
