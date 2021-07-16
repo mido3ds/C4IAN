@@ -142,7 +142,7 @@ func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
 
 	err := c.sendVideoFragmentUDP(v.Video)
 	if err != nil {
-		log.Panic("error in sending video frag:", err)
+		log.Println("error in sending video frag:", err)
 	}
 }
 
@@ -158,6 +158,6 @@ func (c *Context) onSensorDataReceivedFromHAL(s *halapi.SensorData) {
 
 	err := c.sendSensorDataUDP(loc.Lon, loc.Lat, hb.BeatsPerMinut)
 	if err != nil {
-		log.Panic("error in sending sensor data to cmd:", err)
+		log.Println("error in sending sensor data to cmd:", err)
 	}
 }
