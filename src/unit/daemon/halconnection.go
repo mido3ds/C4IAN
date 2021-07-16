@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/gob"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -19,11 +18,19 @@ func simulateHALClient(HALSocketPath string) {
 	}
 
 	enc := gob.NewEncoder(conn)
-	halapi.SensorData{
-		HeartBeat: halapi.HeartBeat{BeatsPerMinut: 5},
-		Location:  halapi.Location{Lon: 5, Lat: 2},
-	}.Send(enc)
-	halapi.VideoFragment{Video: []byte{5, 3}}.Send(enc)
+
+	for {
+		time.Sleep(time.Second * 2)
+		log.Println("hal sending data")
+
+		halapi.SensorData{
+			HeartBeat: halapi.HeartBeat{BeatsPerMinut: 5},
+			Location:  halapi.Location{Lon: 5, Lat: 2},
+		}.Send(enc)
+		halapi.VideoFragment{Video: []byte{5, 3}}.Send(enc)
+		halapi.AudioMsg{Audio: []byte{10, 2}}.Send(enc)
+		halapi.CodeMsg{Code: 6}.Send(enc)
+	}
 }
 
 func (c *Context) listenHAL() {
@@ -95,7 +102,13 @@ func (context *Context) serveHAL(conn net.Conn) {
 }
 
 func (c *Context) onCodeMsgReceivedFromHAL(cm *halapi.CodeMsg) {
-	log.Printf("CodeMsg: %v\n", *cm)
+	log.Printf("From HAL:: CodeMsg= %v\n", *cm)
+
+	if !c.isConnectedToCMD {
+		if !c.tryConnectWithCMD() {
+			return
+		}
+	}
 
 	err := c.sendCodeMessageTCP(cm.Code)
 	if err != nil {
@@ -112,7 +125,13 @@ func (c *Context) onCodeMsgReceivedFromHAL(cm *halapi.CodeMsg) {
 }
 
 func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
-	fmt.Printf("AudioMsg: %v\n", *a)
+	log.Printf("From HAL:: AudioMsg= %v\n", *a)
+
+	if !c.isConnectedToCMD {
+		if !c.tryConnectWithCMD() {
+			return
+		}
+	}
 
 	err := c.sendAudioMessageTCP(a.Audio)
 	if err != nil {
@@ -129,7 +148,7 @@ func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
 }
 
 func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
-	log.Printf("VideoFragment: %v\n", *v)
+	log.Printf("From HAL:: VideoFragment= %v\n", *v)
 	c.saveVideoFragment(v.Video)
 
 	if !c.expectingVideoStream {
@@ -148,8 +167,8 @@ func (c *Context) onSensorDataReceivedFromHAL(s *halapi.SensorData) {
 	hb := s.HeartBeat
 	loc := s.Location
 
-	log.Printf("HeartBeat: %v\n", hb)
-	log.Printf("Location: %v\n", loc)
+	log.Printf("From HAL:: HeartBeat= %v\n", hb)
+	log.Printf("From HAL:: Location= %v\n", loc)
 
 	c.saveHeartbeat(hb.BeatsPerMinut)
 	c.saveLocation(loc.Lon, loc.Lat)
