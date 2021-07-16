@@ -48,7 +48,6 @@ func main() {
 		},
 		// onReceiveVideoFragment
 		func(frag models.VideoFragment) {
-			api.SendEvent(&frag)
 			video := dbManager.GetReceivedVideo(frag.Src, frag.ID)
 			if video == nil {
 				path := videoFilesManager.CreateVideoFile(frag.Src, frag.ID)
@@ -57,6 +56,8 @@ func main() {
 					ID:   frag.ID,
 					Path: path,
 				})
+				frag.Body = []byte(path)
+				api.SendEvent(&frag)
 			}
 			// Can this cause a race condition if fragments arrive fast enough?
 			// or will the file be locked by the OS anyway?
