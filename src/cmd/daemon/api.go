@@ -45,7 +45,7 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router.Handle("/events", api.eventSource)
 
 	router.Use(api.jsonContentType)
-	router.Use(api.allowCORS)
+	router.Use(api.corseHandler)
 
 	// Listen for HTTP requests
 	address := ":" + strconv.Itoa(port)
@@ -67,10 +67,15 @@ func (api *API) jsonContentType(next http.Handler) http.Handler {
 	})
 }
 
-func (api *API) allowCORS(next http.Handler) http.Handler {
+func (api *API) corseHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
-		next.ServeHTTP(w, r)
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			next.ServeHTTP(w, r)
+		}
 	})
 }
 
