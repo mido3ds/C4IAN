@@ -43,7 +43,9 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet)
 	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet)
 	router.Handle("/events", api.eventSource)
+
 	router.Use(api.jsonContentType)
+	router.Use(api.allowCORS)
 
 	// Listen for HTTP requests
 	address := ":" + strconv.Itoa(port)
@@ -61,6 +63,13 @@ func (api *API) SendEvent(body models.Event) {
 func (api *API) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (api *API) allowCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(w, r)
 	})
 }
