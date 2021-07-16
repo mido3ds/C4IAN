@@ -32,7 +32,7 @@ type Unit struct {
 }
 
 type Group struct {
-	IP string
+	IP string `json:"ip", db:"ip"`
 }
 
 type Membership struct {
