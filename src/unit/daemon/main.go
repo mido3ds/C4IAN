@@ -43,15 +43,19 @@ func main() {
 
 type Context struct {
 	Args
-	expectingVideoStream   bool
-	storeDB                *sql.DB
+	storeDB *sql.DB
+
 	cmdUDPConn, cmdTCPConn net.Conn
-	videoSeqno             uint64
-	videoID                int
-	isConnectedToCMD       bool
 	halConn                net.Conn
-	isConnectedToHAL       bool
-	videoStreamTimer       *time.Timer
+
+	// TODO: protect from race conditions
+	expectingVideoStream bool
+	isConnectedToCMD     bool
+	isConnectedToHAL     bool
+
+	videoSeqno       uint64
+	videoID          int
+	videoStreamTimer *time.Timer
 }
 
 func newContext(args *Args) Context {
@@ -94,15 +98,16 @@ func (c *Context) closeConnectionWithCMD() {
 	}
 }
 
-func (c *Context) tryConnectWithCMD() {
+func (c *Context) tryConnectWithCMD() bool {
 	// tcp
 	tcpConn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
 	if err != nil {
 		log.Println("couldn't open tcp port, err:", err)
-		return
+		return false
 	}
 	c.cmdTCPConn = tcpConn
 	c.isConnectedToCMD = true
+	return true
 }
 
 func (c *Context) listenCmdTcp() {
@@ -124,6 +129,7 @@ func (c *Context) listenCmdTcp() {
 			c.isConnectedToCMD = true
 			c.cmdTCPConn = conn
 		}
+		log.Println("connected to cmd")
 
 		c.serveCmd(conn)
 	}
@@ -139,7 +145,7 @@ func (c *Context) listenCmdUdp() {
 		log.Panic(err)
 	}
 	defer conn.Close()
-	log.Println("listenign for cmd on udp port:", c.port)
+	log.Println("listening for cmd on udp port:", c.port)
 
 	c.serveCmd(conn)
 }
