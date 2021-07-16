@@ -156,40 +156,36 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 	// Extract the IP address of the source
 	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
 
-	for {
-		// Decode the type of the packet
-		decoder := gob.NewDecoder(conn)
-		var packetType models.Type
-		err := decoder.Decode(&packetType)
+	// Decode the type of the packet
+	decoder := gob.NewDecoder(conn)
+	var packetType models.Type
+	err := decoder.Decode(&packetType)
+	if err != nil {
+		log.Panic("failed to decode type, err:", err)
+	}
+
+	// Decode the payload of the packet and make appropriate callbacks
+	if packetType == models.MessageType {
+		var msg models.Message
+		err := decoder.Decode(&msg)
 		if err != nil {
-			log.Panic(err)
+			log.Panic("failed to decode code msg from unit, err:", err)
 		}
 
-		// Decode the payload of the packet and make appropriate callbacks
-		if packetType == models.MessageType {
-			var msg models.Message
-			err := decoder.Decode(&msg)
-			if err != nil {
-				log.Print("failed to decode code msg from unit, err:", err)
-				return
-			}
+		msg.Src = srcIP
+		netManager.onReceiveMsg(msg)
 
-			msg.Src = srcIP
-			netManager.onReceiveMsg(msg)
-
-			log.Println("received code msg from unit:", msg) // TODO: remove
-		} else {
-			var audio models.Audio
-			err := decoder.Decode(&audio)
-			if err != nil {
-				log.Print("failed to decode audio msg from unit, err:", err)
-				return
-			}
-
-			audio.Src = srcIP
-			netManager.onReceiveAudio(audio)
-
-			log.Println("received audio msg from unit:", audio) // TODO: remove
+		log.Println("received code msg from unit:", msg) // TODO: remove
+	} else {
+		var audio models.Audio
+		err := decoder.Decode(&audio)
+		if err != nil {
+			log.Panic("failed to decode audio msg from unit, err:", err)
 		}
+
+		audio.Src = srcIP
+		netManager.onReceiveAudio(audio)
+
+		log.Println("received audio msg from unit:", audio) // TODO: remove
 	}
 }

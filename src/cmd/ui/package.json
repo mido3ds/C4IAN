@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "animejs": "^3.2.1",
+    "apexcharts": "^3.27.2",
     "arwes": "^1.0.0-alpha.5",
     "augmented-ui": "^2.0.0",
     "axios": "^0.21.1",
