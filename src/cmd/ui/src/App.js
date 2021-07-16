@@ -6,6 +6,7 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
+import { codes } from './codes'
 import 'react-notifications/lib/notifications.css';
 
 import './index.css';
@@ -13,9 +14,11 @@ import './App.css';
 
 const tabsComponents = {
   "Map": <Home />,
-  "Units": <Profile type="unit"/>,
+  "Units": <Profile/>,
   "Streams": <Streams/>
 }
+
+const msgs = {2: "Stream start request", 3: "Stream end request" , 4: "Attack" }
 
 function App() {
   const playAudioRef = useRef(null);
@@ -34,7 +37,7 @@ function App() {
   useEffect(() => {
     eventSource.addEventListener("msg", ev => {
         var data = JSON.parse(ev.data)
-        NotificationManager.info(data.src + ": " + data.code);
+        NotificationManager.info(data.src + ": " + codes[data.code]);
     })
     eventSource.addEventListener("audio", ev => {
         var data = JSON.parse(ev.data)
@@ -62,10 +65,11 @@ function App() {
       <NotificationContainer/>
       <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      {selectedTab === "Log Out" ?
+      <Home></Home>
+      {/*{selectedTab === "Log Out" ?
         <LogIn onLogIn={() => { onChange("Map") }} />
         : tabsComponents[selectedTab]
-      }
+      }*/}
     </>
   );
 }

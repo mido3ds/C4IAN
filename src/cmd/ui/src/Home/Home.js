@@ -11,7 +11,7 @@ const HeartBeatThreshold = 60
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
-const numDeltas = 100;
+const numDeltas = 50;
 
 function Home() {
     const mapContainer = useRef(null);
@@ -24,76 +24,111 @@ function Home() {
         var el = document.createElement('div');
         el.className = 'map-unit-inactive';
         window.$(el).bind("click", () => {
-            setSelectedUnit(() => {
-                return { ip: unitIP }
-            })
+            setSelectedUnit(unitIP)
         });
+        
+        setUnits(units => {
+            units[unitIP].inActive = true;
+            units[unitIP].marker.remove()
+            units[unitIP].marker = new mapboxgl.Marker(el)
+                                                .setLngLat([units[unitIP].lng, units[unitIP].lat])
+                                                .addTo(map.current);
 
-        units[unitIP].marker.remove()
-        units[unitIP].marker = new mapboxgl.Marker(el)
-                                            .setLngLat([units[unitIP].lng, units[unitIP].lat])
-                                            .addTo(map.current);
-        NotificationManager.error(unitIP + " is inactive for 2 minutes!");
+            return units;                            
+        })
+
+        NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
     }
 
-    var onDanger = (unitIP) => {
+    var onDanger = (unitIP, units) => {
         var el = document.createElement('div');
         el.className = 'map-unit-danger';
         window.$(el).bind("click", () => {
-            setSelectedUnit(() => {
-                return { ip: unitIP }
-            })
+            setSelectedUnit(unitIP)
         });
 
+        units[unitIP].InDanger = true;
         units[unitIP].marker.remove()
         units[unitIP].marker = new mapboxgl.Marker(el)
                                             .setLngLat([units[unitIP].lng, units[unitIP].lat])
                                             .addTo(map.current);
-        NotificationManager.error(unitIP + " is in danger!!");
+        NotificationManager.error(units[unitIP].name + " is in danger!!");
     }
 
     var onDataChange = (newData) => {
-        setUnits(() => {
-            var unitsCopy = JSON.parse(JSON.stringify(units));
-            if (unitsCopy[newData.src].hasOwnProperty("marker")) {
-                var oldPosition = [unitsCopy[newData.src].lng, unitsCopy[newData.src].lat]
-                var newPosition = [newData.lon, newData.lat]
-                onPositionChange(oldPosition, newPosition, unitsCopy[newData.src].marker)
+        setUnits(units => {
+            if (units[newData.src].hasOwnProperty("marker")) {
+                if(units[newData.src].hasOwnProperty("inActive") && units[newData.src].inActive) {
+                    var el = document.createElement('div');
+                    el.className = 'map-unit' + units[newData.src].groupID;
+                    window.$(el).bind("click", () => {
+                        setSelectedUnit(newData.src)
+                    });
+                    units[newData.src].inActive = false;
+                    units[newData.src].marker.remove()
+                    units[newData.src].marker = new mapboxgl.Marker(el)
+                        .setLngLat([newData.lon, newData.lat])
+                        .addTo(map.current);
+                    NotificationManager.info(units[newData.src].name + " is active now");
+                }
 
-                clearTimeout(unitsCopy[newData.src].timerID);
+                var oldPosition = [units[newData.src].lng, units[newData.src].lat]
+                var newPosition = [newData.lon, newData.lat]
+                onPositionChange(oldPosition, newPosition, units[newData.src].marker)
+
+                clearTimeout(units[newData.src].timerID);
             } else {
                 var el = document.createElement('div');
-                el.className = 'map-unit' + unitsCopy[newData.src].groupID;
+                el.className = 'map-unit' + units[newData.src].groupID;
                 window.$(el).bind("click", () => {
-                    setSelectedUnit(() => {
-                        return { ip: newData.src }
-                    })
+                    setSelectedUnit(newData.src)
                 });
-                unitsCopy[newData.src].marker = new mapboxgl.Marker(el)
+                units[newData.src].marker = new mapboxgl.Marker(el)
                     .setLngLat([newData.lon, newData.lat])
                     .addTo(map.current);
-                map.current.fitBounds(getBounds());
 
+                units[newData.src].lng = newData.lon
+                units[newData.src].lat = newData.lat
+
+                map.current.fitBounds(getBounds(units));
             }
 
-            if(unitsCopy[newData.src].heartbeat < HeartBeatThreshold)
-                onDanger(newData.src)
+            units[newData.src].lng = newData.lon
+            units[newData.src].lat = newData.lat
+            units[newData.src].heartbeat = newData.heartbeat
+            units[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
+
+            if(units[newData.src].heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
+                var el = document.createElement('div');
+                el.className = 'map-unit' + units[newData.src].groupID;
+                window.$(el).bind("click", () => {
+                    setSelectedUnit(newData.src)
+                });
+                units[newData.src].marker.remove()
+                units[newData.src].marker = new mapboxgl.Marker(el)
+                    .setLngLat([newData.lon, newData.lat])
+                    .addTo(map.current);
+
+                units[newData.src].InDanger = false;
+                NotificationManager.info(units[newData.src].name + " is no more in danger");
+            }
+
+            if(units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger)
+                onDanger(newData.src, units)
                 
-            unitsCopy[newData.src].lng = newData.lon
-            unitsCopy[newData.src].lat = newData.lat
-            unitsCopy[newData.src].heartbeat = newData.heartbeat
-            unitsCopy[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
+          
+            
+            return units;
         })
     }
 
-    var getBounds = () => {
+    var getBounds = unitsCopy => {
         var coordinates = []
-        setUnits(() => {
-            for (const [key, value] of Object.entries(units)) {
-                coordinates.push([value.lon, value.lat])
+        for (const [key, value] of Object.entries(unitsCopy)) {
+            if(value.hasOwnProperty("lng") && value.hasOwnProperty("lat")) {
+                coordinates.push([value.lng, value.lat])
             }
-            return units
-        })
+        }
 
         var lngB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
         var latB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
@@ -120,14 +155,10 @@ function Home() {
         var delta = [];
         delta[0] = (destination[0] - origin[0]) / numDeltas;
         delta[1] = (destination[1] - origin[1]) / numDeltas;
-        moveMarker(marker, delta, 0)
+        moveMarker(marker, 0, delta)
     }
 
     useEffect(() => {
-        eventSource.addEventListener("sensors-data", ev => {
-            onDataChange(JSON.parse(ev.data))
-        })
-
         if (map.current) return; // initialize map only once
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
@@ -137,12 +168,16 @@ function Home() {
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
 
-        setUnits(() => {
-            var unitsCopy = {}
+        setUnits(units => {
             unitsList.forEach(unit => {
-                unitsCopy[unit.ip] = {name: unit.name, groupID: unit.group, ip: unit.ip}
+                units[unit.ip] = {name: unit.name, groupID: unit.group, ip: unit.ip}
             });
-            return unitsCopy
+
+            return units
+        })
+
+        eventSource.addEventListener("sensors-data", ev => {
+            onDataChange(JSON.parse(ev.data))
         })
     });
 
