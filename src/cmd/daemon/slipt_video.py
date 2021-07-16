@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+# import imageio
+# imageio.plugins.ffmpeg.download()
+
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClipClip
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 import time
 import os
 
@@ -16,7 +19,7 @@ delete_list_after = []
 for time in times:
     starttime = int(time.split("-")[0])
     endtime = int(time.split("-")[1])
-    new_video_name = sre(times.index(time)+1)+".mp4"
+    new_video_name = str(times.index(time)+1)+".mp4"
     ffmpeg_extract_subclip(VideoFile, starttime, endtime, targetname=new_video_name)
     delete_list_after.append(new_video_name)
 
