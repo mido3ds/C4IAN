@@ -20,7 +20,7 @@ function Control({ unit }) {
 
     var onSendMsg = () => {
         NotificationManager.info(msgs[confirmationMsgCode] + " message will be sent to " + unit.name)
-        postMsg(unit.ip, confirmationMsgCode)
+        postMsg(unit.ip, {code: confirmationMsgCode})
     }
 
     var onSendAudio = (audio) => {
