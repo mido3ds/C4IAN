@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/mido3ds/C4IAN/src/models"
+	"github.com/rs/cors"
 	"gopkg.in/antage/eventsource.v1"
 )
 
@@ -37,8 +37,8 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 
 	// Initialize router
 	router := mux.NewRouter()
-	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost, http.MethodOptions)
-	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost)
+	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/units", api.getUnits).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/groups", api.getGroups).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/memberships", api.getMemberships).Methods(http.MethodGet, http.MethodOptions)
@@ -51,8 +51,14 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router.Use(api.jsonContentType)
 
 	// Listen for HTTP requests
+	c := cors.New(cors.Options{
+		OptionsPassthrough: false,
+		AllowedOrigins:     []string{"http://localhost:3000"},
+		AllowCredentials:   true,
+	})
+	handler := c.Handler(router)
 	address := ":" + strconv.Itoa(port)
-	log.Fatal(http.ListenAndServe(address, handlers.CORS()(router)))
+	log.Fatal(http.ListenAndServe(address, handler))
 }
 
 func (api *API) SendEvent(body models.Event) {
