@@ -34,7 +34,7 @@ class MapPopUp extends React.Component {
                         <div className="info">
                             <Words animate className="info-header"> Health </Words>
                             <div className="info-bar">
-                                <progress className="progress-bar" max="100" value={this.props.selectedUnit.hasOwnProperty("heartbeat") ? this.props.selectedUnit.heartbeat: 0}></progress>
+                                <progress className="progress-bar" max="100" value={this.props.selectedUnit.heartbeat !== 1000 ? this.props.selectedUnit.heartbeat: 0}></progress>
                             </div>
                         </div>
                     </div> </> : 

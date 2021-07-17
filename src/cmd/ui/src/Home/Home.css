@@ -5,6 +5,16 @@
     margin-bottom: -100px;
 }
 
+.map-unit {
+    background-image: url('../images/unit.png');
+    background-size: cover;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-width: 4px;
+    border-style: solid;
+}
+
 .map-unit0 {
     background-image: url('../images/unit.png');
     background-size: cover;

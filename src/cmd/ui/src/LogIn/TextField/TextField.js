@@ -106,7 +106,7 @@ function TextField({onLogIn}) {
             )
         });
         
-        setTimeout(function() {onLogIn()}, 4000)
+        setTimeout(function() {onLogIn("Map")}, 4000)
     }
 
     var enterClick = (event) => {
