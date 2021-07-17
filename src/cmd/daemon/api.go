@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/mido3ds/C4IAN/src/models"
-	"github.com/rs/cors"
 	"gopkg.in/antage/eventsource.v1"
 )
 
@@ -52,7 +52,7 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 
 	// Listen for HTTP requests
 	address := ":" + strconv.Itoa(port)
-	log.Fatal(http.ListenAndServe(address, cors.Default().Handler(router)))
+	log.Fatal(http.ListenAndServe(address, handlers.CORS()(router)))
 }
 
 func (api *API) SendEvent(body models.Event) {
