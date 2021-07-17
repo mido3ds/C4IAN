@@ -28,6 +28,7 @@ n = 0
 if kind == 'r':
     for name, pid in get_nodes():
         n += 1
+        # TODO: load groups file
         print(f'-t {pid} -n ./router/router -i '
               f'{name}-wlan0 -p pass -l /tmp/{name}.router.locsock')
 elif kind == 'u':
