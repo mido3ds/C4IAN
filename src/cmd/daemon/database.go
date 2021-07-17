@@ -83,7 +83,7 @@ func (dbManager *DatabaseManager) UpdateLastActivity(ip string) {
 }
 
 func (dbManager *DatabaseManager) GetUnits() []models.Unit {
-	var units []models.Unit
+	units := make([]models.Unit, 0)
 	err := dbManager.db.Select(
 		&units,
 		`
@@ -105,7 +105,7 @@ func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 }
 
 func (dbManager *DatabaseManager) GetGroups() []models.Group {
-	var groups []models.Group
+	groups := make([]models.Group, 0)
 	err := dbManager.db.Select(
 		&groups,
 		"SELECT * FROM groups",
@@ -117,7 +117,7 @@ func (dbManager *DatabaseManager) GetGroups() []models.Group {
 }
 
 func (dbManager *DatabaseManager) GetMemberships() []models.Membership {
-	var memberships []models.Membership
+	memberships := make([]models.Membership, 0)
 	err := dbManager.db.Select(
 		&memberships,
 		"SELECT * FROM members",
@@ -129,7 +129,7 @@ func (dbManager *DatabaseManager) GetMemberships() []models.Membership {
 }
 
 func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
-	var msgs []models.Message
+	msgs := make([]models.Message, 0)
 	err := dbManager.db.Select(
 		&msgs,
 		`
@@ -147,7 +147,7 @@ func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Messag
 }
 
 func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio {
-	var audios []models.Audio
+	audios := make([]models.Audio, 0)
 	err := dbManager.db.Select(
 		&audios,
 		"SELECT time, body FROM received_audios WHERE src = $1 ORDER BY time",
@@ -160,7 +160,7 @@ func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio 
 }
 
 func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.SensorData {
-	var data []models.SensorData
+	data := make([]models.SensorData, 0)
 	err := dbManager.db.Select(
 		&data,
 		"SELECT time, heartbeat, lat, lon FROM received_sensors_data WHERE src = $1 ORDER BY time",
@@ -173,7 +173,7 @@ func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.
 }
 
 func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video {
-	var videos []models.Video
+	videos := make([]models.Video, 0)
 	err := dbManager.db.Select(
 		&videos,
 		"SELECT time, path, id FROM received_videos WHERE src = $1 ORDER BY time",
