@@ -41,8 +41,9 @@ elif kind == 'c':
     for name, pid in get_nodes():
         if 'c' in name:
             n += 1
+            # TODO: create units/groups files
             print(f'-t {pid} -n ./cmd/daemon/daemon '
-                  f'-s /var/lib/caian/{name}.store.sqllite')
+                  f'-s /var/lib/caian/{name}.store.sqllite --videos-path /var/lib/caian/{name}.videos --units-path /tmp/units.json --groups-path /tmp/groups.json')
 
 if n == 0:
     exit(1)
