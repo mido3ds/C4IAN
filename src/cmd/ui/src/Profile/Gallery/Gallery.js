@@ -41,9 +41,9 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
             })
         } else if (type === "video") {
             if (data) return
-            /*getVideos(unit.ip).then(videos => {
+            getVideos(unit.ip).then(videos => {
                 setData(videos)
-            })*/
+            })
         }
     })
 

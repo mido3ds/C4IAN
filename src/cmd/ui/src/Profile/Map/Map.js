@@ -100,6 +100,9 @@ function Map({ unit }) {
 
     return (
         <>  
+            <div className="no-data-gallery-msg"> 
+                <p> No data to be previewed </p> 
+            </div>: 
             <div className="profile-map-wrapper">
                 <div ref={profileMapContainer} className="profile-map-container" />
             </div>
