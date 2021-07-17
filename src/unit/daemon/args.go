@@ -21,7 +21,7 @@ type Args struct {
 }
 
 func (a *Args) String() string {
-	return fmt.Sprintf("&Args{StorePath: %v, Port: %v, HALSocketPath: %v}", a.storePath, a.port, a.halSocketPath)
+	return fmt.Sprintf("&Args{StorePath: %v, Port: %v, HALSocketPath: %v, CMDAddress: %v, Timeout: %v, RetryOrCloseTimeout: %v}", a.storePath, a.port, a.halSocketPath, a.cmdAddress, a.timeout, a.retryOrCloseTimeout)
 }
 
 func parseArgs() (*Args, error) {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/mido3ds/C4IAN/src/unit/daemon/halapi"
+	"github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
 // TODO: remove

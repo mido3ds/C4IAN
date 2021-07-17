@@ -3,10 +3,13 @@ package main
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mido3ds/C4IAN/src/models"
 )
+
+const InactiveThresholdInSeconds = 60 * 2
 
 type DatabaseManager struct {
 	db *sqlx.DB
@@ -24,17 +27,17 @@ func NewDatabaseManager(dbPath string) *DatabaseManager {
 	return &DatabaseManager{db: db}
 }
 
-func (dbManager *DatabaseManager) Initialize(units []string, groups map[string][]string) {
+func (dbManager *DatabaseManager) Initialize(units []models.Unit, groupMembers map[string][]string) {
 	for _, unit := range units {
 		dbManager.AddUnit(unit)
 	}
-	for group, members := range groups {
+	for group, members := range groupMembers {
 		dbManager.AddGroup(group, members)
 	}
 }
 
-func (dbManager *DatabaseManager) AddUnit(IP string) {
-	dbManager.db.MustExec("INSERT INTO units VALUES ($1)", IP)
+func (dbManager *DatabaseManager) AddUnit(unit models.Unit) {
+	dbManager.db.MustExec("INSERT INTO units VALUES ($1, $2, $3)", unit.IP, unit.Name, 0)
 }
 
 func (dbManager *DatabaseManager) AddGroup(groupIP string, memberIPs []string) {
@@ -72,6 +75,57 @@ func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData
 func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Video) {
 	dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
 		video.Time, src, video.ID, video.Path)
+}
+
+func (dbManager *DatabaseManager) UpdateLastActivity(ip string) {
+	dbManager.db.MustExec("UPDATE units SET last_activity = $1 WHERE ip = $2",
+		time.Now().Unix(), ip)
+}
+
+func (dbManager *DatabaseManager) GetUnits() []models.Unit {
+	var units []models.Unit
+	err := dbManager.db.Select(
+		&units,
+		`
+		SELECT name, ip, $1 - last_activity < $2 as active,
+		ifnull(heartbeat, 1000) as heartbeat,
+		ifnull(lon, 1000) as lon,
+		ifnull(lat, 1000) as lat
+		FROM units LEFT JOIN
+		(SELECT * FROM received_sensors_data)
+		ON ip = src AND last_activity = time
+		`,
+		time.Now().Unix(),
+		InactiveThresholdInSeconds,
+	)
+	if err != nil {
+		log.Panic(err)
+	}
+	return units
+}
+
+func (dbManager *DatabaseManager) GetGroups() []models.Group {
+	var groups []models.Group
+	err := dbManager.db.Select(
+		&groups,
+		"SELECT * FROM groups",
+	)
+	if err != nil {
+		log.Panic(err)
+	}
+	return groups
+}
+
+func (dbManager *DatabaseManager) GetMemberships() []models.Membership {
+	var memberships []models.Membership
+	err := dbManager.db.Select(
+		&memberships,
+		"SELECT * FROM members",
+	)
+	if err != nil {
+		log.Panic(err)
+	}
+	return memberships
 }
 
 func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
