@@ -14,24 +14,6 @@ export function postAudioMsg(ip, audio) {
     });
 }
 
-export function getUnits() {
-    axios.get(baseURL + "units/").then((response) => {
-        return response.data;
-    });
-}
-
-export function getGroups() {
-    axios.get(baseURL + "groups/").then((response) => {
-        return response.data;
-    });
-}
-
-export function getMembers() {
-    axios.get(baseURL + "groups/").then((response) => {
-        return response.data;
-    });
-}
-
 export function getAudioMsgs(ip) {
     axios.get(baseURL + "audio-msgs/"+ ip).then((response) => {
         return response.data;

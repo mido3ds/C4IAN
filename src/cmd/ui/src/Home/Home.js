@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import MapPopup from './MapPopUp/MapPopUp'
 import GroupSelect from '../GroupSelect/GroupSelect'
-import { NotificationManager } from 'react-notifications';
-import { getUnits, getMembers } from '../Api/Api'
-import { groupIDs } from '../groupIDs'
+import {NotificationManager} from 'react-notifications';
+import { unitsList } from '../units'
+
 import './Home.css'
 
 const HeartBeatThreshold = 60
@@ -26,15 +26,15 @@ function Home() {
         window.$(el).bind("click", () => {
             setSelectedUnit(unitIP)
         });
-
+        
         setUnits(units => {
-            units[unitIP].active = false;
+            units[unitIP].inActive = true;
             units[unitIP].marker.remove()
             units[unitIP].marker = new mapboxgl.Marker(el)
-                .setLngLat([units[unitIP].lng, units[unitIP].lat])
-                .addTo(map.current);
+                                                .setLngLat([units[unitIP].lng, units[unitIP].lat])
+                                                .addTo(map.current);
 
-            return units;
+            return units;                            
         })
 
         NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
@@ -50,26 +50,25 @@ function Home() {
         units[unitIP].InDanger = true;
         units[unitIP].marker.remove()
         units[unitIP].marker = new mapboxgl.Marker(el)
-            .setLngLat([units[unitIP].lng, units[unitIP].lat])
-            .addTo(map.current);
+                                            .setLngLat([units[unitIP].lng, units[unitIP].lat])
+                                            .addTo(map.current);
         NotificationManager.error(units[unitIP].name + " is in danger!!");
     }
 
     var onDataChange = (newData) => {
         setUnits(units => {
             if (units[newData.src].hasOwnProperty("marker")) {
-                if (!units[newData.src].active) {
+                if(units[newData.src].hasOwnProperty("inActive") && units[newData.src].inActive) {
                     var el = document.createElement('div');
-                    el.className = units[newData.src].hasOwnProperty("groupID") ? "map-unit" + toString(units[newData.src].groupID) :
-                                                                                  "map-unit";
+                    el.className = 'map-unit' + units[newData.src].groupID;
                     window.$(el).bind("click", () => {
                         setSelectedUnit(newData.src)
                     });
-                    units[newData.src].active = true;
+                    units[newData.src].inActive = false;
                     units[newData.src].marker.remove()
                     units[newData.src].marker = new mapboxgl.Marker(el)
-                                                    .setLngLat([newData.lon, newData.lat])
-                                                    .addTo(map.current);
+                        .setLngLat([newData.lon, newData.lat])
+                        .addTo(map.current);
                     NotificationManager.info(units[newData.src].name + " is active now");
                 }
 
@@ -80,8 +79,7 @@ function Home() {
                 clearTimeout(units[newData.src].timerID);
             } else {
                 var el = document.createElement('div');
-                el.className = units[newData.src].hasOwnProperty("groupID") ? "map-unit" + toString(units[newData.src].groupID) :
-                                                                              "map-unit";
+                el.className = 'map-unit' + units[newData.src].groupID;
                 window.$(el).bind("click", () => {
                     setSelectedUnit(newData.src)
                 });
@@ -100,10 +98,9 @@ function Home() {
             units[newData.src].heartbeat = newData.heartbeat
             units[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
 
-            if (units[newData.src].heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
+            if(units[newData.src].heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
                 var el = document.createElement('div');
-                el.className = units[newData.src].hasOwnProperty("groupID") ? "map-unit" + toString(units[newData.src].groupID) :
-                                                                              "map-unit";
+                el.className = 'map-unit' + units[newData.src].groupID;
                 window.$(el).bind("click", () => {
                     setSelectedUnit(newData.src)
                 });
@@ -116,9 +113,9 @@ function Home() {
                 NotificationManager.info(units[newData.src].name + " is no more in danger");
             }
 
-            if (units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger)
+            if(units[newData.src].heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger)
                 onDanger(newData.src, units)
-
+                
             return units;
         })
     }
@@ -126,7 +123,7 @@ function Home() {
     var getBounds = unitsCopy => {
         var coordinates = []
         for (const [key, value] of Object.entries(unitsCopy)) {
-            if (value.lng !== 1000 && value.lat !== 1000) {
+            if(value.hasOwnProperty("lng") && value.hasOwnProperty("lat")) {
                 coordinates.push([value.lng, value.lat])
             }
         }
@@ -172,40 +169,12 @@ function Home() {
             onDataChange(JSON.parse(ev.data))
         })
 
-        var initialData = []//getUnits()
-        var members = [] //getMembers()
-
         setUnits(units => {
-            initialData.forEach(unit => {
-                units[unit.ip] = { name: unit.name, ip: unit.ip, active: unit.active, lng: unit.lon, lat: unit.lat, heartBeat: unit.heartbeat }
+            unitsList.forEach(unit => {
+              units[unit.ip] = { name: unit.name, groupID: unit.group, ip: unit.ip }
             });
-
-            members.forEach(membership => {
-                units[membership.unitIP] = { ...units[membership.unitIP], groupID: groupIDs[membership.groupIP] }
-            });
-
-            map.current.fitBounds(getBounds(units));
-
-            for (const unitIP in units) {
-                if(units[unitIP].lng !== 1000 && units[unitIP].lat !== 1000) {
-                    var el = document.createElement('div');
-                    el.className = units[unitIP].heartbeat < HeartBeatThreshold ? "map-unit-danger" :
-                                   !units[unitIP].active ? "map-unit-inactive" :
-                                   units[unitIP].hasOwnProperty("groupID") ? 'map-unit' + toString(units[unitIP].groupID) :
-                                   "map-unit";
-
-                    window.$(el).bind("click", () => {
-                        setSelectedUnit(unitIP)
-                    });
-
-                    units[unitIP].marker = new mapboxgl.Marker(el)
-                        .setLngLat([units[unitIP].lng, units[unitIP].lat])
-                        .addTo(map.current);
-                }
-            }
-
             return units
-        }) 
+          })
     });
 
     return (

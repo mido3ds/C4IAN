@@ -13,52 +13,37 @@ import 'react-notifications/lib/notifications.css';
 import './index.css';
 import './App.css';
 
-const tabsComponents = {
-  "Map": <Home />,
-  "Units": <Profile />,
-  "Streams": <Streams />,
-  "Log Out": <LogIn />,
-}
 
-class App extends React.Component {
-  constructor(props) {
-    super(props)
+function App() {
+  const playAudioRef = useRef(null);
 
-    this.state = {
-      audioModalName: null,
-      audioModalData: null,
-      selectedTab: "Log Out",
-      eventSource: new EventSource("http://localhost:3170/events")
-    }
+  const [audioModalName, setAudioModalName] = useState(null)
+  const [audioModalData, setAudioModalData] = useState(null)
 
-    this.playAudioRef = React.createRef()
-    this.onChange = this.onChange.bind(this)
+  const [selectedTab, setSelectedTab] = useState("Log Out")
+  const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
+
+  var onPlayAudio = (name, data) => {
+    setAudioModalName(name);
+    setAudioModalData(data);
+    playAudioRef.current.openModal()
   }
 
-
-  onPlayAudio(name, data) {
-    this.setState({ audioModalName: name })
-    this.setState({ audioModalData: data })
-
-    this.playAudioRef.current.openModal()
-  }
-
-  componentDidMount() {
-    this.state.eventSource.addEventListener("msg", ev => {
+  useEffect(() => {
+    eventSource.addEventListener("msg", ev => {
       var data = JSON.parse(ev.data)
       NotificationManager.info(data.src + ": " + codes[data.code]);
     })
-    this.state.eventSource.addEventListener("audio", ev => {
+    eventSource.addEventListener("audio", ev => {
       var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => this.onPlayAudio(data.src, data.body), true);
+      NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
     })
-  }
+  })
 
-  onChange = (selectedTab) => {
-    console.log(selectedTab)
-    this.setState({ selectedTab: selectedTab })
+  var onChange = (selectedTab) => {
+    setSelectedTab(selectedTab)
 
-    if (this.state.selectedTab === "Log Out") {
+    if (selectedTab === "Log Out") {
       window.$('.menu').css('visibility', 'hidden')
     } else {
       window.$('.menu').css('visibility', 'visible')
@@ -70,23 +55,24 @@ class App extends React.Component {
     }
   }
 
-  render() {
-    return (
-      <>
-        <NotificationContainer />
-        <PlayAudio name={this.state.audioModalName} audioBolb={this.state.audioModalData} ref={this.playAudioRef}></PlayAudio>
-        <Menu onChange={this.onChange}> </Menu>
-
-        {
-          React.cloneElement(
-            tabsComponents[this.state.selectedTab],
-            { onLogIn: this.setState({selectedTab: "Map"})}
-        )
-        }
-      </>
-    );
-  }
-
+  return (
+    <>
+      <NotificationContainer />
+      <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
+      <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
+      {
+        selectedTab === "Log Out" ?
+          <LogIn onLogIn={() => { onChange("Map") }} />
+          : selectedTab === "Map" ?
+            <Home />
+            : selectedTab === "Units" ?
+              <Profile />
+              : selectedTab === "Streams" ?
+                <Streams />
+                : <> </>
+      }
+    </>
+  );
 }
 
 export default App;
