@@ -13,6 +13,7 @@ function UnitList({ onChange, type }) {
     const [units, setUnits] = useState([]);
 
     useEffect(() => {
+        if ( units.length ) return
         getUnits().then(initialData => {
             setUnits(units => {
                 initialData.forEach(unit => {

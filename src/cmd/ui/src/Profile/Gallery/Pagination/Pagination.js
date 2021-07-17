@@ -21,7 +21,7 @@ function Pagination({ dataSize, paginate }) {
       incButton.classList.replace('custom-btn', 'custom-btn-disabled');
     }
     
-  }, [pageNumber]);
+  }, [pageNumber, hasNext]);
 
   const btnClick = (inc) => {
     var paginationWrapper = document.querySelector('.pagination-wrapper');

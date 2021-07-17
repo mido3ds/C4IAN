@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React from 'react';
 import Chart from 'react-apexcharts'
 import { getSensorsData } from '../../Api/Api'
 import moment from 'moment'
@@ -9,13 +9,13 @@ class HeartBeatChart extends React.Component {
     getData() {
         if (this.props.unit) {
             getSensorsData(this.props.unit.ip).then(sensorData => {
-                console.log(sensorData)
                 if (!sensorData || !sensorData.length) return null;
-                var data = [] 
+                var data = []
                 var time = []
+                console.log(sensorData)
                 sensorData.forEach((item, index) => {
                     data.push(item.heartbeat)
-                    time.push(moment.unix(item.time).format('hh:mm:ss'))
+                    time.push(moment.unix(item.time).format('hh:mm'))
                 })
                 return { data: data, time: time }
             })
@@ -23,14 +23,63 @@ class HeartBeatChart extends React.Component {
         }
     }
 
+    componentDidMount() {
+        var data = []
+        var time = []
+        if (!this.props.unit) return
+
+        getSensorsData(this.props.unit.ip).then(sensorData => {
+            if (!sensorData || !sensorData.length) return null;
+            sensorData.forEach((item, index) => {
+                data.push(item.heartbeat)
+                time.push(item.time)
+            })
+        })
+        if (!data || !time) return
+        console.log(time)
+        this.setState({
+            series: [{
+                data: data
+            }],
+            options: {
+                chart: {
+                    height: 500,
+                    type: 'line',
+                    zoom: {
+                        enabled: false
+                    },
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                stroke: {
+                    curve: 'straight'
+                },
+                grid: {
+                    show: true,
+                    borderColor: 'rgb(25, 158, 154)',
+                    position: 'back',
+                },
+                xaxis: {
+                    show: false,
+                    categories: time,
+                    labels: {
+                        show: true,
+                        formatter: function(val) {
+                            return moment.unix(time[val]).format('hh:mm:ss') // formats to hours:minutes
+                        } 
+                    }
+                }
+            },
+        });
+    }
+
     constructor(props) {
         super(props);
-        var graphData = this.getData()
-        if (!graphData) return
-        
+
         this.state = {
             series: [{
-                data: graphData.data
+                data: []
             }],
             options: {
                 chart: {
@@ -64,10 +113,10 @@ class HeartBeatChart extends React.Component {
                     },
                 },
                 xaxis: {
-                    categories: graphData.time,
+                    categories: [],
                 }
             },
-        };
+        }
     }
 
     render() {

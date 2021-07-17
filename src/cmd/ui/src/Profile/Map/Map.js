@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
-import './Map.css'
 import { getSensorsData } from '../../Api/Api'
+import './Map.css'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
@@ -11,70 +11,95 @@ function Map({ unit }) {
 
     var getCoordinates = () => {
         if (unit) {
+            var coordinates = []
             getSensorsData(unit.ip).then(sensorData => {
-                var coordinates = []
                 if (!sensorData || !sensorData.length) return null;
                 sensorData.forEach((item, index) => {
-                    coordinates.push([item.loc_x, item.loc_y])
+                    coordinates.push([item.lon, item.lat])
                 })
-                return coordinates
             })
+            return coordinates
         }
         return null;
     }
 
-    useEffect(() => {
-        const coordinates = getCoordinates()
-
-        if (!coordinates || !coordinates.length) return
-        if (map.current) return;
-
-        var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
-        center[0] -= 0.005
-        map.current = new mapboxgl.Map({
-            container: profileMapContainer.current,
-            style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
-            center: center,
-            zoom: 15
+    var getBounds = coordinates => {
+        var lngB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
+        var latB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
+        coordinates.map((coordinate) => {
+            if (coordinate[0] < lngB[0]) lngB[0] = coordinate[0];
+            if (coordinate[0] > lngB[1]) lngB[1] = coordinate[0];
+            if (coordinate[1] < latB[0]) latB[0] = coordinate[1];
+            if (coordinate[1] > latB[1]) latB[1] = coordinate[1];
+            return coordinates
         });
 
-        map.current.on('load', function () {
-            map.current.addSource('route', {
-                'type': 'geojson',
-                'data': {
-                    'type': 'Feature',
-                    'properties': {},
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': coordinates
+        return [[lngB[0] - 2, latB[0] - 2], [lngB[1] + 2, latB[1] + 2]]
+    }
+
+    useEffect(() => {
+        if(!unit) return
+        var coordinates = []
+        getSensorsData(unit.ip).then(sensorData => {
+            if (!sensorData || !sensorData.length) return null;
+            sensorData.forEach((item, index) => {
+                coordinates.push([item.lon, item.lat])
+            })
+            if (coordinates === null) return
+
+            if (map.current) return;
+
+            var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
+            center[0] -= 0.005
+
+            map.current = new mapboxgl.Map({
+                container: profileMapContainer.current,
+                style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
+                center: center,
+                zoom: 7
+            });
+
+            map.current.addControl(new mapboxgl.FullscreenControl());
+            map.current.addControl(new mapboxgl.NavigationControl());
+
+            map.current.fitBounds(getBounds(coordinates));
+    
+            map.current.on('load', function () {
+                map.current.addSource('route', {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'Feature',
+                        'properties': {},
+                        'geometry': {
+                            'type': 'LineString',
+                            'coordinates': coordinates
+                        }
                     }
-                }
-            });
-
-            map.current.addLayer({
-                'id': 'route',
-                'type': 'line',
-                'source': 'route',
-                'layout': {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                'paint': {
-                    'line-color': '#888',
-                    'line-width': 8
-                }
-            });
+                });
+    
+                map.current.addLayer({
+                    'id': 'route',
+                    'type': 'line',
+                    'source': 'route',
+                    'layout': {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    'paint': {
+                        'line-color': '#888',
+                        'line-width': 8
+                    }
+                });
+            })
+            new mapboxgl.Marker({ color: 'black' })
+                .setLngLat(coordinates[coordinates.length - 1])
+                .addTo(map.current);
+    
         })
-        var marker = new mapboxgl.Marker({ color: 'black' })
-            .setLngLat(coordinates[coordinates.length - 1])
-            .addTo(map.current);
-
     })
 
     return (
-        <>  <div className="no-data-map-msg">
-            <p> No data to be previewed </p>
-        </div>
+        <>  
             <div className="profile-map-wrapper">
                 <div ref={profileMapContainer} className="profile-map-container" />
             </div>

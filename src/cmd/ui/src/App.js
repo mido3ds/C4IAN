@@ -21,7 +21,7 @@ function App() {
   const [audioModalData, setAudioModalData] = useState(null)
 
   const [selectedTab, setSelectedTab] = useState("Map")
-  const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
+  const [eventSource] = useState(new EventSource("http://localhost:3170/events"))
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);

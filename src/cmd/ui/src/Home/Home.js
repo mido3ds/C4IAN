@@ -18,7 +18,7 @@ function Home() {
     const map = useRef(null);
     const [units, setUnits] = useState({})
     const [selectedUnit, setSelectedUnit] = useState(null);
-    const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
+    const [eventSource] = useState(new EventSource("http://localhost:3170/events"))
 
     var onTimeout = (unitIP) => {
         setUnits(units => {
@@ -84,7 +84,7 @@ function Home() {
 
     var getBounds = unitsCopy => {
         var coordinates = []
-        for (const [key, value] of Object.entries(unitsCopy)) {
+        for (const value of Object.values(unitsCopy)) {
             if (value.lng !== 1000 && value.lat !== 1000) {
                 coordinates.push([value.lng, value.lat])
             }
@@ -95,11 +95,12 @@ function Home() {
 
         var lngB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
         var latB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
-        coordinates.map((c) => {
-            if (c[0] < lngB[0]) lngB[0] = c[0];
-            if (c[0] > lngB[1]) lngB[1] = c[0];
-            if (c[1] < latB[0]) latB[0] = c[1];
-            if (c[1] > latB[1]) latB[1] = c[1];
+        coordinates.map((coordinate) => {
+            if (coordinate[0] < lngB[0]) lngB[0] = coordinate[0];
+            if (coordinate[0] > lngB[1]) lngB[1] = coordinate[0];
+            if (coordinate[1] < latB[0]) latB[0] = coordinate[1];
+            if (coordinate[1] > latB[1]) latB[1] = coordinate[1];
+            return coordinate
         });
 
         return [[lngB[0] - 2, latB[0] - 2], [lngB[1] + 2, latB[1] + 2]]
@@ -125,7 +126,8 @@ function Home() {
     }
 
     useEffect(() => {
-        if (map.current) return; // initialize map only once
+        if (Object.keys(units).length ) return
+        if (map.current) return; 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: 'mapbox://styles/ahmedafifi/ckr0krxez6p641ao9vl2p71vf',

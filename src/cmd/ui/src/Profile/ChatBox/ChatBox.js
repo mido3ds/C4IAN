@@ -1,11 +1,11 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import uImage from '../../images/unit.png';
 import { getMsgs } from '../../Api/Api'
 import moment from 'moment';
 import { receivedCodes } from '../../codes'
 import './ChatBox.css'
 
-const sentCodes = {2: "Start Streming", 3: "End Streaming" , 4: "Attack" }
+const sentCodes = { 2: "Start Streming", 3: "End Streaming", 4: "Attack" }
 
 function ChatBox({ unit }) {
     const [msgs, setMsgs] = useState(null)
@@ -13,16 +13,15 @@ function ChatBox({ unit }) {
     useEffect(() => {
         if (unit) {
             getMsgs(unit.ip).then(msgsData => {
-                console.log("hello")
-                setMsgs( msgs => {
-                    if(!msgsData || !msgsData.length) {
-                        window.$('.chat-container').css('overflow-y', 'hidden')
-                    } else {
-                        window.$('.chat-container').css('overflow-y', 'scroll')
-                        var element = document.querySelector(".chat-container");
-                        element.scrollTop = element.scrollHeight;
-                    }
-                })
+                setMsgs(msgsData)
+                if (!msgsData || !msgsData.length) {
+                    window.$('.chat-container').css('overflow-y', 'hidden')
+                } else {
+                    window.$('.chat-container').css('overflow-y', 'scroll')
+                    var element = document.querySelector(".chat-container");
+                    if(element) element.scrollTop = element.scrollHeight;
+                }
+                return
             })
         }
     })

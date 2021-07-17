@@ -35,10 +35,12 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
     useEffect(() => {
         if(!unit) return
         if(type === "audio") {
+            if (data) return
             getAudioMsgs(unit.ip).then(audios => {
                 setData(audios)
             })
         } else if (type === "video") {
+            if (data) return
             /*getVideos(unit.ip).then(videos => {
                 setData(videos)
             })*/
