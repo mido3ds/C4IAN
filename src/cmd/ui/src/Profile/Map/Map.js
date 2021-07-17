@@ -5,27 +5,30 @@ import { getSensorsData } from '../../Api/Api'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
-function Map({unit}) {
+function Map({ unit }) {
     const profileMapContainer = useRef(null);
     const map = useRef(null);
 
     var getCoordinates = () => {
-        if (unit) { 
-            var sensorData = getSensorsData(unit.ip)
-            var coordinates = []
-            if(!sensorData || !sensorData.length) return null;
-            sensorData.forEach((item, index) => {
-                coordinates.push([item.loc_x, item.loc_y])
+        if (unit) {
+            getSensorsData(unit.ip).then(sensorData => {
+                var coordinates = []
+                if (!sensorData || !sensorData.length) return null;
+                sensorData.forEach((item, index) => {
+                    coordinates.push([item.loc_x, item.loc_y])
+                })
+                return coordinates
             })
-            return coordinates
         }
         return null;
     }
 
     useEffect(() => {
         const coordinates = getCoordinates()
-        if(!coordinates || !coordinates.length) return
-        if (map.current) return; 
+
+        if (!coordinates || !coordinates.length) return
+        if (map.current) return;
+
         var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
         center[0] -= 0.005
         map.current = new mapboxgl.Map({
@@ -62,16 +65,16 @@ function Map({unit}) {
                 }
             });
         })
-        var marker = new mapboxgl.Marker({color: 'black'})
-                .setLngLat(coordinates[coordinates.length - 1])
-                .addTo(map.current);
+        var marker = new mapboxgl.Marker({ color: 'black' })
+            .setLngLat(coordinates[coordinates.length - 1])
+            .addTo(map.current);
 
     })
 
     return (
-        <>  <div className="no-data-map-msg"> 
-                <p> No data to be previewed </p> 
-            </div>
+        <>  <div className="no-data-map-msg">
+            <p> No data to be previewed </p>
+        </div>
             <div className="profile-map-wrapper">
                 <div ref={profileMapContainer} className="profile-map-container" />
             </div>

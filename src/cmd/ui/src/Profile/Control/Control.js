@@ -23,7 +23,7 @@ function Control({ unit }) {
         postMsg(unit.ip, {code: confirmationMsgCode,})
     }
 
-    var blobToBase64 = function(blob, callback) {
+    var blobToBase64 = (blob, callback) => {
         var reader = new FileReader();
         reader.onload = function() {
             var dataUrl = reader.result;
