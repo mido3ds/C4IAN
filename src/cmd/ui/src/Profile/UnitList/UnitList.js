@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import UnitItem from "../UnitItem/UnitItem.js"
-import './UnitList.css';
+import { getUnits } from '../../Api/Api.js';
 import anime from 'animejs'
-import { unitsList }  from '../../units'
 
-function UnitList({onChange, type}) {
+import './UnitList.css';
+
+function UnitList({ onChange, type }) {
     const [firstUnit, setFirstUnit] = useState(null)
     const [secondUnit, setSecondUnit] = useState(null)
     const [thirdUnit, setThirdUnit] = useState(null)
     const [activeUnit, setActiveUnit] = useState(0);
-    const [units, setUnits] = useState(null);
+    const [units, setUnits] = useState([]);
 
     useEffect(() => {
-        setUnits(() => {
-            var unitsCopy = []
-            unitsList.forEach(unit => {
-                unitsCopy.push({name: unit.name, ip: unit.ip})
-            });
-            onChange(unitsCopy[0])
-            setFirstUnit(unitsCopy[unitsCopy.length - 1])
-            setSecondUnit(unitsCopy[0])
-            setThirdUnit(unitsCopy[1])
-            return unitsCopy
+        getUnits().then(initialData => {
+            setUnits(units => {
+                initialData.forEach(unit => {
+                    units.push({ name: unit.name, ip: unit.ip})
+                });
+                
+                onChange(units[0])
+                setFirstUnit(units[units.length - 1])
+                setSecondUnit(units[0])
+                setThirdUnit(units[1])
+                return units
+            })
         })
-    },[])
+    })
 
     var circularAddition = (Augend, Addend, len) => {
         return (Augend + Addend) % len;
@@ -44,8 +47,7 @@ function UnitList({onChange, type}) {
                 opacity: '40%',
                 duration: 3000,
             })
-            setThirdUnit(units[circularSubtract(activeUnit, 2, units.length)])
-            
+
             anime({
                 targets: cards[0],
                 scaleX: 1,
@@ -54,7 +56,6 @@ function UnitList({onChange, type}) {
                 opacity: '100%',
                 duration: 3000,
             })
-            setFirstUnit(units[circularSubtract(activeUnit, 1, units.length)])
 
             anime({
                 targets: cards[1],
@@ -64,9 +65,15 @@ function UnitList({onChange, type}) {
                 opacity: '40%',
                 duration: 3000,
             })
-            setSecondUnit(units[activeUnit])
 
-            onChange(units[circularSubtract(activeUnit, 1, units.length)])
+            setUnits(units => {
+                setFirstUnit(units[circularSubtract(activeUnit, 1, units.length)])
+                setSecondUnit(units[activeUnit])
+                setThirdUnit(units[circularSubtract(activeUnit, 2, units.length)])
+                onChange(units[circularSubtract(activeUnit, 1, units.length)])
+                return units
+            })
+
             return circularSubtract(activeUnit, 1, units.length)
         })
     }
@@ -84,7 +91,6 @@ function UnitList({onChange, type}) {
                 opacity: '40%',
                 duration: 3000,
             })
-            setSecondUnit(units[activeUnit])
 
             anime({
                 targets: cards[2],
@@ -94,7 +100,6 @@ function UnitList({onChange, type}) {
                 opacity: '100%',
                 duration: 3000,
             })
-            setThirdUnit(units[circularAddition(activeUnit, 1, units.length)])
 
             anime({
                 targets: cards[0],
@@ -104,9 +109,14 @@ function UnitList({onChange, type}) {
                 top: [350, 295],
                 duration: 3000,
             })
-            setFirstUnit(units[circularAddition(activeUnit, 2, units.length)])
 
-            onChange(units[circularAddition(activeUnit, 1, units.length)])
+            setUnits(units => {
+                setFirstUnit(units[circularAddition(activeUnit, 2, units.length)])
+                setSecondUnit(units[activeUnit])
+                setThirdUnit(units[circularAddition(activeUnit, 1, units.length)])
+                onChange(units[circularAddition(activeUnit, 1, units.length)])
+                return units
+            })
             return circularAddition(activeUnit, 1, units.length)
         })
     }
@@ -118,9 +128,9 @@ function UnitList({onChange, type}) {
                 <i onClick={up} className="fas fa-caret-up fa-lg unit-list-upper-arrow arrow-active"></i>
             </div>
             <div id="card-slider" className="unit-list-area">
-                <UnitItem unit={firstUnit}/>
-                <UnitItem unit={secondUnit}/>
-                <UnitItem unit={thirdUnit}/>
+                <UnitItem unit={firstUnit} />
+                <UnitItem unit={secondUnit} />
+                <UnitItem unit={thirdUnit} />
             </div>
             <div className="unit-list-lower-arrow-area area-active">
                 <i onClick={down} className="fas fa-caret-down fa-lg unit-list-lower-arrow arrow-active"></i>

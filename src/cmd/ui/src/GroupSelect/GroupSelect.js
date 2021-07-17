@@ -19,12 +19,14 @@ function GroupSelect() {
     const [groups, setGroups] = useState([])
 
     useEffect(() => {
-        setGroups(getGroups())
-        var items = document.querySelectorAll('.circle img');
-        for (var i = 0, l = items.length; i < l; i++) {
-            items[i].style.left = (50 - 30 * Math.cos(-0.5 * Math.PI - 2 * (1 / l) * i * Math.PI)).toFixed(4) + "%";
-            items[i].style.top = (50 + 30 * Math.sin(-0.5 * Math.PI - 2 * (1 / l) * i * Math.PI)).toFixed(4) + "%";
-        }
+        getGroups().then(data => {
+            setGroups(data)
+            var items = document.querySelectorAll('.circle img');
+            for (var i = 0, l = items.length; i < l; i++) {
+                items[i].style.left = (50 - 30 * Math.cos(-0.5 * Math.PI - 2 * (1 / l) * i * Math.PI)).toFixed(4) + "%";
+                items[i].style.top = (50 + 30 * Math.sin(-0.5 * Math.PI - 2 * (1 / l) * i * Math.PI)).toFixed(4) + "%";
+            }
+        })
     })
 
     var handleButton = (e) => {
@@ -32,16 +34,31 @@ function GroupSelect() {
         document.querySelector('.circle').classList.toggle('open');
     }
 
+    var blobToBase64 = (blob, callback) => {
+        var reader = new FileReader();
+        reader.onload = function() {
+            var dataUrl = reader.result;
+            var base64 = dataUrl.split(',')[1];
+            callback(base64);
+        };
+        reader.readAsDataURL(blob);
+    };
+
     var onGroupIconClick = (group) => {
         setChosenGroup(group)
         recordAudioRef.current.openModal();
+    }
+
+    var sendAudio = (audio) => {
+        console.log(chosenGroup.ip, chosenGroup)
+        postAudioMsg(chosenGroup.ip, { body: audio })
     }
 
     var onSendAudio = (audio) => {
         var notificationMsg = chosenGroup.id === "broadcast" ? "Your audio message will be sent to all units." :
             "Your audio message will be sent to the " + chosenGroup.id + " group."
         NotificationManager.info(notificationMsg)
-        postAudioMsg(chosenGroup.ip, { body: audio })
+        blobToBase64(audio, sendAudio)
     }
 
     return (

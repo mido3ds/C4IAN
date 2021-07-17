@@ -2,25 +2,28 @@ import React, { useRef, useEffect, useState } from 'react';
 import uImage from '../../images/unit.png';
 import { getMsgs } from '../../Api/Api'
 import moment from 'moment';
+import { receivedCodes } from '../../codes'
 import './ChatBox.css'
 
-const msgs = {2: "Start Streming", 3: "End Streaming" , 4: "Attack" }
+const sentCodes = {2: "Start Streming", 3: "End Streaming" , 4: "Attack" }
 
 function ChatBox({ unit }) {
     const [msgs, setMsgs] = useState(null)
 
     useEffect(() => {
         if (unit) {
-            setMsgs(()=> {
-                var msgsData = getMsgs(unit.ip)
-                if(!msgsData || !msgsData.length) {
-                    window.$('.chat-container').css('overflow-y', 'hidden')
-                } else {
-                    window.$('.chat-container').css('overflow-y', 'scroll')
-                }
+            getMsgs(unit.ip).then(msgsData => {
+                console.log("hello")
+                setMsgs( msgs => {
+                    if(!msgsData || !msgsData.length) {
+                        window.$('.chat-container').css('overflow-y', 'hidden')
+                    } else {
+                        window.$('.chat-container').css('overflow-y', 'scroll')
+                        var element = document.querySelector(".chat-container");
+                        element.scrollTop = element.scrollHeight;
+                    }
+                })
             })
-            var element = document.querySelector(".chat-container");
-            element.scrollTop = element.scrollHeight;
         }
     })
 
@@ -34,7 +37,7 @@ function ChatBox({ unit }) {
                                 {msg.sent ?
                                     <li className="chat-right">
                                         <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
-                                        <div className="chat-text"> {msgs[msg.code]} </div>
+                                        <div className="chat-text"> {sentCodes[msg.code]} </div>
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> Me </div>
@@ -45,7 +48,7 @@ function ChatBox({ unit }) {
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> {unit.name.substr(0, unit.name.indexOf(' '))} </div>
                                         </div>
-                                        <div className="chat-text"> {msgs[msg.code]} </div>
+                                        <div className="chat-text"> {receivedCodes[msg.code]} </div>
                                         <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
                                     </li>
                                 }
