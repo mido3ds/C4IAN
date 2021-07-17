@@ -6,7 +6,7 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
-import { codes } from './codes'
+import { receivedCodes } from './codes'
 
 import 'react-notifications/lib/notifications.css';
 
@@ -20,7 +20,7 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
 
-  const [selectedTab, setSelectedTab] = useState("Log Out")
+  const [selectedTab, setSelectedTab] = useState("Map")
   const [eventSource, setEventSource] = useState(new EventSource("http://localhost:3170/events"))
 
   var onPlayAudio = (name, data) => {
@@ -30,9 +30,16 @@ function App() {
   }
 
   useEffect(() => {
+    window.$('.menu').css('visibility', 'visible')
+    window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
+
+    window.$('.menu .item span')
+        .filter(function (idx) { return this.innerHTML === selectedTab })
+        .addClass('selected')
+
     eventSource.addEventListener("msg", ev => {
       var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + ": " + codes[data.code]);
+      NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
     })
     eventSource.addEventListener("audio", ev => {
       var data = JSON.parse(ev.data)

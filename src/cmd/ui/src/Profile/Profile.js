@@ -6,7 +6,7 @@ import Gallery from './Gallery/Gallery'
 import Control from './Control/Control'
 import Map from './Map/Map'
 import ChatBox from './ChatBox/ChatBox'
-import HeartBeatChart from './HeartBeatChart/HearBeatChart'
+import HeartBeatChart from './HeartBeatChart/HeartBeatChart'
 import {
     withStyles,
     Arwes,
