@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import RecordAudio from '../RecordAudio/RecordAudio'
+import GetRadius from '../GetRadius/GetRadius';
 import { postAudioMsg } from '../Api/Api'
 import { NotificationManager } from 'react-notifications';
 import { getGroups } from '../Api/Api'
@@ -15,6 +16,8 @@ const srcImages = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My
 
 function GroupSelect() {
     const recordAudioRef = useRef(null);
+    const getRadiusRef = useRef(null);
+
     const [chosenGroup, setChosenGroup] = useState(null)
     const [groups, setGroups] = useState([])
 
@@ -35,9 +38,22 @@ function GroupSelect() {
         document.querySelector('.circle').classList.toggle('open');
     }
 
+    var onGetRadius = (radius) => {
+        setChosenGroup(group => {
+            group.ip = "255.255." + (radius >> 8).toString(10) + "." + (radius & 0xff).toString(10)
+            return group
+        })
+        recordAudioRef.current.openModal();
+    }
+
     var onGroupIconClick = (group) => {
         setChosenGroup(group)
-        recordAudioRef.current.openModal();
+
+        if(group.id === "broadcast") {
+            getRadiusRef.current.open();
+        } else {
+            recordAudioRef.current.openModal();
+        }
     }
 
     var onSendAudio = (audio) => {
@@ -50,6 +66,7 @@ function GroupSelect() {
     return (
         <>
             <RecordAudio onSend={onSendAudio} ref={recordAudioRef}></RecordAudio>
+            <GetRadius onGetRadius={onGetRadius} ref={getRadiusRef}> </GetRadius>
             {groups ? <nav class="circular-menu">
                 <div class="circle">
                     {groups.map((group, index) => {
