@@ -21,7 +21,7 @@ function GalleryItem({ type, data, time, name }) {
 
     var playMedia = () => {
         if (type === "audio") {
-            playAudioRef.current.openModal()
+            playAudioRef.current.open()
         } else if (type === "video") {
             playVideoRef.current.open()
         }
@@ -31,7 +31,7 @@ function GalleryItem({ type, data, time, name }) {
         <>
             {type === "video" ?
                 <PlayVideo videoUrl={videoData} ref={playVideoRef}></PlayVideo>
-                : <PlayAudio name={name} audioBlob={audioData} ref={playAudioRef}></PlayAudio>
+                : <PlayAudio name={name} audio={audioData} ref={playAudioRef}></PlayAudio>
             }
             <div data-augmented-ui="border" className="gallery-item">
                 <i onClick={playMedia} className="fas fa-play-circle fa-3x gallery-item-play-icon"></i>

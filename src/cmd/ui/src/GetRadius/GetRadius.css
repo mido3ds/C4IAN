@@ -1,0 +1,58 @@
+.get-radius-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 20px;;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 150px;
+    background-color: rgba(1, 51, 38, 0.911);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.get-radius-msg {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    color: #2bede6;
+    margin-bottom: 15px;
+}
+
+.radius-text-field {
+    width: 230px;
+    height: 30px;
+    border: 1px solid rgba(43,237,230,0.7);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 100%);
+    padding: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    color: white;
+}
+
+.radius-text-field:focus {
+    outline: none;
+    border: 1px solid #2bede6;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}
+
+.radius-text-field:hover {
+    outline: none;
+    border: 1px solid #2bede6;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+}
+
+.get-radius-modal > .close {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    padding: 2px 5px;
+    line-height: 20px;
+    right: -10px;
+    top: -10px;
+    font-size: 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #cfcece;
+}
