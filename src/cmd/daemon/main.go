@@ -48,7 +48,11 @@ func main() {
 		// onReceiveVideoFragment
 		func(frag models.VideoFragment) {
 			videoFilesManager.AddFragment(&frag)
-			dbManager.AddVideoIfNew(&frag, videoFilesManager.GetVideoPath(&frag))
+			path := videoFilesManager.GetVideoPath(&frag)
+			exists := dbManager.AddVideoIfNew(&frag, path)
+			if !exists {
+				api.SendEvent(&models.Video{ID: frag.ID, Time: frag.Time, Path: path})
+			}
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
