@@ -49,7 +49,7 @@ type Message struct {
 type Audio struct {
 	Src  string `json:"src"` // Only in SSEs between CMD Daemon & its UI
 	Time int64  `json:"time" db:"time"`
-	Body []byte `json:"body" db:"body"`
+	Body []uint8 `json:"body" db:"body"`
 }
 
 type VideoFragment struct {
