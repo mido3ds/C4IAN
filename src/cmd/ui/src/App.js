@@ -25,7 +25,7 @@ function App() {
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
     setAudioModalData(data);
-    playAudioRef.current.openModal()
+    playAudioRef.current.open()
   }
 
   useEffect(() => {
@@ -68,7 +68,7 @@ function App() {
   return (
     <>
       <NotificationContainer />
-      <PlayAudio name={audioModalName} audioBolb={audioModalData} ref={playAudioRef}></PlayAudio>
+      <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
       {
         selectedTab === "Log Out" ?
