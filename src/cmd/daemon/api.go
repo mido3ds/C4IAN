@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -85,7 +86,11 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	}
 	audioMsg.Time = time.Now().Unix()
 	go api.dbManager.AddSentAudio(ip, &audioMsg)
-	go api.netManager.SendTCP(ip, api.unitsPort, audioMsg)
+	if isMulticastOrBroadcast(ip) {
+		go api.netManager.SendUDP(ip, api.unitsPort, audioMsg)
+	} else {
+		go api.netManager.SendTCP(ip, api.unitsPort, audioMsg)
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -139,4 +144,10 @@ func (api *API) getSensorsData(w http.ResponseWriter, r *http.Request) {
 	ip := mux.Vars(r)["ip"]
 	data := api.dbManager.GetReceivedSensorsData(ip)
 	json.NewEncoder(w).Encode(data)
+}
+
+func isMulticastOrBroadcast(ip string) bool {
+	parsedIP := net.ParseIP(ip).To4()
+	isBroadcast := parsedIP[0] == 255 && parsedIP[1] == 255
+	return isBroadcast || parsedIP.IsMulticast()
 }
