@@ -1,59 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import Modal from 'react-modal';
 import ReactPlayer from 'react-player'
 import './PlayVideo.css'
 
 Modal.setAppElement('#root');
 
-class PlayVideo extends React.Component {
-    constructor(props) {
-        super(props)
+const PlayVideo = forwardRef(({ videoUrl }, ref) => {
+    const [isOpen, setIsOpen] = useState(false)
+    const [video, setVideo] = useState(null)
 
-        this.state = {
-            isOpen: false,
-            video: null
+    var openModal = () => {
+        setIsOpen(true)
+    }
+
+    useImperativeHandle(ref, () => ({
+        open() {
+            openModal()
         }
+    
+    }));
+
+    var closeModal = () => {
+        setIsOpen(false)
     }
 
-    openModal = () => {
-        this.setState({
-            isOpen: true
-        })
-    }
+    useEffect(() => {
+        if (!videoUrl) return
+        import(videoUrl)
+            .then(module => setVideo(module.default))
+    }, [videoUrl])
 
-    closeModal = () => {
-        this.setState({
-            isOpen: false
-        })
-    }
-
-    componentDidMount() {
-        import(this.props.videoUrl)
-        .then(module => this.setState({ video: module.default }))  
-    }
-
-    render() {
-        return (
-            <div>
-                <Modal
-                    isOpen={this.state.isOpen}
-                    onRequestClose={this.closeModal}
-                    className="play-video-modal">
-                    <button className="close" onClick={() => {
-                        this.setState({
-                            videoUrl: null
-                        })
-                        this.closeModal()
-                        }}>
-                        &times;
-                    </button>
-                    {this.props.videoUrl ?
-                        <ReactPlayer controls url={this.state.video} />
-                        : <> </>
-                    }
-                </Modal>
-            </div>
-        );
-    }
-
-} export default PlayVideo;
+    return (
+        <div>
+            <Modal
+                isOpen={isOpen}
+                onRequestClose={closeModal}
+                className="play-video-modal">
+                <button className="close" onClick={() => {
+                    setVideo(null)
+                    closeModal()
+                }}>
+                    &times;
+                </button>
+                {videoUrl ?
+                    <ReactPlayer controls url={video} />
+                    : <> </>
+                }
+            </Modal>
+        </div>
+    );
+}); export default PlayVideo;
