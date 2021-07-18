@@ -9,6 +9,8 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 )
 
+const metadataFileName = "index.m3u8"
+
 type VideoFilesManager struct {
 	path string
 }
@@ -29,67 +31,50 @@ func NewVideoFilesManager(path string) *VideoFilesManager {
 	return &VideoFilesManager{path: path}
 }
 
-func (v *VideoFilesManager) CreateVideoFile(src string, id int) string {
-	// Create directory for unit streams if it does not exist
-	dirPath, err := filepath.Abs(filepath.Join(v.path, src))
-	if err != nil {
-		log.Panic(err)
+func (v *VideoFilesManager) AddFragment(frag *models.VideoFragment) {
+	// Create directory for this streams if it does not exist
+	dir := filepath.Join(v.path, frag.Src, strconv.Itoa(frag.ID))
+	exists := pathExists(dir)
+	if !exists {
+		os.MkdirAll(dir, 0755)
 	}
 
-	exists, err := pathExists(dirPath)
-	if err != nil {
-		log.Panic(err)
-	}
-	if !exists {
-		os.Mkdir(dirPath, 0755)
-	}
+	// Write metadata
+	path := filepath.Join(dir, metadataFileName)
+	writeFile(path, frag.Metadata)
 
-	// Create file for this stream
-	filePath := filepath.Join(dirPath, strconv.Itoa(id) + ".mp4")
-	exists, err = pathExists(filePath)
-	if err != nil {
-		log.Panic(err)
-	}
-	if !exists {
-		os.Create(filePath)
-	} else {
-		log.Panic("Stream file already exists")
-	}
-	return filePath
+	// Write fragment
+	path = filepath.Join(dir, frag.FileName)
+	writeFile(path, frag.Body)
 }
 
-func (v *VideoFilesManager) AppendVideoFragment(frag *models.VideoFragment) {
-	// Check that the stream file exists
-	filePath := filepath.Join(v.path, frag.Src, strconv.Itoa(frag.ID) + ".mp4")
-	exists, err := pathExists(filePath)
-	if err != nil {
-		log.Panic(err)
-	}
-	if !exists {
-		log.Panic("Stream file does not exist")
-	}
+func (v *VideoFilesManager) GetVideoPath(frag *models.VideoFragment) string {
+	return filepath.Join(frag.Src, strconv.Itoa(frag.ID))
+}
 
-	// Open file to append fragment
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
+func writeFile(path string, data []byte) {
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer file.Close()
-
-	// Append fragment
-	_, err = file.Write(frag.Body)
+	n, err := file.Write(data)
+	if n != len(data) {
+		log.Panic("Could not write the whole file")
+	}
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
-func pathExists(path string) (bool, error) {
+func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
-		return true, nil
+		return true
 	}
 	if os.IsNotExist(err) {
-		return false, nil
+		return false
 	}
-	return false, err
+	log.Panic(err)
+	return false
 }

@@ -21,11 +21,11 @@ var unitPort int = 4070
 func TestUnit(*testing.T) {
 	go ListenTCP(unitPort)
 	go ListenUDPMulticast(multicastGroupIP, unitPort)
-	for {
+
+	for i := 0; true; i++ {
+		SendVideoFragment(i/10, i%10, cmdPort)
+		time.Sleep(time.Second)
 	}
-	//SendSensorsData(float64(1), cmdPort)
-	//SendMessage(0, cmdPort)
-	//SendVideoFragment(4, 0, cmdPort)
 }
 
 func ListenUDPMulticast(groupIP string, port int) {
@@ -65,24 +65,6 @@ func ListenUDPMulticast(groupIP string, port int) {
 			}
 		}
 	}
-}
-
-func saveAudio(audio []byte) {
-	f, err := os.Create("a.mp3")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-
-	_, err2 := f.Write(audio)
-
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-
-	fmt.Println("done")
 }
 
 func ListenTCP(port int) {
@@ -149,32 +131,17 @@ func SendSensorsData(i float64, port int) {
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
-<<<<<<< Updated upstream
 		Src:       "10.0.0.3",
 		Time:      time.Now().Unix(),
 		Heartbeat: 10.0,
 		Lat:       41.4568 + i*0.2,
 		Lon:       -79.0512 + i*0.3,
-=======
-		Src:       "10.0.0.1",
-		Time:      time.Now().Unix(),
-		Heartbeat: 72.0,
-		Lat:       41.4568 + i*0.2,
-		Lon:       -78.0512 + i*0.3,
->>>>>>> Stashed changes
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
 }
 
-func TestUnit(*testing.T) {
-	go Listen(unitPort)
-	SendVideoFragment(4, 0, cmdPort)
-	//SendSensorsData(float64(1), cmdPort)
-	//SendMessage(0, cmdPort)
-}
-
-func SendVideoFragment(id int, i int, port int) {
+func SendVideoFragment(id int, index int, port int) {
 	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -188,10 +155,13 @@ func SendVideoFragment(id int, i int, port int) {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.VideoFragmentType)
+
 	encoder.Encode(&models.VideoFragment{
-		ID:   id,
-		Time: time.Now().Unix(),
-		Body: []byte("video fragment" + strconv.Itoa(i) + " "),
+		ID:       id,
+		Time:     time.Now().Unix(),
+		FileName: "frag" + strconv.Itoa(index) + ".ts",
+		Body:     []byte("video fragment" + strconv.Itoa(index) + " "),
+		Metadata: []byte("metadata sent with frag id: " + strconv.Itoa(id) + ", index: " + strconv.Itoa(index)),
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
@@ -232,4 +202,22 @@ func SendAudio(i int, port int) {
 		Body: []byte("audio" + strconv.Itoa(i)),
 	})
 	conn.Close()
+}
+
+func saveAudio(audio []byte) {
+	f, err := os.Create("a.mp3")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	_, err2 := f.Write(audio)
+
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+
+	fmt.Println("done")
 }

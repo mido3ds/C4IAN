@@ -34,7 +34,6 @@ func main() {
 	dbManager.Initialize(units, groupMembers)
 	api := NewAPI()
 	videoFilesManager := NewVideoFilesManager(args.VideosPath)
-	videoBuffer := NewVideoBuffer(videoFilesManager)
 	netManager := NewNetworkManager(
 		// onReceiveMessage
 		func(msg models.Message) {
@@ -48,26 +47,8 @@ func main() {
 		},
 		// onReceiveVideoFragment
 		func(frag models.VideoFragment) {
-			video := dbManager.GetReceivedVideo(frag.Src, frag.ID)
-			if video == nil {
-				path := videoFilesManager.CreateVideoFile(frag.Src, frag.ID)
-				dbManager.AddReceivedVideo(frag.Src, &models.Video{
-					Time: time.Now().Unix(),
-					ID:   frag.ID,
-					Path: path,
-				})
-				newFrag := models.VideoFragment{
-					Src:   frag.Src,
-					ID:    frag.ID,
-					SeqNo: frag.SeqNo,
-					Time:  frag.Time,
-					Body:  []byte(path),
-				}
-				api.SendEvent(&newFrag)
-			}
-			// Can this cause a race condition if fragments arrive fast enough?
-			// or will the file be locked by the OS anyway?
-			videoBuffer.Insert(&frag)
+			videoFilesManager.AddFragment(&frag)
+			dbManager.AddVideoIfNew(&frag, videoFilesManager.GetVideoPath(&frag))
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
@@ -99,7 +80,7 @@ func parseArgs() (*Args, error) {
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.",
 		Default: time.Now().Format(time.RFC3339) + storePathSuffix})
 
-	videosPath := parser.String("v", "videos-path", &argparse.Options{Default: "../ui/src/static/videos", Help: "Path to store videos received from units."})
+	videosPath := parser.String("v", "videos-path", &argparse.Options{Default: "videos", Help: "Path to store videos received from units."})
 	unitsPath := parser.String("u", "units-path", &argparse.Options{Default: "../../units.json", Help: "Path to units.json."})
 	groupsPath := parser.String("g", "groups-path", &argparse.Options{Default: "../../groups.json", Help: "Path to groups.json."})
 
