@@ -12,10 +12,60 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 )
 
+var multicastGroupIP string = "224.0.0.251"
 var cmdPort int = 4170
 var unitPort int = 4070
 
-func Listen(port int) {
+func TestUnit(*testing.T) {
+	go ListenTCP(unitPort)
+	go ListenUDPMulticast(multicastGroupIP, unitPort)
+	for {
+	}
+	//SendSensorsData(float64(1), cmdPort)
+	//SendMessage(0, cmdPort)
+	//SendVideoFragment(4, 0, cmdPort)
+}
+
+func ListenUDPMulticast(groupIP string, port int) {
+	// Get local UDP address
+	address, err := net.ResolveUDPAddr("udp", groupIP+":"+strconv.Itoa(port))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Listen for any remote UDP packets
+	conn, err := net.ListenUDP("udp", address)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer conn.Close()
+
+	var packetType models.Type
+	for {
+		// Read any incoming UDP packet
+		buffer := make([]byte, 1024)
+		length, err := conn.Read(buffer)
+		if err != nil {
+			log.Panic(err)
+		}
+		decoder := gob.NewDecoder(bytes.NewBuffer(buffer[:length]))
+		// Decode any packets in the buffer by reading the type then the payload, then make appropriate callbacks
+		for decoder.Decode(&packetType) == nil {
+			if packetType == models.AudioType {
+				var audio models.Audio
+				err := decoder.Decode(&audio)
+				if err != nil {
+					log.Panic(err)
+				}
+				log.Println("Test: Received multicast audio:", audio)
+			} else {
+				log.Panic("Invalid packet type received through multicast")
+			}
+		}
+	}
+}
+
+func ListenTCP(port int) {
 	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -61,14 +111,6 @@ func Listen(port int) {
 	}
 }
 
-func TestUnit(*testing.T) {
-	go Listen(unitPort)
-	SendSensorsData(float64(1), cmdPort)
-	//SendMessage(0, cmdPort)
-	//SendVideoFragment(4, 0, cmdPort)
-}
-
-
 func SendSensorsData(i float64, port int) {
 	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
 	if err != nil {
@@ -84,11 +126,11 @@ func SendSensorsData(i float64, port int) {
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
-		Src:		"10.0.0.3",
+		Src:       "10.0.0.3",
 		Time:      time.Now().Unix(),
-		Heartbeat:  10.0,
-		Lat:       41.4568 + i * 0.2,
-		Lon:       -79.0512 + i * 0.3,
+		Heartbeat: 10.0,
+		Lat:       41.4568 + i*0.2,
+		Lon:       -79.0512 + i*0.3,
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
@@ -130,7 +172,7 @@ func SendMessage(code int, port int) {
 
 	encoder := gob.NewEncoder(conn)
 	encoder.Encode(models.MessageType)
-	encoder.Encode(&models.Message{Src:"10.0.0.3", Time: time.Now().Unix(), Code: code})
+	encoder.Encode(&models.Message{Src: "10.0.0.3", Time: time.Now().Unix(), Code: code})
 	conn.Close()
 }
 

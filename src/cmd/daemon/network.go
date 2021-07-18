@@ -13,7 +13,7 @@ import (
 )
 
 const RetryTimeout = 2 * time.Second
-const TCPDialTimeout = 2 * time.Second
+const DialTimeout = 2 * time.Second
 
 type onReceiveMsgCallback = func(models.Message)
 type onReceiveAudioCallback = func(models.Audio)
@@ -48,7 +48,7 @@ func (netManager *NetworkManager) Listen(port int) {
 
 func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload interface{}) {
 	// Connect to remote TCP socket
-	conn, err := net.DialTimeout("tcp", dstAddrss+":"+strconv.Itoa(dstPort), TCPDialTimeout)
+	conn, err := net.DialTimeout("tcp", dstAddrss+":"+strconv.Itoa(dstPort), DialTimeout)
 	if err != nil {
 		log.Println("Could not connect to unit: ", dstAddrss, " over TCP port: ", dstPort)
 		log.Println("Retry in ", RetryTimeout)
@@ -69,6 +69,47 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 
 	// Send the payload
 	err = encoder.Encode(payload)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload interface{}) {
+	address, err := net.ResolveUDPAddr("udp", dstAddrss+":"+strconv.Itoa(dstPort))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	conn, err := net.DialUDP("udp", nil, address)
+	if err != nil {
+		log.Panic(err)
+	}
+	defer conn.Close()
+
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+
+	// Get the payload type and add it to the buffer
+	if _, ok := payload.(models.Message); ok {
+		encoder.Encode(models.MessageType)
+	} else if _, ok := payload.(models.Audio); ok {
+		encoder.Encode(models.AudioType)
+	} else {
+		log.Panic("Unknown payload type")
+	}
+
+	// Add the payload to the buffer
+	err = encoder.Encode(payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// Send the buffer
+	n, err := conn.Write(buffer.Bytes())
+	if n != buffer.Len() {
+		log.Panic("Could not write the whole buffer to UDP socket, buffer size: ",
+			buffer.Len(), ", sent bytes: ", n)
+	}
 	if err != nil {
 		log.Panic(err)
 	}
