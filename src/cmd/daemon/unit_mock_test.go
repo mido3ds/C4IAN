@@ -18,7 +18,6 @@ var multicastGroupIP string = "224.0.0.251"
 var cmdPort int = 4170
 var unitPort int = 4070
 
-<<<<<<< Updated upstream
 func TestUnit(*testing.T) {
 	go ListenTCP(unitPort)
 	go ListenUDPMulticast(multicastGroupIP, unitPort)
@@ -68,8 +67,6 @@ func ListenUDPMulticast(groupIP string, port int) {
 	}
 }
 
-func ListenTCP(port int) {
-=======
 func saveAudio(audio []byte) {
 	f, err := os.Create("a.mp3")
 
@@ -88,8 +85,7 @@ func saveAudio(audio []byte) {
 	fmt.Println("done")
 }
 
-func Listen(port int) {
->>>>>>> Stashed changes
+func ListenTCP(port int) {
 	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
