@@ -73,8 +73,8 @@ func (c *Context) sendAudioMsgs() {
 
 func (c *Context) streamVideo() {
 	// TODO
-	// every 10s: start video streaming mode (which lasts for 10s), video=rand(videos)
-	// in video streaming mode: iterate over fragment (what size?)
+	// every 10s: start video streaming mode (which lasts for 10s)
+	// in video streaming mode: send index.m3u8 with last fragment
 }
 
 func (c *Context) sendCodeMsgs() {
