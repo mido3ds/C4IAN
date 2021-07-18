@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/mido3ds/C4IAN/src/models"
@@ -31,7 +31,11 @@ func NewVideoFilesManager(path string) *VideoFilesManager {
 
 func (v *VideoFilesManager) CreateVideoFile(src string, id int) string {
 	// Create directory for unit streams if it does not exist
-	dirPath := path.Join(v.path, src)
+	dirPath, err := filepath.Abs(filepath.Join(v.path, src))
+	if err != nil {
+		log.Panic(err)
+	}
+
 	exists, err := pathExists(dirPath)
 	if err != nil {
 		log.Panic(err)
@@ -41,7 +45,7 @@ func (v *VideoFilesManager) CreateVideoFile(src string, id int) string {
 	}
 
 	// Create file for this stream
-	filePath := path.Join(dirPath, strconv.Itoa(id))
+	filePath := filepath.Join(dirPath, strconv.Itoa(id) + ".mp4")
 	exists, err = pathExists(filePath)
 	if err != nil {
 		log.Panic(err)
@@ -56,7 +60,7 @@ func (v *VideoFilesManager) CreateVideoFile(src string, id int) string {
 
 func (v *VideoFilesManager) AppendVideoFragment(frag *models.VideoFragment) {
 	// Check that the stream file exists
-	filePath := path.Join(v.path, frag.Src, strconv.Itoa(frag.ID))
+	filePath := filepath.Join(v.path, frag.Src, strconv.Itoa(frag.ID) + ".mp4")
 	exists, err := pathExists(filePath)
 	if err != nil {
 		log.Panic(err)
