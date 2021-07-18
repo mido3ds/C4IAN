@@ -9,20 +9,6 @@ function Map({ unit }) {
     const profileMapContainer = useRef(null);
     const map = useRef(null);
 
-    var getCoordinates = () => {
-        if (unit) {
-            var coordinates = []
-            getSensorsData(unit.ip).then(sensorData => {
-                if (!sensorData || !sensorData.length) return null;
-                sensorData.forEach((item, index) => {
-                    coordinates.push([item.lon, item.lat])
-                })
-            })
-            return coordinates
-        }
-        return null;
-    }
-
     var getBounds = coordinates => {
         var lngB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
         var latB = [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER]
@@ -49,7 +35,7 @@ function Map({ unit }) {
 
             if (map.current) return;
 
-            var center = [...coordinates[Math.ceil(coordinates.length / 2)]]
+            var center = [...coordinates[coordinates.length - 1]]
             center[0] -= 0.005
 
             map.current = new mapboxgl.Map({
@@ -96,7 +82,7 @@ function Map({ unit }) {
                 .addTo(map.current);
     
         })
-    })
+    },[unit])
 
     return (
         <>  

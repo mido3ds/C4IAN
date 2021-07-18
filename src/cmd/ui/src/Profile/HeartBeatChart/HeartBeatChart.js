@@ -36,7 +36,7 @@ class HeartBeatChart extends React.Component {
             })
         })
         if (!data || !time) return
-        console.log(time)
+
         this.setState({
             series: [{
                 data: data
@@ -121,7 +121,7 @@ class HeartBeatChart extends React.Component {
 
     render() {
         return (
-            <>{!this.state ?
+            <>{this.state.series[0].data.length ?
                 <div className="no-data-heartbeat-msg">
                     <p> No data to be previewed </p>
                 </div> :
