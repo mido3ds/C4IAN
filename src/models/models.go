@@ -3,6 +3,7 @@ package models
 const (
 	MESSAGE_EVENT      = "msg"
 	AUDIO_EVENT        = "audio"
+	VIDEO_EVENT        = "video"
 	VIDEO_FRAME_EVENT  = "video-fragment"
 	SENSORS_DATA_EVENT = "sensors-data"
 )
@@ -81,6 +82,10 @@ func (msg *Message) EventType() string {
 
 func (audio *Audio) EventType() string {
 	return AUDIO_EVENT
+}
+
+func (video *Video) EventType() string {
+	return VIDEO_EVENT
 }
 
 func (frame *VideoFragment) EventType() string {
