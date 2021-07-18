@@ -8,26 +8,6 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
     const [data, setData] = useState(null);
     const [startItem, setStartItem] = useState(0)
 
-    const b64toBlob = (b64Data, contentType='', sliceSize=512) => {
-        const byteCharacters = atob(b64Data);
-        const byteArrays = [];
-      
-        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-          const slice = byteCharacters.slice(offset, offset + sliceSize);
-      
-          const byteNumbers = new Array(slice.length);
-          for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-          }
-      
-          const byteArray = new Uint8Array(byteNumbers);
-          byteArrays.push(byteArray);
-        }
-      
-        const blob = new Blob(byteArrays, {type: contentType});
-        return blob;
-      }
-
     var paginate = (pageNumber) => {
         setStartItem(4 * (pageNumber - 1));
     }
@@ -35,17 +15,15 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
     useEffect(() => {
         if(!unit) return
         if(type === "audio") {
-            if (data) return
             getAudioMsgs(unit.ip).then(audios => {
                 setData(audios)
             })
         } else if (type === "video") {
-            if (data) return
             getVideos(unit.ip).then(videos => {
                 setData(videos)
             })
         }
-    })
+    },[type])
 
     return (
         <div className="gallery-container">
@@ -57,7 +35,7 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
                 <div className="items-container">
                     {
                         [...Array(Math.min(data.length - startItem, 4))].map((x, i) => 
-                            <GalleryItem name= {unit.name} type={type} time={data[i + startItem].time} data={data[i].body} key={i} />
+                            <GalleryItem name= {unit.name} type={type} time={data[i + startItem].time} data={data[i]} key={i} />
                         )
                     }
                 </div>

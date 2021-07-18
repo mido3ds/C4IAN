@@ -24,12 +24,12 @@ function ChatBox({ unit }) {
                 return
             })
         }
-    })
+    },[unit])
 
     return (
         <div className="content-wrapper">
             <div className="chat-container">
-                {msgs ?
+                {msgs && msgs.length ?
                     <ul className="chat-box chatContainerScroll">
                         {msgs.map((msg, index) => {
                             return <>

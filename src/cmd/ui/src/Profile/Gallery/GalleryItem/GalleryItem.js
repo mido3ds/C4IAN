@@ -1,29 +1,42 @@
 import './GalleryItem.css';
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Moment from 'react-moment';
 import PlayAudio from '../../../PlayAudio/PlayAudio'
 import PlayVideo from '../../../PlayVideo/PlayVideo'
 
-function GalleryItem({type, data, time, name}) {
+function GalleryItem({ type, data, time, name }) {
     const playAudioRef = useRef(null);
     const playVideoRef = useRef(null);
+    const [audioData, setAudioData] = useState(null)
+    const [videoData, setVideoData] = useState(null)
+
+    useEffect(()=> {
+        if (type === "audio") {
+            setAudioData(data.body)
+        } else if (type === "video") {
+            setVideoData(data.path)
+        }
+    }, [data, type])
+
 
     var playMedia = () => {
-        if(type === "audio") {
+        if (type === "audio") {
             playAudioRef.current.openModal()
-        } else if(type === "video") {
-            playVideoRef.current.openModal()
+        } else if (type === "video") {
+            playVideoRef.current.open()
         }
     }
-    
+
     return (
         <>
-        <PlayVideo videoUrl={data} ref={playVideoRef}></PlayVideo>
-        <PlayAudio name={name} audioBolb={data} ref={playAudioRef}></PlayAudio>
-        <div  data-augmented-ui="border" className="gallery-item">
-            <i onClick={playMedia} className="fas fa-play-circle fa-3x gallery-item-play-icon"></i>
-            <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time}</Moment>
-        </div>
+            {type === "video" ?
+                <PlayVideo videoUrl={videoData} ref={playVideoRef}></PlayVideo>
+                : <PlayAudio name={name} audioBlob={audioData} ref={playAudioRef}></PlayAudio>
+            }
+            <div data-augmented-ui="border" className="gallery-item">
+                <i onClick={playMedia} className="fas fa-play-circle fa-3x gallery-item-play-icon"></i>
+                <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time}</Moment>
+            </div>
         </>
     );
 }
