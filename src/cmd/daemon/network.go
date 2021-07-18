@@ -185,7 +185,7 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 				}
 				videoFragment.Src = src.IP.String()
 				netManager.onReceiveVideoFragment(videoFragment)
-				log.Println("received videofragment:", videoFragment) // TODO: remoe
+				log.Println("received video fragment:", videoFragment) // TODO: remoe
 			}
 		}
 	}

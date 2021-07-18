@@ -72,11 +72,6 @@ func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData
 		data.Time, data.Src, data.Heartbeat, data.Lat, data.Lon)
 }
 
-func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Video) {
-	dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
-		video.Time, src, video.ID, video.Path)
-}
-
 func (dbManager *DatabaseManager) UpdateLastActivity(ip string, lastActivity int64) {
 	dbManager.db.MustExec("UPDATE units SET last_activity = $1 WHERE ip = $2",
 		lastActivity, ip)
@@ -185,18 +180,24 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	return videos
 }
 
-func (dbManager *DatabaseManager) GetReceivedVideo(srcIP string, id int) *models.Video {
-	var video models.Video
+func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path string) {
+	// Check if the video already exists in the database
+	exists := true
 	row := dbManager.db.QueryRowx(
 		"SELECT time, path, id FROM received_videos WHERE src = $1 AND id = $2",
-		srcIP, id,
+		frag.Src, frag.ID,
 	)
+	var video models.Video
 	err := row.StructScan(&video)
 	if err == sql.ErrNoRows {
-		return nil
-	}
-	if err != nil {
+		exists = false
+	} else if err != nil {
 		log.Panic(err)
 	}
-	return &video
+
+	// Add video if it does not exist
+	if !exists {
+		dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
+			frag.Time, frag.Src, frag.ID, path)
+	}
 }
