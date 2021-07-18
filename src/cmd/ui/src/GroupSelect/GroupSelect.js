@@ -35,30 +35,16 @@ function GroupSelect() {
         document.querySelector('.circle').classList.toggle('open');
     }
 
-    var blobToBase64 = (blob, callback) => {
-        var reader = new FileReader();
-        reader.onload = function() {
-            var dataUrl = reader.result;
-            var base64 = dataUrl.split(',')[1];
-            callback(base64);
-        };
-        reader.readAsDataURL(blob);
-    };
-
     var onGroupIconClick = (group) => {
         setChosenGroup(group)
         recordAudioRef.current.openModal();
-    }
-
-    var sendAudio = (audio) => {
-        postAudioMsg(chosenGroup.ip, { body: audio })
     }
 
     var onSendAudio = (audio) => {
         var notificationMsg = chosenGroup.id === "broadcast" ? "Your audio message will be sent to all units." :
             "Your audio message will be sent to the " + chosenGroup.id + " group."
         NotificationManager.info(notificationMsg)
-        blobToBase64(audio, sendAudio)
+        postAudioMsg(chosenGroup.ip, audio)
     }
 
     return (

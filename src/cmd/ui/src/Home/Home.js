@@ -13,12 +13,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-function Home() {
+function Home({eventSource}) {
     const mapContainer = useRef(null);
     const map = useRef(null);
     const [units, setUnits] = useState({})
     const [selectedUnit, setSelectedUnit] = useState(null);
-    const [eventSource] = useState(new EventSource("http://localhost:3170/events"))
 
     var onTimeout = (unitIP) => {
         setUnits(units => {
@@ -89,7 +88,7 @@ function Home() {
                 coordinates.push([value.lng, value.lat])
             }
         }
-
+       
         if (!coordinates.length)
             return [[0, 0], [0, 0]]
 
@@ -137,10 +136,11 @@ function Home() {
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
 
+        var eventSource = new EventSource("http://localhost:3170/events")
         eventSource.addEventListener("sensors-data", ev => {
             onDataChange(JSON.parse(ev.data))
         })
-        
+
         getUnits().then(initialData => {
             getMembers().then(members => {
                 setUnits(units => {
@@ -159,11 +159,12 @@ function Home() {
                     }
 
                     map.current.fitBounds(getBounds(units));
+                
                     return units
                 })
             })
         })
-    });
+    },[]);
 
     return (
         <>
