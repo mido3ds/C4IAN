@@ -77,9 +77,9 @@ func (dbManager *DatabaseManager) AddReceivedVideo(src string, video *models.Vid
 		video.Time, src, video.ID, video.Path)
 }
 
-func (dbManager *DatabaseManager) UpdateLastActivity(ip string) {
+func (dbManager *DatabaseManager) UpdateLastActivity(ip string, lastActivity int64) {
 	dbManager.db.MustExec("UPDATE units SET last_activity = $1 WHERE ip = $2",
-		time.Now().Unix(), ip)
+		lastActivity, ip)
 }
 
 func (dbManager *DatabaseManager) GetUnits() []models.Unit {

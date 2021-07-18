@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -16,6 +18,7 @@ var multicastGroupIP string = "224.0.0.251"
 var cmdPort int = 4170
 var unitPort int = 4070
 
+<<<<<<< Updated upstream
 func TestUnit(*testing.T) {
 	go ListenTCP(unitPort)
 	go ListenUDPMulticast(multicastGroupIP, unitPort)
@@ -66,6 +69,27 @@ func ListenUDPMulticast(groupIP string, port int) {
 }
 
 func ListenTCP(port int) {
+=======
+func saveAudio(audio []byte) {
+	f, err := os.Create("a.mp3")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	_, err2 := f.Write(audio)
+
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+
+	fmt.Println("done")
+}
+
+func Listen(port int) {
+>>>>>>> Stashed changes
 	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
@@ -104,7 +128,10 @@ func ListenTCP(port int) {
 				if err != nil {
 					log.Panic(err)
 				}
-				log.Println("Test: Received an audio: ", audio)
+
+				saveAudio(audio.Body)
+
+				//log.Println("Test: Received an audio: ", audio)
 			}
 			conn.Close()
 		}()
@@ -126,14 +153,29 @@ func SendSensorsData(i float64, port int) {
 	encoder := gob.NewEncoder(&buffer)
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
+<<<<<<< Updated upstream
 		Src:       "10.0.0.3",
 		Time:      time.Now().Unix(),
 		Heartbeat: 10.0,
 		Lat:       41.4568 + i*0.2,
 		Lon:       -79.0512 + i*0.3,
+=======
+		Src:       "10.0.0.1",
+		Time:      time.Now().Unix(),
+		Heartbeat: 72.0,
+		Lat:       41.4568 + i*0.2,
+		Lon:       -78.0512 + i*0.3,
+>>>>>>> Stashed changes
 	})
 	conn.Write(buffer.Bytes())
 	conn.Close()
+}
+
+func TestUnit(*testing.T) {
+	go Listen(unitPort)
+	SendVideoFragment(4, 0, cmdPort)
+	//SendSensorsData(float64(1), cmdPort)
+	//SendMessage(0, cmdPort)
 }
 
 func SendVideoFragment(id int, i int, port int) {

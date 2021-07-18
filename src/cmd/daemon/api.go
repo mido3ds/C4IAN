@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -73,19 +75,27 @@ func (api *API) SendEvent(body models.Event) {
 func (api *API) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		
 		next.ServeHTTP(w, r)
 	})
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
-	audioMsg := models.Audio{}
 	ip := mux.Vars(r)["ip"]
-	err := json.NewDecoder(r.Body).Decode(&audioMsg)
+	file, _, err := r.FormFile("audio")
 	if err != nil {
 		log.Panic(err)
-	}
+	}	
+
+	var buffer bytes.Buffer
+	io.Copy(&buffer, file)
+
+	audioMsg := models.Audio{}
+	audioMsg.Body = buffer.Bytes()
 	audioMsg.Time = time.Now().Unix()
+	
 	go api.dbManager.AddSentAudio(ip, &audioMsg)
+	
 	if isMulticastOrBroadcast(ip) {
 		go api.netManager.SendUDP(ip, api.unitsPort, audioMsg)
 	} else {

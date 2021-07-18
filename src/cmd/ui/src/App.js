@@ -21,7 +21,6 @@ function App() {
   const [audioModalData, setAudioModalData] = useState(null)
 
   const [selectedTab, setSelectedTab] = useState("Map")
-  const [eventSource] = useState(new EventSource("http://localhost:3170/events"))
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -30,22 +29,26 @@ function App() {
   }
 
   useEffect(() => {
+  
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
     window.$('.menu .item span')
-        .filter(function (idx) { return this.innerHTML === selectedTab })
-        .addClass('selected')
+      .filter(function (idx) { return this.innerHTML === selectedTab })
+      .addClass('selected')
 
+    var eventSource = new EventSource("http://localhost:3170/events")
     eventSource.addEventListener("msg", ev => {
       var data = JSON.parse(ev.data)
       NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
     })
+
     eventSource.addEventListener("audio", ev => {
       var data = JSON.parse(ev.data)
       NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
     })
-  })
+
+  }, [])
 
   var onChange = (selectedTab) => {
     setSelectedTab(selectedTab)

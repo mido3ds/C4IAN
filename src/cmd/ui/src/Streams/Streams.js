@@ -8,11 +8,11 @@ class Streams extends React.Component {
         super(props)
 
         this.state = {
-            eventSource: new EventSource("http://localhost:3170/events"),
             Streams: []
         }
 
-        this.state.eventSource.addEventListener("video-fragment", ev => {
+        var eventSource = new EventSource("http://localhost:3170/events")
+        eventSource.addEventListener("video-fragment", ev => {
             this.onReceiveFragment(JSON.parse(ev.data))
         })
     }

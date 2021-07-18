@@ -7,7 +7,12 @@ export async function postMsg(ip, msg) {
 }
 
 export async function postAudioMsg(ip, audio) {
-    var response = await axios.post(baseURL + "audio-msg/"+ ip, audio);
+    const formData = new FormData();
+    formData.append("audio", audio);
+
+    var response = await axios.post(baseURL + "audio-msg/"+ ip, formData, {headers: {
+        'Content-Type': 'multipart/form-data'
+      }});
     return response.data;
 }
 
