@@ -73,7 +73,7 @@ func main() {
 		func(data models.SensorData) {
 			api.SendEvent(&data)
 			dbManager.AddReceivedSensorsData(&data)
-			dbManager.UpdateLastActivity(data.Src)
+			dbManager.UpdateLastActivity(data.Src, data.Time)
 		},
 	)
 	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
@@ -99,7 +99,7 @@ func parseArgs() (*Args, error) {
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive data.",
 		Default: time.Now().Format(time.RFC3339) + storePathSuffix})
 
-	videosPath := parser.String("v", "videos-path", &argparse.Options{Default: "videos", Help: "Path to store videos received from units."})
+	videosPath := parser.String("v", "videos-path", &argparse.Options{Default: "../ui/src/static/videos", Help: "Path to store videos received from units."})
 	unitsPath := parser.String("u", "units-path", &argparse.Options{Default: "../../units.json", Help: "Path to units.json."})
 	groupsPath := parser.String("g", "groups-path", &argparse.Options{Default: "../../groups.json", Help: "Path to groups.json."})
 
