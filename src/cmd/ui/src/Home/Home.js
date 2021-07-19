@@ -133,7 +133,7 @@ function Home({selectedTab}) {
         if (map.current) return; 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: 'mapbox://styles/ahmedafifi/ckr0krxez6p641ao9vl2p71vf',
+            style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
             center: [0,0],
             zoom: 10
         });
