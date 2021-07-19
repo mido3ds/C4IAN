@@ -51,7 +51,7 @@ type Context struct {
 
 	halMutex              sync.Mutex
 	_expectingVideoStream bool
-	_isConnectedToHAL     bool
+	isConnectedToHAL      bool
 
 	videoMutex       sync.Mutex
 	_videoSeqno      uint64
@@ -65,7 +65,7 @@ func newContext(args *Args) Context {
 		_videoSeqno:           0,
 		videoID:               0,
 		_expectingVideoStream: false,
-		_isConnectedToHAL:     false,
+		isConnectedToHAL:      false,
 	}
 
 	// db
@@ -100,18 +100,6 @@ func (c *Context) setExpectingVideoStream(v bool) {
 	c.halMutex.Lock()
 	defer c.halMutex.Unlock()
 	c._expectingVideoStream = v
-}
-
-func (c *Context) isConnectedToHAL() bool {
-	c.halMutex.Lock()
-	defer c.halMutex.Unlock()
-	return c._isConnectedToHAL
-}
-
-func (c *Context) setIsConnectedToHAL(v bool) {
-	c.halMutex.Lock()
-	defer c.halMutex.Unlock()
-	c._isConnectedToHAL = v
 }
 
 func (c *Context) resetVideoSeqNo() {
@@ -254,18 +242,29 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 		break
 	default:
 		log.Println("generic code msg")
-		enc := gob.NewEncoder(c.halConn)
-		err := halapi.ShowCodeMsg{Code: msg.Code}.Send(enc)
-		if err != nil {
-			log.Println("error in sending code msg to hal:", err)
+
+		c.halMutex.Lock()
+		defer c.halMutex.Unlock()
+
+		if c.isConnectedToHAL {
+			enc := gob.NewEncoder(c.halConn)
+			err := halapi.ShowCodeMsg{Code: msg.Code}.Send(enc)
+			if err != nil {
+				log.Println("error in sending code msg to hal:", err)
+			}
 		}
+
 		break
 	}
 }
 
 func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 	log.Println("Received an audio with len= ", len(audio.Body))
-	if c.isConnectedToHAL() {
+
+	c.halMutex.Lock()
+	defer c.halMutex.Unlock()
+
+	if c.isConnectedToHAL {
 		enc := gob.NewEncoder(c.halConn)
 		err := halapi.ShowAudioMsg{Audio: audio.Body}.Send(enc)
 		if err != nil {

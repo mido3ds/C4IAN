@@ -49,15 +49,23 @@ func (c *Context) listenHAL() {
 	for {
 		// go simulateHALClient(c.halSocketPath)
 		conn, err := halListener.Accept()
-		c.halConn = conn
 		defer conn.Close()
+
+		c.halMutex.Lock()
+		c.halConn = conn
+		c.isConnectedToHAL = true
+		c.halMutex.Unlock()
+
+		defer func() {
+			c.halMutex.Lock()
+			c.halConn = nil
+			c.isConnectedToHAL = false
+			c.halMutex.Unlock()
+		}()
 
 		if err != nil {
 			log.Println("accept error:", err)
 		} else {
-			c.setIsConnectedToHAL(true)
-			defer c.setIsConnectedToHAL(false)
-
 			log.Println("HAL connected")
 			c.serveHAL(conn)
 		}
