@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -32,7 +33,7 @@ func (c *Context) createTables() {
 	tables := []string{
 		`CREATE TABLE IF NOT EXISTS HeartBeats (beatsPerMinute INT, time INT);`,
 		`CREATE TABLE IF NOT EXISTS Locations (lon REAL, lat REAL, time INT);`,
-		`CREATE TABLE IF NOT EXISTS VideoFragments (data BLOB, time INT);`,
+		`CREATE TABLE IF NOT EXISTS VideoFragments (data BLOB, metadata BLOB, filename TEXT, time INT);`,
 	}
 
 	for _, v := range tables {
@@ -91,18 +92,18 @@ func (c *Context) saveLocation(lon, lat float64) error {
 }
 
 // TODO: append video fragments to one row
-func (c *Context) saveVideoFragment(data []byte) error {
+func (c *Context) saveVideoFragment(data, metadata []byte, filename string) error {
 	if c.storeDB == nil {
 		return nil
 	}
 
-	statement, err := c.storeDB.Prepare(`INSERT INTO VideoFragments (data, time) VALUES(?, strftime('%s','now'));`)
+	statement, err := c.storeDB.Prepare(`INSERT INTO VideoFragments (data, metadata, filename, time) VALUES(?, ?, ?, strftime('%s','now'));`)
 	if err != nil {
 		return fmt.Errorf("couldn't insert heartbeat, err: %v", err)
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(data)
+	_, err = statement.Exec(data, metadata, filename)
 	if err != nil {
 		return fmt.Errorf("couldn't insert heartbeat, err: %v", err)
 	}

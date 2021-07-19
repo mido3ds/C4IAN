@@ -24,9 +24,9 @@ func parseArgs() (*Args, error) {
 	parser := argparse.NewParser("halsimulation", "Simulator for unit client HAL")
 
 	halSocketPath := parser.String("", "hal-socket-path", &argparse.Options{Help: "Path to unix socket file to communicate over with HAL.", Default: "/tmp/unit.hal.sock"})
-	video := parser.String("", "videos-dir-path", &argparse.Options{Help: "Path to directory of videos to send.", Default: "/dev/video0"})
+	video := parser.String("v", "video", &argparse.Options{Help: "Path to directory of videos to send.", Default: ""})
 	ffmpegPath := parser.String("", "ffmpeg-path", &argparse.Options{Help: "Path to ffmpeg executable.", Default: "ffmpeg"})
-	audiosDirPath := parser.String("", "audios-dir-path", &argparse.Options{Help: "Path to directory of audios to send.", Default: "/tmp/hal.audios"})
+	audiosDirPath := parser.String("", "audios-dir", &argparse.Options{Help: "Path to directory of audios to send. If not provided won't send audio messages.", Default: ""})
 	fragmentDurSecs := parser.Int("", "fragment-dur-secs", &argparse.Options{Help: "Duration in secs of one video fragment.", Default: 2})
 
 	err := parser.Parse(os.Args)

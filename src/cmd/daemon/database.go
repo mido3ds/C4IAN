@@ -77,6 +77,19 @@ func (dbManager *DatabaseManager) UpdateLastActivity(ip string, lastActivity int
 		lastActivity, ip)
 }
 
+func (dbManager *DatabaseManager) GetUnitsNames() map[string]string {
+	units := make([]models.Unit, 0)
+	err := dbManager.db.Select(&units, "SELECT ip, name FROM units")
+	if err != nil {
+		log.Panic(err)
+	}
+	unitsNames := make(map[string]string)
+	for _, unit := range units {
+		unitsNames[unit.IP] = unit.Name
+	}
+	return unitsNames
+}
+
 func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 	units := make([]models.Unit, 0)
 	err := dbManager.db.Select(
@@ -180,11 +193,11 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	return videos
 }
 
-func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path string) bool {
+func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment) bool {
 	// Check if the video already exists in the database
 	exists := true
 	row := dbManager.db.QueryRowx(
-		"SELECT time, path, id FROM received_videos WHERE src = $1 AND id = $2",
+		"SELECT * FROM received_videos WHERE src = $1 AND id = $2",
 		frag.Src, frag.ID,
 	)
 	var video models.Video
@@ -197,8 +210,8 @@ func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path
 
 	// Add video if it does not exist
 	if !exists {
-		dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
-			frag.Time, frag.Src, frag.ID, path)
+		dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3)",
+			frag.Time, frag.Src, frag.ID)
 	}
 	return exists
 }

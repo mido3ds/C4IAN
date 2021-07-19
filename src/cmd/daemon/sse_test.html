@@ -12,8 +12,8 @@
             evsrc.addEventListener("audio", ev => {
                 console.log("Received an audio message: ", JSON.parse(ev.data))
             })
-            evsrc.addEventListener("video-fragment", ev => {
-                console.log("Received a video fragment: ", JSON.parse(ev.data))
+            evsrc.addEventListener("video", ev => {
+                console.log("A video stream started: ", JSON.parse(ev.data))
             })
             evsrc.addEventListener("sensors-data", ev => {
                 console.log("Received sensors data: ", JSON.parse(ev.data))
