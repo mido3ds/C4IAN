@@ -31,7 +31,7 @@ type API struct {
 func NewAPI() *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte("Access-Control-Allow-Origin: http://localhost:*"),
+			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
 		}
 	})
 	return &API{eventSource: es}
@@ -72,7 +72,7 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 	// Listen for HTTP requests
 	c := cors.New(cors.Options{
 		OptionsPassthrough: false,
-		AllowedOrigins:     []string{"http://localhost:*", "null"},
+		AllowedOrigins:     []string{"http://localhost:3000", "null"},
 		AllowCredentials:   true,
 	})
 	handler := c.Handler(router)

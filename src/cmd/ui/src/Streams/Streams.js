@@ -16,7 +16,9 @@ function Streams({streams, onEndStream}) {
     return (
         <div className="video-root">
             <div className="streams-container">
-                {streams.map((value, index) => {
+            {!streams || !streams.length ?
+                <p className="no-streams-msg"> No streams available </p> :
+                streams.map((value, index) => {
                     return <div className="stream">
                         <Stream onEndStream={onEndStream} stream={value}> </Stream>
                     </div>
