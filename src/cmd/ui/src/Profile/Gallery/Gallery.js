@@ -23,7 +23,7 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
                 setData(videos)
             })
         }
-    },[type])
+    },[type, unit])
 
     return (
         <div className="gallery-container">

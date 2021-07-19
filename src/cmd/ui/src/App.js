@@ -21,7 +21,7 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
 
-  const [selectedTab, setSelectedTab] = useState("Streams")
+  const [selectedTab, setSelectedTab] = useState("Map")
 
   const [streamsTime, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
@@ -33,7 +33,6 @@ function App() {
   }
 
   var onEndStreamRequest = (data) => {
-    console.log("Hello")
     setStreams(streams => {
       streams = streams.filter(stream => {
         return stream.id !== data.id
@@ -76,7 +75,11 @@ function App() {
 
   useEffect(() => {
     if (selectedTab === "Streams") {
-      setStreamsTimer(null)
+      setStreamsTimer(streamsTimer => {
+        if(streamsTimer)
+          clearTimeout(streamsTimer);
+        return null
+      })
     } else {
       setStreamsTimer(setTimeout(() => {
         perodicCheckStreamsPage()
