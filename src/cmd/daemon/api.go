@@ -65,17 +65,14 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 	router.Use(api.jsonContentType)
 
 	// Listen for HTTP requests
-	address := fmt.Sprintf(":%d", port)
-	allowedOrigin := fmt.Sprintf("http://localhost%s", address)
-	fmt.Println(allowedOrigin)
 	c := cors.New(cors.Options{
 		OptionsPassthrough: false,
-		AllowedOrigins:     []string{allowedOrigin},
-		AllowCredentials:   false,
+		AllowedOrigins:     []string{"http://localhost:*"},
+		AllowCredentials:   true,
 	})
 	handler := c.Handler(router)
+	address := ":" + strconv.Itoa(port)
 	log.Fatal(http.ListenAndServe(address, handler))
-	// log.Fatal(http.ListenAndServe(address, cors.Default().Handler(router)))
 }
 
 func (api *API) StreamHandler(response http.ResponseWriter, request *http.Request) {
