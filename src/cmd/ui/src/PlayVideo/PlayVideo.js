@@ -45,7 +45,7 @@ const PlayVideo = forwardRef(({ videoData }, ref) => {
                 </button>
                 {videoData ?
                     <ReactHlsPlayer
-                      src={baseURL + "stream/" + videoData.src + "/" + videoData.body + "/" + M3U8Name}
+                      src={baseURL + "stream/" + videoData.src + "/" + videoData.id + "/" + M3U8Name}
                       autoPlay={true}
                       controls={true}
                       hlsConfig={HLSConfig}  

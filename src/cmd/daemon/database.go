@@ -184,7 +184,7 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	videos := make([]models.Video, 0)
 	err := dbManager.db.Select(
 		&videos,
-		"SELECT time, path, id FROM received_videos WHERE src = $1 ORDER BY time",
+		"SELECT * FROM received_videos WHERE src = $1 ORDER BY time",
 		srcIP,
 	)
 	if err != nil {

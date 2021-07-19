@@ -9,6 +9,7 @@ const HLSConfig = {
     maxLoadingDelay: 4,
     minAutoBitrate: 0,
     lowLatencyMode: true,
+    liveMaxLatencyDurationCount: 10
 }
 
 function Stream({ onEndStream, stream }) {

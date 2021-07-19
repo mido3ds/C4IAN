@@ -59,7 +59,7 @@ case $TO_RUN in
         EXECUTABLE="./cmd/daemon/daemon"
         COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path /tmp/local-cmd.units.json --groups-path /tmp/local-cmd.groups.json "$OPTS
 
-        echo >/tmp/local-cmd.units.json '{"units": ["127.0.0.1"]}'
+        echo >/tmp/local-cmd.units.json '{"units": [{"ip": "127.0.0.1", "name": "Yosry"}]}'
         echo >/tmp/local-cmd.groups.json '{"224.0.2.1": ["127.0.0.1"]}'
         ;;
     router)

@@ -25,7 +25,6 @@ type API struct {
 	dbManager   *DatabaseManager
 	netManager  *NetworkManager
 	eventSource eventsource.EventSource
-	VideosPath  string
 }
 
 func NewAPI() *API {
@@ -37,12 +36,11 @@ func NewAPI() *API {
 	return &API{eventSource: es}
 }
 
-func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *DatabaseManager, netManager *NetworkManager) {
+func (api *API) Start(port int, unitsPort int, videosPath string, dbManager *DatabaseManager, netManager *NetworkManager) {
 	// Initialize members
 	api.unitsPort = unitsPort
 	api.netManager = netManager
 	api.dbManager = dbManager
-	api.VideosPath = VideosPath
 
 	// Initialize router
 	router := mux.NewRouter()
@@ -61,7 +59,7 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 
 	// Streaming file server
 	router.PathPrefix("/api/stream/").Handler(
-		http.StripPrefix("/api/stream/", http.FileServer(http.Dir("./videos/"))),
+		http.StripPrefix("/api/stream/", http.FileServer(http.Dir(videosPath))),
 	)
 
 	// SSE endpoint

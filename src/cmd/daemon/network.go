@@ -160,7 +160,7 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 	var packetType models.Type
 	for {
 		// Read any incoming UDP packet
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, 64*1024*10)
 		length, src, err := conn.ReadFromUDP(buffer)
 		if err != nil {
 			log.Panic(err)
@@ -175,8 +175,8 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 					log.Panic(err)
 				}
 				sensorsData.Src = src.IP.String()
-				netManager.onReceiveSensorsData(sensorsData)
 				log.Println("received sensor data:", sensorsData) // TODO: remoe
+				netManager.onReceiveSensorsData(sensorsData)
 			} else {
 				var videoFragment models.VideoFragment
 				err := decoder.Decode(&videoFragment)
@@ -184,8 +184,8 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 					log.Panic(err)
 				}
 				videoFragment.Src = src.IP.String()
+				log.Println("received video fragment:", videoFragment.FileName) // TODO: remoe
 				netManager.onReceiveVideoFragment(videoFragment)
-				log.Println("received video fragment:", videoFragment) // TODO: remoe
 			}
 		}
 	}

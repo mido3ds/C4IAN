@@ -63,12 +63,6 @@ func main() {
 	go api.Start(args.UIPort, args.UnitsPort, args.VideosPath, dbManager, netManager)
 	netManager.Listen(args.Port)
 	log.Println("finished initalizing all")
-	for {
-		time.Sleep(4 * time.Second)
-		fmt.Println("Sending: stream")
-		api.SendEvent(&models.Video{Src: "172.0.0.2", ID: 50, Time: time.Now().Unix()})
-	}
-
 	waitSIGINT()
 }
 

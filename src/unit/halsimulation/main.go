@@ -207,10 +207,11 @@ func (c *Context) sendM3U8(m3u8path string) {
 	tsfiles := make([][]byte, 0)
 	filenames := make([]string, 0)
 	for i := c.lastTSIndex; i < numTS; i++ {
-		name := path.Join(c.tempDir, fmt.Sprintf("index%d.ts", i))
+		name := fmt.Sprintf("index%d.ts", i)
+		path := path.Join(c.tempDir, name)
 		filenames = append(filenames, name)
 
-		bts, err := ioutil.ReadFile(name)
+		bts, err := ioutil.ReadFile(path)
 		if err != nil {
 			log.Panic(err)
 		}
