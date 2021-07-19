@@ -68,7 +68,7 @@ function App() {
     setSelectedTab(selectedTab => {
       setUnitNames(unitNames => {
         if (selectedTab !== "Log Out")
-          NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src].name, data.body), true);
+          NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src], data.body), true);
         return unitNames
       })
       return selectedTab
