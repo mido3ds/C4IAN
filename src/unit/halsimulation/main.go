@@ -59,8 +59,13 @@ func newContext(args *Args) Context {
 	videoPath := args.videoPath
 	log.Println("videoPath:", videoPath)
 
-	audiosFiles := listDir(args.audiosDirPath)
-	log.Println("audios:", audiosFiles)
+	audiosFiles := []string{}
+	if len(args.audiosDirPath) > 0 {
+		audiosFiles = listDir(args.audiosDirPath)
+		log.Println("audios:", audiosFiles)
+	} else {
+		log.Println("no audio dir provided")
+	}
 
 	tempdir, err := ioutil.TempDir("", "halsimulation.")
 	if err != nil {
@@ -73,25 +78,25 @@ func newContext(args *Args) Context {
 		}
 	}()
 
-	// conn, err := net.Dial("unix", args.halSocketPath)
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
+	conn, err := net.Dial("unix", args.halSocketPath)
+	if err != nil {
+		log.Panic(err)
+	}
 	shouldCloseDir = false
 
-	// enc := gob.NewEncoder(conn)
-	// dec := gob.NewDecoder(conn)
+	enc := gob.NewEncoder(conn)
+	dec := gob.NewDecoder(conn)
 
 	return Context{
-		Args:        *args,
-		videoPath:   videoPath,
-		audiosFiles: audiosFiles,
-		// halConn:          conn,
+		Args:             *args,
+		videoPath:        videoPath,
+		audiosFiles:      audiosFiles,
+		halConn:          conn,
 		videoStreamingOn: false,
 		tempDir:          tempdir,
 		lastTSIndex:      0,
-		// enc:              enc,
-		// dec:              dec,
+		enc:              enc,
+		dec:              dec,
 	}
 }
 
@@ -101,6 +106,11 @@ func (c *Context) close() {
 }
 
 func (c *Context) sendAudioMsgs() {
+	if len(c.audiosDirPath) == 0 {
+		log.Println("no audio dir, won't send audio messages")
+		return
+	}
+
 	// every rand(avg=2s, stdev=300ms): send(rand(audio msg))
 	for {
 		time.Sleep(time.Duration(normal(2, 0.3)) * time.Second)
@@ -120,6 +130,11 @@ func (c *Context) sendAudioMsgs() {
 }
 
 func (c *Context) streamVideo() {
+	if len(c.videoPath) == 0 {
+		log.Println("no video path, won't stream videos")
+		return
+	}
+
 	// in video streaming mode: send index.m3u8 with last fragment
 	tempm3u8, err := ioutil.TempFile(c.tempDir, "index.m3u8.")
 	if err != nil {
