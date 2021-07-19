@@ -50,6 +50,7 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/units", api.getUnits).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/units-names", api.getUnitsNames).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/groups", api.getGroups).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/memberships", api.getMemberships).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet, http.MethodOptions)
@@ -169,6 +170,11 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 func (api *API) getUnits(w http.ResponseWriter, r *http.Request) {
 	units := api.dbManager.GetUnits()
 	json.NewEncoder(w).Encode(units)
+}
+
+func (api *API) getUnitsNames(w http.ResponseWriter, r *http.Request) {
+	unitsNames := api.dbManager.GetUnitsNames()
+	json.NewEncoder(w).Encode(unitsNames)
 }
 
 func (api *API) getGroups(w http.ResponseWriter, r *http.Request) {

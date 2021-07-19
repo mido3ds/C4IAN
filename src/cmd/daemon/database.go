@@ -77,6 +77,19 @@ func (dbManager *DatabaseManager) UpdateLastActivity(ip string, lastActivity int
 		lastActivity, ip)
 }
 
+func (dbManager *DatabaseManager) GetUnitsNames() map[string]string {
+	units := make([]models.Unit, 0)
+	err := dbManager.db.Select(&units, "SELECT ip, name FROM units")
+	if err != nil {
+		log.Panic(err)
+	}
+	unitsNames := make(map[string]string)
+	for _, unit := range units {
+		unitsNames[unit.IP] = unit.Name
+	}
+	return unitsNames
+}
+
 func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 	units := make([]models.Unit, 0)
 	err := dbManager.db.Select(
