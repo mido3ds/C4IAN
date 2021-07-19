@@ -1,0 +1,84 @@
+.confirmation-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 20px;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 200px;
+    background-color: rgba(1, 51, 38, 0.911);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+
+}
+
+.confirmation-msg {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    color: #2bede6;
+    margin-bottom: 30px;
+    width: 450px;
+    text-align: center;
+}
+
+.confirmation-control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-msg-button {
+    width: 130px;
+    height: 50px;
+    padding: 5px !important;
+    display: flex;
+    justify-content: center;
+    font-size: 15px;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+    border: solid 2px #2bede6;
+    color: #2bede6;
+    margin-left: 50px;
+    margin-bottom: -20px;
+}
+
+.close-msg-button:hover {
+    background: linear-gradient(to bottom, rgba(237, 43, 43, 0.1) 0%, rgba(237, 43, 43, 0.3) 100%);
+}
+
+.send-msg-button:hover {
+    background: linear-gradient(to bottom, rgba(43, 127, 237, 0.1) 0%, rgba(43, 127, 237,  0.3) 100%);
+}
+
+.send-msg-button {
+    width: 130px;
+    height: 50px;
+    padding: 5px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+    border: solid 2px #2bede6;
+    color: #2bede6;
+    margin-bottom: -20px;
+
+}
+
+.confirmation-modal > .close {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    padding: 2px 5px;
+    line-height: 20px;
+    right: -10px;
+    top: -10px;
+    font-size: 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #cfcece;
+}

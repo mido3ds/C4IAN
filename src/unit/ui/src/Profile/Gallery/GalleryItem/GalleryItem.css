@@ -1,0 +1,24 @@
+.gallery-item {
+    width: 160px;
+    height: 100px;
+    --aug-border-bg: linear-gradient(to bottom, rgba(43,237,230,0.25) 10%, rgba(43,237,230,0) 100%);
+    --aug-border-all: 1px;
+    background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 40px; 
+
+}
+
+.gallery-item-play-icon {
+    color: rgba(194, 204, 204, 0.664);
+    cursor: pointer;
+}
+
+.gallery-item-time {
+    position: absolute;
+    bottom: -20px;
+    font-size: 13px;
+    color: rgba(194, 204, 204, 0.568);
+}
