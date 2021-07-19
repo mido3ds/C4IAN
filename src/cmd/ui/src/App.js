@@ -141,6 +141,8 @@ function App() {
 
     eventSource.addEventListener("video", ev => {
       onReceiveStream(JSON.parse(ev.data))
+      console.log(ev.data)
+      console.log(JSON.parse(ev.data))
     })
 
     getNames().then(unitsData => {

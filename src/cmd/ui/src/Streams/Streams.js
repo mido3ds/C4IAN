@@ -13,7 +13,6 @@ function Streams({streams, onEndStream}) {
         window.$('.stream').css("height", `${100 / rows}%`);
     }, [streams])
 
- 
     return (
         <div className="video-root">
             <div className="streams-container">

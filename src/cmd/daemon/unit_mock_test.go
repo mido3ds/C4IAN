@@ -14,9 +14,13 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 )
 
-var multicastGroupIP string = "224.0.0.251"
-var cmdPort int = 4170
-var unitPort int = 4070
+const (
+	unitPort         = 4070
+	cmdPort          = 4170
+	multicastGroupIP = "224.0.0.251"
+	unitIP           = "172.0.0.2"
+	videoID          = 50
+)
 
 func TestUnit(*testing.T) {
 	go ListenTCP(unitPort)
