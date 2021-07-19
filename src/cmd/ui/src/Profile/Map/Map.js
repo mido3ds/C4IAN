@@ -28,8 +28,10 @@ function Map({ unit }) {
         var coordinates = []
         getSensorsData(unit.ip).then(sensorData => {
             if (!sensorData || !sensorData.length) {
-                if (map.current) 
+                if (map.current) {
                     map.current.remove()
+                    map.current = null;
+                }
                 return 
             }
 
@@ -38,14 +40,18 @@ function Map({ unit }) {
             })
 
             if (coordinates === null) {
-                if (map.current) 
+                if (map.current)  {
                     map.current.remove()
+                    map.current = null;
+                }
                 return 
             }
 
             if (map.current) {
-                if (map.current) 
+                if (map.current) {
                     map.current.remove() 
+                    map.current = null;
+                }
             }
 
             var center = [...coordinates[coordinates.length - 1]]

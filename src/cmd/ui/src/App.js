@@ -7,7 +7,7 @@ import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
 import { receivedCodes } from './codes'
-import { postMsg } from './Api/Api';
+import { postMsg, getNames } from './Api/Api';
 
 import 'react-notifications/lib/notifications.css';
 
@@ -25,6 +25,8 @@ function App() {
 
   const [streamsTimer, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
+
+  const [unitNames, setUnitNames] = useState({})
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -62,21 +64,53 @@ function App() {
     })
   }
 
+  var onReceiveAudio = (data) => {
+    setSelectedTab(selectedTab => {
+      setUnitNames(unitNames => {
+        if (selectedTab !== "Log Out")
+          NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src], data.body), true);
+        return unitNames
+      })
+      return selectedTab
+
+    })
+  }
+
+  var onReceiveMessage = (data) => {
+    setSelectedTab(selectedTab => {
+      setUnitNames(unitNames => {
+        if (selectedTab !== "Log Out")
+          NotificationManager.info(unitNames[data.src] + ": " + receivedCodes[data.code]);
+        return unitNames
+      })
+      return selectedTab
+    })
+  }
+
   var onReceiveStream = (data) => {
-    if (streams.some(e => e.ID === data.ID)) {
-      //streams[streams.findIndex(stream => stream.id === data.ID)].body = data.body;
+    if (streams.some(e => e.src === data.src)) {
+      streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
       streams.push(data)
       setTimeout(() => {
         perodicStartStream(data)
       }, 50 * 1000)
+
+      setSelectedTab(selectedTab => {
+        setUnitNames(unitNames => {
+          if (selectedTab !== "Log Out")
+            NotificationManager.info(unitNames[data.src] + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
+          return unitNames
+        })
+        return selectedTab
+      })
     }
   }
 
   useEffect(() => {
     if (selectedTab === "Streams") {
       setStreamsTimer(streamsTimer => {
-        if(streamsTimer)
+        if (streamsTimer)
           clearTimeout(streamsTimer);
         return null
       })
@@ -87,8 +121,8 @@ function App() {
     }
   }, [selectedTab])
 
-  useEffect(() => {
 
+  useEffect(() => {
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
@@ -98,20 +132,22 @@ function App() {
 
     var eventSource = new EventSource("http://localhost:3170/events")
     eventSource.addEventListener("msg", ev => {
-      var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
+      onReceiveMessage(JSON.parse(ev.data))
     })
 
     eventSource.addEventListener("audio", ev => {
-      var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
+      onReceiveAudio(JSON.parse(ev.data))
     })
 
-    eventSource.addEventListener("video-fragment", ev => {
+    eventSource.addEventListener("video", ev => {
       onReceiveStream(JSON.parse(ev.data))
     })
 
-  })
+    getNames().then(unitsData => {
+      console.log(unitsData)
+      setUnitNames(unitsData)
+    })
+  }, [])
 
   var onChange = (selectedTab) => {
     setSelectedTab(selectedTab)
@@ -137,11 +173,11 @@ function App() {
         selectedTab === "Log Out" ?
           <LogIn onLogIn={() => { onChange("Map") }} />
           : selectedTab === "Map" ?
-            <Home />
+            <Home selectedTab={selectedTab} />
             : selectedTab === "Units" ?
               <Profile />
               : selectedTab === "Streams" ?
-                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)}/>
+                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
                 : <> </>
       }
     </>

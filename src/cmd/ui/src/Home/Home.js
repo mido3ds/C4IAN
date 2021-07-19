@@ -13,7 +13,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-function Home() {
+function Home({selectedTab}) {
     const mapContainer = useRef(null);
     const map = useRef(null);
     const [units, setUnits] = useState({})
@@ -22,7 +22,8 @@ function Home() {
     var onTimeout = (unitIP) => {
         setUnits(units => {
             units[unitIP].active = false;
-            NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
+            if(selectedTab !== "Log Out")
+                NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
             drawMarker(unitIP, units)
             return units
         })
@@ -48,14 +49,17 @@ function Home() {
         setUnits(units => {
             if (newData.heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger) {
                 units[newData.src].InDanger = true;
-                NotificationManager.error(units[newData.src].name + " is in danger!!");
+                if(selectedTab !== "Log Out")
+                    NotificationManager.error(units[newData.src].name + " is in danger!!");
             } else if (newData.heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
                 units[newData.src].InDanger = false;
-                NotificationManager.info(units[newData.src].name + " is no more in danger");
+                if(selectedTab !== "Log Out")
+                    NotificationManager.info(units[newData.src].name + " is no more in danger");
             } 
 
             if (!units[newData.src].active) {
-                NotificationManager.info(units[newData.src].name + " is active now");
+                if(selectedTab !== "Log Out")
+                    NotificationManager.info(units[newData.src].name + " is active now");
                 units[newData.src].active = true;
             }
             
@@ -129,7 +133,7 @@ function Home() {
         if (map.current) return; 
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: 'mapbox://styles/ahmedafifi/ckr0krxez6p641ao9vl2p71vf',
+            style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
             center: [0,0],
             zoom: 10
         });
@@ -159,7 +163,7 @@ function Home() {
                     }
 
                     map.current.fitBounds(getBounds(units));
-                
+                    
                     return units
                 })
             })
