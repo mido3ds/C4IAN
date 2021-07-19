@@ -126,7 +126,7 @@ func (c *Context) streamVideo() {
 		log.Panic(err)
 	}
 
-	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir)
+	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir, c.fragmentDurSecs)
 	go c.watchM3U8(tempm3u8.Name())
 
 	// every 10s: start video streaming mode (which lasts for 10s)
@@ -219,7 +219,7 @@ func (c *Context) sendM3U8(m3u8path string) {
 	log.Println("sent", numTSToSend, "TSs") // TODO: remove
 }
 
-func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string) {
+func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs int) {
 	args := []string{
 		fmt.Sprintf("-i %s", videoPath),
 		`-framerate 60`,
@@ -228,7 +228,7 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string) {
 		`-fs 6500`,
 		`-start_number 0`,
 		`-f hls`,
-		`-hls_time 2`,
+		fmt.Sprintf("-hls_time %d", fragmentDurSecs),
 		`-hls_playlist_type event`,
 		`-hls_flags independent_segments`,
 		`-hls_flags split_by_time`,
