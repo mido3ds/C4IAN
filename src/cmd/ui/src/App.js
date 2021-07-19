@@ -7,6 +7,7 @@ import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
 import { receivedCodes } from './codes'
+import { postMsg } from './Api/Api';
 
 import 'react-notifications/lib/notifications.css';
 
@@ -20,7 +21,10 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
 
-  const [selectedTab, setSelectedTab] = useState("Map")
+  const [selectedTab, setSelectedTab] = useState("Streams")
+
+  const [streamsTime, setStreamsTimer] = useState(null)
+  const [streams, setStreams] = useState([])
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -28,8 +32,60 @@ function App() {
     playAudioRef.current.open()
   }
 
+  var onEndStreamRequest = (data) => {
+    console.log("Hello")
+    setStreams(streams => {
+      streams = streams.filter(stream => {
+        return stream.id !== data.id
+      })
+      return streams
+    })
+
+    postMsg(data.src, { code: 3, })
+  }
+
+  var perodicStartStream = (data) => {
+    // Resend start stream request
+    postMsg(data.src, { code: 2, })
+    if (streams.some(e => e.ID === data.ID)) {
+      setTimeout(() => {
+        perodicStartStream(data)
+      }, 50 * 1000)
+    }
+  }
+
+  var perodicCheckStreamsPage = () => {
+    setStreams(streams => {
+      streams.forEach(stream => {
+        postMsg(stream.src, { code: 3, })
+      })
+      return []
+    })
+  }
+
+  var onReceiveStream = (data) => {
+    if (streams.some(e => e.ID === data.ID)) {
+      //streams[streams.findIndex(stream => stream.id === data.ID)].body = data.body;
+    } else {
+      streams.push(data)
+      setTimeout(() => {
+        perodicStartStream(data)
+      }, 50 * 1000)
+    }
+  }
+
   useEffect(() => {
-  
+    if (selectedTab === "Streams") {
+      setStreamsTimer(null)
+    } else {
+      setStreamsTimer(setTimeout(() => {
+        perodicCheckStreamsPage()
+      }, 5 * 60 * 1000))
+    }
+  }, [selectedTab])
+
+  useEffect(() => {
+
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
@@ -46,6 +102,10 @@ function App() {
     eventSource.addEventListener("audio", ev => {
       var data = JSON.parse(ev.data)
       NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
+    })
+
+    eventSource.addEventListener("video-fragment", ev => {
+      onReceiveStream(JSON.parse(ev.data))
     })
 
   }, [])
@@ -78,7 +138,7 @@ function App() {
             : selectedTab === "Units" ?
               <Profile />
               : selectedTab === "Streams" ?
-                <Streams />
+                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)}/>
                 : <> </>
       }
     </>

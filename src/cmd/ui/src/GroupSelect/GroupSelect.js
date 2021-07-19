@@ -41,6 +41,7 @@ function GroupSelect() {
     var onGetRadius = (radius) => {
         setChosenGroup(group => {
             group.ip = "255.255." + (radius >> 8).toString(10) + "." + (radius & 0xff).toString(10)
+            console.log(group.ip)
             return group
         })
         recordAudioRef.current.openModal();

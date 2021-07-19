@@ -1,54 +1,31 @@
 import './Streams.css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Stream from './Stream/Stream'
 
-class Streams extends React.Component {
 
-    constructor(props) {
-        super(props)
+function Streams({streams, onEndStream}) {
 
-        this.state = {
-            Streams: []
-        }
-
-        var eventSource = new EventSource("http://localhost:3170/events")
-        eventSource.addEventListener("video-fragment", ev => {
-            this.onReceiveFragment(JSON.parse(ev.data))
-        })
-    }
-
-    onReceiveFragment(data) {
-        if (this.state.Streams.some(e => e.ID === data.ID)) {
-            // Add Fragment
-        } else {
-            this.state.Streams.push({ ID: data.ID })
-        }
-    }
-
-    componentDidMount() {
+    useEffect(() => {
         var number = window.$('.stream').length;
         var columns = Math.ceil(Math.sqrt(number) - 0.1);
         var rows = Math.ceil(number / columns);
         window.$('.stream').css("width", `${100 / columns}%`);
         window.$('.stream').css("height", `${100 / rows}%`);
-    }
+    }, [streams])
 
-    render() {
-        return (
-            <div className="video-root">
-                <div className="streams-container">
-                    <div className="stream">
-                        <Stream> </Stream>
+ 
+    return (
+        <div className="video-root">
+            <div className="streams-container">
+                {streams.map((value, index) => {
+                    return <div className="stream">
+                        <Stream onEndStream={onEndStream} stream={value}> </Stream>
                     </div>
-                    {this.state.Streams.map((value, index) => {
-                        return <div className="stream">
-                            <Stream streamID={value.ID}> </Stream>
-                        </div>
-                    })}
-                </div>
+                })}
             </div>
-        );
-    }
+        </div>
+    );
+    
 }
 export default Streams;
 
