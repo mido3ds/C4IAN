@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -14,6 +15,11 @@ import (
 	"github.com/mido3ds/C4IAN/src/models"
 	"github.com/rs/cors"
 	"gopkg.in/antage/eventsource.v1"
+)
+
+const (
+	VideosPath = "videos"
+	M3U8Name   = "index.m3u8"
 )
 
 type API struct {
@@ -51,6 +57,9 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet, http.MethodOptions)
 	router.Handle("/events", api.eventSource)
 
+	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}", api.StreamHandler).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}/{segName:index[0-9]+.ts}", api.StreamHandler).Methods(http.MethodGet, http.MethodOptions)
+
 	router.Use(api.jsonContentType)
 
 	// Listen for HTTP requests
@@ -64,6 +73,42 @@ func (api *API) Start(port int, unitsPort int, dbManager *DatabaseManager, netMa
 	log.Fatal(http.ListenAndServe(address, handler))
 }
 
+func (api *API) StreamHandler(response http.ResponseWriter, request *http.Request) {
+	fmt.Printf("Request: %s\n", request.RequestURI)
+	vars := mux.Vars(request)
+	mId, err := strconv.Atoi(vars["mId"])
+	ip, ok := vars["ip"]
+	if err != nil || !ok {
+		response.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	segName, ok := vars["segName"]
+	if !ok {
+		mediaBase := getMediaBase(ip, mId)
+		serveHlsM3u8(response, request, mediaBase)
+	} else {
+		mediaBase := getMediaBase(ip, mId)
+		serveHlsTs(response, request, mediaBase, segName)
+	}
+}
+
+func getMediaBase(ip string, mId int) string {
+	return fmt.Sprintf("%s/%s/%d", VideosPath, ip, mId)
+}
+
+func serveHlsM3u8(w http.ResponseWriter, r *http.Request, mediaBase string) {
+	mediaFile := fmt.Sprintf("%s/%s", mediaBase, M3U8Name)
+	http.ServeFile(w, r, mediaFile)
+	w.Header().Set("Content-Type", "application/x-mpegURL")
+}
+
+func serveHlsTs(w http.ResponseWriter, r *http.Request, mediaBase, segName string) {
+	mediaFile := fmt.Sprintf("%s/%s", mediaBase, segName)
+	http.ServeFile(w, r, mediaFile)
+	w.Header().Set("Content-Type", "video/MP2T")
+}
+
 func (api *API) SendEvent(body models.Event) {
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -75,7 +120,6 @@ func (api *API) SendEvent(body models.Event) {
 func (api *API) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
-		
 		next.ServeHTTP(w, r)
 	})
 }
@@ -85,7 +129,7 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	file, _, err := r.FormFile("audio")
 	if err != nil {
 		log.Panic(err)
-	}	
+	}
 
 	var buffer bytes.Buffer
 	io.Copy(&buffer, file)
@@ -93,9 +137,9 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	audioMsg := models.Audio{}
 	audioMsg.Body = buffer.Bytes()
 	audioMsg.Time = time.Now().Unix()
-	
+
 	go api.dbManager.AddSentAudio(ip, &audioMsg)
-	
+
 	if isMulticastOrBroadcast(ip) {
 		go api.netManager.SendUDP(ip, api.unitsPort, audioMsg)
 	} else {
