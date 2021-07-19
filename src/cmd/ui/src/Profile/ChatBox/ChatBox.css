@@ -64,28 +64,16 @@
 }
 
 .chat-container li .chat-text {
-    padding: .4rem 1rem;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
+    padding: .8rem 1rem;
     border-radius: 4px;
     background: linear-gradient(to bottom, rgba(43,237,230,0.05) 0%, rgba(43,237,230,0.1) 100%);
     font-weight: 300;
-    line-height: 150%;
     position: relative;
-    height: 40px !important;
     margin-top: 15px;
+    display: block;
+    overflow-y: auto;
 }
 
-.chat-container li .chat-text:before {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 0;
-    top: 10px;
-    left: -20px;
-    border: 10px solid;
-    border-color: transparent rgba(43, 237, 230, 0.048) transparent transparent;
-}
 
 .chat-container li.chat-left > .chat-text {
     margin-left: -10px
