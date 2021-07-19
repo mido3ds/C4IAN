@@ -66,16 +66,23 @@ function App() {
 
   var onReceiveAudio = (data) => {
     setSelectedTab(selectedTab => {
-      if(selectedTab !== "Log Out")
-        NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src].name, data.body), true);
+      setUnitNames(unitNames => {
+        if (selectedTab !== "Log Out")
+          NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src].name, data.body), true);
+        return unitNames
+      })
       return selectedTab
+
     })
   }
 
   var onReceiveMessage = (data) => {
     setSelectedTab(selectedTab => {
-      if(selectedTab !== "Log Out")
-        NotificationManager.info(unitNames[data.src] + ": " + receivedCodes[data.code]);
+      setUnitNames(unitNames => {
+        if (selectedTab !== "Log Out")
+          NotificationManager.info(unitNames[data.src] + ": " + receivedCodes[data.code]);
+        return unitNames
+      })
       return selectedTab
     })
   }
@@ -89,9 +96,12 @@ function App() {
         perodicStartStream(data)
       }, 50 * 1000)
 
-      setSelectedTab( selectedTab => {
-        if(selectedTab !== "Log Out")
-          NotificationManager.info(unitNames[data.src] + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
+      setSelectedTab(selectedTab => {
+        setUnitNames(unitNames => {
+          if (selectedTab !== "Log Out")
+            NotificationManager.info(unitNames[data.src] + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
+          return unitNames
+        })
         return selectedTab
       })
     }
@@ -134,6 +144,7 @@ function App() {
     })
 
     getNames().then(unitsData => {
+      console.log(unitsData)
       setUnitNames(unitsData)
     })
   }, [])
@@ -153,24 +164,24 @@ function App() {
     }
   }
 
-    return (
-      <>
-        <NotificationContainer />
-        <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
-        <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-        {
-          selectedTab === "Log Out" ?
-            <LogIn onLogIn={() => { onChange("Map") }} />
-            : selectedTab === "Map" ?
-              <Home selectedTab={selectedTab} />
-              : selectedTab === "Units" ?
-                <Profile />
-                : selectedTab === "Streams" ?
-                  <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
-                  : <> </>
-        }
-      </>
-    );
-  }
+  return (
+    <>
+      <NotificationContainer />
+      <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
+      <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
+      {
+        selectedTab === "Log Out" ?
+          <LogIn onLogIn={() => { onChange("Map") }} />
+          : selectedTab === "Map" ?
+            <Home selectedTab={selectedTab} />
+            : selectedTab === "Units" ?
+              <Profile />
+              : selectedTab === "Streams" ?
+                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
+                : <> </>
+      }
+    </>
+  );
+}
 
-  export default App;
+export default App;
