@@ -1,0 +1,9 @@
+<script src="https://cdn.jsdelivr.net/hls.js/latest/hls.min.js"></script>
+<script src="custom_hls_test.js"></script>
+<video id="customHlsvideo" controls></video>
+<script>
+  var videoElement = document.getElementById('customHlsvideo');
+  var videoUrl = "http://localhost:8000/api/stream/1/2";
+  var chp = new CustomHlsPlayer();
+  chp.switchToHls(videoElement, videoUrl);
+</script>
