@@ -3,7 +3,6 @@ import React from 'react';
 import Stream from './Stream/Stream'
 
 class Streams extends React.Component {
-
     constructor(props) {
         super(props)
 
