@@ -61,20 +61,20 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}", api.StreamHandler).Methods(http.MethodGet)
 	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}/{segName:index[0-9]+.ts}", api.StreamHandler).Methods(http.MethodGet)
 
-	// router.Use(api.jsonContentType)
+	router.Use(api.jsonContentType)
 
 	// Listen for HTTP requests
-	address := ":" + strconv.Itoa(port)
+	address := fmt.Sprintf(":%d", port)
 	allowedOrigin := fmt.Sprintf("http://localhost%s", address)
 	fmt.Println(allowedOrigin)
-	// c := cors.New(cors.Options{
-	// 	OptionsPassthrough: false,
-	// 	AllowedOrigins:     []string{allowedOrigin},
-	// 	AllowCredentials:   false,
-	// })
-	// handler := c.Handler(router)
-	// log.Fatal(http.ListenAndServe(address, handler))
-	log.Fatal(http.ListenAndServe(address, cors.Default().Handler(router)))
+	c := cors.New(cors.Options{
+		OptionsPassthrough: false,
+		AllowedOrigins:     []string{allowedOrigin},
+		AllowCredentials:   false,
+	})
+	handler := c.Handler(router)
+	log.Fatal(http.ListenAndServe(address, handler))
+	// log.Fatal(http.ListenAndServe(address, cors.Default().Handler(router)))
 }
 
 func (api *API) StreamHandler(response http.ResponseWriter, request *http.Request) {
