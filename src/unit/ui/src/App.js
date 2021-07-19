@@ -18,7 +18,7 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
 
-  const [selectedTab, setSelectedTab] = useState("Map")
+  const [selectedTab, setSelectedTab] = useState("Profile")
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -82,7 +82,7 @@ function App() {
       {
         selectedTab === "Log Out" ?
           <LogIn />
-          : selectedTab === "Units" ?
+          : selectedTab === "Profile" ?
           <Profile />
           : <> </>
       }

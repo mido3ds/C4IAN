@@ -3,27 +3,26 @@ import axios from "axios";
 export const baseURL = "http://localhost:8000/";
 const apiURL = baseURL + "api/";
 
-
-export function getMsgs(ip) {
-    axios.get(apiURL + "msgs"+ ip).then((response) => {
-        return response.data;
-    });
+export async function getMsgs(ip) {
+    var response = await axios.get(apiURL + "msgs/"+ ip);
+    return response.data;
 }
 
-export function postMsg(ip, msg) {
-    axios.post(apiURL + "msgs"+ ip, msg).then((response) => {
-        return response;
-    });
+export async function postMsg(ip, msg) {
+    axios.post(apiURL + "msg/"+ ip, msg);
 }
 
-export function postAudioMsg(ip, audio) {
-    axios.post(apiURL + "audio-msgs"+ ip, audio).then((response) => {
-        return response;
-    });
+export async function postAudioMsg(ip, audio) {
+    const formData = new FormData();
+    formData.append("audio", audio);
+
+    var response = await axios.post(apiURL + "audio-msg/"+ ip, formData, {headers: {
+        'Content-Type': 'multipart/form-data'
+      }});
+    return response.data;
 }
 
-export function getAudioMsgs(ip) {
-    axios.get(apiURL + "audio-msgs/"+ ip).then((response) => {
-        return response.data;
-    });
+export async function getAudioMsgs(ip) {
+    var response = await axios.get(apiURL + "audio-msgs/"+ ip);
+    return response.data;
 }
