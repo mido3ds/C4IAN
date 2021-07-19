@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"os/exec"
@@ -100,8 +101,22 @@ func (c *Context) close() {
 }
 
 func (c *Context) sendAudioMsgs() {
-	// TODO
 	// every rand(avg=2s, stdev=300ms): send(rand(audio msg))
+	for {
+		time.Sleep(time.Duration(normal(2, 0.3)) * time.Second)
+
+		audioBuffer, err := ioutil.ReadFile(c.audiosFiles[rand.Intn(len(c.audiosFiles))])
+		if err != nil {
+			log.Panic(err)
+		}
+
+		err = halapi.AudioMsg{
+			Audio: audioBuffer,
+		}.Send(c.enc)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
 }
 
 func (c *Context) streamVideo() {
@@ -110,10 +125,8 @@ func (c *Context) streamVideo() {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer os.Remove(tempm3u8.Name())
-	defer tempm3u8.Close()
 
-	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir)
+	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir, c.fragmentDurSecs)
 	go c.watchM3U8(tempm3u8.Name())
 
 	// every 10s: start video streaming mode (which lasts for 10s)
@@ -206,8 +219,7 @@ func (c *Context) sendM3U8(m3u8path string) {
 	log.Println("sent", numTSToSend, "TSs") // TODO: remove
 }
 
-func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string) {
-	// TODO
+func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs int) {
 	args := []string{
 		fmt.Sprintf("-i %s", videoPath),
 		`-framerate 60`,
@@ -216,7 +228,7 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string) {
 		`-fs 6500`,
 		`-start_number 0`,
 		`-f hls`,
-		`-hls_time 2`,
+		fmt.Sprintf("-hls_time %d", fragmentDurSecs),
 		`-hls_playlist_type event`,
 		`-hls_flags independent_segments`,
 		`-hls_flags split_by_time`,
@@ -252,27 +264,96 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string) {
 }
 
 func (c *Context) sendCodeMsgs() {
-	// TODO
 	// every rand(avg=3s, stdev=1s): send(rand(number for code msg))
+	for {
+		time.Sleep(time.Duration(normal(3, 1)) * time.Second)
+
+		err := halapi.CodeMsg{
+			Code: rand.Intn(400),
+		}.Send(c.enc)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
 }
 
 func (c *Context) sendSensorsData() {
-	// TODO
 	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
+	for {
+		time.Sleep(10 * time.Second)
+
+		if rand.Intn(100) < 60 {
+			lon := normal(32.4, .02)
+			lat := normal(43.098, .03)
+			hb := int(normal(70, 20))
+
+			err := halapi.SensorData{
+				Location: halapi.Location{
+					Lon: lon,
+					Lat: lat,
+				},
+				HeartBeat: halapi.HeartBeat{
+					BeatsPerMinut: hb,
+				},
+			}.Send(c.enc)
+
+			if err != nil {
+				log.Panic(err)
+			}
+		}
+	}
 }
 
 func (c *Context) receiveMsgs() {
+	var svs halapi.StartVideoStream
+	var evs halapi.EndVideoStream
+	var sam halapi.ShowAudioMsg
+	var scm halapi.ShowCodeMsg
+
 	for {
-		// TODO
+		receivedType, err := halapi.RecvFromUnit(c.dec, &svs, &evs, &sam, &scm)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		switch receivedType {
+		case halapi.StartVideoStreamType:
+			log.Println("started vidoe streaming")
+			c.videoStreamingOn = true
+			break
+		case halapi.EndVideoStreamType:
+			log.Println("ended video streaming")
+			c.videoStreamingOn = false
+			break
+		case halapi.ShowAudioMsgType:
+			onRecievedAudioMsg(sam.Audio, c.tempDir)
+			break
+		case halapi.ShowCodeMsgType:
+			onReceivedCodeMsg(scm.Code)
+			break
+		}
 	}
 }
 
 func onReceivedCodeMsg(code int) {
-	// TODO
-	// print any code msg
+	log.Println("Received code msg:", code)
 }
 
-func onRecievedAudioMsg(audio []byte) {
-	// TODO
+func onRecievedAudioMsg(audio []byte, tmpDir string) {
 	// save any audio msg in getTmpFile() and print path
+	path, err := ioutil.TempFile(tmpDir, "audio.")
+	if err != nil {
+		log.Panic(path)
+	}
+	defer path.Close()
+
+	n, err := path.Write(audio)
+	if n != len(audio) {
+		log.Panic("didn't save all bytes of audio msg")
+	}
+	if err != nil {
+		log.Panic(err)
+	}
+
+	log.Println("saved audio msg to:", path.Name())
 }

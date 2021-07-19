@@ -9,15 +9,15 @@ import (
 )
 
 type Args struct {
-	halSocketPath     string
-	videoPath         string
-	audiosDirPath     string
-	ffmpegPath        string
-	fragmentSizeBytes int
+	halSocketPath   string
+	videoPath       string
+	audiosDirPath   string
+	ffmpegPath      string
+	fragmentDurSecs int
 }
 
 func (a *Args) String() string {
-	return fmt.Sprintf("&Args{halSocketPath: %v, videosDirPath: %v, audiosDirPath: %v, fragmentSizeBytes: %v}", a.halSocketPath, a.videoPath, a.audiosDirPath, a.fragmentSizeBytes)
+	return fmt.Sprintf("&Args{halSocketPath: %v, videosDirPath: %v, audiosDirPath: %v, fragmentDurSecs: %v}", a.halSocketPath, a.videoPath, a.audiosDirPath, a.fragmentDurSecs)
 }
 
 func parseArgs() (*Args, error) {
@@ -27,7 +27,7 @@ func parseArgs() (*Args, error) {
 	video := parser.String("", "videos-dir-path", &argparse.Options{Help: "Path to directory of videos to send.", Default: "/dev/video0"})
 	ffmpegPath := parser.String("", "ffmpeg-path", &argparse.Options{Help: "Path to ffmpeg executable.", Default: "ffmpeg"})
 	audiosDirPath := parser.String("", "audios-dir-path", &argparse.Options{Help: "Path to directory of audios to send.", Default: "/tmp/hal.audios"})
-	fragmentSizeBytes := parser.Int("", "fragment-size-bytes", &argparse.Options{Help: "Size in bytes of one video fragment.", Default: 512})
+	fragmentDurSecs := parser.Int("", "fragment-dur-secs", &argparse.Options{Help: "Duration in secs of one video fragment.", Default: 2})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -35,10 +35,10 @@ func parseArgs() (*Args, error) {
 	}
 
 	return &Args{
-		halSocketPath:     *halSocketPath,
-		videoPath:         *video,
-		audiosDirPath:     *audiosDirPath,
-		fragmentSizeBytes: *fragmentSizeBytes,
-		ffmpegPath:        *ffmpegPath,
+		halSocketPath:   *halSocketPath,
+		videoPath:       *video,
+		audiosDirPath:   *audiosDirPath,
+		fragmentDurSecs: *fragmentDurSecs,
+		ffmpegPath:      *ffmpegPath,
 	}, nil
 }
