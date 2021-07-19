@@ -61,7 +61,7 @@ func main() {
 			dbManager.UpdateLastActivity(data.Src, data.Time)
 		},
 	)
-	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
+	go api.Start(args.UIPort, args.UnitsPort, args.VideosPath, dbManager, netManager)
 	netManager.Listen(args.Port)
 	log.Println("finished initalizing all")
 	waitSIGINT()
