@@ -83,7 +83,6 @@ CREATE TABLE received_videos (
     time    int NOT NULL,
     src     text NOT NULL,
     id      int NOT NULL,
-    path    text NOT NULL,
 
     PRIMARY KEY (src, id),
     FOREIGN KEY (src) 

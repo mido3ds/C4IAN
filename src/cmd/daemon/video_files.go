@@ -48,10 +48,6 @@ func (v *VideoFilesManager) AddFragment(frag *models.VideoFragment) {
 	writeFile(path, frag.Body)
 }
 
-func (v *VideoFilesManager) GetVideoPath(frag *models.VideoFragment) string {
-	return filepath.Join(frag.Src, strconv.Itoa(frag.ID))
-}
-
 func writeFile(path string, data []byte) {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {

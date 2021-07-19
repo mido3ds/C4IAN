@@ -13,7 +13,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8
-	github.com/mido3ds/C4IAN v0.0.0-20210718231520-dd2839aaa553
+	github.com/mido3ds/C4IAN v0.0.0-20210719134456-54f7f3b82063
 	github.com/rs/cors v1.8.0
 	gopkg.in/antage/eventsource.v1 v1.0.0-20150318155416-803f4c5af225
 )
