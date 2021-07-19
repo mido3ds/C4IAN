@@ -42,15 +42,7 @@ function HeartBeatChart({ unit }) {
         }
     })
 
-    useEffect(() => {
-        if (!unit) return
-
-        var data = []
-        var time = []
-
-
-    }, [unit])
-
+    
     useEffect(() => {
         if (!unit) return
 

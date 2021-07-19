@@ -132,6 +132,8 @@ function TextField({onLogIn}) {
                             wrongData();
                             return states.PASSWORD;
                         }
+                    default:
+                        break;
                 }
             })
         }

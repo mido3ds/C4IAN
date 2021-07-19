@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import Modal from 'react-modal';
 import ReactHlsPlayer from 'react-hls-player';
 import './PlayVideo.css'

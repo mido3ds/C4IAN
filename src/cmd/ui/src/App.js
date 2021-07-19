@@ -23,7 +23,7 @@ function App() {
 
   const [selectedTab, setSelectedTab] = useState("Map")
 
-  const [streamsTime, setStreamsTimer] = useState(null)
+  const [streamsTimer, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
 
   var onPlayAudio = (name, data) => {
@@ -111,7 +111,7 @@ function App() {
       onReceiveStream(JSON.parse(ev.data))
     })
 
-  }, [])
+  })
 
   var onChange = (selectedTab) => {
     setSelectedTab(selectedTab)

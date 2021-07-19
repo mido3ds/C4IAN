@@ -13,7 +13,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-function Home({eventSource}) {
+function Home() {
     const mapContainer = useRef(null);
     const map = useRef(null);
     const [units, setUnits] = useState({})
@@ -164,7 +164,7 @@ function Home({eventSource}) {
                 })
             })
         })
-    },[]);
+    });
 
     return (
         <>
