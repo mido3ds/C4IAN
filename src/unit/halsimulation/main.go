@@ -136,13 +136,15 @@ func (c *Context) streamVideo() {
 	}
 
 	// in video streaming mode: send index.m3u8 with last fragment
-	tempm3u8, err := ioutil.TempFile(c.tempDir, "index.")
+	m3u8Path := path.Join(c.tempDir, "index.m3u8")
+	f, err := os.Create(m3u8Path)
 	if err != nil {
 		log.Panic(err)
 	}
+	defer f.Close()
 
-	go c.watchM3U8(tempm3u8.Name())
-	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir, c.fragmentDurSecs)
+	go c.watchM3U8(m3u8Path)
+	go runFFmpeg(c.ffmpegPath, c.videoPath, m3u8Path, c.tempDir, c.fragmentDurSecs)
 
 	// every 10s: start video streaming mode (which lasts for 10s)
 	for {
