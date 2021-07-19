@@ -41,35 +41,36 @@ type Membership struct {
 
 // Time as int64 to store in db as Unix Time (SQLite3 does not support a time type)
 type Message struct {
-	Src       string `json:"src"`            // Only in SSEs between CMD Daemon & its UI
+	Src       string `json:"src" db:"src"`
 	SentByCMD bool   `json:"sent" db:"sent"` // Only between CMD Daemon & its UI
 	Time      int64  `json:"time" db:"time"`
 	Code      int    `json:"code" db:"code"`
 }
 
 type Audio struct {
-	Src  string  `json:"src"` // Only in SSEs between CMD Daemon & its UI
+	Src  string  `json:"src"`
 	Time int64   `json:"time" db:"time"`
 	Body []uint8 `json:"body" db:"body"`
 }
 
+// Only in SSEs between CMD Daemon & its UI
 type VideoFragment struct {
-	Src      string `json:"src"` // Only in SSEs between CMD Daemon & its UI
-	ID       int    `json:"id" db:"id"`
+	Src      string `json:"src"`
+	ID       int    `json:"id"`
 	FileName string `json:"file"`
-	Time     int64  `json:"time" db:"time"`
+	Time     int64  `json:"time"`
 	Metadata []byte `json:"metadata"`
-	Body     []byte `json:"body" db:"body"`
+	Body     []byte `json:"body"`
 }
 
 type Video struct {
+	Src  string `json:"src" db:"src"`
 	ID   int    `json:"id" db:"id"`
 	Time int64  `json:"time" db:"time"`
-	Path string `json:"path" db:"path"`
 }
 
 type SensorData struct {
-	Src       string  `json:"src"` // Only in SSEs between CMD Daemon & its UI
+	Src       string  `json:"src" db:"src"`
 	Time      int64   `json:"time" db:"time"`
 	Heartbeat int     `json:"heartbeat" db:"heartbeat"`
 	Lat       float64 `json:"lat" db:"lat"`
