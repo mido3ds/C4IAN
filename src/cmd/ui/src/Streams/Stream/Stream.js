@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import ReactPlayer from 'react-player'
+import React from 'react';
 import ReactHlsPlayer from 'react-hls-player';
 import './Stream.css'
 

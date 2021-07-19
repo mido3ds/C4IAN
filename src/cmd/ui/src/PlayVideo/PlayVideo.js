@@ -1,6 +1,6 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import Modal from 'react-modal';
-import ReactPlayer from 'react-player'
+import ReactHlsPlayer from 'react-hls-player';
 import './PlayVideo.css'
 
 Modal.setAppElement('#root');
@@ -16,7 +16,6 @@ const HLSConfig = {
 
 const PlayVideo = forwardRef(({ videoData }, ref) => {
     const [isOpen, setIsOpen] = useState(false)
-    const [video, setVideo] = useState(null)
 
     var openModal = () => {
         setIsOpen(true)
@@ -33,12 +32,6 @@ const PlayVideo = forwardRef(({ videoData }, ref) => {
         setIsOpen(false)
     }
 
-    useEffect(() => {
-        if (!videoUrl) return
-        import(videoUrl)
-            .then(module => setVideo(module.default))
-    }, [videoUrl])
-
     return (
         <div>
             <Modal
@@ -46,12 +39,11 @@ const PlayVideo = forwardRef(({ videoData }, ref) => {
                 onRequestClose={closeModal}
                 className="play-video-modal">
                 <button className="close" onClick={() => {
-                    setVideo(null)
                     closeModal()
                 }}>
                     &times;
                 </button>
-                {videoUrl ?
+                {videoData ?
                     <ReactHlsPlayer
                       src={baseURL + "stream/" + videoData.src + "/" + videoData.body + "/" + M3U8Name}
                       autoPlay={true}
