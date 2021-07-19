@@ -23,3 +23,9 @@
     position: relative;
 }
 
+.no-streams-msg {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 35px;
+    color: #2bede6;
+}
+
