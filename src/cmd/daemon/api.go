@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -32,7 +31,7 @@ type API struct {
 func NewAPI() *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte("Access-Control-Allow-Origin: *"),
+			[]byte("Access-Control-Allow-Origin: http://localhost:*"),
 		}
 	})
 	return &API{eventSource: es}
@@ -47,6 +46,8 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 
 	// Initialize router
 	router := mux.NewRouter()
+
+	// API endpoints
 	router.HandleFunc("/api/audio-msg/{ip}", api.postAudioMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/msg/{ip}", api.postMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/units", api.getUnits).Methods(http.MethodGet, http.MethodOptions)
@@ -57,59 +58,26 @@ func (api *API) Start(port int, unitsPort int, VideosPath string, dbManager *Dat
 	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet, http.MethodOptions)
-	router.Handle("/events", api.eventSource)
 
-	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}", api.StreamHandler).Methods(http.MethodGet)
-	router.HandleFunc("/api/stream/{ip}/{mId:[0-9]+}/{segName:index[0-9]+.ts}", api.StreamHandler).Methods(http.MethodGet)
+	// Streaming file server
+	router.PathPrefix("/api/stream/").Handler(
+		http.StripPrefix("/api/stream/", http.FileServer(http.Dir("./videos/"))),
+	)
+
+	// SSE endpoint
+	router.Handle("/events", api.eventSource)
 
 	router.Use(api.jsonContentType)
 
 	// Listen for HTTP requests
 	c := cors.New(cors.Options{
 		OptionsPassthrough: false,
-		AllowedOrigins:     []string{"http://localhost:*"},
+		AllowedOrigins:     []string{"http://localhost:*", "null"},
 		AllowCredentials:   true,
 	})
 	handler := c.Handler(router)
 	address := ":" + strconv.Itoa(port)
 	log.Fatal(http.ListenAndServe(address, handler))
-}
-
-func (api *API) StreamHandler(response http.ResponseWriter, request *http.Request) {
-	fmt.Printf("Request: %s\n", request.RequestURI)
-	vars := mux.Vars(request)
-	mId, err := strconv.Atoi(vars["mId"])
-	ip, ok := vars["ip"]
-	fmt.Printf("mId: %d\n", mId)
-	fmt.Printf("ip: %s\n", ip)
-	if err != nil || !ok {
-		response.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	fmt.Println("passed")
-	segName, ok := vars["segName"]
-	fmt.Printf("segName: %s\n", segName)
-	if !ok {
-		api.serveHlsM3u8(response, request, ip, mId)
-	} else {
-		fmt.Println(segName)
-		api.serveHlsTs(response, request, ip, mId, segName)
-	}
-}
-
-func (api *API) serveHlsM3u8(w http.ResponseWriter, r *http.Request, ip string, mId int) {
-	mediaFile := fmt.Sprintf("%s/%s/%d/%s", api.VideosPath, ip, mId, M3U8Name)
-	fmt.Printf("Get file: %s\n", mediaFile)
-	http.ServeFile(w, r, mediaFile)
-	w.Header().Set("Content-Type", "application/x-mpegURL")
-}
-
-func (api *API) serveHlsTs(w http.ResponseWriter, r *http.Request, ip string, mId int, segName string) {
-	mediaFile := fmt.Sprintf("%s/%s/%d/%s", api.VideosPath, ip, mId, segName)
-	fmt.Printf("Get file: %s\n", mediaFile)
-	http.ServeFile(w, r, mediaFile)
-	w.Header().Set("Content-Type", "video/MP2T")
 }
 
 func (api *API) SendEvent(body models.Event) {
