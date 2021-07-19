@@ -28,12 +28,14 @@ $ sudo ./start u2 ping 10.0.0.1 -c5
 ```sh
 $ sudo ./start units
 $ sudo ./start cmds
+$ sudo ./start hals -- --video /path/to/video --audios-dir /path/to/audio/dir # TODO
 ```
 
-## Start single UNIT/CMD locally
+## Start single UNIT/CMD/HAL locally
 ```sh
 $ sudo ./start local unit
 $ sudo ./start local cmd
+$ sudo ./start local hal -- --video /path/to/video --audios-dir /path/to/audio/dir
 ```
 
 ## Watch mode

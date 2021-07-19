@@ -136,6 +136,8 @@ func (c *Context) listenCmdTcp() {
 	defer cmdLisener.Close()
 	log.Println("listening for cmd on tcp port:", c.port)
 
+	// go simulateCMD(c)
+
 	for {
 		conn, err := cmdLisener.Accept()
 		if err != nil {
@@ -176,6 +178,15 @@ func (c *Context) listenCmdTcp() {
 				log.Panic("received unrecognized msg type on tcp")
 			}
 		}()
+	}
+}
+
+func simulateCMD(c *Context) {
+	for {
+		time.Sleep(5 * time.Second)
+
+		c.onCodeMsgReceivedFromCMD(&models.Message{Code: 5})
+		c.onAudioMsgReceivedFromCMD(&models.Audio{Body: []byte{45, 23, 45, 1, 2, 4}})
 	}
 }
 
@@ -243,6 +254,11 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 		break
 	default:
 		log.Println("generic code msg")
+		enc := gob.NewEncoder(c.halConn)
+		err := halapi.ShowCodeMsg{Code: msg.Code}.Send(enc)
+		if err != nil {
+			log.Println("error in sending code msg to hal:", err)
+		}
 		break
 	}
 }
@@ -260,7 +276,7 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 	}
 }
 
-func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
+func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename string) error {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
 	err := encoder.Encode(models.VideoFragmentType)
@@ -269,10 +285,11 @@ func (c *Context) sendVideoFragmentUDP(fragment []byte) error {
 	}
 
 	err = encoder.Encode(&models.VideoFragment{
-		ID:    c.videoID,
-		Time:  time.Now().Unix(),
-		Body:  fragment,
-		SeqNo: c.incrementAndGetVideoSeqNo(),
+		ID:       c.videoID,
+		Time:     time.Now().Unix(),
+		Body:     fragment,
+		Metadata: metadata,
+		FileName: filename,
 	})
 
 	if err != nil {

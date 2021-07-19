@@ -13,9 +13,7 @@ function invalid() {
     exit 1
 }
 
-IS_UNIT=0
-IS_CMD=0
-IS_RTR=0
+TO_RUN=
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -27,23 +25,11 @@ while [ "$1" != "" ]; do
             WATCH=1
             echo "running in watch mode"
             ;;
-        unit)
-            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
+        unit | cmd | router | hal)
+            if [[ ! -z "$TO_RUN" ]]; then
                 invalid
             fi
-            IS_UNIT=1
-            ;;
-        cmd)
-            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
-                invalid
-            fi
-            IS_CMD=1
-            ;;
-        router)
-            if [[ $IS_CMD -eq 1 ]] || [[ $IS_UNIT -eq 1 ]]; then
-                invalid
-            fi
-            IS_RTR=1
+            TO_RUN=$1
             ;;
         --)
             shift
@@ -62,22 +48,36 @@ LOG_PATH="/var/log/caian/local-"
 EXECUTABLE=""
 COMMAND=""
 
-if [[ $IS_UNIT -eq 1 ]]; then
-    LOG_PATH+="unit"
-    EXECUTABLE="./unit/daemon/daemon"
-    COMMAND="./unit/daemon/daemon -s /var/lib/caian/local-unit.store.sqllite "$OPTS
-elif [[ $IS_CMD -eq 1 ]]; then
-    LOG_PATH+="cmd"
-    EXECUTABLE="./cmd/daemon/daemon"
-    COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path /tmp/local-cmd.units.json --groups-path /tmp/local-cmd.groups.json "$OPTS
+case $TO_RUN in
+    unit)
+        LOG_PATH+="unit"
+        EXECUTABLE="./unit/daemon/daemon"
+        COMMAND="./unit/daemon/daemon -s /var/lib/caian/local-unit.store.sqllite "$OPTS
+        ;;
+    cmd)
+        LOG_PATH+="cmd"
+        EXECUTABLE="./cmd/daemon/daemon"
+        COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path /tmp/local-cmd.units.json --groups-path /tmp/local-cmd.groups.json "$OPTS
 
-    echo >/tmp/local-cmd.units.json '{"units": ["127.0.0.1"]}'
-    echo >/tmp/local-cmd.groups.json '{"224.0.2.1": ["127.0.0.1"]}'
-elif [[ $IS_RTR -eq 1 ]]; then
-    LOG_PATH+="router"
-    EXECUTABLE="./router/router"
-    COMMAND="./router/deploy "$OPTS
-fi
+        echo >/tmp/local-cmd.units.json '{"units": ["127.0.0.1"]}'
+        echo >/tmp/local-cmd.groups.json '{"224.0.2.1": ["127.0.0.1"]}'
+        ;;
+    router)
+        (cd ./router && go build)
+        LOG_PATH+="router"
+        EXECUTABLE="./router/router"
+        COMMAND="./router/deploy "$OPTS
+        ;;
+    hal)
+        LOG_PATH+="halsimulation"
+        EXECUTABLE="./unit/halsimulation/halsimulation"
+        COMMAND="./unit/halsimulation/halsimulation "$OPTS
+        ;;
+    *)
+        echo "Unknown TO_RUN \"$TO_RUN\""
+        usage
+        exit 1
+esac
 
 mkdir -p /var/log/caian/ /var/lib/caian/
 

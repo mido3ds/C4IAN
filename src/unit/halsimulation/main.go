@@ -136,13 +136,13 @@ func (c *Context) streamVideo() {
 	}
 
 	// in video streaming mode: send index.m3u8 with last fragment
-	tempm3u8, err := ioutil.TempFile(c.tempDir, "index.m3u8.")
+	tempm3u8, err := ioutil.TempFile(c.tempDir, "index.")
 	if err != nil {
 		log.Panic(err)
 	}
 
-	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir, c.fragmentDurSecs)
 	go c.watchM3U8(tempm3u8.Name())
+	go runFFmpeg(c.ffmpegPath, c.videoPath, tempm3u8.Name(), c.tempDir, c.fragmentDurSecs)
 
 	// every 10s: start video streaming mode (which lasts for 10s)
 	for {
@@ -163,29 +163,37 @@ func (c *Context) watchM3U8(m3u8path string) {
 		log.Panic(err)
 	}
 
+	ticker := time.NewTicker(time.Second)
+
 	for {
 		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return
+		case <-ticker.C:
+			if c.videoStreamingOn {
+				c.sendM3U8(m3u8path)
 			}
-			log.Println("event:", event)
-			if (event.Op & fsnotify.Write) == fsnotify.Write {
-				log.Println("modified file:", event.Name) // TODO: remove
-				if c.videoStreamingOn {
-					c.sendM3U8(m3u8path)
-				}
+		case event, _ := <-watcher.Events:
+			if (event.Op&fsnotify.Write) == fsnotify.Write && c.videoStreamingOn {
+				c.sendM3U8(m3u8path)
 			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return
-			}
+		case err, _ := <-watcher.Errors:
 			log.Panic(err)
 		}
 	}
 }
 
+func getNumTS(m3u8 []byte) int {
+	reg := regexp.MustCompile(`index(\d)+\.ts`)
+	b := reg.FindAll(m3u8, -1)
+	size := 0
+	if b != nil {
+		size = len(b)
+	}
+	return size
+}
+
 func (c *Context) sendM3U8(m3u8path string) {
+	log.Println("sending m3u8")
+
 	// load m3u8 file
 	m3u8, err := ioutil.ReadFile(m3u8path)
 	if err != nil {
@@ -193,19 +201,13 @@ func (c *Context) sendM3U8(m3u8path string) {
 	}
 
 	// get latest ts file(s)
-	reg := regexp.MustCompile(`index(\d)+\.ts`)
-	b := reg.FindAll(m3u8[:], -1)
-	size := 0
-	if b != nil {
-		size = len(b)
-	}
-	numTSToSend := size - c.lastTSIndex
-	log.Println(numTSToSend)
+	numTS := getNumTS(m3u8)
+	numTSToSend := numTS - c.lastTSIndex
 
 	tsfiles := make([][]byte, 0)
 	filenames := make([]string, 0)
-	for i := c.lastTSIndex; i < size; i++ {
-		name := fmt.Sprintf("index%d.ts", i)
+	for i := c.lastTSIndex; i < numTS; i++ {
+		name := path.Join(c.tempDir, fmt.Sprintf("index%d.ts", i))
 		filenames = append(filenames, name)
 
 		bts, err := ioutil.ReadFile(name)
@@ -231,31 +233,31 @@ func (c *Context) sendM3U8(m3u8path string) {
 	// increment counter to latest ts file(s)
 	c.lastTSIndex += numTSToSend
 
-	log.Println("sent", numTSToSend, "TSs") // TODO: remove
+	log.Println("sent", numTSToSend, "TSs, filenames:", filenames) // TODO: remove
 }
 
 func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs int) {
 	args := []string{
-		fmt.Sprintf("-i %s", videoPath),
-		`-framerate 60`,
-		`-s 480x360`,
-		`-level 3.0`,
-		`-fs 6500`,
-		`-start_number 0`,
-		`-f hls`,
-		fmt.Sprintf("-hls_time %d", fragmentDurSecs),
-		`-hls_playlist_type event`,
-		`-hls_flags independent_segments`,
-		`-hls_flags split_by_time`,
-		`-hls_segment_type mpegts`,
-		`-hls_list_size 5`,
+		`-i`, videoPath,
+		`-framerate`, `60`,
+		`-s`, `480x360`,
+		`-level`, `3.0`,
+		`-fs`, `6500`,
+		`-start_number`, `0`,
+		`-f`, `hls`,
+		`-hls_time`, fmt.Sprint(fragmentDurSecs),
+		`-hls_playlist_type`, `event`,
+		`-hls_flags`, `independent_segments`,
+		`-hls_flags`, `split_by_time`,
+		`-hls_segment_type`, `mpegts`,
+		`-hls_list_size`, `5`,
 		m3u8Path,
 	}
 	cmd := exec.Command(ffmpegPath, args...)
 	log.Println("executing: ", cmd)
 
 	stderrpath := path.Join(outdir, "stderr")
-	stderr, err := os.Open(stderrpath)
+	stderr, err := os.Create(stderrpath)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -264,7 +266,7 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs i
 	log.Println("ffmpeg stderr path:", stderrpath)
 
 	stdoutpath := path.Join(outdir, "stdout")
-	stdout, err := os.Open(stdoutpath)
+	stdout, err := os.Create(stdoutpath)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -274,7 +276,9 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs i
 
 	err = cmd.Run()
 	if err != nil {
-		log.Panic(err)
+		stderr, _ := ioutil.ReadFile(stderrpath)
+		stdout, _ := ioutil.ReadFile(stdoutpath)
+		log.Panic("error:", err, ", stderr:", string(stderr), ", stdout:", string(stdout))
 	}
 }
 

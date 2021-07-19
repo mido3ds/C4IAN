@@ -10,7 +10,6 @@ import (
 	"github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
-// TODO: remove
 func simulateHALClient(HALSocketPath string) {
 	conn, err := net.Dial("unix", HALSocketPath)
 	if err != nil {
@@ -48,7 +47,7 @@ func (c *Context) listenHAL() {
 	log.Println("listening for HAL connection over unix socket:", c.halSocketPath)
 
 	for {
-		go simulateHALClient(c.halSocketPath)
+		// go simulateHALClient(c.halSocketPath)
 		conn, err := halListener.Accept()
 		c.halConn = conn
 		defer conn.Close()
@@ -76,7 +75,8 @@ func (context *Context) serveHAL(conn net.Conn) {
 	for {
 		sentType, err := halapi.RecvFromHAL(dec, &video, &sensorData, &audiomsg, &codemsg)
 		if err != nil {
-			log.Println(err)
+			log.Print(err)
+			return
 		} else {
 			switch sentType {
 			case halapi.VideoFragmentType:
@@ -116,7 +116,7 @@ func (c *Context) onCodeMsgReceivedFromHAL(cm *halapi.CodeMsg) {
 }
 
 func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
-	log.Printf("From HAL:: AudioMsg= %v\n", *a)
+	log.Printf("From HAL:: len(AudioMsg)=%v\n", len(a.Audio))
 
 	err := c.sendAudioMessageTCP(a.Audio)
 	if err != nil {
@@ -132,15 +132,15 @@ func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
 }
 
 func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
-	log.Printf("From HAL:: VideoFragment= %v\n", *v)
-	c.saveVideoFragment(v.Video)
+	log.Printf("From HAL:: len(VideoFragment)=%v, len(Metadata)=%v, Filename=%v\n", len(v.Video), len(v.Metadata), v.Filename)
+	c.saveVideoFragment(v.Video, v.Metadata, v.Filename)
 
 	if !c.expectingVideoStream() {
 		log.Println("received video fragment from HAL, but CMD didn't ask for it, dropping it")
 		return
 	}
 
-	err := c.sendVideoFragmentUDP(v.Video)
+	err := c.sendVideoFragmentUDP(v.Video, v.Metadata, v.Filename)
 	if err != nil {
 		log.Println("error in sending video frag:", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"path"
 )
 
 func normal(mean, stdDev float64) float64 {
@@ -23,20 +24,20 @@ func buildPath(a, b string) string {
 	return fmt.Sprintf("%s/%s", a, b)
 }
 
-func listDir(path string) []string {
-	log.Println(path)
-	files, err := ioutil.ReadDir(path)
+func listDir(pathToDir string) []string {
+	log.Println(pathToDir)
+	files, err := ioutil.ReadDir(pathToDir)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	list := make([]string, 0)
 	for _, f := range files {
-		path := buildPath(path, f.Name())
+		p := path.Join(pathToDir, f.Name())
 		if f.IsDir() {
-			list = append(list, listDir(path)...)
+			list = append(list, listDir(p)...)
 		} else {
-			list = append(list, path)
+			list = append(list, p)
 		}
 	}
 
