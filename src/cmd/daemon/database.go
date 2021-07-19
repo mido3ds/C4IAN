@@ -180,7 +180,7 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 	return videos
 }
 
-func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path string) {
+func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path string) bool {
 	// Check if the video already exists in the database
 	exists := true
 	row := dbManager.db.QueryRowx(
@@ -200,4 +200,5 @@ func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment, path
 		dbManager.db.MustExec("INSERT INTO received_videos VALUES ($1, $2, $3, $4)",
 			frag.Time, frag.Src, frag.ID, path)
 	}
+	return exists
 }

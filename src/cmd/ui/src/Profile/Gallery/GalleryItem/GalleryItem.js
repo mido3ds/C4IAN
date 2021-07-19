@@ -14,7 +14,7 @@ function GalleryItem({ type, data, time, name }) {
         if (type === "audio") {
             setAudioData(data.body)
         } else if (type === "video") {
-            setVideoData(data.path)
+            setVideoData(data)
         }
     }, [data, type])
 
@@ -30,7 +30,7 @@ function GalleryItem({ type, data, time, name }) {
     return (
         <>
             {type === "video" ?
-                <PlayVideo videoUrl={videoData} ref={playVideoRef}></PlayVideo>
+                <PlayVideo videoData={videoData} ref={playVideoRef}></PlayVideo>
                 : <PlayAudio name={name} audio={audioData} ref={playAudioRef}></PlayAudio>
             }
             <div data-augmented-ui="border" className="gallery-item">

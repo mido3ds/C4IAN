@@ -48,7 +48,11 @@ func main() {
 		// onReceiveVideoFragment
 		func(frag models.VideoFragment) {
 			videoFilesManager.AddFragment(&frag)
-			dbManager.AddVideoIfNew(&frag, videoFilesManager.GetVideoPath(&frag))
+			path := videoFilesManager.GetVideoPath(&frag)
+			exists := dbManager.AddVideoIfNew(&frag, path)
+			if !exists {
+				api.SendEvent(&models.Video{ID: frag.ID, Time: frag.Time, Path: path})
+			}
 		},
 		// onReceiveSensorsData
 		func(data models.SensorData) {
@@ -57,7 +61,7 @@ func main() {
 			dbManager.UpdateLastActivity(data.Src, data.Time)
 		},
 	)
-	go api.Start(args.UIPort, args.UnitsPort, dbManager, netManager)
+	go api.Start(args.UIPort, args.UnitsPort, args.VideosPath, dbManager, netManager)
 	netManager.Listen(args.Port)
 	log.Println("finished initalizing all")
 	waitSIGINT()

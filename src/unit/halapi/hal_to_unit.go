@@ -8,7 +8,9 @@ import (
 // VideoFragment is sent to unit periodically
 // as configured in StartVideoStream sent by unit
 type VideoFragment struct {
-	Video []byte
+	Video    []byte
+	Metadata []byte
+	Filename string
 }
 
 func (s VideoFragment) Send(enc *gob.Encoder) error {
@@ -16,7 +18,7 @@ func (s VideoFragment) Send(enc *gob.Encoder) error {
 	if err != nil {
 		return err
 	}
-	return enc.Encode(s.Video)
+	return enc.Encode(s)
 }
 
 // AudioMsg is sent to unit when the owner presses record
@@ -85,7 +87,7 @@ func RecvFromHAL(dec *gob.Decoder, vp *VideoFragment, s *SensorData, a *AudioMsg
 
 	switch sentType {
 	case VideoFragmentType:
-		err = dec.Decode(&vp.Video)
+		err = dec.Decode(vp)
 		break
 	case SensorDataType:
 		err = dec.Decode(s)

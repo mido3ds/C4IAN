@@ -2359,7 +2359,7 @@
     "normalize-path" "^3.0.0"
     "picomatch" "^2.0.4"
 
-"apexcharts@^3.18.0":
+"apexcharts@^3.18.0", "apexcharts@^3.27.2":
   "integrity" "sha512-FjW0OW6Oq9kbWJiF6wIZEsMNNHme6WNv3eh+p4azuWVELNY/LigXU+01s4TP+Obplhy6byV9bw9x7GhrbN2YsQ=="
   "resolved" "https://registry.npmjs.org/apexcharts/-/apexcharts-3.27.2.tgz"
   "version" "3.27.2"
@@ -4991,7 +4991,7 @@
   "resolved" "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz"
   "version" "1.8.1"
 
-"eventemitter3@^4.0.0":
+"eventemitter3@^4.0.0", "eventemitter3@^4.0.3":
   "integrity" "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="
   "resolved" "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz"
   "version" "4.0.7"
@@ -5840,6 +5840,14 @@
   "integrity" "sha512-l9sfDFsuqtOqKDsQdqrMRk0U85RZc0RtOR9yPI7mRVOa4FsR/BVnZ0shmQRM96Ji99kYZP/7hn1cedc1+ApsTQ=="
   "resolved" "https://registry.yarnpkg.com/hex-color-regex/-/hex-color-regex-1.1.0.tgz"
   "version" "1.1.0"
+
+"hls.js@^0.14.17":
+  "integrity" "sha512-25A7+m6qqp6UVkuzUQ//VVh2EEOPYlOBg32ypr34bcPO7liBMOkKFvbjbCBfiPAOTA/7BSx1Dujft3Th57WyFg=="
+  "resolved" "https://registry.npmjs.org/hls.js/-/hls.js-0.14.17.tgz"
+  "version" "0.14.17"
+  dependencies:
+    "eventemitter3" "^4.0.3"
+    "url-toolkit" "^2.1.6"
 
 "hmac-drbg@^1.0.1":
   "integrity" "sha1-0nRXAQJabHdabFRXk+1QL8DGSaE="
@@ -9796,6 +9804,13 @@
   "resolved" "https://registry.npmjs.org/react-fast-compare/-/react-fast-compare-3.2.0.tgz"
   "version" "3.2.0"
 
+"react-hls-player@^3.0.7":
+  "integrity" "sha512-i5QWNyLmaUhV/mgnpljRJT0CBfJnylClV/bne8aiXO3ZqU0+D3U/jtTDwdXM4i5qHhyFy9lemyZ179IgadKd0Q=="
+  "resolved" "https://registry.npmjs.org/react-hls-player/-/react-hls-player-3.0.7.tgz"
+  "version" "3.0.7"
+  dependencies:
+    "hls.js" "^0.14.17"
+
 "react-is@^16.8.1":
   "integrity" "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="
   "resolved" "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz"
@@ -9957,7 +9972,7 @@
     "loose-envify" "^1.4.0"
     "prop-types" "^15.6.2"
 
-"react@*", "react@^0.14.0 || ^15.0.0 || ^16 || ^17", "react@^15.0.0 || ^16.0.0", "react@^16.0 || ^17.0.0", "react@^16.0.2", "react@^16.14.0", "react@^16.x || ^17.x", "react@>= 16", "react@>=0.13", "react@>=0.15", "react@>=15.0.0", "react@>=16", "react@>=16.6.0", "react@16.x":
+"react@*", "react@^0.14.0 || ^15.0.0 || ^16 || ^17", "react@^15.0.0 || ^16.0.0", "react@^16.0 || ^17.0.0", "react@^16.0.2", "react@^16.13.1", "react@^16.14.0", "react@^16.x || ^17.x", "react@>= 16", "react@>=0.13", "react@>=0.15", "react@>=15.0.0", "react@>=16", "react@>=16.6.0", "react@16.x":
   "integrity" "sha512-0X2CImDkJGApiAlcf0ODKIneSwBPhqJawOa5wCtKbu7ZECrmS26NvtSILynQ66cgkT/RJ4LidJOc3bUESwmU8g=="
   "resolved" "https://registry.npmjs.org/react/-/react-16.14.0.tgz"
   "version" "16.14.0"
@@ -11937,6 +11952,11 @@
   dependencies:
     "querystringify" "^2.1.1"
     "requires-port" "^1.0.0"
+
+"url-toolkit@^2.1.6":
+  "integrity" "sha512-Da75SQoxsZ+2wXS56CZBrj2nukQ4nlGUZUP/dqUBG5E1su5GKThgT94Q00x81eVII7AyS1Pn+CtTTZ4Z0pLUtQ=="
+  "resolved" "https://registry.npmjs.org/url-toolkit/-/url-toolkit-2.2.3.tgz"
+  "version" "2.2.3"
 
 "url@^0.11.0":
   "integrity" "sha1-ODjpfPxgUh63PFJajlW/3Z4uKPE="
