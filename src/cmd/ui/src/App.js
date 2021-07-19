@@ -62,21 +62,43 @@ function App() {
     })
   }
 
+  var onReceiveAudio = (data) => {
+    setSelectedTab(selectedTab => {
+      if(selectedTab !== "Log Out")
+        NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
+      return selectedTab
+    })
+  }
+
+  var onReceiveMessage = (data) => {
+    setSelectedTab(selectedTab => {
+      if(selectedTab !== "Log Out")
+        NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
+      return selectedTab
+    })
+  }
+
   var onReceiveStream = (data) => {
-    if (streams.some(e => e.ID === data.ID)) {
-      //streams[streams.findIndex(stream => stream.id === data.ID)].body = data.body;
+    if (streams.some(e => e.src === data.src)) {
+      streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
       streams.push(data)
       setTimeout(() => {
         perodicStartStream(data)
       }, 50 * 1000)
+
+      setSelectedTab( selectedTab => {
+        if(selectedTab !== "Log Out")
+          NotificationManager.info(data.src + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
+        return selectedTab
+      })
     }
   }
 
   useEffect(() => {
     if (selectedTab === "Streams") {
       setStreamsTimer(streamsTimer => {
-        if(streamsTimer)
+        if (streamsTimer)
           clearTimeout(streamsTimer);
         return null
       })
@@ -87,8 +109,8 @@ function App() {
     }
   }, [selectedTab])
 
-  useEffect(() => {
 
+  useEffect(() => {
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
@@ -98,20 +120,18 @@ function App() {
 
     var eventSource = new EventSource("http://localhost:3170/events")
     eventSource.addEventListener("msg", ev => {
-      var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
+      onReceiveMessage(JSON.parse(ev.data))
     })
 
     eventSource.addEventListener("audio", ev => {
-      var data = JSON.parse(ev.data)
-      NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
+      onReceiveAudio(JSON.parse(ev.data))
     })
 
-    eventSource.addEventListener("video-fragment", ev => {
+    eventSource.addEventListener("video", ev => {
       onReceiveStream(JSON.parse(ev.data))
     })
 
-  })
+  }, [])
 
   var onChange = (selectedTab) => {
     setSelectedTab(selectedTab)
@@ -128,24 +148,24 @@ function App() {
     }
   }
 
-  return (
-    <>
-      <NotificationContainer />
-      <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
-      <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      {
-        selectedTab === "Log Out" ?
-          <LogIn onLogIn={() => { onChange("Map") }} />
-          : selectedTab === "Map" ?
-            <Home />
-            : selectedTab === "Units" ?
-              <Profile />
-              : selectedTab === "Streams" ?
-                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)}/>
-                : <> </>
-      }
-    </>
-  );
-}
+    return (
+      <>
+        <NotificationContainer />
+        <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
+        <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
+        {
+          selectedTab === "Log Out" ?
+            <LogIn onLogIn={() => { onChange("Map") }} />
+            : selectedTab === "Map" ?
+              <Home selectedTab={selectedTab} />
+              : selectedTab === "Units" ?
+                <Profile />
+                : selectedTab === "Streams" ?
+                  <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
+                  : <> </>
+        }
+      </>
+    );
+  }
 
-export default App;
+  export default App;
