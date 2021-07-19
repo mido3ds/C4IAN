@@ -7,7 +7,7 @@ import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
 import { receivedCodes } from './codes'
-import { postMsg } from './Api/Api';
+import { postMsg, getNames } from './Api/Api';
 
 import 'react-notifications/lib/notifications.css';
 
@@ -25,6 +25,8 @@ function App() {
 
   const [streamsTimer, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
+
+  const [unitNames, setUnitNames] = useState({})
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -65,7 +67,7 @@ function App() {
   var onReceiveAudio = (data) => {
     setSelectedTab(selectedTab => {
       if(selectedTab !== "Log Out")
-        NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(data.src, data.body), true);
+        NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio(unitNames[data.src].name, data.body), true);
       return selectedTab
     })
   }
@@ -73,7 +75,7 @@ function App() {
   var onReceiveMessage = (data) => {
     setSelectedTab(selectedTab => {
       if(selectedTab !== "Log Out")
-        NotificationManager.info(data.src + ": " + receivedCodes[data.code]);
+        NotificationManager.info(unitNames[data.src] + ": " + receivedCodes[data.code]);
       return selectedTab
     })
   }
@@ -89,7 +91,7 @@ function App() {
 
       setSelectedTab( selectedTab => {
         if(selectedTab !== "Log Out")
-          NotificationManager.info(data.src + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
+          NotificationManager.info(unitNames[data.src] + " start streaming, click here to open streaming page!", '', 3000, () => onChange("Streams"), true);
         return selectedTab
       })
     }
@@ -131,6 +133,9 @@ function App() {
       onReceiveStream(JSON.parse(ev.data))
     })
 
+    getNames().then(unitsData => {
+      setUnitNames(unitsData)
+    })
   }, [])
 
   var onChange = (selectedTab) => {
