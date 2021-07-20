@@ -59,10 +59,11 @@ type Context struct {
 	videoStreamTimer *time.Timer
 
 	// videoManager *VideoFilesManager
+	api *API
 }
 
-func newContext(args *Args) Context {
-	context := Context{
+func newContext(args *Args) *Context {
+	context := &Context{
 		Args:                  *args,
 		_videoSeqno:           0,
 		videoID:               0,
@@ -84,6 +85,8 @@ func newContext(args *Args) Context {
 
 	// videoManager := NewVideoFilesManager("/tmp/unitvideos/assets/media")
 	// context.videoManager = videoManager
+
+	context.api = newAPI(context)
 
 	return context
 }
@@ -258,6 +261,8 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 			}
 		}
 
+		c.api.sendCodeMsgEvent(msg.Code)
+
 		break
 	}
 }
@@ -276,6 +281,8 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 	} else {
 		log.Println("received msg but coudln't connect to HAL to play it, dropping msg")
 	}
+
+	c.api.sendAudioMsgEvent(audio.Body)
 }
 
 func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename string) error {

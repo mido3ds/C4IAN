@@ -18,6 +18,7 @@ type Args struct {
 	cmdAddress          string
 	timeout             time.Duration
 	retryOrCloseTimeout time.Duration
+	uiPort              int
 }
 
 func (a *Args) String() string {
@@ -29,6 +30,7 @@ func parseArgs() (*Args, error) {
 
 	storePath := parser.String("s", "store", &argparse.Options{Help: "Path to archive video/positions/heartbeats. If not provided, won't store them.", Default: nil})
 	port := parser.Int("p", "port", &argparse.Options{Help: "Main port the client will bind to, to receive connections from other clients.", Default: 4070})
+	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3270, Help: "UI port the client will bind to, to connect with its UI."})
 	timeout := parser.Int("", "timeout-millis", &argparse.Options{Help: "Timeout of writing to CMD in millis, if timeouted will reopen socket and send.", Default: 1000})
 	retryTimeout := parser.Int("", "retry-millis", &argparse.Options{Help: "Timeout of resending same packet in millis, if failed again will reopen socket.", Default: 3000})
 	cmdAddress := parser.String("", "cmd-addr", &argparse.Options{Help: "Address+Port of cmd center to communicate with.", Default: "127.0.0.1:4170"})
@@ -46,5 +48,6 @@ func parseArgs() (*Args, error) {
 		cmdAddress:          *cmdAddress,
 		timeout:             time.Duration(*timeout) * time.Millisecond,
 		retryOrCloseTimeout: time.Duration(*retryTimeout) * time.Millisecond,
+		uiPort:              *uiPort,
 	}, nil
 }
