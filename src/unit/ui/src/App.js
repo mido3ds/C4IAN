@@ -15,20 +15,21 @@ import './index.css';
 
 function App() {
   const playAudioRef = useRef(null);
-  const AudioMsgType = 6 & 0xff
-  const CodeMsgType = 7 & 0xff
-  const [audioModalName, setAudioModalName] = useState(null)
-  const [audioModalData, setAudioModalData] = useState(null)
-  const [msgs, appendToMsgs] = useState([])
-  const [audios, appendToAudios] = useState([])
-  const [unixSocket, setSocket] = useState(null)
+  const AudioMsgType = 6 & 0xff;
+  const CodeMsgType = 7 & 0xff;
+  const UnixSocketPath = '/tmp/unit.hal.sock';
+  const [audioModalName, setAudioModalName] = useState(null);
+  const [audioModalData, setAudioModalData] = useState(null);
+  const [unixSocket, setSocket] = useState(null);
+  const [msgs, appendToMsgs] = useState([]);
+  const [audios, appendToAudios] = useState([]);
 
-  const [selectedTab, setSelectedTab] = useState("Profile")
+  const [selectedTab, setSelectedTab] = useState("Profile");
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
     setAudioModalData(data);
-    playAudioRef.current.open()
+    playAudioRef.current.open();
   }
 
   var onReceiveMessage = (data) => {
@@ -36,9 +37,9 @@ function App() {
       if (selectedTab !== "Log Out") {
         NotificationManager.info("Command Center" + ": " + receivedCodes[data.Body]);
         data["sent"] = false;
-        appendToMsgs(data)
+        appendToMsgs(data);
       }
-      return selectedTab
+      return selectedTab;
     })
   }
 
@@ -46,9 +47,9 @@ function App() {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
         NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", data.Body), true);
-        appendToAudios(data)
+        appendToAudios(data);
       }
-      return selectedTab
+      return selectedTab;
     })
   }
 
@@ -59,22 +60,22 @@ function App() {
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
 
-      var socket = net.connect('/tmp/unit.hal.sock');
-      socket.on('data', (data) => {
+      var socket = ipc.connectTo('unit-hal', UnixSocketPath);
+      socket.on('message', (data) => {
         const parsedData = JSON.parse(decode(data).buffer);
-        console.log("received msg: ", parsedData)
+        console.log("received msg: ", parsedData);
         if (parsedData.Type == CodeMsgType) {
-          onReceiveMessage(parsedData)
+          onReceiveMessage(parsedData);
         }
         else if (parsedData.Type == AudioMsgType) {
-          onReceiveAudio(parsedData)
+          onReceiveAudio(parsedData);
         }
       });
-      setSocket(socket)
+      setSocket(socket);
   }, [])
 
   var onChange = (selectedTab) => {
-    setSelectedTab(selectedTab)
+    setSelectedTab(selectedTab);
 
     if (selectedTab === "Log Out") {
       window.$('.menu').css('visibility', 'hidden')
