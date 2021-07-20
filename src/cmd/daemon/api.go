@@ -53,7 +53,8 @@ func (api *API) Start(port int, unitsPort int, videosPath string, dbManager *Dat
 	router.HandleFunc("/api/groups", api.getGroups).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/memberships", api.getMemberships).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/audio-msgs/{ip}", api.getAudioMsgs).Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/api/msgs/{ip}", api.getMsgs).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/msgs/{ip}", api.getConversation).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/received-msgs", api.getReceivedMsgs).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/videos/{ip}", api.getVideos).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/sensors-data/{ip}", api.getSensorsData).Methods(http.MethodGet, http.MethodOptions)
 
@@ -156,7 +157,12 @@ func (api *API) getAudioMsgs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(audios)
 }
 
-func (api *API) getMsgs(w http.ResponseWriter, r *http.Request) {
+func (api *API) getReceivedMsgs(w http.ResponseWriter, r *http.Request) {
+	msgs := api.dbManager.GetAllReceivedMessages()
+	json.NewEncoder(w).Encode(msgs)
+}
+
+func (api *API) getConversation(w http.ResponseWriter, r *http.Request) {
 	ip := mux.Vars(r)["ip"]
 	msgs := api.dbManager.GetConversation(ip)
 	json.NewEncoder(w).Encode(msgs)

@@ -3,11 +3,14 @@ package main
 import (
 	"database/sql"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mido3ds/C4IAN/src/models"
 )
+
+var mutex sync.RWMutex
 
 const InactiveThresholdInSeconds = 60 * 2
 
@@ -37,10 +40,14 @@ func (dbManager *DatabaseManager) Initialize(units []models.Unit, groupMembers m
 }
 
 func (dbManager *DatabaseManager) AddUnit(unit models.Unit) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO units VALUES ($1, $2, $3)", unit.IP, unit.Name, 0)
 }
 
 func (dbManager *DatabaseManager) AddGroup(groupIP string, memberIPs []string) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO groups VALUES ($1)", groupIP)
 	for _, memberIP := range memberIPs {
 		dbManager.db.MustExec("INSERT INTO members VALUES ($1, $2)", groupIP, memberIP)
@@ -48,36 +55,50 @@ func (dbManager *DatabaseManager) AddGroup(groupIP string, memberIPs []string) {
 }
 
 func (dbManager *DatabaseManager) AddSentMessage(dstIP string, msg *models.Message) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO sent_msgs VALUES ($1, $2, $3)",
 		msg.Time, dstIP, msg.Code)
 }
 
 func (dbManager *DatabaseManager) AddSentAudio(dstIP string, audio *models.Audio) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO sent_audios VALUES ($1, $2, $3)",
 		audio.Time, dstIP, audio.Body)
 }
 
 func (dbManager *DatabaseManager) AddReceivedMessage(msg *models.Message) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO received_msgs VALUES ($1, $2, $3)",
 		msg.Time, msg.Src, msg.Code)
 }
 
 func (dbManager *DatabaseManager) AddReceivedAudio(audio *models.Audio) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO received_audios VALUES ($1, $2, $3)",
 		audio.Time, audio.Src, audio.Body)
 }
 
 func (dbManager *DatabaseManager) AddReceivedSensorsData(data *models.SensorData) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("INSERT INTO received_sensors_data VALUES ($1, $2, $3, $4, $5)",
 		data.Time, data.Src, data.Heartbeat, data.Lat, data.Lon)
 }
 
 func (dbManager *DatabaseManager) UpdateLastActivity(ip string, lastActivity int64) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	dbManager.db.MustExec("UPDATE units SET last_activity = $1 WHERE ip = $2",
 		lastActivity, ip)
 }
 
 func (dbManager *DatabaseManager) GetUnitsNames() map[string]string {
+	mutex.Lock()
+	defer mutex.Unlock()
 	units := make([]models.Unit, 0)
 	err := dbManager.db.Select(&units, "SELECT ip, name FROM units")
 	if err != nil {
@@ -91,6 +112,8 @@ func (dbManager *DatabaseManager) GetUnitsNames() map[string]string {
 }
 
 func (dbManager *DatabaseManager) GetUnits() []models.Unit {
+	mutex.Lock()
+	defer mutex.Unlock()
 	units := make([]models.Unit, 0)
 	err := dbManager.db.Select(
 		&units,
@@ -113,6 +136,8 @@ func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 }
 
 func (dbManager *DatabaseManager) GetGroups() []models.Group {
+	mutex.Lock()
+	defer mutex.Unlock()
 	groups := make([]models.Group, 0)
 	err := dbManager.db.Select(
 		&groups,
@@ -125,6 +150,8 @@ func (dbManager *DatabaseManager) GetGroups() []models.Group {
 }
 
 func (dbManager *DatabaseManager) GetMemberships() []models.Membership {
+	mutex.Lock()
+	defer mutex.Unlock()
 	memberships := make([]models.Membership, 0)
 	err := dbManager.db.Select(
 		&memberships,
@@ -137,6 +164,8 @@ func (dbManager *DatabaseManager) GetMemberships() []models.Membership {
 }
 
 func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Message {
+	mutex.Lock()
+	defer mutex.Unlock()
 	msgs := make([]models.Message, 0)
 	err := dbManager.db.Select(
 		&msgs,
@@ -154,7 +183,20 @@ func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Messag
 	return msgs
 }
 
+func (dbManager *DatabaseManager) GetAllReceivedMessages() []models.Message {
+	mutex.Lock()
+	defer mutex.Unlock()
+	msgs := make([]models.Message, 0)
+	err := dbManager.db.Select(&msgs, "SELECT *, 0 as sent FROM received_msgs ORDER BY time")
+	if err != nil {
+		log.Panic(err)
+	}
+	return msgs
+}
+
 func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio {
+	mutex.Lock()
+	defer mutex.Unlock()
 	audios := make([]models.Audio, 0)
 	err := dbManager.db.Select(
 		&audios,
@@ -168,6 +210,8 @@ func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio 
 }
 
 func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.SensorData {
+	mutex.Lock()
+	defer mutex.Unlock()
 	data := make([]models.SensorData, 0)
 	err := dbManager.db.Select(
 		&data,
@@ -181,6 +225,8 @@ func (dbManager *DatabaseManager) GetReceivedSensorsData(srcIP string) []models.
 }
 
 func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video {
+	mutex.Lock()
+	defer mutex.Unlock()
 	videos := make([]models.Video, 0)
 	err := dbManager.db.Select(
 		&videos,
@@ -194,12 +240,15 @@ func (dbManager *DatabaseManager) GetReceivedVideos(srcIP string) []models.Video
 }
 
 func (dbManager *DatabaseManager) AddVideoIfNew(frag *models.VideoFragment) bool {
+	mutex.Lock()
+	defer mutex.Unlock()
 	// Check if the video already exists in the database
 	exists := true
 	row := dbManager.db.QueryRowx(
 		"SELECT * FROM received_videos WHERE src = $1 AND id = $2",
 		frag.Src, frag.ID,
 	)
+
 	var video models.Video
 	err := row.StructScan(&video)
 	if err == sql.ErrNoRows {

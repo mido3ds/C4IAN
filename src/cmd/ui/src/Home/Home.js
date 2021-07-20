@@ -1,7 +1,8 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import mapboxgl from '!mapbox-gl'; // eslint-disable-line import/no-webpack-loader-syntax
 import MapPopup from './MapPopUp/MapPopUp'
 import GroupSelect from '../GroupSelect/GroupSelect'
+import ChatWindow from './ChatWindow/ChatWindow';
 import { NotificationManager } from 'react-notifications';
 import { getUnits, getMembers } from '../Api/Api'
 import { groupIDs } from '../groupIDs'
@@ -13,11 +14,18 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-function Home({selectedTab}) {
+const Home = forwardRef(({selectedTab}, ref) => {
     const mapContainer = useRef(null);
+    const msgsRef = useRef(null);
     const map = useRef(null);
     const [units, setUnits] = useState({})
     const [selectedUnit, setSelectedUnit] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        onNewMessage(message) {
+            msgsRef.current.onNewMessage(message)
+        }
+    }));
 
     var onTimeout = (unitIP) => {
         setUnits(units => {
@@ -173,12 +181,12 @@ function Home({selectedTab}) {
     return (
         <>
             <GroupSelect></GroupSelect>
+            <ChatWindow ref={msgsRef}></ChatWindow>
             <MapPopup selectedUnit={units[selectedUnit]} />
             <div>
                 <div ref={mapContainer} className="map-container" />
             </div>
         </>
     );
-}
-
+});
 export default Home;
