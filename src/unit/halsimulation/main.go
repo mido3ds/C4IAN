@@ -44,12 +44,11 @@ func main() {
 
 type Context struct {
 	Args
-	videoPath        string
-	audiosFiles      []string
-	halConn          net.Conn
-	videoStreamingOn bool
-	tempDir          string
-	lastTSIndex      int
+	videoPath   string
+	audiosFiles []string
+	halConn     net.Conn
+	tempDir     string
+	lastTSIndex int
 }
 
 func newContext(args *Args) Context {
@@ -82,13 +81,12 @@ func newContext(args *Args) Context {
 	shouldCloseDir = false
 
 	return Context{
-		Args:             *args,
-		videoPath:        videoPath,
-		audiosFiles:      audiosFiles,
-		halConn:          conn,
-		videoStreamingOn: false,
-		tempDir:          tempdir,
-		lastTSIndex:      0,
+		Args:        *args,
+		videoPath:   videoPath,
+		audiosFiles: audiosFiles,
+		halConn:     conn,
+		tempDir:     tempdir,
+		lastTSIndex: 0,
 	}
 }
 
@@ -138,19 +136,17 @@ func (c *Context) streamVideo() {
 	go c.watchM3U8(m3u8Path)
 	go runFFmpeg(c.ffmpegPath, c.videoPath, m3u8Path, c.tempDir, c.fragmentDurSecs)
 
-	// every 10s: start video streaming mode (which lasts for 10s)
 	for {
 		time.Sleep(10 * time.Second)
-		c.videoStreamingOn = !c.videoStreamingOn
+		c.lastTSIndex = 0
+		log.Println("reseting lastTSIndex to 0")
 	}
 }
 
 func (c *Context) watchM3U8(m3u8path string) {
 	for {
 		time.Sleep(50 * time.Millisecond)
-		if c.videoStreamingOn {
-			c.sendM3U8(m3u8path)
-		}
+		c.sendM3U8(m3u8path)
 	}
 }
 
@@ -165,8 +161,6 @@ func getNumTS(m3u8 []byte) int {
 }
 
 func (c *Context) sendM3U8(m3u8path string) {
-	log.Println("sending m3u8")
-
 	// load m3u8 file
 	m3u8, err := ioutil.ReadFile(m3u8path)
 	if err != nil {
@@ -211,7 +205,10 @@ func (c *Context) sendM3U8(m3u8path string) {
 	// increment counter to latest ts file(s)
 	c.lastTSIndex += numTSToSend
 
-	log.Println("sent", numTSToSend, "TSs, filenames:", filenames) // TODO: remove
+	//log.Println("numTs", numTS)
+	if numTSToSend > 0 {
+		log.Println("sent", numTSToSend, "TSs, filenames:", filenames) // TODO: remove
+	}
 }
 
 func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs int) {
@@ -315,11 +312,9 @@ func (c *Context) receiveMsgs() {
 		switch receivedType {
 		case halapi.StartVideoStreamType:
 			log.Println("started vidoe streaming")
-			c.videoStreamingOn = true
 			break
 		case halapi.EndVideoStreamType:
 			log.Println("ended video streaming")
-			c.videoStreamingOn = false
 			break
 		case halapi.ShowAudioMsgType:
 			onRecievedAudioMsg(sam.Audio, c.tempDir)
