@@ -58,7 +58,7 @@ type Context struct {
 	videoID          int
 	videoStreamTimer *time.Timer
 
-	videoManager *VideoFilesManager
+	// videoManager *VideoFilesManager
 }
 
 func newContext(args *Args) Context {
@@ -82,8 +82,8 @@ func newContext(args *Args) Context {
 	}
 	context.cmdUDPConn = udpConn
 
-	videoManager := NewVideoFilesManager("/tmp/unitvideos/assets/media")
-	context.videoManager = videoManager
+	// videoManager := NewVideoFilesManager("/tmp/unitvideos/assets/media")
+	// context.videoManager = videoManager
 
 	return context
 }
