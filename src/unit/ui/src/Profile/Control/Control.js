@@ -26,7 +26,8 @@ function Control({ allMsgs }) {
             Body: confirmationMsgCode
         };
         // socket.write(encode(data));
-        postMsg(encode(data))
+        // const encoded = encode(data)
+        postMsg(data);
         data["sent"] = true;
         allMsgs.push(data)
         console.log("send msg");
@@ -39,7 +40,7 @@ function Control({ allMsgs }) {
             Body: Uint8Array.from(audio)
         }
         // this.props.socket.write(encode(data));
-        postAudioMsg(encode(data));
+        postAudioMsg(audio);
         console.log("send audio");
     }
 

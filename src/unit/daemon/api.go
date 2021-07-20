@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -58,7 +57,6 @@ func (api *API) start(port int) {
 	})
 	handler := c.Handler(router)
 	address := ":" + strconv.Itoa(port)
-	fmt.Printf("port: %s\n", address)
 	log.Fatal(http.ListenAndServe(address, handler))
 }
 
@@ -76,7 +74,6 @@ func (api *API) sendAudioMsgEvent(audio []byte) {
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Recieved Audio")
 	file, _, err := r.FormFile("audio")
 	if err != nil {
 		log.Panic(err)
@@ -90,24 +87,12 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func readMsg(body io.ReadCloser) halapi.CodeMsg {
-	var vp halapi.VideoFragment
-	var s halapi.SensorData
-	var a halapi.AudioMsg
-	var msg halapi.CodeMsg
-	recvdType, err := halapi.ReadFromHAL(body, &vp, &s, &a, &msg)
+func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
+	msg := halapi.CodeMsg{}
+	err := json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		log.Panic(err)
 	}
-	if recvdType != halapi.CodeMsgType {
-		log.Panic("invalid type, expected CodeMsgType")
-	}
-	return msg
-}
-
-func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Recieved Msg")
-	msg := readMsg(r.Body)
 	api.context.onCodeMsgReceivedFromHAL(&msg)
 	w.WriteHeader(http.StatusOK)
 }
