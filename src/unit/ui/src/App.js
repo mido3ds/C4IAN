@@ -64,7 +64,7 @@ function App() {
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
 
-      var eventSource = new EventSource(baseURL)
+      var eventSource = new EventSource(baseURL+'events')
       eventSource.addEventListener("CODE-EVENT", ev => {
         onReceiveMessage(ev.data)
       })
