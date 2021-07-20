@@ -2,9 +2,8 @@ import './Gallery.css';
 import React, { useState, useEffect } from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
-import { getAudioMsgs } from '../../Api/Api'
 
- function Gallery({type, unit}) {
+ function Gallery({type, audios}) {
     const [data, setData] = useState(null);
     const [startItem, setStartItem] = useState(0)
 
@@ -13,13 +12,11 @@ import { getAudioMsgs } from '../../Api/Api'
     }
 
     useEffect(() => {
-        if(!unit) return
-        if(type === "audio") {
-            getAudioMsgs(unit.ip).then(audios => {
-                setData(audios)
-            })
+        // TODO
+        if (audios) {
+            setData(audios)
         }
-    },[type, unit])
+    },[audios])
 
     return (
         <div className="gallery-container">
@@ -31,7 +28,7 @@ import { getAudioMsgs } from '../../Api/Api'
                 <div className="items-container">
                     {
                         [...Array(Math.min(data.length - startItem, 4))].map((x, i) => 
-                            <GalleryItem name= {unit.name} type={type} time={data[i + startItem].time} data={data[i]} key={i} />
+                            <GalleryItem name= {"Command Center"} type={type} data={data[i]} key={i} />
                         )
                     }
                 </div>

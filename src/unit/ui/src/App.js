@@ -5,9 +5,9 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import { receivedCodes } from './codes'
-import { baseURL } from './Api/Api';
 import net from 'net';
-import { encode, decode } from '@msgpack/msgpack';
+import ipc from 'node-ipc';
+import { decode } from '@msgpack/msgpack';
 
 import 'react-notifications/lib/notifications.css';
 import './index.css';
@@ -15,9 +15,13 @@ import './index.css';
 
 function App() {
   const playAudioRef = useRef(null);
-
+  const AudioMsgType = 6 & 0xff
+  const CodeMsgType = 7 & 0xff
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
+  const [msgs, appendToMsgs] = useState([])
+  const [audios, appendToAudios] = useState([])
+  const [unixSocket, setSocket] = useState(null)
 
   const [selectedTab, setSelectedTab] = useState("Profile")
 
@@ -27,18 +31,23 @@ function App() {
     playAudioRef.current.open()
   }
 
-  var onReceiveAudio = (data) => {
+  var onReceiveMessage = (data) => {
     setSelectedTab(selectedTab => {
-      if (selectedTab !== "Log Out")
-        NotificationManager.info(data.src + " sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", data.body), true);
+      if (selectedTab !== "Log Out") {
+        NotificationManager.info("Command Center" + ": " + receivedCodes[data.Body]);
+        data["sent"] = false;
+        appendToMsgs(data)
+      }
       return selectedTab
     })
   }
 
-  var onReceiveMessage = (data) => {
+  var onReceiveAudio = (data) => {
     setSelectedTab(selectedTab => {
-      if (selectedTab !== "Log Out")
-        NotificationManager.info("Command Center" + ": " + receivedCodes[data.code]);
+      if (selectedTab !== "Log Out") {
+        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", data.Body), true);
+        appendToAudios(data)
+      }
       return selectedTab
     })
   }
@@ -50,28 +59,18 @@ function App() {
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
 
-    // socket.connect('/tmp/unit.hal.sock', (client) => {
-    //   console.log("received msg")
-    //   // do something with the client
-    //   const encoded: Uint8Array = encode(client.data);
-    //   if (encoded[0] == 0) {
-    //     encoded
-    //   }
-    //   else if (encoded[0] == 1) {
-
-    //   }
-    // })
-
-    socket.connect('/tmp/unit/unit.hal.sock', )
-    // net.createConnection().listen(path.join('\\\\?\\pipe', process.cwd(), 'myctl'));
-    var eventSource = new EventSource(baseURL+"events")
-    eventSource.addEventListener("msg", ev => {
-      onReceiveMessage(JSON.parse(ev.data))
-    })
-
-    eventSource.addEventListener("audio", ev => {
-      onReceiveAudio(JSON.parse(ev.data))
-    })
+      var socket = net.connect('/tmp/unit.hal.sock');
+      socket.on('data', (data) => {
+        const parsedData = JSON.parse(decode(data).buffer);
+        console.log("received msg: ", parsedData)
+        if (parsedData.Type == CodeMsgType) {
+          onReceiveMessage(parsedData)
+        }
+        else if (parsedData.Type == AudioMsgType) {
+          onReceiveAudio(parsedData)
+        }
+      });
+      setSocket(socket)
   }, [])
 
   var onChange = (selectedTab) => {
@@ -98,7 +97,7 @@ function App() {
         selectedTab === "Log Out" ?
           <LogIn />
           : selectedTab === "Profile" ?
-          <Profile />
+          <Profile socket={unixSocket} msgs={msgs} audios={audios}/>
           : <> </>
       }
     </>

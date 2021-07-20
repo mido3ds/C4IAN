@@ -11,25 +11,18 @@ import {
 } from 'arwes';
 import withTemplate from '../withTemplate';
 
-
 const styles = theme => ({
     root: {
         background: 'rgba(7, 43, 41, 0.05);',
     },
 });
 
-const profileComponents = {
-    "Control": <Control />,
-    "Audios": <Gallery type="audio" />,
-    "Messages": <ChatBox/>,
-}
-
 class Profile extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { activatedTab: "Control", activatedUnit: {name: ""} };
+        this.state = { activatedTab: "Control", activatedUnit: {name: "Me"} };
     }
-
+    
     updateActiveUnit(activatedUnit) {
         this.setState({ ...this.state, activatedUnit: activatedUnit })
     }
@@ -37,9 +30,14 @@ class Profile extends React.Component {
     updateActiveTab(activatedTab) {
         this.setState({ ...this.state, activatedTab: activatedTab })
     }
-
+    
     render() {
-        const { classes } = this.props;
+        const { classes, socket, msgs, audios } = this.props;
+        const profileComponents = {
+            "Control": <Control socket={socket} allMsgs={msgs}/>,
+            "Audios": <Gallery type="audio" audios={audios} />,
+            "Messages": <ChatBox allMsgs={msgs}/>,
+        }
         return (
             <div>
                 <Arwes>
