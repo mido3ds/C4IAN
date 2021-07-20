@@ -47,6 +47,7 @@ function App() {
 
   var perodicStartStream = (data) => {
     setStreams( streams => {
+      if(!streams) return
       if (streams.some(e => e.id === data.id && e.src === data.src)) {
         // Resend start stream request
         postMsg(data.src, { code: 2, })
