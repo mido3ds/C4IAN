@@ -5,8 +5,9 @@ import ConfirmationModal from '../../ConfirmationModal/ConfirmationModal'
 import { NotificationManager } from 'react-notifications';
 import { encode } from '@msgpack/msgpack';
 import { sentCodes, msgsCode } from '../../codes'
+import { postAudioMsg, postMsg } from '../../Api/Api'
 
-function Control({ socket, allMsgs }) {
+function Control({ allMsgs }) {
     const AudioMsgType = 6 & 0xff
     const CodeMsgType = 7 & 0xff
     const recordAudioRef = useRef(null);
@@ -22,9 +23,10 @@ function Control({ socket, allMsgs }) {
         NotificationManager.info(sentCodes[confirmationMsgCode] + " message will be sent to Command Center")
         var data = {
             Type: CodeMsgType,
-            Body: confirmationMsgCode & 0xff // one byte message
-        }
-        socket.write(encode(data));
+            Body: confirmationMsgCode
+        };
+        // socket.write(encode(data));
+        postMsg(encode(data))
         data["sent"] = true;
         allMsgs.push(data)
         console.log("send msg");
@@ -36,7 +38,8 @@ function Control({ socket, allMsgs }) {
             Type: AudioMsgType,
             Body: Uint8Array.from(audio)
         }
-        this.props.socket.write(encode(data));
+        // this.props.socket.write(encode(data));
+        postAudioMsg(encode(data));
         console.log("send audio");
     }
 

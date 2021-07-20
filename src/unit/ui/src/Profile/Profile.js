@@ -32,9 +32,9 @@ class Profile extends React.Component {
     }
     
     render() {
-        const { classes, socket, msgs, audios } = this.props;
+        const { classes, msgs, audios } = this.props;
         const profileComponents = {
-            "Control": <Control socket={socket} allMsgs={msgs}/>,
+            "Control": <Control allMsgs={msgs}/>,
             "Audios": <Gallery type="audio" audios={audios} />,
             "Messages": <ChatBox allMsgs={msgs}/>,
         }

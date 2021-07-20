@@ -25,7 +25,7 @@ type API struct {
 func newAPI(context *Context) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: http://localhost:%v", UIPort)),
+			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
 		}
 	})
 	return &API{eventSource: es, context: context}
@@ -53,12 +53,12 @@ func (api *API) start(port int) {
 	// Listen for HTTP requests
 	c := cors.New(cors.Options{
 		OptionsPassthrough: false,
-		AllowedOrigins:     []string{fmt.Sprintf("http://localhost:%v", UIPort), "null"},
+		AllowedOrigins:     []string{"http://localhost:*"},
 		AllowCredentials:   true,
 	})
 	handler := c.Handler(router)
 	address := ":" + strconv.Itoa(port)
-	log.Panic(http.ListenAndServe(address, handler))
+	log.Fatal(http.ListenAndServe(address, handler))
 }
 
 func (api *API) sendCodeMsgEvent(code int) {
@@ -75,6 +75,7 @@ func (api *API) sendAudioMsgEvent(audio []byte) {
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Recieved Audio")
 	file, _, err := r.FormFile("audio")
 	if err != nil {
 		log.Panic(err)
@@ -110,6 +111,7 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 }
 
 func readSensorsData(body io.ReadCloser) halapi.SensorData {
+	fmt.Println("Recieved Msg")
 	var vp halapi.VideoFragment
 	var s halapi.SensorData
 	var a halapi.AudioMsg
