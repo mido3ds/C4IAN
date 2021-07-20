@@ -16,6 +16,11 @@ export async function postAudioMsg(ip, audio) {
     return response.data;
 }
 
+export async function getAllMsgs() {
+    var response = await axios.get(baseURL + "received-msgs");
+    return response.data;
+}
+
 export async function getNames() {
     var response = await axios.get(baseURL + "units-names");
     return response.data;

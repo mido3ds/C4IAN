@@ -1,0 +1,56 @@
+.chat-window-wrapper {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 380px;
+    height: 250px;
+    background: rgba(1, 7, 8, 0.767);
+    border: 2px solid rgba(0, 7, 7, 0.904);
+    display: block;
+    overflow: auto;
+    z-index: 10;
+    padding: .4em 1em;
+}
+
+.chat-msg {
+    font-weight: bold;
+    color:  rgba(255, 255, 255, 0.877);
+}
+
+.sender-name {
+    color:  rgba(161, 25, 1, 0.877);
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 15px;
+}
+  
+/* Track */
+::-webkit-scrollbar-track {
+    background: rgba(1, 7, 8, 0.767);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: rgba(44, 1, 1, 0.781);
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .no-msgs {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
+
+  .no-received-msgs {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 25px;
+    font-weight: bold;
+    color:  rgba(255, 255, 255, 0.877);
+  }
