@@ -46,8 +46,7 @@ type Context struct {
 	Args
 	storeDB *sql.DB
 
-	cmdUDPConn net.Conn
-	halConn    net.Conn
+	halConn net.Conn
 
 	halMutex              sync.Mutex
 	_expectingVideoStream bool
@@ -77,12 +76,6 @@ func newContext(args *Args) *Context {
 		context.createTables()
 	}
 
-	udpConn, err := net.DialTimeout("udp", context.cmdAddress, context.timeout)
-	if err != nil {
-		log.Panic("couldn't open udp port, err:", err)
-	}
-	context.cmdUDPConn = udpConn
-
 	// videoManager := NewVideoFilesManager("/tmp/unitvideos/assets/media")
 	// context.videoManager = videoManager
 
@@ -95,7 +88,6 @@ func (c *Context) close() {
 	if c.storeDB != nil {
 		c.storeDB.Close()
 	}
-	c.cmdUDPConn.Close()
 }
 
 func (c *Context) expectingVideoStream() bool {
@@ -286,9 +278,15 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 }
 
 func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename string) error {
+	conn, err := net.DialTimeout("tcp", c.cmdAddress, c.timeout)
+	if err != nil {
+		return fmt.Errorf("couldn't open tcp port, err: %v", err)
+	}
+	defer conn.Close()
+
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(models.VideoFragmentType)
+	err = encoder.Encode(models.VideoFragmentType)
 	if err != nil {
 		return fmt.Errorf("failed to encode type, error: %v", err)
 	}
@@ -305,7 +303,7 @@ func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename strin
 		return fmt.Errorf("failed to encode fragment, err: %v", err)
 	}
 
-	_, err = c.cmdUDPConn.Write(buffer.Bytes())
+	_, err = conn.Write(buffer.Bytes())
 	if err != nil {
 		return fmt.Errorf("failed to send bytes, err: %v", err)
 	}
@@ -314,9 +312,15 @@ func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename strin
 }
 
 func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error {
+	udpConn, err := net.DialTimeout("udp", c.cmdAddress, c.timeout)
+	if err != nil {
+		log.Panic("couldn't open udp port, err:", err)
+	}
+	defer udpConn.Close()
+
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(models.SensorDataType)
+	err = encoder.Encode(models.SensorDataType)
 	if err != nil {
 		return fmt.Errorf("failed to encode type, error: %v", err)
 	}
@@ -331,7 +335,7 @@ func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error 
 		return fmt.Errorf("failed to encode sensor data, err: %v", err)
 	}
 
-	_, err = c.cmdUDPConn.Write(buffer.Bytes())
+	_, err = udpConn.Write(buffer.Bytes())
 	if err != nil {
 		return fmt.Errorf("failed to send bytes, err: %v", err)
 	}
