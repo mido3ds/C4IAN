@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/mido3ds/C4IAN/src/models"
 	"github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
@@ -142,6 +143,12 @@ func (c *Context) onAudioMsgReceivedFromHAL(a *halapi.AudioMsg) {
 func (c *Context) onVideoReceivedFromHAL(v *halapi.VideoFragment) {
 	log.Printf("From HAL:: len(VideoFragment)=%v, len(Metadata)=%v, Filename=%v\n", len(v.Video), len(v.Metadata), v.Filename)
 	c.saveVideoFragment(v.Video, v.Metadata, v.Filename)
+	c.videoManager.AddFragment(&models.VideoFragment{
+		ID:       1,
+		Body:     v.Video,
+		Metadata: v.Metadata,
+		FileName: v.Filename,
+	})
 
 	if !c.expectingVideoStream() {
 		log.Println("received video fragment from HAL, but CMD didn't ask for it, dropping it")

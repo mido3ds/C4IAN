@@ -57,6 +57,8 @@ type Context struct {
 	_videoSeqno      uint64
 	videoID          int
 	videoStreamTimer *time.Timer
+
+	videoManager *VideoFilesManager
 }
 
 func newContext(args *Args) Context {
@@ -79,6 +81,9 @@ func newContext(args *Args) Context {
 		log.Panic("couldn't open udp port, err:", err)
 	}
 	context.cmdUDPConn = udpConn
+
+	videoManager := NewVideoFilesManager("/tmp/unitvideos/assets/media")
+	context.videoManager = videoManager
 
 	return context
 }

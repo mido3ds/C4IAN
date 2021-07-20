@@ -1,8 +1,10 @@
 package halapi
 
 import (
-	"encoding/gob"
 	"fmt"
+	"io"
+
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // VideoFragment is sent to unit periodically
@@ -13,12 +15,14 @@ type VideoFragment struct {
 	Filename string
 }
 
-func (s VideoFragment) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(VideoFragmentType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(s)
+func (s VideoFragment) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&s)
+	b2, err := msgpack.Marshal(&WrappedMsg{
+		Type: VideoFragmentType,
+		Body: b,
+	})
+	_, err = w.Write(b2)
+	return
 }
 
 // AudioMsg is sent to unit when the owner presses record
@@ -27,12 +31,14 @@ type AudioMsg struct {
 	Audio []byte
 }
 
-func (a AudioMsg) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(AudioMsgType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(a.Audio)
+func (a AudioMsg) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&a)
+	b2, err := msgpack.Marshal(&WrappedMsg{
+		Type: AudioMsgType,
+		Body: b,
+	})
+	_, err = w.Write(b2)
+	return
 }
 
 // CodeMsg is sent to unit when the owner preses some
@@ -41,12 +47,14 @@ type CodeMsg struct {
 	Code int
 }
 
-func (c CodeMsg) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(CodeMsgType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(c.Code)
+func (c CodeMsg) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&c)
+	b2, err := msgpack.Marshal(&WrappedMsg{
+		Type: CodeMsgType,
+		Body: b,
+	})
+	_, err = w.Write(b2)
+	return
 }
 
 // HeartBeat is sent to unit periodically
@@ -70,38 +78,41 @@ type SensorData struct {
 	Location
 }
 
-func (s SensorData) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(SensorDataType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(s)
+func (s SensorData) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&s)
+	b2, err := msgpack.Marshal(&WrappedMsg{
+		Type: SensorDataType,
+		Body: b,
+	})
+	_, err = w.Write(b2)
+	return
 }
 
-func RecvFromHAL(dec *gob.Decoder, vp *VideoFragment, s *SensorData, a *AudioMsg, c *CodeMsg) (Type, error) {
-	var sentType Type
-	err := dec.Decode(&sentType)
-	if err != nil {
-		return 0, err
-	}
+func ReadFromHAL(r io.Reader, vp *VideoFragment, s *SensorData, a *AudioMsg, c *CodeMsg) (recvdType Type, err error) {
+	var wrapped WrappedMsg
 
-	switch sentType {
+	dec := msgpack.NewDecoder(r)
+	err = dec.Decode(&wrapped)
+
+	recvdType = wrapped.Type
+
+	switch recvdType {
 	case VideoFragmentType:
-		err = dec.Decode(vp)
+		err = msgpack.Unmarshal(wrapped.Body, vp)
 		break
 	case SensorDataType:
-		err = dec.Decode(s)
+		err = msgpack.Unmarshal(wrapped.Body, s)
 		break
 	case AudioMsgType:
-		err = dec.Decode(&a.Audio)
+		err = msgpack.Unmarshal(wrapped.Body, a)
 		break
 	case CodeMsgType:
-		err = dec.Decode(&c.Code)
+		err = msgpack.Unmarshal(wrapped.Body, c)
 		break
 	default:
-		err = fmt.Errorf("received unkown msg type = %v", sentType)
+		err = fmt.Errorf("received unkown msg type = %v", recvdType)
 		break
 	}
 
-	return sentType, err
+	return
 }
