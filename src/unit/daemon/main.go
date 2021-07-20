@@ -18,6 +18,22 @@ import (
 
 const VideoStreamingNoEndTimeout = 1 * time.Minute
 
+func testPeriodicCMDMsgs(context *Context, code int) {
+	time.AfterFunc(2*time.Second, func() {
+		sendCode := (code % 3) + 2
+		context.onCodeMsgReceivedFromCMD(&models.Message{Code: sendCode})
+		testPeriodicCMDMsgs(context, code+1)
+	})
+}
+
+func testPeriodicCMDAudios(context *Context) {
+	audioMock := []uint8{1, 2, 3, 4}
+	time.AfterFunc(2*time.Second, func() {
+		context.onAudioMsgReceivedFromCMD(&models.Audio{Body: audioMock})
+		testPeriodicCMDAudios(context)
+	})
+}
+
 func main() {
 	defer log.Println("finished cleaning up, closing")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
@@ -36,9 +52,12 @@ func main() {
 	go context.listenHAL()
 	go context.listenCmdTcp()
 	go context.listenCmdUdp()
-	context.api.start(8000)
+	go context.api.start(8000)
 
 	log.Println("finished initalizing all")
+
+	// testPeriodicCMDMsgs(context, 0)
+	// testPeriodicCMDAudios(context)
 
 	waitSIGINT()
 }
@@ -232,6 +251,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 			log.Println("didn't receive end video streaming for 1 minute, closing video streaming")
 			c.setExpectingVideoStream(false)
 		})
+		c.api.sendCodeMsgEvent(msg.Code)
 		break
 	case StopVideStreamingCode:
 		log.Println("stop video streaming code")
@@ -240,6 +260,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 			c.videoStreamTimer = nil
 		}
 		c.setExpectingVideoStream(false)
+		c.api.sendCodeMsgEvent(msg.Code)
 		break
 	default:
 		log.Println("generic code msg")
@@ -253,9 +274,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 				log.Println("error in sending code msg to hal:", err)
 			}
 		}
-
 		c.api.sendCodeMsgEvent(msg.Code)
-
 		break
 	}
 }

@@ -3,9 +3,9 @@ import React, { useRef, useState } from 'react';
 import RecordAudio from '../../RecordAudio/RecordAudio'
 import ConfirmationModal from '../../ConfirmationModal/ConfirmationModal'
 import { NotificationManager } from 'react-notifications';
-import { encode } from '@msgpack/msgpack';
 import { sentCodes, msgsCode } from '../../codes'
 import { postAudioMsg, postMsg } from '../../Api/Api'
+import { MsgsDB } from '../../db';
 
 function Control({ allMsgs }) {
     const AudioMsgType = 6 & 0xff
@@ -13,9 +13,10 @@ function Control({ allMsgs }) {
     const recordAudioRef = useRef(null);
     const confirmationModalRef = useRef(null);
     const [confirmationMsgCode, setConfirmationMsgCode] = useState(null)
-
-    var onMsgIconClick = (msgCode) => {
-        setConfirmationMsgCode(msgCode)
+    const [msgs, setMsgs] = useState(allMsgs)
+    
+    var onMsgIconClick = (code) => {
+        setConfirmationMsgCode(code.toString(10))
         confirmationModalRef.current.openModal();
     }
 
@@ -29,16 +30,17 @@ function Control({ allMsgs }) {
         // const encoded = encode(data)
         postMsg(data);
         data["sent"] = true;
-        allMsgs.push(data)
-        console.log("send msg");
+        msgs.push(data);
+        setMsgs(msgs)
+        MsgsDB.push(data);
     }
 
     var onSendAudio = (audio) => {
         NotificationManager.info("Your audio message will be sent to Command Center")
-        var data = {
-            Type: AudioMsgType,
-            Body: Uint8Array.from(audio)
-        }
+        // var data = {
+        //     Type: AudioMsgType,
+        //     Body: Uint8Array.from(audio)
+        // }
         // this.props.socket.write(encode(data));
         postAudioMsg(audio);
         console.log("send audio");

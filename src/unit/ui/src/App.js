@@ -5,6 +5,7 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import { receivedCodes } from './codes'
+import { MsgsDB, AudiosDB } from './db'
 // import net from 'net';
 // import ipc from 'node-ipc';
 // import { decode } from '@msgpack/msgpack';
@@ -22,8 +23,8 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null);
   const [audioModalData, setAudioModalData] = useState(null);
   // const [unixSocket, setSocket] = useState(null);
-  const [msgs, appendToMsgs] = useState([]);
-  const [audios, appendToAudios] = useState([]);
+  const [msgs, setMsgs] = useState([]);
+  const [audios, setAudios] = useState([]);
 
   const [selectedTab, setSelectedTab] = useState("Profile");
 
@@ -38,10 +39,15 @@ function App() {
       if (selectedTab !== "Log Out") {
         NotificationManager.info("Command Center" + ": " + receivedCodes[code]);
         const msg = {
+          Type: 7 & 0xff,
           sent: false,
           Body: code,
         };
-        appendToMsgs(msg);
+        msgs.push(msg);
+        setMsgs(msgs);
+        MsgsDB.push(msg);
+        console.log("MsgsDB: ", MsgsDB);
+        // setMsgs([...msgs, msg]);
       }
       return selectedTab;
     })
@@ -51,7 +57,10 @@ function App() {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
         NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", audio), true);
-        appendToAudios(audio);
+        audios.push(audio)
+        setAudios(audios);
+        AudiosDB.push(audio);
+        console.log("AudiosDB: ", AudiosDB);
       }
       return selectedTab;
     })
