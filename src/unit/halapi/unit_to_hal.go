@@ -1,8 +1,10 @@
 package halapi
 
 import (
-	"encoding/gob"
 	"fmt"
+	"io"
+
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // StartVideoStream
@@ -11,70 +13,74 @@ type StartVideoStream struct {
 	RefreshRate int
 }
 
-func (s StartVideoStream) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(StartVideoStreamType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(s.RefreshRate)
+func (s StartVideoStream) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&s)
+	b2, err := msgpack.Marshal(&WrappedMsg{
+		Type: StartVideoStreamType,
+		Body: b,
+	})
+	_, err = w.Write(b2)
+	return
 }
 
 // EndVideoStream
 type EndVideoStream struct{}
 
-func (s EndVideoStream) Send(enc *gob.Encoder) error {
-	return enc.Encode(byte(EndVideoStreamType))
+func (s EndVideoStream) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&WrappedMsg{Type: EndVideoStreamType})
+	_, err = w.Write(b)
+	return
 }
 
-// ShowAudioMsg
+// ShowAudioMsg is sent to HAL to show code msg to user
 type ShowAudioMsg struct {
 	Audio []byte
 }
 
-func (s ShowAudioMsg) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(ShowAudioMsgType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(s.Audio)
+func (s ShowAudioMsg) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&s)
+	b2, err := msgpack.Marshal(&WrappedMsg{Type: ShowAudioMsgType, Body: b})
+	_, err = w.Write(b2)
+	return
 }
 
-// ShowCodeMsg
+// ShowCodeMsg is sent to HAL to play audio msg to user
 type ShowCodeMsg struct {
 	Code int
 }
 
-func (s ShowCodeMsg) Send(enc *gob.Encoder) error {
-	err := enc.Encode(byte(ShowCodeMsgType))
-	if err != nil {
-		return err
-	}
-	return enc.Encode(s.Code)
+func (s ShowCodeMsg) Write(w io.Writer) (err error) {
+	b, err := msgpack.Marshal(&s)
+	b2, err := msgpack.Marshal(&WrappedMsg{Type: ShowCodeMsgType, Body: b})
+	_, err = w.Write(b2)
+	return
 }
 
-func RecvFromUnit(dec *gob.Decoder, svs *StartVideoStream, evs *EndVideoStream, sam *ShowAudioMsg, scm *ShowCodeMsg) (Type, error) {
-	var sentType Type
-	err := dec.Decode(&sentType)
-	if err != nil {
-		return 0, err
-	}
+func ReadFromUnit(r io.Reader, svs *StartVideoStream, evs *EndVideoStream, sam *ShowAudioMsg, scm *ShowCodeMsg) (recvdType Type, err error) {
+	var wrapped WrappedMsg
 
-	switch sentType {
+	dec := msgpack.NewDecoder(r)
+	err = dec.Decode(&wrapped)
+
+	recvdType = wrapped.Type
+
+	switch recvdType {
 	case StartVideoStreamType:
-		err = dec.Decode(&svs.RefreshRate)
+		err = msgpack.Unmarshal(wrapped.Body, svs)
 		break
 	case EndVideoStreamType:
+		err = msgpack.Unmarshal(wrapped.Body, evs)
 		break
 	case ShowAudioMsgType:
-		err = dec.Decode(&sam.Audio)
+		err = msgpack.Unmarshal(wrapped.Body, sam)
 		break
 	case ShowCodeMsgType:
-		err = dec.Decode(&scm.Code)
+		err = msgpack.Unmarshal(wrapped.Body, scm)
 		break
 	default:
-		err = fmt.Errorf("received unkown msg type = %v", sentType)
+		err = fmt.Errorf("received unkown msg type = %v", recvdType)
 		break
 	}
 
-	return sentType, err
+	return
 }

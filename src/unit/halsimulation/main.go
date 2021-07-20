@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,9 +10,9 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/mido3ds/C4IAN/src/unit/halapi"
 )
 
@@ -51,8 +50,6 @@ type Context struct {
 	videoStreamingOn bool
 	tempDir          string
 	lastTSIndex      int
-	enc              *gob.Encoder
-	dec              *gob.Decoder
 }
 
 func newContext(args *Args) Context {
@@ -84,9 +81,6 @@ func newContext(args *Args) Context {
 	}
 	shouldCloseDir = false
 
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-
 	return Context{
 		Args:             *args,
 		videoPath:        videoPath,
@@ -95,8 +89,6 @@ func newContext(args *Args) Context {
 		videoStreamingOn: false,
 		tempDir:          tempdir,
 		lastTSIndex:      0,
-		enc:              enc,
-		dec:              dec,
 	}
 }
 
@@ -122,7 +114,7 @@ func (c *Context) sendAudioMsgs() {
 
 		err = halapi.AudioMsg{
 			Audio: audioBuffer,
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -154,31 +146,10 @@ func (c *Context) streamVideo() {
 }
 
 func (c *Context) watchM3U8(m3u8path string) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Panic(err)
-	}
-	defer watcher.Close()
-
-	err = watcher.Add(m3u8path)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	ticker := time.NewTicker(time.Second)
-
 	for {
-		select {
-		case <-ticker.C:
-			if c.videoStreamingOn {
-				c.sendM3U8(m3u8path)
-			}
-		case event, _ := <-watcher.Events:
-			if (event.Op&fsnotify.Write) == fsnotify.Write && c.videoStreamingOn {
-				c.sendM3U8(m3u8path)
-			}
-		case err, _ := <-watcher.Errors:
-			log.Panic(err)
+		time.Sleep(50 * time.Millisecond)
+		if c.videoStreamingOn {
+			c.sendM3U8(m3u8path)
 		}
 	}
 }
@@ -221,13 +192,17 @@ func (c *Context) sendM3U8(m3u8path string) {
 		tsfiles = append(tsfiles, bts)
 	}
 
+	strm3u8 := string(m3u8)
+
 	// send video fragment(s)
 	for i := 0; i < len(tsfiles); i++ {
+		splittedFile := strings.SplitAfter(strm3u8, filenames[i])[0]
+
 		err := halapi.VideoFragment{
 			Video:    tsfiles[i],
-			Metadata: m3u8,
+			Metadata: []byte(splittedFile),
 			Filename: filenames[i],
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic("failed to send video fragment, err:", err)
 		}
@@ -251,7 +226,6 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs i
 		`-hls_time`, fmt.Sprint(fragmentDurSecs),
 		`-hls_playlist_type`, `event`,
 		`-hls_flags`, `independent_segments`,
-		`-hls_flags`, `split_by_time`,
 		`-hls_segment_type`, `mpegts`,
 		`-hls_list_size`, `5`,
 		m3u8Path,
@@ -292,7 +266,7 @@ func (c *Context) sendCodeMsgs() {
 
 		err := halapi.CodeMsg{
 			Code: rand.Intn(400),
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -317,7 +291,7 @@ func (c *Context) sendSensorsData() {
 				HeartBeat: halapi.HeartBeat{
 					BeatsPerMinut: hb,
 				},
-			}.Send(c.enc)
+			}.Write(c.halConn)
 
 			if err != nil {
 				log.Panic(err)
@@ -333,7 +307,7 @@ func (c *Context) receiveMsgs() {
 	var scm halapi.ShowCodeMsg
 
 	for {
-		receivedType, err := halapi.RecvFromUnit(c.dec, &svs, &evs, &sam, &scm)
+		receivedType, err := halapi.ReadFromUnit(c.halConn, &svs, &evs, &sam, &scm)
 		if err != nil {
 			log.Panic(err)
 		}
