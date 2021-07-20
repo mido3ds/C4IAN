@@ -6,7 +6,6 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
-import { receivedCodes } from './codes'
 import { postMsg, getNames } from './Api/Api';
 
 import 'react-notifications/lib/notifications.css';
@@ -17,6 +16,7 @@ import './App.css';
 
 function App() {
   const playAudioRef = useRef(null);
+  const homeRef = useRef(null);
 
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
@@ -78,20 +78,19 @@ function App() {
 
   var onReceiveMessage = (data) => {
     setSelectedTab(selectedTab => {
-      setUnitNames(unitNames => {
-        if (selectedTab !== "Log Out")
-          NotificationManager.info(unitNames[data.src] + ": " + receivedCodes[data.code]);
-        return unitNames
-      })
+        if (selectedTab === "Map") 
+          homeRef.current.onNewMessage(data)
       return selectedTab
     })
   }
 
   var onReceiveStream = (data) => {
     if (streams.some(e => e.src === data.src)) {
+      console.log("hello1")
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
-      streams.push(data)
+      console.log("hello")
+      setStreams([...streams, data])
       setTimeout(() => {
         perodicStartStream(data)
       }, 50 * 1000)
@@ -141,12 +140,9 @@ function App() {
 
     eventSource.addEventListener("video", ev => {
       onReceiveStream(JSON.parse(ev.data))
-      console.log(ev.data)
-      console.log(JSON.parse(ev.data))
     })
 
     getNames().then(unitsData => {
-      console.log(unitsData)
       setUnitNames(unitsData)
     })
   }, [])
@@ -175,7 +171,7 @@ function App() {
         selectedTab === "Log Out" ?
           <LogIn onLogIn={() => { onChange("Map") }} />
           : selectedTab === "Map" ?
-            <Home selectedTab={selectedTab} />
+            <Home ref={homeRef} selectedTab={selectedTab}/>
             : selectedTab === "Units" ?
               <Profile />
               : selectedTab === "Streams" ?

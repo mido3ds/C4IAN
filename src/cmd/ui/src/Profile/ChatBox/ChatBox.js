@@ -47,7 +47,8 @@ function ChatBox({ unit }) {
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> {unit.name.substr(0, unit.name.indexOf(' '))} </div>
                                         </div>
-                                        <div className="chat-text"> {receivedCodes[msg.code]} </div>
+                                        <div className="chat-text"> {receivedCodes.hasOwnProperty(msg.code) ? receivedCodes[msg.code] : (msg.code).toString(10)
+} </div>
                                         <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
                                     </li>
                                 }
