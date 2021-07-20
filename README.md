@@ -63,7 +63,7 @@ It may break your system, in this case reverse it back: `sudo m /bin/python.old 
 
 Then install mininet-wifi:
 
-``` 
+```
 $ (
     set -e
     sudo apt update
