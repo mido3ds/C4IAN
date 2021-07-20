@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"log"
 	"net"
 	"os"
@@ -17,8 +16,6 @@ func simulateHALClient(HALSocketPath string) {
 		log.Panic(err)
 	}
 
-	enc := gob.NewEncoder(conn)
-
 	for {
 		time.Sleep(time.Second * 2)
 		log.Println("hal sending data")
@@ -26,10 +23,10 @@ func simulateHALClient(HALSocketPath string) {
 		halapi.SensorData{
 			HeartBeat: halapi.HeartBeat{BeatsPerMinut: 5},
 			Location:  halapi.Location{Lon: 5, Lat: 2},
-		}.Send(enc)
-		halapi.VideoFragment{Video: []byte{5, 3}}.Send(enc)
-		halapi.AudioMsg{Audio: []byte{10, 2}}.Send(enc)
-		halapi.CodeMsg{Code: 6}.Send(enc)
+		}.Write(conn)
+		halapi.VideoFragment{Video: []byte{5, 3}}.Write(conn)
+		halapi.AudioMsg{Audio: []byte{10, 2}}.Write(conn)
+		halapi.CodeMsg{Code: 6}.Write(conn)
 	}
 }
 
@@ -74,15 +71,13 @@ func (c *Context) listenHAL() {
 }
 
 func (context *Context) serveHAL(conn net.Conn) {
-	dec := gob.NewDecoder(conn)
-
 	var video halapi.VideoFragment
 	var sensorData halapi.SensorData
 	var audiomsg halapi.AudioMsg
 	var codemsg halapi.CodeMsg
 
 	for {
-		sentType, err := halapi.RecvFromHAL(dec, &video, &sensorData, &audiomsg, &codemsg)
+		sentType, err := halapi.ReadFromHAL(conn, &video, &sensorData, &audiomsg, &codemsg)
 		if err != nil {
 			log.Print(err)
 			return

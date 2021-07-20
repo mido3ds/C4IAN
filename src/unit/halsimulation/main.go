@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -51,8 +50,6 @@ type Context struct {
 	videoStreamingOn bool
 	tempDir          string
 	lastTSIndex      int
-	enc              *gob.Encoder
-	dec              *gob.Decoder
 }
 
 func newContext(args *Args) Context {
@@ -84,9 +81,6 @@ func newContext(args *Args) Context {
 	}
 	shouldCloseDir = false
 
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-
 	return Context{
 		Args:             *args,
 		videoPath:        videoPath,
@@ -95,8 +89,6 @@ func newContext(args *Args) Context {
 		videoStreamingOn: false,
 		tempDir:          tempdir,
 		lastTSIndex:      0,
-		enc:              enc,
-		dec:              dec,
 	}
 }
 
@@ -122,7 +114,7 @@ func (c *Context) sendAudioMsgs() {
 
 		err = halapi.AudioMsg{
 			Audio: audioBuffer,
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -227,7 +219,7 @@ func (c *Context) sendM3U8(m3u8path string) {
 			Video:    tsfiles[i],
 			Metadata: m3u8,
 			Filename: filenames[i],
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic("failed to send video fragment, err:", err)
 		}
@@ -292,7 +284,7 @@ func (c *Context) sendCodeMsgs() {
 
 		err := halapi.CodeMsg{
 			Code: rand.Intn(400),
-		}.Send(c.enc)
+		}.Write(c.halConn)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -317,7 +309,7 @@ func (c *Context) sendSensorsData() {
 				HeartBeat: halapi.HeartBeat{
 					BeatsPerMinut: hb,
 				},
-			}.Send(c.enc)
+			}.Write(c.halConn)
 
 			if err != nil {
 				log.Panic(err)
@@ -333,7 +325,7 @@ func (c *Context) receiveMsgs() {
 	var scm halapi.ShowCodeMsg
 
 	for {
-		receivedType, err := halapi.RecvFromUnit(c.dec, &svs, &evs, &sam, &scm)
+		receivedType, err := halapi.ReadFromUnit(c.halConn, &svs, &evs, &sam, &scm)
 		if err != nil {
 			log.Panic(err)
 		}

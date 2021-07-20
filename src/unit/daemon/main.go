@@ -252,8 +252,7 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 		defer c.halMutex.Unlock()
 
 		if c.isConnectedToHAL {
-			enc := gob.NewEncoder(c.halConn)
-			err := halapi.ShowCodeMsg{Code: msg.Code}.Send(enc)
+			err := halapi.ShowCodeMsg{Code: msg.Code}.Write(c.halConn)
 			if err != nil {
 				log.Println("error in sending code msg to hal:", err)
 			}
@@ -270,8 +269,7 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 	defer c.halMutex.Unlock()
 
 	if c.isConnectedToHAL {
-		enc := gob.NewEncoder(c.halConn)
-		err := halapi.ShowAudioMsg{Audio: audio.Body}.Send(enc)
+		err := halapi.ShowAudioMsg{Audio: audio.Body}.Write(c.halConn)
 		if err != nil {
 			log.Println("error in sending show audio msg to HAL, err:", err)
 		}
