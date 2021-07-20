@@ -36,6 +36,7 @@ func main() {
 	go context.listenHAL()
 	go context.listenCmdTcp()
 	go context.listenCmdUdp()
+	context.api.start(8000)
 
 	log.Println("finished initalizing all")
 

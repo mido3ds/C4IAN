@@ -15,7 +15,7 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-const UIPort = 8000
+const UIPort = 3000
 
 type API struct {
 	context     *Context
@@ -58,6 +58,7 @@ func (api *API) start(port int) {
 	})
 	handler := c.Handler(router)
 	address := ":" + strconv.Itoa(port)
+	fmt.Printf("port: %s\n", address)
 	log.Fatal(http.ListenAndServe(address, handler))
 }
 
@@ -105,13 +106,13 @@ func readMsg(body io.ReadCloser) halapi.CodeMsg {
 }
 
 func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Recieved Msg")
 	msg := readMsg(r.Body)
 	api.context.onCodeMsgReceivedFromHAL(&msg)
 	w.WriteHeader(http.StatusOK)
 }
 
 func readSensorsData(body io.ReadCloser) halapi.SensorData {
-	fmt.Println("Recieved Msg")
 	var vp halapi.VideoFragment
 	var s halapi.SensorData
 	var a halapi.AudioMsg
