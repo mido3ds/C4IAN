@@ -14,6 +14,7 @@ type Args struct {
 	audiosDirPath   string
 	ffmpegPath      string
 	fragmentDurSecs int
+	live     bool
 }
 
 func (a *Args) String() string {
@@ -28,6 +29,7 @@ func parseArgs() (*Args, error) {
 	ffmpegPath := parser.String("", "ffmpeg-path", &argparse.Options{Help: "Path to ffmpeg executable.", Default: "ffmpeg"})
 	audiosDirPath := parser.String("", "audios-dir", &argparse.Options{Help: "Path to directory of audios to send. If not provided won't send audio messages.", Default: ""})
 	fragmentDurSecs := parser.Int("", "fragment-dur-secs", &argparse.Options{Help: "Duration in secs of one video fragment.", Default: 2})
+	live := parser.Flag("", "live", &argparse.Options{Help: "Indicates this is streaming from camera not from file, false by default."})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -40,5 +42,6 @@ func parseArgs() (*Args, error) {
 		audiosDirPath:   *audiosDirPath,
 		fragmentDurSecs: *fragmentDurSecs,
 		ffmpegPath:      *ffmpegPath,
+		live:     *live,
 	}, nil
 }

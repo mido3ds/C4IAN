@@ -46,13 +46,16 @@ function App() {
   }
 
   var perodicStartStream = (data) => {
-    // Resend start stream request
-    postMsg(data.src, { code: 2, })
-    if (streams.some(e => e.ID === data.ID)) {
-      setTimeout(() => {
-        perodicStartStream(data)
-      }, 50 * 1000)
-    }
+    setStreams( streams => {
+      if(!streams) return
+      if (streams.some(e => e.id === data.id && e.src === data.src)) {
+        // Resend start stream request
+        postMsg(data.src, { code: 2, })
+        setTimeout(() => {
+          perodicStartStream(data)
+        }, 50 * 1000)
+      }
+    })
   }
 
   var perodicCheckStreamsPage = () => {
@@ -86,10 +89,8 @@ function App() {
 
   var onReceiveStream = (data) => {
     if (streams.some(e => e.src === data.src)) {
-      console.log("hello1")
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
-      console.log("hello")
       setStreams([...streams, data])
       setTimeout(() => {
         perodicStartStream(data)

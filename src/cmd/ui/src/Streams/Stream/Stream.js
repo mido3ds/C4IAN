@@ -23,8 +23,6 @@ function Stream({ onEndStream, stream }) {
                         src={baseURL + "stream/" + stream.src + "/" + stream.id + "/" + M3U8Name}
                         autoPlay={true}
                         controls={true}
-                        width= "100%"
-                        height=" 100%"
                         hlsConfig={HLSConfig}  
                     />
                 </div> : <> </>
