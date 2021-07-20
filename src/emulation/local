@@ -57,10 +57,8 @@ case $TO_RUN in
     cmd)
         LOG_PATH+="cmd"
         EXECUTABLE="./cmd/daemon/daemon"
-        COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path /tmp/local-cmd.units.json --groups-path /tmp/local-cmd.groups.json "$OPTS
-
-        echo >/tmp/local-cmd.units.json '{"units": [{"ip": "127.0.0.1", "name": "Yosry"}]}'
-        echo >/tmp/local-cmd.groups.json '{"224.0.2.1": ["127.0.0.1"]}'
+        COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path units.json --groups-path groups.json "$OPTS
+        # TODO: create units.json and groups.json out of example in case they don't exist
         ;;
     router)
         (cd ./router && go build)
