@@ -154,6 +154,15 @@ func (dbManager *DatabaseManager) GetConversation(unitIP string) []models.Messag
 	return msgs
 }
 
+func (dbManager *DatabaseManager) GetAllReceivedMessages() []models.Message {
+	msgs := make([]models.Message, 0)
+	err := dbManager.db.Select(&msgs, "SELECT *, 0 as sent FROM received_msgs ORDER BY time")
+	if err != nil {
+		log.Panic(err)
+	}
+	return msgs
+}
+
 func (dbManager *DatabaseManager) GetReceivedAudio(srcIP string) []models.Audio {
 	audios := make([]models.Audio, 0)
 	err := dbManager.db.Select(

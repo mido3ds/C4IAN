@@ -27,7 +27,8 @@ func TestUnit(*testing.T) {
 	go ListenUDPMulticast(multicastGroupIP, unitPort)
 
 	for i := 0; true; i++ {
-		SendVideoFragment(i/10, i%10, cmdPort)
+		//SendVideoFragment(i/10, i%10, cmdPort)
+		SendMessage(i, cmdPort)
 		time.Sleep(time.Second)
 	}
 }
