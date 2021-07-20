@@ -134,13 +134,13 @@ func (c *Context) streamVideo() {
 	defer f.Close()
 
 	go c.watchM3U8(m3u8Path)
-	go runFFmpeg(c.ffmpegPath, c.videoPath, m3u8Path, c.tempDir, c.fragmentDurSecs)
+	runFFmpeg(c.ffmpegPath, c.videoPath, m3u8Path, c.tempDir, c.fragmentDurSecs)
 
-	for {
-		time.Sleep(10 * time.Second)
-		c.lastTSIndex = 0
-		log.Println("reseting lastTSIndex to 0")
-	}
+	// for {
+	// 	time.Sleep(10 * time.Second)
+	// 	c.lastTSIndex = 0
+	// 	log.Println("reseting lastTSIndex to 0")
+	// }
 }
 
 func (c *Context) watchM3U8(m3u8path string) {
