@@ -221,7 +221,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		audio.Src = srcIP
 		netManager.onReceiveAudio(audio)
 
-		log.Println("received audio msg from unit:", audio) // TODO: remove
+		log.Println("received audio msg from unit: len=", len(audio.Body)) // TODO: remove
 	case models.VideoFragmentType:
 		var videoFragment models.VideoFragment
 		err := decoder.Decode(&videoFragment)
@@ -229,7 +229,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 			log.Panic(err)
 		}
 		videoFragment.Src = srcIP
-		log.Println("received video fragment:", videoFragment.FileName) // TODO: remove
+		log.Println("received video fragment: filename=", videoFragment.FileName) // TODO: remove
 		netManager.onReceiveVideoFragment(videoFragment)
 	default:
 		log.Panic("Unknow packet type received through TCP from: ", srcIP)
