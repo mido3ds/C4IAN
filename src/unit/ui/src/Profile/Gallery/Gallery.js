@@ -2,6 +2,7 @@ import './Gallery.css';
 import React, { useState, useEffect } from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
+import { AudiosDB } from '../../db'
 
  function Gallery({type, audios}) {
     const [data, setData] = useState(null);
@@ -12,7 +13,6 @@ import Pagination from './Pagination/Pagination'
     }
 
     useEffect(() => {
-        // TODO
         if (audios) {
             setData(audios)
         }
