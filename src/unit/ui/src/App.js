@@ -6,9 +6,10 @@ import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import { receivedCodes } from './codes'
 import { baseURL } from './Api/Api';
+import net from 'net';
+import { encode, decode } from '@msgpack/msgpack';
 
 import 'react-notifications/lib/notifications.css';
-
 import './index.css';
 
 
@@ -49,6 +50,20 @@ function App() {
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
 
+    // socket.connect('/tmp/unit.hal.sock', (client) => {
+    //   console.log("received msg")
+    //   // do something with the client
+    //   const encoded: Uint8Array = encode(client.data);
+    //   if (encoded[0] == 0) {
+    //     encoded
+    //   }
+    //   else if (encoded[0] == 1) {
+
+    //   }
+    // })
+
+    socket.connect('/tmp/unit/unit.hal.sock', )
+    // net.createConnection().listen(path.join('\\\\?\\pipe', process.cwd(), 'myctl'));
     var eventSource = new EventSource(baseURL+"events")
     eventSource.addEventListener("msg", ev => {
       onReceiveMessage(JSON.parse(ev.data))
