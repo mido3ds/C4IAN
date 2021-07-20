@@ -58,7 +58,59 @@ case $TO_RUN in
         LOG_PATH+="cmd"
         EXECUTABLE="./cmd/daemon/daemon"
         COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path units.json --groups-path groups.json "$OPTS
-        # TODO: create units.json and groups.json out of example in case they don't exist
+        if [[ ! -a "units.json" ]]; then
+            echo >units.json '{
+                "units": [
+                    {
+                        "ip": "127.0.0.1",
+                        "name": "Localhost"
+                    },
+                    {
+                        "ip": "10.0.0.1",
+                        "name": "Ahmed Mahmoud"
+                    },
+                    {
+                        "ip": "10.0.0.2",
+                        "name": "Yosry Ahmed"
+                    },
+                    {
+                        "ip": "10.0.0.3",
+                        "name": "Mahmoud Othman"
+                    },
+                    {
+                        "ip": "10.0.0.4",
+                        "name": "Abdulrahman Khalid"
+                    },
+                    {
+                        "ip": "10.0.0.5",
+                        "name": "Muhanad Atef"
+                    },
+                    {
+                        "ip": "10.0.0.6",
+                        "name": "Nader AbdElGhani"
+                    }
+                ]
+            }
+            '
+        fi
+
+        if [[ ! -a "groups.json" ]]; then
+            echo >groups.json '{
+                "224.0.2.1": [
+                    "10.0.0.1",
+                    "10.0.0.2"
+                ],
+                "224.0.2.2": [
+                    "10.0.0.3",
+                    "10.0.0.4"
+                ],
+                "224.0.2.3": [
+                    "10.0.0.5",
+                    "10.0.0.6"
+                ]
+            }
+            '
+        fi
         ;;
     router)
         (cd ./router && go build)
