@@ -175,17 +175,10 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 					log.Panic(err)
 				}
 				sensorsData.Src = src.IP.String()
-				log.Println("received sensor data:", sensorsData) // TODO: remoe
+				log.Println("received sensor data:", sensorsData) // TODO: remove
 				netManager.onReceiveSensorsData(sensorsData)
 			} else {
-				var videoFragment models.VideoFragment
-				err := decoder.Decode(&videoFragment)
-				if err != nil {
-					log.Panic(err)
-				}
-				videoFragment.Src = src.IP.String()
-				log.Println("received video fragment:", videoFragment.FileName) // TODO: remoe
-				netManager.onReceiveVideoFragment(videoFragment)
+				log.Panic("Unknow packet type received through UDP from: ", src.IP.String())
 			}
 		}
 	}
@@ -206,7 +199,8 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 	}
 
 	// Decode the payload of the packet and make appropriate callbacks
-	if packetType == models.MessageType {
+	switch packetType {
+	case models.MessageType:
 		var msg models.Message
 		err := decoder.Decode(&msg)
 		if err != nil {
@@ -217,7 +211,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		netManager.onReceiveMsg(msg)
 
 		log.Println("received code msg from unit:", msg) // TODO: remove
-	} else {
+	case models.AudioType:
 		var audio models.Audio
 		err := decoder.Decode(&audio)
 		if err != nil {
@@ -228,5 +222,16 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		netManager.onReceiveAudio(audio)
 
 		log.Println("received audio msg from unit:", audio) // TODO: remove
+	case models.VideoFragmentType:
+		var videoFragment models.VideoFragment
+		err := decoder.Decode(&videoFragment)
+		if err != nil {
+			log.Panic(err)
+		}
+		videoFragment.Src = srcIP
+		log.Println("received video fragment:", videoFragment.FileName) // TODO: remove
+		netManager.onReceiveVideoFragment(videoFragment)
+	default:
+		log.Panic("Unknow packet type received through TCP from: ", srcIP)
 	}
 }

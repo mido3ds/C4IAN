@@ -146,20 +146,18 @@ func SendSensorsData(i float64, port int) {
 }
 
 func SendVideoFragment(id int, index int, port int) {
-	address, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
+	address, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
 		log.Panic(err)
 	}
 
-	conn, err := net.DialUDP("udp", nil, address)
+	conn, err := net.DialTCP("tcp", nil, address)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
+	encoder := gob.NewEncoder(conn)
 	encoder.Encode(models.VideoFragmentType)
-
 	encoder.Encode(&models.VideoFragment{
 		ID:       id,
 		Time:     time.Now().Unix(),
@@ -167,7 +165,6 @@ func SendVideoFragment(id int, index int, port int) {
 		Body:     []byte("video fragment" + strconv.Itoa(index) + " "),
 		Metadata: []byte("metadata sent with frag id: " + strconv.Itoa(id) + ", index: " + strconv.Itoa(index)),
 	})
-	conn.Write(buffer.Bytes())
 	conn.Close()
 }
 
