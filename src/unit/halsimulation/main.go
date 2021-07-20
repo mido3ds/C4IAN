@@ -135,12 +135,6 @@ func (c *Context) streamVideo() {
 
 	go c.watchM3U8(m3u8Path)
 	runFFmpeg(c.ffmpegPath, c.videoPath, m3u8Path, c.tempDir, c.fragmentDurSecs)
-
-	// for {
-	// 	time.Sleep(10 * time.Second)
-	// 	c.lastTSIndex = 0
-	// 	log.Println("reseting lastTSIndex to 0")
-	// }
 }
 
 func (c *Context) watchM3U8(m3u8path string) {
@@ -224,7 +218,7 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs i
 		`-hls_playlist_type`, `event`,
 		`-hls_flags`, `independent_segments`,
 		`-hls_segment_type`, `mpegts`,
-		`-hls_list_size`, `5`,
+		`-hls_list_size`, `0`,
 		m3u8Path,
 	}
 	cmd := exec.Command(ffmpegPath, args...)
@@ -302,6 +296,7 @@ func (c *Context) receiveMsgs() {
 	var evs halapi.EndVideoStream
 	var sam halapi.ShowAudioMsg
 	var scm halapi.ShowCodeMsg
+	var timer *time.Timer
 
 	for {
 		receivedType, err := halapi.ReadFromUnit(c.halConn, &svs, &evs, &sam, &scm)
@@ -312,9 +307,24 @@ func (c *Context) receiveMsgs() {
 		switch receivedType {
 		case halapi.StartVideoStreamType:
 			log.Println("started vidoe streaming")
+			if timer != nil {
+				timer.Stop()
+			}
+			timer = time.AfterFunc(time.Minute, func() {
+				log.Println("timeouted in video streaming")
+
+				if !c.live {
+					log.Println("resettign lastTSIndex")
+					c.lastTSIndex = 0
+				}
+			})
 			break
 		case halapi.EndVideoStreamType:
 			log.Println("ended video streaming")
+			if !c.live {
+				log.Println("resettign lastTSIndex")
+				c.lastTSIndex = 0
+			}
 			break
 		case halapi.ShowAudioMsgType:
 			onRecievedAudioMsg(sam.Audio, c.tempDir)
