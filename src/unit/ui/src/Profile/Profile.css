@@ -1,0 +1,45 @@
+.profile-root {
+    width: 100vw;
+    height: 100vh;
+    padding-top: 40px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+}
+
+.profile-frame {
+    overflow: visible;
+    position: relative;
+    width: 900px;
+    height: 500px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    --aug-border-bg: linear-gradient(to bottom, rgba(43,237,230,0.35) 0%, rgba(43,237,230,0) 100%);
+    --aug-border-all: 1px;
+    --aug-r-extend1:100px;
+
+    --aug-br1-width: 30px;
+    --aug-br1-height: 30px;
+
+    --aug-scoop-tl1: initial;
+    --aug-tl1-width: 80px;
+    --aug-tl1-height: 80px;
+    --aug-tl-extend2:400px;
+    --aug-t-height:400px;
+
+    --aug-tr1-height: 20px;
+    --aug-l1-width: 0px;
+
+    --aug-bl-inset2: 0px;
+    --aug-bl1-width: 0px;
+
+    --aug-br-inset1: 0px;
+
+    background-color: rgba(43,237,230,0.05);
+    zoom: 90%;
+
+    transform: perspective(1500px) rotateY(0deg);
+}
