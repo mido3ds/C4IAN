@@ -60,3 +60,9 @@ With `start` script you can always pass more options to routers/units/cmds, just
 ```sh
 $ sudo ./start local cmd -- <options to cmd executable...>
 ```
+
+## Note
+You may need to run the following command to enable writing to `/tmp/`:
+```
+sudo sysctl fs.protected_regular=0
+```
