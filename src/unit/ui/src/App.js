@@ -48,7 +48,6 @@ function App() {
       })
   
       eventSource.addEventListener("AUDIO-EVENT", ev => {
-        console.log(JSON.parse(ev.data))
         onReceiveAudio(JSON.parse(ev.data))
       })
   }, [])
