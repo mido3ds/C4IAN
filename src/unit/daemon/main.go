@@ -57,7 +57,7 @@ func main() {
 
 	log.Println("finished initalizing all")
 
-	// testPeriodicCMDMsgs(context, 0)
+	testPeriodicCMDMsgs(context, 0)
 	// testPeriodicCMDAudios(context)
 
 	waitSIGINT()

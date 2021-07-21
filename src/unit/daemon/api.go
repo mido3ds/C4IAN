@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-const UIPort = 3000
+const UIPort = 3006
 
 type API struct {
 	context     *Context
@@ -24,9 +25,9 @@ type API struct {
 func newAPI(context *Context) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
+			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: http://localhost:%v", UIPort)),
 		}
-	})	
+	})
 	return &API{eventSource: es, context: context}
 }
 
@@ -37,14 +38,13 @@ func (api *API) start(port int) {
 	// API endpoints
 	router.HandleFunc("/api/audio-msg", api.postAudioMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/code-msg", api.postMsg).Methods(http.MethodPost)
-	router.HandleFunc("/api/sensors-data", api.postSensorsData).Methods(http.MethodPost)
 
 	// SSE endpoint
 	router.Handle("/events", api.eventSource)
 
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("Content-Type", "application/x-msgpack")
+			w.Header().Add("Content-Type", "application/json")
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -93,26 +93,5 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 	api.context.onCodeMsgReceivedFromHAL(&msg)
-	w.WriteHeader(http.StatusOK)
-}
-
-func readSensorsData(body io.ReadCloser) halapi.SensorData {
-	var vp halapi.VideoFragment
-	var s halapi.SensorData
-	var a halapi.AudioMsg
-	var msg halapi.CodeMsg
-	recvdType, err := halapi.ReadFromHAL(body, &vp, &s, &a, &msg)
-	if err != nil {
-		log.Panic(err)
-	}
-	if recvdType != halapi.SensorDataType {
-		log.Panic("invalid type, expected SensorDataType")
-	}
-	return s
-}
-
-func (api *API) postSensorsData(w http.ResponseWriter, r *http.Request) {
-	sensorsdata := readSensorsData(r.Body)
-	api.context.onSensorDataReceivedFromHAL(&sensorsdata)
 	w.WriteHeader(http.StatusOK)
 }

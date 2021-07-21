@@ -56,7 +56,7 @@ function App() {
     <>
       <NotificationContainer />
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
-      <Profile msgs={msgs} audios={audios} setMsgs={setMsgs}/>
+      <Profile msgs={msgs} audios={audios} />
     </>
   );
 }
