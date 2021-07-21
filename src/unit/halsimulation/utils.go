@@ -64,7 +64,7 @@ func getDefaultInterface() string {
 		// get field containing gateway address
 		tokens := strings.Split(scanner.Text(), "\t")
 		iface := tokens[0]
-		if iface != "lo" {
+		if iface != "lo" && iface != "" {
 			return iface
 		}
 	}
