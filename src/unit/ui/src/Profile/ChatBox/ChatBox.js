@@ -25,7 +25,11 @@ function ChatBox({ msgs }) {
                             return <>
                                 {msg.sent ?
                                     <li className="chat-right">
+<<<<<<< HEAD
                                             <div className="chat-text"> {sentCodes[msg.Code]} </div>
+=======
+                                        <div className="chat-text"> {sentCodes[msg.Body]} </div>
+>>>>>>> 5628e525d9ba3e41cec9950bbf84555f838a5188
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> Me </div>
@@ -36,7 +40,7 @@ function ChatBox({ msgs }) {
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> {"Command Center"} </div>
                                         </div>
-                                        <div className="chat-text"> {receivedCodes[msg.Code]} </div>
+                                        <div className="chat-text"> {receivedCodes[msg.Body]} </div>
                                     </li>
                                 }
                             </>

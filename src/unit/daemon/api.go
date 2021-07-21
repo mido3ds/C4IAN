@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -15,7 +14,7 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-const UIPort = 3006
+const UIPort = 3000
 
 type API struct {
 	context     *Context
@@ -25,7 +24,7 @@ type API struct {
 func newAPI(context *Context) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: http://localhost:%v", UIPort)),
+			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
 		}
 	})	
 	return &API{eventSource: es, context: context}

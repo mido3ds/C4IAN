@@ -46,10 +46,17 @@ function App() {
   var onReceiveAudio = (audio) => {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
+<<<<<<< HEAD
         NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3006, () => onPlayAudio("Command Center", audio), true);
         setAudios((audios)=> {
           return [...audios, audio]
         });
+=======
+        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", audio), true);
+        audios.push(audio)
+        setAudios(audios);
+        AudiosDB.push(audio);
+>>>>>>> 5628e525d9ba3e41cec9950bbf84555f838a5188
       }
       return selectedTab;
     })
