@@ -46,8 +46,6 @@ function App() {
         msgs.push(msg);
         setMsgs(msgs);
         MsgsDB.push(msg);
-        console.log("MsgsDB: ", MsgsDB);
-        // setMsgs([...msgs, msg]);
       }
       return selectedTab;
     })
@@ -60,7 +58,6 @@ function App() {
         audios.push(audio)
         setAudios(audios);
         AudiosDB.push(audio);
-        console.log("AudiosDB: ", AudiosDB);
       }
       return selectedTab;
     })
@@ -81,19 +78,6 @@ function App() {
       eventSource.addEventListener("AUDIO-EVENT", ev => {
         onReceiveAudio(ev.data)
       })
-
-      // var socket = ipc.connectTo('unit-hal', UnixSocketPath);
-      // socket.on('message', (data) => {
-      //   const parsedData = JSON.parse(decode(data).buffer);
-      //   console.log("received msg: ", parsedData);
-      //   if (parsedData.Type == CodeMsgType) {
-      //     onReceiveMessage(parsedData);
-      //   }
-      //   else if (parsedData.Type == AudioMsgType) {
-      //     onReceiveAudio(parsedData);
-      //   }
-      // });
-      // setSocket(socket);
   }, [])
 
   var onChange = (selectedTab) => {
