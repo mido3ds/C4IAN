@@ -28,7 +28,7 @@ $ sudo ./start u2 ping 10.0.0.1 -c5
 ```sh
 $ sudo ./start units
 $ sudo ./start cmds
-$ sudo ./start hals -- --video /path/to/video --audios-dir /path/to/audio/dir # TODO
+$ sudo ./start hals -- --video /path/to/video --audios-dir /path/to/audio/dir
 ```
 
 ## Start single UNIT/CMD/HAL locally

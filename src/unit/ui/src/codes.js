@@ -1,5 +1,5 @@
 export const msgsCode = {
-  "Help": 0,
+  "Danger": 0,
   "Mission Accomplished": 1,
   "Need Backup": 2,
   "Change Plan": 3,

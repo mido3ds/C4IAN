@@ -9,7 +9,6 @@ function ChatBox({allMsgs}) {
 
     useEffect(() => {
         setMsgs(allMsgs);
-        console.log(allMsgs);
         if (!allMsgs || !allMsgs.length) {
             window.$('.chat-container').css('overflow-y', 'hidden')
         } else {
