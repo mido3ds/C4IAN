@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/database_logger"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
@@ -56,6 +57,7 @@ func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
 
 	// write to device driver
 	f.zidMacConn.Write(buffer.Bytes(), nextHopMac)
+	DatabaseLogger.LogForwarding(buffer.Bytes()[ZIDHeaderLen+IPv4HeaderLen:], dstIP)
 }
 
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
@@ -82,6 +84,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 		for item := range es.Items.Iter() {
 			log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
 			f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
+			DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], grpIP)
 		}
 	}
 }

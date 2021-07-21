@@ -12,7 +12,7 @@ emergencies due to the lack of a network infrastructure and the high mobility of
 method to collect real time data and analyze it to have a competitive advantage in the battleground.
 
 ## Motivation
-Mobile ad-hoc networks can be formed on-the-go, without any infrastructure. They promise more
+Mobile ad-hoc networks can be formed on the go, without any infrastructure. They promise more
 flexibility and reliability than manual radio broadcasting. We are interested in building such complex
 distributed systems.
 

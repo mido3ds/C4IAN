@@ -17,16 +17,17 @@ import (
 )
 
 func main() {
-	defer log.Println("finished cleaning up, closing")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	log.SetOutput(os.Stdout)
-
 	args, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
 	fmt.Println(args)
+	defer log.Println("finished cleaning up, closing")
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
+	log.SetPrefix("[" + getDefaultInterface() + "] ")
 
 	context := newContext(args)
 
@@ -49,11 +50,16 @@ type Context struct {
 	halConn     net.Conn
 	tempDir     string
 	lastTSIndex int
+	locAgent    *LocAgent
 }
 
 func newContext(args *Args) Context {
 	videoPath := args.videoPath
-	log.Println("videoPath:", videoPath)
+	if len(videoPath) > 0 {
+		log.Println("videoPath:", videoPath)
+	} else {
+		log.Println("no video to stream")
+	}
 
 	audiosFiles := []string{}
 	if len(args.audiosDirPath) > 0 {
@@ -80,6 +86,14 @@ func newContext(args *Args) Context {
 	}
 	shouldCloseDir = false
 
+	var locAgent *LocAgent = nil
+	if len(args.locationSocket) > 0 {
+		locAgent, err = newLocAgent(args.locationSocket)
+		if err != nil {
+			log.Panic(err)
+		}
+	}
+
 	return Context{
 		Args:        *args,
 		videoPath:   videoPath,
@@ -87,6 +101,7 @@ func newContext(args *Args) Context {
 		halConn:     conn,
 		tempDir:     tempdir,
 		lastTSIndex: 0,
+		locAgent:    locAgent,
 	}
 }
 
@@ -265,14 +280,29 @@ func (c *Context) sendCodeMsgs() {
 }
 
 func (c *Context) sendSensorsData() {
+	var lon float64
+	var lat float64
+
+	if c.locAgent != nil {
+		go c.locAgent.start()
+	}
+
 	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
 	for {
 		time.Sleep(10 * time.Second)
 
 		if rand.Intn(100) < 60 {
-			lon := normal(32.4, .02)
-			lat := normal(43.098, .03)
+			if true {
 			hb := int(normal(70, 20))
+
+			if c.locAgent != nil {
+				loc := c.locAgent.location
+				lon = loc.Lon
+				lat = loc.Lat
+			} else {
+				lon = normal(32.4, .02)
+				lat = normal(43.098, .03)
+			}
 
 			err := halapi.SensorData{
 				Location: halapi.Location{

@@ -2,9 +2,9 @@
 
 function usage() {
     F=$(realpath --relative-to=. $0)
-    echo "Usage: ${F} [-w|--watch] [-- <options to pass to all routers>]"
-    echo "Runs all routers, pass -w|--watch to watch changes in executable"
-    echo "Pass any other options after -- to all routers argv"
+    echo "Usage: ${F} [-w|--watch] [-- <options to pass to all hals>]"
+    echo "Runs all hals, pass -w|--watch to watch changes in executable"
+    echo "Pass any other options after -- to all hals argv"
 }
 
 while [ "$1" != "" ]; do
@@ -32,14 +32,12 @@ while [ "$1" != "" ]; do
     shift
 done
 
-# check nodes exist
-python3 emulation/get_nodes_pid.py r 1>&2 >/dev/null || ( echo No nodes found; exit 1 )
+# check hals exist
+python3 emulation/get_nodes_pid.py u 1>&2 >/dev/null || ( echo No units found; exit 1 )
 
-mkdir -p /var/log/caian/ 
+mkdir -p /var/log/caian/ /var/lib/caian/
 
-# create log database
-python3 emulation/create_log_database.py /var/log/caian/log.db
-echo "forwarding decisions are stored in /var/log/caian/log.db"
+echo "hals DBs are in /var/lib/caian/"
 
 function cleanup() {
     pkill -u root -f ./emulation/watchdog
@@ -47,14 +45,14 @@ function cleanup() {
 trap cleanup INT
 
 # copy all stdout/stderr to log
-echo "stdout+stderr is saved in /var/log/caian/routers"
-exec &> >(tee  -a /var/log/caian/routers)
+echo "stdout+stderr is saved in /var/log/caian/hals"
+exec &> >(tee  -a /var/log/caian/hals)
 echo ------------------------
 
-python3 emulation/get_nodes_pid.py r | while read line; do
+python3 emulation/get_nodes_pid.py h | while read line; do
     line="${line} ${OPTS}"
     if [[ $WATCH -eq 1 ]]; then
-        ./emulation/watchdog --file ./router/router --command "nsenter $line" &
+        ./emulation/watchdog --file ./unit/halsimulation/halsimulation --command "nsenter $line" &
     else
         nsenter $line &
     fi
