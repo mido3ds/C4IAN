@@ -190,8 +190,77 @@ def mobility_thread():
             time.sleep(MOB_STEP_PERIOD)
 
 
+class FileToSave(NamedTuple):
+    path: str
+    content: str
+
+    def save(self):
+        with open(self.path, 'w') as f:
+            f.write(self.content)
+
+
+def get_units_file(cmd_name: str, cmd_units: List[Node]) -> FileToSave:
+    return FileToSave(
+        path=f'/tmp/mn.{cmd_name}.units.json',
+        content=json.dumps({
+            'units': [{'ip': unit.get_ip(), 'name': unit.name} for unit in cmd_units]
+        })
+    )
+
+
+def get_metadata_files(nodes: List[Node]) -> List[FileToSave]:
+    metadata = {
+        'router': {'groups_file': dict()},  # ok
+        'unit': {'cmd_addr': dict()},  # ok
+        'cmd': {
+            'units_file': dict(),
+            'groups_file': dict(),  # ok
+        }
+    }
+    units = sorted([node for node in nodes if 'u' in node.name],
+                   key=lambda node: int(node.name[1:]))
+    cmds = sorted([node for node in nodes if 'c' in node.name],
+                  key=lambda node: int(node.name[1:]))
+
+    groups = {
+        "224.0.2.1": [unit.get_ip() for unit in units[:len(units)//2]],
+        "224.0.2.2": [unit.get_ip() for unit in units[len(units)//2:]]
+    }
+    groups_file = FileToSave('/tmp/mn.groups.json', json.dumps(groups))
+    for node in nodes:
+        metadata['router']['groups_file'][node.name] = groups_file.path
+    for cmd in cmds:
+        metadata['cmd']['groups_file'][cmd.name] = groups_file.path
+
+    files = [groups_file]
+
+    j = 0
+    units_per_cmd = len(units)//len(cmds)
+    for i, cmd in enumerate(cmds):
+        if i == len(cmds)-1:
+            cmd_units = units[j:]
+        else:
+            cmd_units = units[j:j+units_per_cmd]
+            j += units_per_cmd
+
+        for unit in cmd_units:
+            metadata['unit']['cmd_addr'][unit.name] = f'{cmd.get_ip()}:4170'
+
+        units_file = get_units_file(cmd.name, cmd_units)
+        metadata['cmd']['units_file'][cmd.name] = units_file.path
+        files.append(units_file)
+
+    files.append(FileToSave('/tmp/mn.metadata.json', json.dumps(metadata)))
+    return files
+
+
 args = parse_args()
 nodes, rng, zlen = read_topo(args.topology)
+
+print('*** Saving metadata files')
+metadata_files = get_metadata_files(nodes)
+for f in metadata_files:
+    f.save()
 
 
 def nodes_coords(offset):

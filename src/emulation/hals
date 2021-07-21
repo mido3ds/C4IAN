@@ -1,0 +1,62 @@
+#!/bin/bash -e
+
+function usage() {
+    F=$(realpath --relative-to=. $0)
+    echo "Usage: ${F} [-w|--watch] [-- <options to pass to all hals>]"
+    echo "Runs all hals, pass -w|--watch to watch changes in executable"
+    echo "Pass any other options after -- to all hals argv"
+}
+
+while [ "$1" != "" ]; do
+    PARAM=`echo $1 | awk -F= '{print $1}'`
+    VALUE=`echo $1 | awk -F= '{print $2}'`
+    case $PARAM in
+        -h | --help)
+            usage
+            exit
+            ;;
+        -w | --watch)
+            WATCH=1
+            echo "running in watch mode"
+            ;;
+        --)
+            shift
+            OPTS="$@"
+            break
+            ;;
+        *)
+            echo "Unknown parameter \"$1\""
+            usage
+            exit 1
+    esac
+    shift
+done
+
+# check hals exist
+python3 emulation/get_nodes_pid.py u 1>&2 >/dev/null || ( echo No units found; exit 1 )
+
+mkdir -p /var/log/caian/ /var/lib/caian/
+
+echo "hals DBs are in /var/lib/caian/"
+
+function cleanup() {
+    pkill -u root -f ./emulation/watchdog
+}
+trap cleanup INT
+
+# copy all stdout/stderr to log
+echo "stdout+stderr is saved in /var/log/caian/hals"
+exec &> >(tee  -a /var/log/caian/hals)
+echo ------------------------
+
+python3 emulation/get_nodes_pid.py h | while read line; do
+    line="${line} ${OPTS}"
+    if [[ $WATCH -eq 1 ]]; then
+        ./emulation/watchdog --file ./unit/halsimulation/halsimulation --command "nsenter $line" &
+    else
+        nsenter $line &
+    fi
+done
+
+# TODO: close routers gracefully
+wait

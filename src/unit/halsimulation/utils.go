@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 )
 
 func normal(mean, stdDev float64) float64 {
@@ -42,4 +44,28 @@ func listDir(pathToDir string) []string {
 	}
 
 	return list
+}
+
+func getDefaultInterface() string {
+	file, err := os.Open("/proc/net/route")
+	if err != nil {
+		log.Panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		const line = 1 // line containing the gateway addr. (first line: 0)
+		// jump to line containing the agteway address
+		for i := 0; i < line; i++ {
+			scanner.Scan()
+		}
+
+		// get field containing gateway address
+		tokens := strings.Split(scanner.Text(), "\t")
+		return tokens[0]
+	}
+
+	log.Panic("no default interface found")
+	return "unreachable"
 }
