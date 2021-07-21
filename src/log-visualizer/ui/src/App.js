@@ -32,15 +32,14 @@ function App() {
       var coordinates = []
       Object.keys(locations).forEach(ip => {
         if (markers[ip]) markers[ip].remove()
+
         markers[ip] = new mapboxgl.Marker({ color: 'black' })
           .setLngLat([locations[ip].lon, locations[ip].lat])
           .addTo(map.current);
 
         coordinates.push([locations[ip].lon, locations[ip].lat])
-        map.current.fitBounds(getBounds(coordinates));
-
-        return markers;
       })
+      return markers;
     })
   }
 
@@ -53,14 +52,19 @@ function App() {
         var lat = markers[ip].getLngLat().lat
         coordinates.push([lng, lat])
 
-        if (index === 0) color = 'red'
-        if (index === pathIps.length) color = 'blue'
+        if (index === 0) color = 'red' 
+        if (index === pathIps.length - 1) color = 'blue'
         if (markers[ip]) markers[ip].remove()
 
         markers[ip] = new mapboxgl.Marker({ color: color })
           .setLngLat([lng, lat])
           .addTo(map.current);
       })
+
+      if(typeof(map.current.getSource('route')) !== 'undefined') {
+        map.current.removeLayer('route')
+        map.current.removeSource('route')
+      }
 
       map.current.addSource('route', {
         'type': 'geojson',
@@ -88,6 +92,8 @@ function App() {
         }
       });
 
+      map.current.setZoom(15)
+      map.current.setCenter([markers[pathIps[0]].getLngLat().lng, markers[pathIps[0]].getLngLat().lat])
       return markers;
     })
   }
@@ -110,6 +116,7 @@ function App() {
 
   useEffect(() => {
     setSelectedMsg(selectedMsg => {
+      if(!selectedMsg) return selectedMsg
       getMsgData(selectedMsg).then(msgData => {
         addMarkers(msgData["locations"])
         drawPath(msgData["path"])

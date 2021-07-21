@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = "http://localhost:3170/api/";
+const baseURL = "http://localhost:5000/api/";
 
 export async function getMsgs() {
     var response = await axios.get(baseURL + "packets");
@@ -8,7 +8,7 @@ export async function getMsgs() {
 }
 
 export async function getMsgData(hash) {
-    var response = await axios.get(baseURL + "packet-data" + hash);
+    var response = await axios.get(baseURL + "packet-data/" + hash);
     return response.data;
 }
 
