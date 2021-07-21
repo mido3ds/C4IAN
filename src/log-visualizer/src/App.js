@@ -33,10 +33,10 @@ function App() {
       Object.keys(locations).forEach(ip => {
         if (markers[ip]) markers[ip].remove()
         markers[ip] = new mapboxgl.Marker({ color: 'black' })
-          .setLngLat([locations[ip].lng, locations[ip].lat])
+          .setLngLat([locations[ip].lon, locations[ip].lat])
           .addTo(map.current);
 
-        coordinates.push([locations[ip].lng, locations[ip].lat])
+        coordinates.push([locations[ip].lon, locations[ip].lat])
         map.current.fitBounds(getBounds(coordinates));
 
         return markers;
