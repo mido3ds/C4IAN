@@ -28,7 +28,7 @@ import { AudiosDB } from '../../db'
                 <div className="items-container">
                     {
                         [...Array(Math.min(data.length - startItem, 4))].map((x, i) => 
-                            <GalleryItem name= {"Command Center"} type={type} data={data[i]} key={i} />
+                            <GalleryItem name= {"Command Center"} type={type} data={data[i]} key={i} time={data[i + startItem].time} />
                         )
                     }
                 </div>

@@ -295,7 +295,7 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 		log.Println("received msg but coudln't connect to HAL to play it")
 	}
 
-	c.api.sendAudioMsgEvent(audio.Body)
+	c.api.sendAudioMsgEvent(audio)
 }
 
 func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename string) error {

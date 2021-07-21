@@ -3,13 +3,13 @@ import React, { useRef, useState, useEffect } from 'react';
 import Moment from 'react-moment';
 import PlayAudio from '../../../PlayAudio/PlayAudio'
 
-function GalleryItem({ type, data, name }) {
+function GalleryItem({ type, data, name, time }) {
     const playAudioRef = useRef(null);
     const [audioData, setAudioData] = useState(null)
 
     useEffect(()=> {
         if (type === "audio") {
-            setAudioData(data.Body)
+            setAudioData(data.body)
         }
     }, [data, type])
 
@@ -28,7 +28,7 @@ function GalleryItem({ type, data, name }) {
             }
             <div data-augmented-ui="border" className="gallery-item">
                 <i onClick={playMedia} className="fas fa-play-circle fa-3x gallery-item-play-icon"></i>
-                {/* <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time}</Moment> */}
+                <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time}</Moment>
             </div>
         </>
     );

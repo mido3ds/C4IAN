@@ -54,7 +54,7 @@ function App() {
   var onReceiveAudio = (audio) => {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
-        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 6000, () => onPlayAudio("Command Center", audio), true);
+        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 6000, () => onPlayAudio("Command Center", audio.body), true);
         audios.push(audio)
         setAudios(audios);
         AudiosDB.push(audio);
@@ -76,7 +76,8 @@ function App() {
       })
   
       eventSource.addEventListener("AUDIO-EVENT", ev => {
-        onReceiveAudio(ev.data)
+        console.log(JSON.parse(ev.data))
+        onReceiveAudio(JSON.parse(ev.data))
       })
   }, [])
 
