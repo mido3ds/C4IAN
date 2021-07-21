@@ -21,7 +21,7 @@ const path = "/var/log/caian/log.db"
 var DatabaseLogger DatabaseManager
 
 func (dbManager *DatabaseManager) Initialize(myIP net.IP) {
-	dbManager.db = sqlx.MustOpen("sqlite3", path)
+	dbManager.db = sqlx.MustOpen("sqlite3", path+"?_busy_timeout=5000")
 	dbManager.myIP = myIP
 }
 
