@@ -25,10 +25,13 @@ function Control({ allMsgs }) {
             Code: parseInt(confirmationMsgCode)
         };
         postMsg(data);
-        data["sent"] = true;
-        msgs.push(data);
+        const savedMsg = {
+            Code: confirmationMsgCode,
+            sent: true
+        };
+        msgs.push(savedMsg);
         setMsgs(msgs)
-        MsgsDB.push(data);
+        MsgsDB.push(savedMsg);
     }
 
     var onSendAudio = (audio) => {
