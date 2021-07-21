@@ -66,15 +66,18 @@ func (a *ZoneIDAgent) Start() {
 
 func (a *ZoneIDAgent) updateZone() {
 	myGpsLocationMutex.Lock()
+	defer myGpsLocationMutex.Unlock()
+
 	err := a.decoder.Decode(&myGpsLocation)
 	if err != nil {
-		log.Println("err in loc decoding")
+		log.Println("err in loc decoding, err:", err)
 		return
 	}
-	myGpsLocationMutex.Unlock()
 
 	id := newZoneID(myGpsLocation, a.zlen)
 	myZoneMutex.Lock()
+	defer myZoneMutex.Unlock()
+
 	if id != myZone.ID {
 		myZone.ID = id
 		for _, cb := range a.zoneChangeCallbacks {
@@ -82,8 +85,6 @@ func (a *ZoneIDAgent) updateZone() {
 		}
 		log.Println("New Zone =", &myZone)
 	}
-	myZoneMutex.Unlock()
-
 }
 
 func (a *ZoneIDAgent) Close() {

@@ -13,8 +13,9 @@ type Args struct {
 	videoPath       string
 	audiosDirPath   string
 	ffmpegPath      string
+	locationSocket  string
 	fragmentDurSecs int
-	live     bool
+	live            bool
 }
 
 func (a *Args) String() string {
@@ -31,6 +32,8 @@ func parseArgs() (*Args, error) {
 	fragmentDurSecs := parser.Int("", "fragment-dur-secs", &argparse.Options{Help: "Duration in secs of one video fragment.", Default: 2})
 	live := parser.Flag("", "live", &argparse.Options{Help: "Indicates this is streaming from camera not from file, false by default."})
 
+	locationSocket := parser.String("", "location-socket", &argparse.Options{Help: "Path to unixgrams to receive location updates on, works the same as router, if not provided will create fake locations.", Default: ""})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		return nil, errors.New(parser.Usage(err))
@@ -42,6 +45,7 @@ func parseArgs() (*Args, error) {
 		audiosDirPath:   *audiosDirPath,
 		fragmentDurSecs: *fragmentDurSecs,
 		ffmpegPath:      *ffmpegPath,
-		live:     *live,
+		live:            *live,
+		locationSocket:  *locationSocket,
 	}, nil
 }
