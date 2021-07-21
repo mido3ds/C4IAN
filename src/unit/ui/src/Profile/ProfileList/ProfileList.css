@@ -1,19 +1,22 @@
 .list-container {
     position: relative;
     top: 0px;
-    right: 0px;
+    right: 325px;
     z-index: 10;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     flex-basis: auto;
-    margin-left: 70px;
-    margin-top: 60px;
+    margin-right: 0px;
+    margin-top: 90px;
+
+    justify-content: center;
+    align-items: center;
 }
 
 .upper-tap {
     width: 235px;
-    height: 50px;
+    height: 60px;
     background-color:  rgba(107, 110, 108, 0.158);
     margin-bottom: -13px;
     margin-left: -5px;
@@ -28,15 +31,14 @@
 
 .upper-arrow {
     margin-top: -15px;
-    font-size: 50px;
+    font-size: 60px;
     color:   rgba(102, 103, 109, 0.144);
 }
 
 .down-arrow {
     margin-top: 12px;
-    font-size: 50px;
+    font-size: 60px;
     color:   rgba(102, 103, 109, 0.144);
-
 }
 
 .active-arrow {
@@ -55,7 +57,6 @@
     background-color:  rgba(149, 153, 153, 0.574);
     position: absolute;
     top: 5px;
-    
 }
 
 .upper {

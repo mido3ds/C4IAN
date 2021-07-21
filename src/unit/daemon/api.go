@@ -26,7 +26,7 @@ func newAPI(context *Context) *API {
 		return [][]byte{
 			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
 		}
-	})
+	})	
 	return &API{eventSource: es, context: context}
 }
 
@@ -69,7 +69,6 @@ func (api *API) sendAudioMsgEvent(audio []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	api.eventSource.SendEventMessage(string(payload), "AUDIO-EVENT", "")
 }
 
