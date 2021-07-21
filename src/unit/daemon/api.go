@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/mido3ds/C4IAN/src/models"
 	"github.com/mido3ds/C4IAN/src/unit/halapi"
 	"github.com/rs/cors"
 	"gopkg.in/antage/eventsource.v1"
@@ -64,8 +65,8 @@ func (api *API) sendCodeMsgEvent(code int) {
 	api.eventSource.SendEventMessage(strconv.Itoa(code), "CODE-EVENT", "")
 }
 
-func (api *API) sendAudioMsgEvent(audio []byte) {
-	payload, err := json.Marshal(audio)
+func (api *API) sendAudioMsgEvent(body *models.Audio) {
+	payload, err := json.Marshal(body)
 	if err != nil {
 		log.Panic(err)
 	}

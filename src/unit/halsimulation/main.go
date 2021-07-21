@@ -292,7 +292,6 @@ func (c *Context) sendSensorsData() {
 		time.Sleep(10 * time.Second)
 
 		if rand.Intn(100) < 60 {
-			if true {
 			hb := int(normal(70, 20))
 
 			if c.locAgent != nil {
