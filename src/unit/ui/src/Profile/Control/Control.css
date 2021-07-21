@@ -35,6 +35,15 @@
   cursor: pointer;
 }
 
+.dange-icon {
+  top: 60px;
+  left: 620px;
+  width: 60px;
+  height: 60px;
+  position: absolute;
+  cursor: pointer;
+}
+
 .audio-icon {
   top: 180px;
   left: 270px;
