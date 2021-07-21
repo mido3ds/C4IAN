@@ -53,7 +53,7 @@ func main() {
 	go context.listenHAL()
 	go context.listenCmdTcp()
 	go context.listenCmdUdp()
-	go context.api.start(8000)
+	go context.api.start(args.uiPort)
 
 	log.Println("finished initalizing all")
 
@@ -292,7 +292,7 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 			log.Println("error in sending show audio msg to HAL, err:", err)
 		}
 	} else {
-		log.Println("received msg but coudln't connect to HAL to play it, dropping msg")
+		log.Println("received msg but coudln't connect to HAL to play it")
 	}
 
 	c.api.sendAudioMsgEvent(audio.Body)

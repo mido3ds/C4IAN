@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const baseURL = "http://localhost:8000/";
+export const baseURL = "http://localhost:3270/";
 const apiURL = baseURL + "api/";
 
 export async function postMsg(msg) {

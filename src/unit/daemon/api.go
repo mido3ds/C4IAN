@@ -63,6 +63,7 @@ func (api *API) start(port int) {
 
 func (api *API) sendCodeMsgEvent(code int) {
 	api.eventSource.SendEventMessage(strconv.Itoa(code), "CODE-EVENT", "")
+	log.Println("sent code msg to UI")
 }
 
 func (api *API) sendAudioMsgEvent(audio []byte) {
@@ -72,6 +73,7 @@ func (api *API) sendAudioMsgEvent(audio []byte) {
 	}
 
 	api.eventSource.SendEventMessage(string(payload), "AUDIO-EVENT", "")
+	log.Println("sent audio msg to UI")
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
