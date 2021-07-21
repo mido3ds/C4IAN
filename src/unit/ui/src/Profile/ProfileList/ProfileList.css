@@ -1,7 +1,7 @@
 .list-container {
     position: relative;
     top: 0px;
-    right: 0px;
+    /* right: 100px; */
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -9,6 +9,9 @@
     flex-basis: auto;
     margin-left: 70px;
     margin-top: 60px;
+
+    justify-content: center;
+    align-items: center;
 }
 
 .upper-tap {
