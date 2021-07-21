@@ -8,8 +8,8 @@
     align-items: center;
 }
 
-.attack-icon {
-  top: 110px;
+.mission-icon {
+  top: 11 0px;
   left: 410px;
   position: absolute;
   width: 50px;
@@ -17,7 +17,16 @@
   cursor: pointer;
 }
 
-.video-icon {
+.backup-icon {
+  top: 365px;
+  left: 600px;
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+
+.danger-icon {
   top: 365px;
   left: 410px;
   position: absolute;
@@ -35,7 +44,7 @@
   cursor: pointer;
 }
 
-.stop-icon {
+.plan-icon {
   top: 370px;
   right: 110px;  
   position: absolute;

@@ -5,10 +5,6 @@ import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
 import PlayAudio from './PlayAudio/PlayAudio'
 import { receivedCodes } from './codes'
-import { MsgsDB, AudiosDB } from './db'
-// import net from 'net';
-// import ipc from 'node-ipc';
-// import { decode } from '@msgpack/msgpack';
 import { baseURL } from './Api/Api'
 
 import 'react-notifications/lib/notifications.css';
@@ -17,12 +13,8 @@ import './index.css';
 
 function App() {
   const playAudioRef = useRef(null);
-  // const AudioMsgType = 6 & 0xff;
-  // const CodeMsgType = 7 & 0xff;
-  // const UnixSocketPath = '/tmp/unit.hal.sock';
   const [audioModalName, setAudioModalName] = useState(null);
   const [audioModalData, setAudioModalData] = useState(null);
-  // const [unixSocket, setSocket] = useState(null);
   const [msgs, setMsgs] = useState([]);
   const [audios, setAudios] = useState([]);
 
@@ -43,9 +35,9 @@ function App() {
           sent: false,
           Body: code,
         };
-        msgs.push(msg);
-        setMsgs(msgs);
-        MsgsDB.push(msg);
+        setMsgs((msgs)=> {
+          return [...msgs, msg]
+        });
       }
       return selectedTab;
     })
@@ -54,10 +46,9 @@ function App() {
   var onReceiveAudio = (audio) => {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
-        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 6000, () => onPlayAudio("Command Center", audio.body), true);
         audios.push(audio)
         setAudios(audios);
-        AudiosDB.push(audio);
+        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 6000, () => onPlayAudio("Command Center", audio.body), true);
       }
       return selectedTab;
     })
@@ -105,7 +96,7 @@ function App() {
         selectedTab === "Log Out" ?
           <LogIn />
           : selectedTab === "Profile" ?
-          <Profile msgs={msgs} audios={audios}/>
+          <Profile msgs={msgs} audios={audios} setMsgs={setMsgs}/>
           : <> </>
       }
     </>

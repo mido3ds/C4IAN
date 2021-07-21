@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +15,7 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-const UIPort = 3006
+const UIPort = 3000
 
 type API struct {
 	context     *Context
@@ -26,9 +25,9 @@ type API struct {
 func newAPI(context *Context) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: http://localhost:%v", UIPort)),
+			[]byte("Access-Control-Allow-Origin: http://localhost:3000"),
 		}
-	})
+	})	
 	return &API{eventSource: es, context: context}
 }
 
@@ -64,7 +63,6 @@ func (api *API) start(port int) {
 
 func (api *API) sendCodeMsgEvent(code int) {
 	api.eventSource.SendEventMessage(strconv.Itoa(code), "CODE-EVENT", "")
-	log.Println("sent code msg to UI")
 }
 
 func (api *API) sendAudioMsgEvent(body *models.Audio) {
@@ -72,9 +70,7 @@ func (api *API) sendAudioMsgEvent(body *models.Audio) {
 	if err != nil {
 		log.Panic(err)
 	}
-
 	api.eventSource.SendEventMessage(string(payload), "AUDIO-EVENT", "")
-	log.Println("sent audio msg to UI")
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {

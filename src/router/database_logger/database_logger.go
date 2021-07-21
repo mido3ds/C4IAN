@@ -21,7 +21,7 @@ const path = "/var/log/caian/log.db"
 var DatabaseLogger DatabaseManager
 
 func (dbManager *DatabaseManager) Initialize(myIP net.IP) {
-	dbManager.db = sqlx.MustOpen("sqlite3", path+"?_busy_timeout=5000")
+	dbManager.db = sqlx.MustOpen("sqlite3", path)
 	dbManager.myIP = myIP
 }
 
@@ -34,16 +34,26 @@ func (dbManager *DatabaseManager) StartLocationLogging() {
 }
 
 func (dbManager *DatabaseManager) LogLocation(location GpsLocation) {
-	dbManager.db.MustExec(
-		"INSERT INTO locations VALUES ($1, $2, $3, $4)",
-		time.Now().UnixNano(), dbManager.myIP.String(), location.Lat, location.Lon,
-	)
+	for {
+		_, err := dbManager.db.Exec(
+			"INSERT INTO locations VALUES ($1, $2, $3, $4)",
+			time.Now().UnixNano(), dbManager.myIP.String(), location.Lat, location.Lon,
+		)
+		if err == nil {
+			break
+		}
+	}
 }
 
 func (dbManager *DatabaseManager) LogForwarding(payload []byte, dst net.IP) {
 	hash := HashSHA3(payload)
-	dbManager.db.MustExec(
-		"INSERT INTO forwarding VALUES ($1, $2, $3, $4)",
-		time.Now().UnixNano(), dbManager.myIP.String(), dst.String(), hash,
-	)
+	for {
+		_, err := dbManager.db.Exec(
+			"INSERT INTO forwarding VALUES ($1, $2, $3, $4)",
+			time.Now().UnixNano(), dbManager.myIP.String(), dst.String(), hash,
+		)
+		if err == nil {
+			break
+		}
+	}
 }

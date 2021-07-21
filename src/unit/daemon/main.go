@@ -292,7 +292,7 @@ func (c *Context) onAudioMsgReceivedFromCMD(audio *models.Audio) {
 			log.Println("error in sending show audio msg to HAL, err:", err)
 		}
 	} else {
-		log.Println("received msg but coudln't connect to HAL to play it")
+		log.Println("received msg but coudln't connect to HAL to play it, dropping msg")
 	}
 
 	c.api.sendAudioMsgEvent(audio)

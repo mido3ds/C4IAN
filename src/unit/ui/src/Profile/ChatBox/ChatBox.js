@@ -2,14 +2,11 @@ import React, { useEffect, useState } from 'react';
 import uImage from '../../images/unit.png';
 import { receivedCodes, sentCodes } from '../../codes'
 import './ChatBox.css'
-import { MsgsDB } from '../../db'
 
-function ChatBox({allMsgs}) {
-    const [msgs, setMsgs] = useState(null)
+function ChatBox({ msgs }) {
 
     useEffect(() => {
-        setMsgs(allMsgs);
-        if (!allMsgs || !allMsgs.length) {
+        if (!msgs || !msgs.length) {
             window.$('.chat-container').css('overflow-y', 'hidden')
         } else {
             window.$('.chat-container').css('overflow-y', 'scroll')
@@ -17,7 +14,7 @@ function ChatBox({allMsgs}) {
             if(element) element.scrollTop = element.scrollHeight;
         }
         return
-    },[allMsgs])
+    },[msgs])
 
     return (
         <div className="content-wrapper">
@@ -28,7 +25,7 @@ function ChatBox({allMsgs}) {
                             return <>
                                 {msg.sent ?
                                     <li className="chat-right">
-                                        <div className="chat-text"> {sentCodes[msg.Code]} </div>
+                                            <div className="chat-text"> {sentCodes[msg.Code]} </div>
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> Me </div>
@@ -39,7 +36,7 @@ function ChatBox({allMsgs}) {
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
                                             <div className="chat-name"> {"Command Center"} </div>
                                         </div>
-                                        <div className="chat-text"> {receivedCodes[msg.Code]} </div>
+                                        <div className="chat-text"> {receivedCodes[msg.Body]} </div>
                                     </li>
                                 }
                             </>
