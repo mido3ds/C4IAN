@@ -3,7 +3,10 @@ package zid
 import "sync"
 
 var myZoneMutex sync.RWMutex
+var myGpsLocationMutex sync.RWMutex
+
 var myZone Zone
+var myGpsLocation GpsLocation
 
 func MyZone() Zone {
 	myZoneMutex.RLock()
@@ -12,9 +15,9 @@ func MyZone() Zone {
 }
 
 func MyLocation() GpsLocation {
-	myZoneMutex.RLock()
-	defer myZoneMutex.RUnlock()
-	return MyZone().ID.toGridLocation().toGPSLocation()
+	myGpsLocationMutex.RLock()
+	defer myGpsLocationMutex.RUnlock()
+	return myGpsLocation
 }
 
 func MyZIDHeader(dstZID ZoneID) *ZIDHeader {
