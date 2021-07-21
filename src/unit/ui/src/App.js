@@ -35,7 +35,7 @@ function App() {
   }
 
   var onReceiveAudio = (audio) => {
-    NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3006, () => onPlayAudio("Command Center", audio), true);
+    NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3006, () => onPlayAudio("Command Center", audio.body), true);
     setAudios((audios)=> {
       return [...audios, audio]
     });
