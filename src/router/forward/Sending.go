@@ -84,7 +84,6 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 		for item := range es.Items.Iter() {
 			log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
 			f.ipMacConn.Write(encryptedPacket, item.Value.(*NextHopEntry).NextHop)
-			DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], grpIP)
 		}
 	}
 }
