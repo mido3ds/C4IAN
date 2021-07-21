@@ -155,7 +155,10 @@ func getDefaultInterface() string {
 
 		// get field containing gateway address
 		tokens := strings.Split(scanner.Text(), "\t")
-		return tokens[0]
+		iface := tokens[0]
+		if iface != "lo" {
+			return iface
+		}
 	}
 
 	log.Panic("no default interface found")
