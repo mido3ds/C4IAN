@@ -100,8 +100,8 @@ class Node(NamedTuple):
     name: str
     position: Position
 
-    def get_sock(self):
-        return f'/tmp/{self.name}.router.locsock'
+    def get_socks(self):
+        return [f'/tmp/{self.name}.router.locsock', f'/tmp/{self.name}.hal.locsock']
 
     def get_ip(self):
         t = self.name[0].lower()
@@ -143,10 +143,10 @@ def locations_thread():
     print('locations', end=' ')
     while running:
         for node in nodes:
-            sock = node.get_sock()
-            x, y, _ = stations[node.name].getxyz()
-            lat, lon = loc.to_gps_coords(x, y)
-            loc.send_location(sock, lon, lat)
+            for sock in node.get_socks():
+                x, y, _ = stations[node.name].getxyz()
+                lat, lon = loc.to_gps_coords(x, y)
+                loc.send_location(sock, lon, lat)
         time.sleep(REFRESH_PERIOD)
     print('locations', end=' ')
 

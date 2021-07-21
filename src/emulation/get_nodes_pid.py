@@ -83,7 +83,8 @@ elif kind == 'h':
             n += 1
             print(f'-t {pid} -n '
                   f'./unit/halsimulation/halsimulation '
-                  f'--hal-socket-path /tmp/{name}.router.locsock ')
+                  f'--hal-socket-path /tmp/{name}.hal.sock '
+                  f'--location-socket /tmp/{name}.hal.locsock ')
 
 if n == 0:
     exit(1)
