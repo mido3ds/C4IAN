@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/AkihiroSuda/go-netfilter-queue"
+	. "github.com/mido3ds/C4IAN/src/router/database_logger"
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
@@ -123,6 +124,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 				ipPacket := append(ipHdr, ipPayload...)
 
 				// receive message by injecting it in loopback
+				DatabaseLogger.LogForwarding(packet[ZIDHeaderLen+IPv4HeaderLen:], ip.DestIP)
 				f.ipConn.Write(ipPacket)
 			} else { // i'm a forwarder
 				//log.Println("Forward msg from: ", ip.SrcIP, "to: ", ip.DestIP, "ttl: ", ip.TTL)
@@ -200,6 +202,7 @@ func (f *Forwarder) forwardZIDToNextHop(packet []byte, myZID, dstZID ZoneID, dst
 
 	// hand it directly to the interface
 	f.zidMacConn.Write(packet, nextHopMAC)
+	DatabaseLogger.LogForwarding(packet[ZIDHeaderLen+IPv4HeaderLen:], dstIP)
 }
 
 func (f *Forwarder) forwardBufferedPacketDirectly(packet []byte, dstIP net.IP) {
@@ -223,6 +226,7 @@ func (f *Forwarder) forwardBufferedPacketDirectly(packet []byte, dstIP net.IP) {
 		copy(packet[:ZIDHeaderLen], f.msec.Encrypt(zid.MarshalBinary()))
 		// Send to the next hop for the original destination
 		f.zidMacConn.Write(packet, nextHopMAC)
+		DatabaseLogger.LogForwarding(packet[ZIDHeaderLen+IPv4HeaderLen:], dstIP)
 	} else {
 		log.Panicln("Dst Zone must be cached here")
 	}
@@ -253,6 +257,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 				ipPacket := append(ipHdr, ipPayload...)
 
 				// receive message by injecting it in loopback
+				DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], ip.DestIP)
 				f.ipConn.Write(ipPacket)
 			}
 
@@ -272,6 +277,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 				for item := range es.Items.Iter() {
 					log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
 					f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
+					DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], ip.DestIP)
 				}
 			}
 		}()

@@ -39,6 +39,7 @@ mkdir -p /var/log/caian/
 
 # create log database
 python3 emulation/create_log_database.py /var/log/caian/log.db
+echo "forwarding decisions are stored in /var/log/caian/log.db"
 
 function cleanup() {
     pkill -u root -f ./emulation/watchdog

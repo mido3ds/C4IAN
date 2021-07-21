@@ -8,6 +8,7 @@ schema = \
 
 DROP TABLE IF EXISTS forwarding;
 CREATE TABLE forwarding (
+    time        int,
     ip          text,
     dst         text,
     packet_hash blob,

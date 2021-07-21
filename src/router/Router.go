@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	. "github.com/mido3ds/C4IAN/src/router/database_logger"
 	. "github.com/mido3ds/C4IAN/src/router/forward"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
 	"github.com/mido3ds/C4IAN/src/router/kernel"
@@ -55,6 +56,9 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 		return nil, fmt.Errorf("failed to get iface ips, err: %s", err)
 	}
 	log.Println("iface ipv4: ", ip)
+
+	// Initialize database logger
+	DatabaseLogger.Initialize(ip)
 
 	msec := NewMSecLayer(passphrase)
 

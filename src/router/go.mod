@@ -7,6 +7,8 @@ require (
 	github.com/akamensky/argparse v1.2.2
 	github.com/cornelk/hashmap v1.0.1
 	github.com/dchest/siphash v1.2.2 // indirect
+	github.com/jmoiron/sqlx v1.3.4
+	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7
 	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf
 	github.com/onsi/ginkgo v1.16.1 // indirect
