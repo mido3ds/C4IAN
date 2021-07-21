@@ -91,6 +91,7 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 	msg := halapi.CodeMsg{}
 	err := json.NewDecoder(r.Body).Decode(&msg)
+	fmt.Println(msg)
 	if err != nil {
 		log.Panic(err)
 	}
