@@ -11,8 +11,8 @@
 
 .profile-frame {
     overflow: visible;
-    position: relative;
-    text-align: center;
+    position: absolute;
+    right: 400px;
     width: 900px;
     height: 500px;
     display: flex;
