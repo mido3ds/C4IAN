@@ -121,6 +121,9 @@ func (r *Router) Start() {
 	// zid agent
 	go r.zidAgent.Start()
 
+	// start location logging
+	go DatabaseLogger.StartLocationLogging()
+
 	// start controllers
 	go r.sarpCont.Start()
 	go r.unicCont.Start()
