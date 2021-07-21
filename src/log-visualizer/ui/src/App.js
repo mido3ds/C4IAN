@@ -88,7 +88,7 @@ function App() {
       container: MapContainer.current,
       style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
       center: [-112, 70],
-      zoom: 7
+      zoom: 15
     });
 
     map.current.addControl(new mapboxgl.FullscreenControl());
@@ -99,7 +99,15 @@ function App() {
       features: []
     };
 
-    for (let lng = -180; lng <= 180; lng += 0.005) {
+    function calcInterval(zlen) {
+      let d = 1.0 / (1 << zlen) // [0, 1]
+      d *= 2                    // [0, 2]
+      d = d > 1 ? (d - 2) : d   // [-1, 1]
+      d *= 180                  // [-180, 180]
+      return d
+    }
+
+    for (let lng = -180; lng <= 180; lng += calcInterval(16)) {
       graticule.features.push({
         type: 'Feature',
         geometry: { type: 'LineString', coordinates: [[lng, -90], [lng, 90]] },
@@ -107,7 +115,7 @@ function App() {
       });
     }
 
-    for (let lat = -90; lat <= 90; lat += 0.005) {
+    for (let lat = -90; lat <= 90; lat += calcInterval(16)) {
       graticule.features.push({
         type: 'Feature',
         geometry: { type: 'LineString', coordinates: [[-180, lat], [180, lat]] },
