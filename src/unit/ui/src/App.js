@@ -54,7 +54,7 @@ function App() {
   var onReceiveAudio = (audio) => {
     setSelectedTab(selectedTab => {
       if (selectedTab !== "Log Out") {
-        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3000, () => onPlayAudio("Command Center", audio), true);
+        NotificationManager.info("Command Center sends audio message, click here to play it!", '', 6000, () => onPlayAudio("Command Center", audio), true);
         audios.push(audio)
         setAudios(audios);
         AudiosDB.push(audio);
