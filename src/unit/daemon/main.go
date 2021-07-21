@@ -43,9 +43,16 @@ func main() {
 	fmt.Println(args)
 	defer log.Println("finished cleaning up, closing")
 
+	var iface string
+	if len(args.iface) > 0 {
+		iface = args.iface
+	} else {
+		iface = getDefaultInterface()
+	}
+
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
-	log.SetPrefix("[" + getDefaultInterface() + "] ")
+	log.SetPrefix("[" + iface + "] ")
 
 	context := newContext(args)
 	defer context.close()

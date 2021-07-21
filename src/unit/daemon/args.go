@@ -19,6 +19,7 @@ type Args struct {
 	timeout             time.Duration
 	retryOrCloseTimeout time.Duration
 	uiPort              int
+	iface               string
 }
 
 func (a *Args) String() string {
@@ -36,6 +37,8 @@ func parseArgs() (*Args, error) {
 	cmdAddress := parser.String("", "cmd-addr", &argparse.Options{Help: "Address+Port of cmd center to communicate with.", Default: "127.0.0.1:4170"})
 	ctrlSocketPath := parser.String("", "hal-socket-path", &argparse.Options{Help: "Path to unix socket file to communicate over with HAL.", Default: "/tmp/unit.hal.sock"})
 
+	iface := parser.String("", "iface", &argparse.Options{Help: "Name of this interface. Default is to list the ifaces with /proc/net/route.", Default: ""})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		return nil, errors.New(parser.Usage(err))
@@ -49,5 +52,6 @@ func parseArgs() (*Args, error) {
 		timeout:             time.Duration(*timeout) * time.Millisecond,
 		retryOrCloseTimeout: time.Duration(*retryTimeout) * time.Millisecond,
 		uiPort:              *uiPort,
+		iface:               *iface,
 	}, nil
 }

@@ -14,6 +14,7 @@ type Args struct {
 	audiosDirPath   string
 	ffmpegPath      string
 	locationSocket  string
+	iface           string
 	fragmentDurSecs int
 	live            bool
 }
@@ -34,6 +35,8 @@ func parseArgs() (*Args, error) {
 
 	locationSocket := parser.String("", "location-socket", &argparse.Options{Help: "Path to unixgrams to receive location updates on, works the same as router, if not provided will create fake locations.", Default: ""})
 
+	iface := parser.String("", "iface", &argparse.Options{Help: "Name of this interface. Default is to list the ifaces with /proc/net/route.", Default: ""})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		return nil, errors.New(parser.Usage(err))
@@ -47,5 +50,6 @@ func parseArgs() (*Args, error) {
 		ffmpegPath:      *ffmpegPath,
 		live:            *live,
 		locationSocket:  *locationSocket,
+		iface:           *iface,
 	}, nil
 }

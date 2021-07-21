@@ -62,6 +62,7 @@ elif kind == 'u':
             n += 1
             print(f'-t {pid} -n '
                   f'./unit/daemon/daemon '
+                  f'--iface {name}-wlan0 '
                   f'--store /var/lib/caian/{name}.store.sqllite '
                   f'--hal-socket-path /tmp/{name}.hal.sock '
                   f'--cmd-addr {unit_get_cmd_addr(name)} ')
@@ -72,6 +73,7 @@ elif kind == 'c':
             n += 1
             print(f'-t {pid} -n '
                   f'./cmd/daemon/daemon '
+                  f'--iface {name}-wlan0 '
                   f'--store /var/lib/caian/{name}.store.sqllite '
                   f'--videos-path /var/lib/caian/{name}.videos '
                   f'--units-path {cmd_get_units_file(name)} '
@@ -83,6 +85,7 @@ elif kind == 'h':
             n += 1
             print(f'-t {pid} -n '
                   f'./unit/halsimulation/halsimulation '
+                  f'--iface {name}-wlan0 '
                   f'--hal-socket-path /tmp/{name}.hal.sock '
                   f'--location-socket /tmp/{name}.hal.locsock ')
 

@@ -28,9 +28,16 @@ func main() {
 	fmt.Println(args)
 	defer log.Println("finished cleaning up, closing")
 
+	var iface string
+	if len(args.Iface) > 0 {
+		iface = args.Iface
+	} else {
+		iface = getDefaultInterface()
+	}
+
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.SetOutput(os.Stdout)
-	log.SetPrefix("[" + getDefaultInterface() + "] ")
+	log.SetPrefix("[" + iface + "] ")
 
 	units, groupMembers := parseConfig(args.UnitsPath, args.GroupsPath)
 	dbManager := NewDatabaseManager(args.StorePath)
@@ -75,6 +82,7 @@ type Args struct {
 	VideosPath string
 	UnitsPath  string
 	GroupsPath string
+	Iface      string
 	Port       int
 	UIPort     int
 	UnitsPort  int
@@ -94,6 +102,8 @@ func parseArgs() (*Args, error) {
 	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
 	unitsPort := parser.Int("", "units-port", &argparse.Options{Default: 4070, Help: "Main port used in units."})
 
+	iface := parser.String("", "iface", &argparse.Options{Help: "Name of this interface. Default is to list the ifaces with /proc/net/route.", Default: ""})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		return nil, errors.New(parser.Usage(err))
@@ -112,6 +122,7 @@ func parseArgs() (*Args, error) {
 		Port:       *port,
 		UIPort:     *uiPort,
 		UnitsPort:  *unitsPort,
+		Iface:      *iface,
 	}, nil
 }
 
@@ -156,9 +167,7 @@ func getDefaultInterface() string {
 		// get field containing gateway address
 		tokens := strings.Split(scanner.Text(), "\t")
 		iface := tokens[0]
-		if iface != "lo" && iface != "" {
-			return iface
-		}
+		return iface
 	}
 
 	log.Panic("no default interface found")
