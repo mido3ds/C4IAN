@@ -1,55 +1,55 @@
 
 .control-container {
-    margin-top: 20px;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  margin-top: 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .mission-icon {
-  top: 11 0px;
-  left: 410px;
+  top: 180px;
+  right: 260px;
+  width: 60px;
+  height: 60px;
   position: absolute;
-  width: 50px;
-  height: 50px;
   cursor: pointer;
 }
 
 .backup-icon {
-  top: 365px;
-  left: 600px;
+  top: 340px;
+  right: 290px;
+  width: 60px;
+  height: 60px;
   position: absolute;
-  width: 50px;
-  height: 50px;
   cursor: pointer;
 }
 
 .danger-icon {
-  top: 365px;
-  left: 410px;
+  top: 60px;
+  left: 420px;
+  width: 60px;
+  height: 60px;
   position: absolute;
-  width: 50px;
-  height: 50px;
   cursor: pointer;
 }
 
 .audio-icon {
-  right: 110px;  
-  top: 110px;
-  position: absolute;
+  top: 180px;
+  left: 270px;
   width: 60px;
   height: 60px;
+  position: absolute;
   cursor: pointer;
 }
 
 .plan-icon {
-  top: 370px;
-  right: 110px;  
+  top: 340px;
+  left: 290px;
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   cursor: pointer;
 }
 

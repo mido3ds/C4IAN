@@ -257,7 +257,6 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 				ipPacket := append(ipHdr, ipPayload...)
 
 				// receive message by injecting it in loopback
-				DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], ip.DestIP)
 				f.ipConn.Write(ipPacket)
 			}
 
@@ -277,7 +276,6 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 				for item := range es.Items.Iter() {
 					log.Printf("Forward packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
 					f.ipMacConn.Write(packet, item.Value.(*NextHopEntry).NextHop)
-					DatabaseLogger.LogForwarding(packet[IPv4HeaderLen:], ip.DestIP)
 				}
 			}
 		}()
