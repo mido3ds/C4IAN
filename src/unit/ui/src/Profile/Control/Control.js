@@ -22,8 +22,7 @@ function Control({ allMsgs }) {
     var onSendMsg = () => {
         NotificationManager.info(sentCodes[confirmationMsgCode] + " message will be sent to Command Center")
         var data = {
-            Type: CodeMsgType,
-            Body: confirmationMsgCode
+            Code: parseInt(confirmationMsgCode)
         };
         postMsg(data);
         data["sent"] = true;
