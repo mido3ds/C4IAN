@@ -4,6 +4,8 @@ import Gallery from './Gallery/Gallery'
 import Control from './Control/Control'
 import ChatBox from './ChatBox/ChatBox'
 import ProfileList from './ProfileList/ProfileList'
+import { Container, Row, Col } from 'reactstrap';
+
 import {
     withStyles,
     Arwes,
@@ -38,17 +40,26 @@ class Profile extends React.Component {
             "Audios": <Gallery type="audio" audios={audios} />,
             "Messages": <ChatBox msgs={msgs}/>,
         }
+  
         return (
             <div>
                 <Arwes>
                     <Content className={`profile-root ${classes.root}`}>
-                        <ProfileList onChange={activatedTab => this.updateActiveTab(activatedTab)}></ProfileList>
-                        <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
-                            {React.cloneElement(
-                                profileComponents[this.state.activatedTab],
-                                { unit: this.state.activatedUnit }
-                            )}
-                        </div>
+                        <Container>
+                            <Row>
+                                <Col xs="auto">
+                                    <ProfileList onChange={activatedTab => this.updateActiveTab(activatedTab)}></ProfileList>
+                                </Col>
+                                <Col xs="auto">
+                                    <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
+                                        {React.cloneElement(
+                                            profileComponents[this.state.activatedTab],
+                                            { unit: this.state.activatedUnit }
+                                        )}
+                                    </div>
+                                </Col>
+                            </Row>
+                        </Container>
                     </Content>
                 </Arwes>
             </div>
