@@ -65,7 +65,7 @@ func (a *ZoneIDAgent) Start() {
 }
 
 func (a *ZoneIDAgent) updateZone() {
-	var loc gpsLocation
+	var loc GpsLocation
 	err := a.decoder.Decode(&loc)
 	if err != nil {
 		log.Println("err in loc decoding")

@@ -20,8 +20,8 @@ func (g gridLocation) String() string {
 	return fmt.Sprintf("gridLocation{x:%v,y:%v}", g.x, g.y)
 }
 
-func (g gridLocation) toGPSLocation() gpsLocation {
-	return gpsLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
+func (g gridLocation) toGPSLocation() GpsLocation {
+	return GpsLocation{Lat: indexToDegrees(g.y), Lon: indexToDegrees(g.x)}
 }
 
 func (g gridLocation) toZoneID() ZoneID {
@@ -30,16 +30,16 @@ func (g gridLocation) toZoneID() ZoneID {
 
 // gpsLocation is gps position
 // where Lat and Lon are in degrees
-type gpsLocation struct {
+type GpsLocation struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
 }
 
-func (p gpsLocation) toGridLocation() gridLocation {
+func (p GpsLocation) toGridLocation() gridLocation {
 	return gridLocation{y: degreesToIndex(p.Lat), x: degreesToIndex(p.Lon)}
 }
 
-func (p gpsLocation) String() string {
+func (p GpsLocation) String() string {
 	return fmt.Sprintf("GPSLocation{Lon:%v,Lat:%v}", p.Lon, p.Lat)
 }
 
@@ -83,7 +83,7 @@ func zlenMask(zlen byte) uint16 {
 
 type ZoneID uint32
 
-func newZoneID(l gpsLocation, zlen byte) ZoneID {
+func newZoneID(l GpsLocation, zlen byte) ZoneID {
 	if zlen < 0 || zlen > 16 {
 		log.Panic("zlen must be between 0 and 16")
 	}
