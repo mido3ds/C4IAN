@@ -19,7 +19,7 @@ type Args struct {
 }
 
 func (a *Args) String() string {
-	return fmt.Sprintf("&Args{halSocketPath: %v, videosDirPath: %v, audiosDirPath: %v, fragmentDurSecs: %v}", a.halSocketPath, a.videoPath, a.audiosDirPath, a.fragmentDurSecs)
+	return fmt.Sprintf("&Args{halSocketPath: %v, videosDirPath: %v, audiosDirPath: %v, fragmentDurSecs: %v, ffmpegPath: %v, live: %v}", a.halSocketPath, a.videoPath, a.audiosDirPath, a.fragmentDurSecs, a.ffmpegPath, a.live)
 }
 
 func parseArgs() (*Args, error) {
