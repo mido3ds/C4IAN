@@ -37,9 +37,9 @@ type Router struct {
 
 func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath string) (*Router, error) {
 	// tell linux im a router
-	kernel.AddIPTablesRule()
+	kernel.AddIPTablesRule(ifaceName)
 	if err := kernel.RegisterGateway(); err != nil {
-		kernel.DeleteIPTablesRule()
+		kernel.DeleteIPTablesRule(ifaceName)
 		return nil, err
 	}
 
@@ -144,5 +144,5 @@ func (r *Router) Close() {
 	r.zidAgent.Close()
 
 	kernel.UnregisterGateway()
-	kernel.DeleteIPTablesRule()
+	kernel.DeleteIPTablesRule(r.iface.Name)
 }
