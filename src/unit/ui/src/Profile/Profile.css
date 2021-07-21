@@ -11,11 +11,11 @@
 
 .profile-frame {
     overflow: visible;
-    position: absolute;
-    right: 400px;
     width: 900px;
     height: 500px;
-    display: flex;
+    margin-left: 0px;
+    padding-left: 0px;
+
     justify-content: space-around;
     align-items: center;
     --aug-border-bg: linear-gradient(to bottom, rgba(43,237,230,0.35) 0%, rgba(43,237,230,0) 100%);
