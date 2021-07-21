@@ -21,9 +21,8 @@ import { AudiosDB } from '../../db'
     return (
         <div className="gallery-container">
             {!data || !data.length ?
-            <div className="no-data-gallery-msg"> 
-                <p> No data to be previewed </p> 
-            </div>: 
+            <p className="no-data-gallery-msg"> No data to be previewed </p> 
+            : 
             <> 
                 <div className="items-container">
                     {

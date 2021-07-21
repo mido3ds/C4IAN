@@ -42,9 +42,8 @@ function ChatBox({ msgs }) {
                             </>
                         })}
                     </ul> :
-                    <div className="no-data-chat-msg">
-                        <p> No data to be previewed </p>
-                    </div>}
+                    <p className="no-data-chat-msg"> No data to be previewed </p>
+                    }
             </div>
         </div>
     )
