@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import json
 
 
 def get_nodes():
@@ -21,30 +22,68 @@ def get_nodes():
 
 kind = sys.argv[1]
 
-assert(kind in ['r', 'u', 'c'])
+with open('/tmp/mn.metadata.json') as f:
+    metadata = json.load(f)
+
+
+def router_get_groups_file(name):
+    return metadata['router']['groups_file'][name]
+
+
+def unit_get_cmd_addr(name):
+    return metadata['unit']['cmd_addr'][name]
+
+
+def cmd_get_units_file(name):
+    return metadata['cmd']['units_file'][name]
+
+
+def cmd_get_groups_file(name):
+    return metadata['cmd']['groups_file'][name]
+
+
+assert(kind in ['r', 'u', 'c', 'h'])
 
 n = 0
 
 if kind == 'r':
     for name, pid in get_nodes():
         n += 1
-        # TODO: load groups file
-        print(f'-t {pid} -n ./router/router -i '
-              f'{name}-wlan0 -p pass -l /tmp/{name}.router.locsock')
+        print(f'-t {pid} -n '
+              f'./router/router '
+              f'--iface {name}-wlan0 '
+              f'--pass xXxHaCkEr_MaNxXx '  # very hard to guess password
+              f'--location-socket /tmp/{name}.router.locsock '
+              f'--mgroups-file {router_get_groups_file(name)} ')
+
 elif kind == 'u':
     for name, pid in get_nodes():
         if 'u' in name:
             n += 1
-            print(f'-t {pid} -n ./unit/daemon/daemon '
-                  f'-s /var/lib/caian/{name}.store.sqllite')
+            print(f'-t {pid} -n '
+                  f'./unit/daemon/daemon '
+                  f'--store /var/lib/caian/{name}.store.sqllite '
+                  f'--hal-socket-path /tmp/{name}.hal.sock '
+                  f'--cmd-addr {unit_get_cmd_addr(name)} ')
 
 elif kind == 'c':
     for name, pid in get_nodes():
         if 'c' in name:
             n += 1
-            # TODO: create units/groups files
-            print(f'-t {pid} -n ./cmd/daemon/daemon '
-                  f'-s /var/lib/caian/{name}.store.sqllite --videos-path /var/lib/caian/{name}.videos --units-path /tmp/units.json --groups-path /tmp/groups.json')
+            print(f'-t {pid} -n '
+                  f'./cmd/daemon/daemon '
+                  f'--store /var/lib/caian/{name}.store.sqllite '
+                  f'--videos-path /var/lib/caian/{name}.videos '
+                  f'--units-path {cmd_get_units_file(name)} '
+                  f'--groups-path {cmd_get_groups_file(name)} ')
+
+elif kind == 'h':
+    for name, pid in get_nodes():
+        if 'u' in name:
+            n += 1
+            print(f'-t {pid} -n '
+                  f'./unit/halsimulation/halsimulation '
+                  f'--hal-socket-path /tmp/{name}.router.locsock ')
 
 if n == 0:
     exit(1)

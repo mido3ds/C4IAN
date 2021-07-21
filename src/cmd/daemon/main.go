@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,15 +20,17 @@ import (
 const storePathSuffix = ".db"
 
 func main() {
-	defer log.Println("finished cleaning up, closing")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	log.SetOutput(os.Stdout)
-
 	args, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
+	fmt.Println(args)
+	defer log.Println("finished cleaning up, closing")
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
+	log.SetPrefix("[" + getDefaultInterface() + "] ")
 
 	units, groupMembers := parseConfig(args.UnitsPath, args.GroupsPath)
 	dbManager := NewDatabaseManager(args.StorePath)
@@ -133,4 +136,28 @@ func waitSIGINT() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+}
+
+func getDefaultInterface() string {
+	file, err := os.Open("/proc/net/route")
+	if err != nil {
+		log.Panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		const line = 1 // line containing the gateway addr. (first line: 0)
+		// jump to line containing the agteway address
+		for i := 0; i < line; i++ {
+			scanner.Scan()
+		}
+
+		// get field containing gateway address
+		tokens := strings.Split(scanner.Text(), "\t")
+		return tokens[0]
+	}
+
+	log.Panic("no default interface found")
+	return "unreachable"
 }

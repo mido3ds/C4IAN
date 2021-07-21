@@ -35,16 +35,17 @@ func testPeriodicCMDAudios(context *Context) {
 }
 
 func main() {
-	defer log.Println("finished cleaning up, closing")
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	log.SetOutput(os.Stdout)
-
 	args, err := parseArgs()
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(1)
 	}
 	fmt.Println(args)
+	defer log.Println("finished cleaning up, closing")
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
+	log.SetPrefix("[" + getDefaultInterface() + "] ")
 
 	context := newContext(args)
 	defer context.close()

@@ -10,8 +10,9 @@ Arguments:
  -h  --help             Print help information
  mn                     Start mininet-wifi
  routers                Start routers in all mininet-wifi nodes
- units                  Start units in all mininet-wifi nodes
- cmds                   Start cmds in all mininet-wifi nodes
+ units                  Start units in all mininet-wifi unit nodes
+ hals                   Start hals in all mininet-wifi unit nodes
+ cmds                   Start cmds in all mininet-wifi cmd nodes
  local                  Start local router/unit/cmd
  <node> <command...>    Run any command in the given node.
                             Example, to start bash in u3: $ $0 u3
@@ -41,6 +42,10 @@ while [ "$1" != "" ]; do
         units)
             shift
             exec ./emulation/units "$@"
+            ;;
+        hals)
+            shift
+            exec ./emulation/hals "$@"
             ;;
         cmds)
             shift
