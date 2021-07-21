@@ -37,6 +37,9 @@ python3 emulation/get_nodes_pid.py r 1>&2 >/dev/null || ( echo No nodes found; e
 
 mkdir -p /var/log/caian/ 
 
+# create log database
+python3 emulation/create_log_database.py /var/log/caian/log.db
+
 function cleanup() {
     pkill -u root -f ./emulation/watchdog
 }
