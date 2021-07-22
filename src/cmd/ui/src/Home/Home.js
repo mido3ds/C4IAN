@@ -14,7 +14,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-const Home = forwardRef(({selectedTab, port}, ref) => {
+const Home = forwardRef(({ selectedTab, port }, ref) => {
     const mapContainer = useRef(null);
     const msgsRef = useRef(null);
     const map = useRef(null);
@@ -24,13 +24,16 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
     useImperativeHandle(ref, () => ({
         onNewMessage(message) {
             msgsRef.current.onNewMessage(message)
+        },
+        onChangePort(port) {
+            onGetPort(port)
         }
     }));
 
     var onTimeout = (unitIP) => {
         setUnits(units => {
             units[unitIP].active = false;
-            if(selectedTab !== "Log Out")
+            if (selectedTab !== "Log Out")
                 NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
             drawMarker(unitIP, units)
             return units
@@ -40,37 +43,37 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
     var drawMarker = (unitIP, units) => {
         var el = document.createElement('div');
         el.className = units[unitIP].InDanger ? "map-unit-danger" :
-                        !units[unitIP].active ? "map-unit-inactive" :
-                        units[unitIP].hasOwnProperty("groupID") ? 'map-unit' + units[unitIP].groupID :
-                        "map-unit";
+            !units[unitIP].active ? "map-unit-inactive" :
+                units[unitIP].hasOwnProperty("groupID") ? 'map-unit' + units[unitIP].groupID :
+                    "map-unit";
         window.$(el).bind("click", () => {
             setSelectedUnit(unitIP)
         });
 
-        if(units[unitIP].marker) units[unitIP].marker.remove()
+        if (units[unitIP].marker) units[unitIP].marker.remove()
         units[unitIP].marker = new mapboxgl.Marker(el)
             .setLngLat([units[unitIP].lng, units[unitIP].lat])
             .addTo(map.current);
-    } 
+    }
 
     var onDataChange = (newData) => {
         setUnits(units => {
             if (newData.heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger) {
                 units[newData.src].InDanger = true;
-                if(selectedTab !== "Log Out")
+                if (selectedTab !== "Log Out")
                     NotificationManager.error(units[newData.src].name + " is in danger!!");
             } else if (newData.heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
                 units[newData.src].InDanger = false;
-                if(selectedTab !== "Log Out")
+                if (selectedTab !== "Log Out")
                     NotificationManager.info(units[newData.src].name + " is no more in danger");
-            } 
+            }
 
             if (!units[newData.src].active) {
-                if(selectedTab !== "Log Out")
+                if (selectedTab !== "Log Out")
                     NotificationManager.info(units[newData.src].name + " is active now");
                 units[newData.src].active = true;
             }
-            
+
 
             if (units[newData.src].hasOwnProperty("marker")) {
                 drawMarker(newData.src, units)
@@ -100,7 +103,7 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
                 coordinates.push([value.lng, value.lat])
             }
         }
-       
+
         if (!coordinates.length)
             return [[0, 0], [0, 0]]
 
@@ -136,26 +139,14 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
         moveMarker(marker, 0, delta)
     }
 
-    useEffect(() => {
-        if(!port) return
-        if (Object.keys(units).length ) return
-        if (map.current) return; 
-        map.current = new mapboxgl.Map({
-            container: mapContainer.current,
-            style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
-            center: [0,0],
-            zoom: 10
-        });
-        map.current.addControl(new mapboxgl.FullscreenControl());
-        map.current.addControl(new mapboxgl.NavigationControl());
-
-        var eventSource = new EventSource("http://localhost:" + port + "/events")
+    var onGetPort = (receivedPort) => {
+        var eventSource = new EventSource("http://localhost:" + receivedPort + "/events")
         eventSource.addEventListener("sensors-data", ev => {
             onDataChange(JSON.parse(ev.data))
         })
 
-        getUnits(port).then(initialData => {
-            getMembers(port).then(members => {
+        getUnits(receivedPort).then(initialData => {
+            getMembers(receivedPort).then(members => {
                 setUnits(units => {
                     initialData.forEach(unit => {
                         units[unit.ip] = { name: unit.name, ip: unit.ip, active: unit.active, lng: unit.lon, lat: unit.lat, heartbeat: unit.heartbeat, InDanger: unit.heartbeat < HeartBeatThreshold }
@@ -172,21 +163,39 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
                     }
 
                     map.current.fitBounds(getBounds(units));
-                    
+
                     return units
                 })
             })
         })
-    }, [port]);
+    }
+
+    useEffect(() => {
+        if (Object.keys(units).length) return
+        if (map.current) return;
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
+            center: [0, 0],
+            zoom: 10
+        });
+        map.current.addControl(new mapboxgl.FullscreenControl());
+        map.current.addControl(new mapboxgl.NavigationControl());
+    }, []);
 
     return (
         <>
-            <GroupSelect port={port}></GroupSelect>
-            <ChatWindow port={port} ref={msgsRef}></ChatWindow>
-            <MapPopup selectedUnit={units[selectedUnit]} />
+            {!port ? <> </> :
+                <>
+                    <GroupSelect port={port}></GroupSelect>
+                    <ChatWindow port={port} ref={msgsRef}></ChatWindow>
+                    <MapPopup selectedUnit={units[selectedUnit]} />
+                </>
+            }
             <div>
                 <div ref={mapContainer} className="map-container" />
             </div>
+
         </>
     );
 });

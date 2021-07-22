@@ -137,8 +137,17 @@ function App() {
       getNames(port).then(unitsData => {
         setUnitNames(unitsData)
       })
+
+      setSelectedTab(selectedTab => {
+        if (selectedTab === "Map") {
+          homeRef.current.onChangePort(port)
+        }
+        return selectedTab
+      })
+
       return port
     })
+
   }
 
   useEffect(() => {
@@ -157,10 +166,7 @@ function App() {
 
 
   useEffect(() => {
-    if (!port) {
-      getPortRef.current.open();
-      return
-    }
+    getPortRef.current.open();
     
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
@@ -168,21 +174,23 @@ function App() {
     window.$('.menu .item span')
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
+  }, [])
 
-  }, [port])
+  var onChange = (sTab) => {
+    setSelectedTab(sTab)
 
-  var onChange = (selectedTab) => {
-    setSelectedTab(selectedTab)
-
-    if (selectedTab === "Log Out") {
+    if (sTab === "Log Out") {
       window.$('.menu').css('visibility', 'hidden')
     } else {
       window.$('.menu').css('visibility', 'visible')
       window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
       window.$('.menu .item span')
-        .filter(function (idx) { return this.innerHTML === selectedTab })
+        .filter(function (idx) { return this.innerHTML === sTab })
         .addClass('selected')
+
+      if (sTab === "Map")
+        homeRef.current.onChangePort(port)
     }
   }
 
@@ -192,9 +200,9 @@ function App() {
       <NotificationContainer />
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      { !port ? <> </> :
+      {
         selectedTab === "Log Out" ?
-          <LogIn onLogIn={() => { onChange("Map") }} />
+          <LogIn port={port} onLogIn={() => { onChange("Map") }} />
           : selectedTab === "Map" ?
             <Home port={port} ref={homeRef} selectedTab={selectedTab} />
             : selectedTab === "Units" ?
