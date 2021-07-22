@@ -68,7 +68,7 @@ function App() {
       <GetPort onGetPort={onGetPort} ref={getPortRef}> </GetPort>
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
       
-      {!port ? <> </> : <Profile msgs={msgs} audios={audios} setMsgs={setMsgs} />}
+      {!port ? <> </> : <Profile port={port} msgs={msgs} audios={audios} setMsgs={setMsgs} />}
     </>
   );
 }

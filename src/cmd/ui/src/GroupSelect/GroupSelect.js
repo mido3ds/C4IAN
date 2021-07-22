@@ -61,7 +61,7 @@ function GroupSelect({port}) {
         var notificationMsg = chosenGroup.id === "broadcast" ? "Your audio message will be sent to all units." :
             "Your audio message will be sent to the " + chosenGroup.id + " group."
         NotificationManager.info(notificationMsg)
-        postAudioMsg(chosenGroup.ip, audio)
+        postAudioMsg(chosenGroup.ip, audio, port)
     }
 
     return (
