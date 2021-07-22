@@ -33,7 +33,7 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
         setUnits(units => {
             units[unitIP].active = false;
             if (selectedTab !== "Log Out")
-                NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!");
+                NotificationManager.error(units[unitIP].name + " is inactive for 2 minutes!", '', 1000, () => {}, true);
             drawMarker(unitIP, units)
             return units
         })
@@ -60,16 +60,16 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
             if (newData.heartbeat <= HeartBeatThreshold && !units[newData.src].InDanger) {
                 units[newData.src].InDanger = true;
                 if (selectedTab !== "Log Out")
-                    NotificationManager.error(units[newData.src].name + " is in danger!!");
+                    NotificationManager.error(units[newData.src].name + " is in danger!!", '', 1000, () => {}, true);
             } else if (newData.heartbeat > HeartBeatThreshold && units[newData.src].InDanger) {
                 units[newData.src].InDanger = false;
                 if (selectedTab !== "Log Out")
-                    NotificationManager.info(units[newData.src].name + " is no more in danger");
+                    NotificationManager.info(units[newData.src].name + " is no more in danger", '', 1000, () => {}, true);
             }
 
             if (!units[newData.src].active) {
                 if (selectedTab !== "Log Out")
-                    NotificationManager.info(units[newData.src].name + " is active now");
+                    NotificationManager.info(units[newData.src].name + " is active now", '', 1000, () => {}, true);
                 units[newData.src].active = true;
             }
 
