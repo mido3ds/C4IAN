@@ -12,7 +12,9 @@ const ChatWindow = forwardRef(({port}, ref) => {
 
     var hangdleMessage = (msg) => {
         var msgData = receivedCodes.hasOwnProperty(msg.code) ? receivedCodes[msg.code] : (msg.code).toString(10)
-        setMessages([...messages, { name: unitsNames[msg.src], msg: msgData }])
+        setMessages((messages) => { 
+            return [...messages, { name: unitsNames[msg.src], msg: msgData }]
+        })
     }
 
     useImperativeHandle(ref, () => ({
