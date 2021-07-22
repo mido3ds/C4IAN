@@ -72,6 +72,7 @@ func main() {
 
 type Context struct {
 	Args
+	name    string
 	storeDB *sql.DB
 
 	halConn net.Conn
@@ -91,6 +92,7 @@ type Context struct {
 
 func newContext(args *Args) *Context {
 	context := &Context{
+		name:                  args.iface[0:2],
 		Args:                  *args,
 		_videoSeqno:           0,
 		videoID:               0,
