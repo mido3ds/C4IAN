@@ -32,7 +32,6 @@ type MulticastController struct {
 	refJoinQuery    *Timer
 	timers          *TimersQueue
 	startSending    bool
-	// TODO make dest doesn't send join reply if it doesn't want to this grpIP
 }
 
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string, timers *TimersQueue) (*MulticastController, error) {
@@ -47,7 +46,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	var mgrpContent string
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
-
+		// log.Println("ODMRP TEST MODE")
 		// pass members ids in MEMS env var
 		// like MEMS=5,14,20
 		var membersIPs []string
@@ -73,7 +72,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 			}
 		}
 
-		log.Printf("multicast test mode, adr={%v}, members={%v}\n", address, membersIPs)
+		// log.Printf("multicast test mode, adr={%v}, members={%v}\n", address, membersIPs)
 		mgrpContent = "{\"" + address + "\": [" + strings.Join(membersIPs, ", ") + "]}"
 	} else {
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
@@ -203,7 +202,7 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 
 	encryptedJQ := c.msec.Encrypt(jq.marshalBinary())
 	c.queryFlooder.Flood(encryptedJQ)
-	log.Println("sent join query to", grpIP) // TODO remove
+	// log.Println("sent join query to", grpIP)
 
 	// To keep table up to date consistantly send join query and recieve join replies to fill tables
 	// When you wants to stop call stopSending() func
@@ -223,18 +222,8 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	if !valid {
 		log.Panicln("Corrupted JoinQuery msg received") // TODO: no panicing!
 	}
-
-	log.Printf("(ip:%#v, mac:%#v), Recieved JoinQuery form %#v\n", c.ip.String(), c.mac.String(), jq.prevHop.String())
-
-	log.Println(jq) // TODO: remove this
-
-	// // if the join query already sent
-	// // Check if it is a duplicate by comparing the (Source IP Address, Sequence Number) in the cache. DONE
-	// cache, ok := c.cacheTable.Get(jq.SrcIP)
-	// if ok && cache.SeqNo >= jq.SeqNo {
-	// 	return nil, false
-	// }
-
+	// log.Printf("(ip:%#v, mac:%#v), Recieved JoinQuery form %#v\n", c.ip.String(), c.mac.String(), jq.prevHop.String())
+	// log.Println(jq)
 	// If the TTL field value is less than  0, then discard. DONE
 	jq.ttl--
 	if jq.ttl < 0 {
@@ -354,7 +343,7 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 	}
 
 	// TODO remove log
-	log.Printf("Recieved JoinReply %#v\n", jr.prevHop.String())
+	// log.Printf("Recieved JoinReply %#v\n", jr.prevHop.String())
 
 	// update forwarding table
 	forwardingEntry := &forwardingEntry{nextHop: jr.prevHop, cost: jr.cost}
@@ -364,7 +353,7 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 	}
 
 	if c.imInSrcs(jr) {
-		log.Println("Source Recieved JoinReply !!")
+		// log.Println("Source Recieved JoinReply !!")
 		newJR := c.updateJoinReply(jr, ft)
 		if newJR != nil {
 			c.sendJoinReply(newJR)
@@ -376,12 +365,12 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 			c.sendJoinReply(newJR)
 		}
 	}
-	log.Println("Cache After Recieve JoinReply")
-	log.Println(c.cacheTable)
 
-	log.Println("Forwarding Tables After Recieve JoinReply")
-	log.Println(c.forwardingTable)
-	log.Println(ft)
+	// log.Println("Cache After Recieve JoinReply")
+	// log.Println(c.cacheTable)
+	// log.Println("Forwarding Tables After Recieve JoinReply")
+	// log.Println(c.forwardingTable)
+	// log.Println(ft)
 }
 
 func (c *MulticastController) imInDests(jq *joinQuery) bool {
