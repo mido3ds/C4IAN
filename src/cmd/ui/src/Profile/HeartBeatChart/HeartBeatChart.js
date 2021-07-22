@@ -143,7 +143,7 @@ function HeartBeatChart({ unit, port }) {
                         labels: {
                             show: true,
                             formatter: function (val) {
-                                return moment.unix(val).format('hh:mm:ss') 
+                                return moment.unix(val/ (1000*1000)).format('hh:mm:ss') 
                             }
                         }
                     }

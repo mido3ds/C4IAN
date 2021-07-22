@@ -35,7 +35,7 @@ function ChatBox({ unit, port }) {
                             return <>
                                 {msg.sent ?
                                     <li className="chat-right">
-                                        <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
+                                        <div className="chat-hour"> {moment.unix(msg.time / (1000*1000)).format('hh:mm')} </div>
                                         <div className="chat-text"> {sentCodes[msg.code]} </div>
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
@@ -49,7 +49,7 @@ function ChatBox({ unit, port }) {
                                         </div>
                                         <div className="chat-text"> {receivedCodes.hasOwnProperty(msg.code) ? receivedCodes[msg.code] : (msg.code).toString(10)
 } </div>
-                                        <div className="chat-hour"> {moment.unix(msg.time).format('hh:mm')} </div>
+                                        <div className="chat-hour"> {moment.unix(msg.time / (1000*1000)).format('hh:mm')} </div>
                                     </li>
                                 }
                             </>

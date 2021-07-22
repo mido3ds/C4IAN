@@ -4,8 +4,7 @@ import MapPopup from './MapPopUp/MapPopUp'
 import GroupSelect from '../GroupSelect/GroupSelect'
 import ChatWindow from './ChatWindow/ChatWindow';
 import { NotificationManager } from 'react-notifications';
-import { getUnits, getMembers } from '../Api/Api'
-import { groupIDs } from '../groupIDs'
+import { getUnits, getMembers, getGroups } from '../Api/Api'
 import './Home.css'
 
 const HeartBeatThreshold = 50
@@ -147,24 +146,32 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
 
         getUnits(receivedPort).then(initialData => {
             getMembers(receivedPort).then(members => {
-                setUnits(units => {
-                    initialData.forEach(unit => {
-                        units[unit.ip] = { name: unit.name, ip: unit.ip, active: unit.active, lng: unit.lon, lat: unit.lat, heartbeat: unit.heartbeat, InDanger: unit.heartbeat < HeartBeatThreshold }
-                    });
+                getGroups(receivedPort).then(groups => {
+                    setUnits(units => {
+                        var groupsIPs = groups.map(group => group.ip).sort();
+                        var groupIDs = {}
+                        groupsIPs.forEach((ip, index) => {
+                            groupIDs[ip] = index
+                        });
 
-                    members.forEach(membership => {
-                        units[membership.unitIP] = { ...units[membership.unitIP], groupID: groupIDs[membership.groupIP] }
-                    });
+                        initialData.forEach(unit => {
+                            units[unit.ip] = { name: unit.name, ip: unit.ip, active: unit.active, lng: unit.lon, lat: unit.lat, heartbeat: unit.heartbeat, InDanger: unit.heartbeat < HeartBeatThreshold }
+                        });
 
-                    for (const unitIP in units) {
-                        if (units[unitIP].lng !== 1000 && units[unitIP].lat !== 1000) {
-                            drawMarker(unitIP, units)
+                        members.forEach(membership => {
+                            units[membership.unitIP] = { ...units[membership.unitIP], groupID: groupIDs[membership.groupIP] }
+                        });
+
+                        for (const unitIP in units) {
+                            if (units[unitIP].lng !== 1000 && units[unitIP].lat !== 1000) {
+                                drawMarker(unitIP, units)
+                            }
                         }
-                    }
 
-                    map.current.fitBounds(getBounds(units));
+                        map.current.fitBounds(getBounds(units));
 
-                    return units
+                        return units
+                    })
                 })
             })
         })

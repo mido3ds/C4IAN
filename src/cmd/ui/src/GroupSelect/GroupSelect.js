@@ -4,7 +4,6 @@ import GetRadius from '../GetRadius/GetRadius';
 import { postAudioMsg } from '../Api/Api'
 import { NotificationManager } from 'react-notifications';
 import { getGroups } from '../Api/Api'
-import { groupIDs } from '../groupIDs'
 import './GroupSelect.css';
 
 const IDs = ["pink", "orange", "blue", "yellow", "green"]
@@ -20,11 +19,20 @@ function GroupSelect({port}) {
 
     const [chosenGroup, setChosenGroup] = useState(null)
     const [groups, setGroups] = useState([])
+    const [groupIDs, setGroupIDs] = useState({})
 
     useEffect(() => {
         if(groups.length !== 0 || !port) return
         getGroups(port).then(data => {
             setGroups(data)
+            var groupsIPs = (data.map(group => group.ip)).sort();
+            setGroupIDs(groupIDs => {
+                groupsIPs.forEach((ip, index) => {
+                    groupIDs[ip] = index
+                });
+                return groupIDs
+            })
+            
             var items = document.querySelectorAll('.circle img');
             for (var i = 0, l = items.length; i < l; i++) {
                 items[i].style.left = (50 - 30 * Math.cos(-0.5 * Math.PI - 2 * (1 / l) * i * Math.PI)).toFixed(4) + "%";
