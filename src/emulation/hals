@@ -33,7 +33,7 @@ while [ "$1" != "" ]; do
 done
 
 # check hals exist
-python3 emulation/get_nodes_pid.py u 1>&2 >/dev/null || ( echo No units found; exit 1 )
+python3 emulation/get_nodes_pid.py u nsenter 1>&2 >/dev/null || ( echo No units found; exit 1 )
 
 mkdir -p /var/log/caian/ /var/lib/caian/
 
@@ -49,7 +49,7 @@ echo "stdout+stderr is saved in /var/log/caian/hals"
 exec &> >(tee  -a /var/log/caian/hals)
 echo ------------------------
 
-python3 emulation/get_nodes_pid.py h | while read line; do
+python3 emulation/get_nodes_pid.py h nsenter | while read line; do
     line="${line} ${OPTS}"
     if [[ $WATCH -eq 1 ]]; then
         ./emulation/watchdog --file ./unit/halsimulation/halsimulation --command "nsenter $line" &

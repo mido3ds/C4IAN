@@ -52,12 +52,19 @@ case $TO_RUN in
     unit)
         LOG_PATH+="unit"
         EXECUTABLE="./unit/daemon/daemon"
-        COMMAND="./unit/daemon/daemon -s /var/lib/caian/local-unit.store.sqllite "$OPTS
+        COMMAND="./unit/daemon/daemon -s /var/lib/caian/local-unit.store.sqllite --ui-socket /tmp/local-unit.sock"$OPTS
+
+        socat TCP4-LISTEN:3270,fork,reuseaddr UNIX-CONNECT:/tmp/local-unit.sock &
+        echo UNIT tcp socket 3270
         ;;
     cmd)
         LOG_PATH+="cmd"
         EXECUTABLE="./cmd/daemon/daemon"
-        COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --videos-path /var/lib/caian/local-cmd.videos --units-path units.json --groups-path groups.json "$OPTS
+        COMMAND="./cmd/daemon/daemon -s /var/lib/caian/local-cmd.store.sqllite --ui-socket /tmp/local-cmd.sock --videos-path /var/lib/caian/local-cmd.videos --units-path units.json --groups-path groups.json "$OPTS
+
+        socat TCP4-LISTEN:3170,fork,reuseaddr UNIX-CONNECT:/tmp/local-cmd.sock &
+        echo CMD tcp socket 3170
+
         if [[ ! -a "units.json" ]]; then
             echo >units.json '{
                 "units": [

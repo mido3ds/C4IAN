@@ -33,7 +33,7 @@ while [ "$1" != "" ]; do
 done
 
 # check nodes exist
-python3 emulation/get_nodes_pid.py r 1>&2 >/dev/null || ( echo No nodes found; exit 1 )
+python3 emulation/get_nodes_pid.py r nsenter 1>&2 >/dev/null || ( echo No nodes found; exit 1 )
 
 mkdir -p /var/log/caian/ 
 
@@ -51,7 +51,7 @@ echo "stdout+stderr is saved in /var/log/caian/routers"
 exec &> >(tee  -a /var/log/caian/routers)
 echo ------------------------
 
-python3 emulation/get_nodes_pid.py r | while read line; do
+python3 emulation/get_nodes_pid.py r nsenter | while read line; do
     line="${line} ${OPTS}"
     if [[ $WATCH -eq 1 ]]; then
         ./emulation/watchdog --file ./router/router --command "nsenter $line" &
