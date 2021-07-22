@@ -192,7 +192,7 @@ function App() {
       <NotificationContainer />
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
-      {
+      { !port ? <> </> :
         selectedTab === "Log Out" ?
           <LogIn onLogIn={() => { onChange("Map") }} />
           : selectedTab === "Map" ?
