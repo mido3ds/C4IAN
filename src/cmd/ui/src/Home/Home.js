@@ -78,11 +78,11 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
                 clearTimeout(units[newData.src].timerID);
                 units[newData.src].lng = newData.lon
                 units[newData.src].lat = newData.lat
-                map.current.fitBounds(getBounds(units));
             } else {
                 units[newData.src].lng = newData.lon
                 units[newData.src].lat = newData.lat
                 drawMarker(newData.src, units)
+                map.current.fitBounds(getBounds(units));
             }
 
 
