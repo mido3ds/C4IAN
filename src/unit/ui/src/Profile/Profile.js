@@ -54,7 +54,7 @@ class Profile extends React.Component {
                                     <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
                                         {React.cloneElement(
                                             profileComponents[this.state.activatedTab],
-                                            { unit: this.state.activatedUnit }
+                                            { unit: this.state.activatedUnit, port: this.props.port  }
                                         )}
                                     </div>
                                 </Col>

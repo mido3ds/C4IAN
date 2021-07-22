@@ -6,7 +6,7 @@ import { NotificationManager } from 'react-notifications';
 import { sentCodes, msgsCode } from '../../codes'
 import { postAudioMsg, postMsg } from '../../Api/Api'
 
-function Control({ msgs, setMsgs }) {
+function Control({ msgs, setMsgs, port }) {
     const recordAudioRef = useRef(null);
     const confirmationModalRef = useRef(null);
     const [confirmationMsgCode, setConfirmationMsgCode] = useState(null)
@@ -21,7 +21,7 @@ function Control({ msgs, setMsgs }) {
         var data = {
             Code: parseInt(confirmationMsgCode)
         };
-        postMsg(data);
+        postMsg(data, port);
         const msg = {
             Code: confirmationMsgCode,
             sent: true
@@ -33,7 +33,7 @@ function Control({ msgs, setMsgs }) {
 
     var onSendAudio = (audio) => {
         NotificationManager.info("Your audio message will be sent to Command Center")
-        postAudioMsg(audio);
+        postAudioMsg(audio, port);
     }
 
     return (
