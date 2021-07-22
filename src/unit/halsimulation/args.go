@@ -17,6 +17,7 @@ type Args struct {
 	iface           string
 	fragmentDurSecs int
 	live            bool
+	sensors         bool
 }
 
 func (a *Args) String() string {
@@ -32,7 +33,7 @@ func parseArgs() (*Args, error) {
 	audiosDirPath := parser.String("", "audios-dir", &argparse.Options{Help: "Path to directory of audios to send. If not provided won't send audio messages.", Default: ""})
 	fragmentDurSecs := parser.Int("", "fragment-dur-secs", &argparse.Options{Help: "Duration in secs of one video fragment.", Default: 2})
 	live := parser.Flag("", "live", &argparse.Options{Help: "Indicates this is streaming from camera not from file, false by default."})
-
+	noSensors := parser.Flag("", "no-sensors", &argparse.Options{Help: "Turn off sensors data generation, false by default."})
 	locationSocket := parser.String("", "location-socket", &argparse.Options{Help: "Path to unixgrams to receive location updates on, works the same as router, if not provided will create fake locations.", Default: ""})
 
 	iface := parser.String("", "iface", &argparse.Options{Help: "Name of this interface. Default is to list the ifaces with /proc/net/route.", Default: ""})
@@ -49,6 +50,7 @@ func parseArgs() (*Args, error) {
 		fragmentDurSecs: *fragmentDurSecs,
 		ffmpegPath:      *ffmpegPath,
 		live:            *live,
+		sensors:         !(*noSensors),
 		locationSocket:  *locationSocket,
 		iface:           *iface,
 	}, nil
