@@ -45,8 +45,8 @@ func main() {
 
 	context := newContext(args)
 
-	go context.sendAudioMsgs()
-	go context.sendCodeMsgs()
+	// go context.sendAudioMsgs()
+	// go context.sendCodeMsgs()
 	go context.sendSensorsData()
 	go context.streamVideo()
 
@@ -301,12 +301,11 @@ func (c *Context) sendSensorsData() {
 		go c.locAgent.start()
 	}
 
-	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
+	// every 3s to 7s: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=30))
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(normal(5, 2)) * time.Second)
 
-		//if rand.Intn(100) < 60 {
-		hb := int(normal(70, 20))
+		hb := int(normal(80, 15))
 
 		if c.locAgent != nil {
 			loc := c.locAgent.location
