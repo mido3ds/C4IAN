@@ -62,7 +62,7 @@ function App() {
         })
         setTimeout(() => {
           perodicStartStream(data)
-        }, 50 * 1000)
+        }, 30 * 1000)
       }
     })
   }
@@ -104,9 +104,7 @@ function App() {
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
       setStreams([...streams, data])
-      setTimeout(() => {
-        perodicStartStream(data)
-      }, 50 * 1000)
+      perodicStartStream(data)
 
       setSelectedTab(selectedTab => {
         setUnitNames(unitNames => {

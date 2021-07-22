@@ -72,6 +72,7 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Println("Sent TCP packet to: ", dstAddrss)
 }
 
 func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload interface{}) {
