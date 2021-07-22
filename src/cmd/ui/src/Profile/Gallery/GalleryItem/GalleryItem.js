@@ -35,7 +35,7 @@ function GalleryItem({ type, data, time, name }) {
             }
             <div data-augmented-ui="border" className="gallery-item">
                 <i onClick={playMedia} className="fas fa-play-circle fa-3x gallery-item-play-icon"></i>
-                <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time}</Moment>
+                <Moment className="gallery-item-time" format="wo MMM hh:mm" unix>{time/ (1000*1000)}</Moment>
             </div>
         </>
     );
