@@ -70,7 +70,7 @@ func main() {
 			dbManager.UpdateLastActivity(data.Src, data.Time)
 		},
 	)
-	go api.Start(args.UIPort, args.UnitsPort, args.VideosPath, dbManager, netManager)
+	go api.Start(args.UISocket, args.UnitsPort, args.VideosPath, dbManager, netManager)
 	netManager.Listen(args.Port)
 	log.Println("finished initalizing all")
 	waitSIGINT()
@@ -83,8 +83,8 @@ type Args struct {
 	UnitsPath  string
 	GroupsPath string
 	Iface      string
+	UISocket   string
 	Port       int
-	UIPort     int
 	UnitsPort  int
 }
 
@@ -99,7 +99,7 @@ func parseArgs() (*Args, error) {
 	groupsPath := parser.String("g", "groups-path", &argparse.Options{Default: "../../groups.json", Help: "Path to groups.json."})
 
 	port := parser.Int("p", "port", &argparse.Options{Default: 4170, Help: "Main port the client will bind to, to receive connections from other clients."})
-	uiPort := parser.Int("", "ui-port", &argparse.Options{Default: 3170, Help: "UI port the client will bind to, to connect with its UI."})
+	uiSocket := parser.String("", "ui-socket", &argparse.Options{Default: "/tmp/cmd.sock", Help: "Unix socket file that the client will listen on, to connect with its UI."})
 	unitsPort := parser.Int("", "units-port", &argparse.Options{Default: 4070, Help: "Main port used in units."})
 
 	iface := parser.String("", "iface", &argparse.Options{Help: "Name of this interface. Default is to list the ifaces with /proc/net/route.", Default: ""})
@@ -120,7 +120,7 @@ func parseArgs() (*Args, error) {
 		UnitsPath:  *unitsPath,
 		GroupsPath: *groupsPath,
 		Port:       *port,
-		UIPort:     *uiPort,
+		UISocket:   *uiSocket,
 		UnitsPort:  *unitsPort,
 		Iface:      *iface,
 	}, nil

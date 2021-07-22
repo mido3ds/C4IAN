@@ -60,7 +60,7 @@ func main() {
 	go context.listenHAL()
 	go context.listenCmdTcp()
 	go context.listenCmdUdp()
-	go context.api.start(args.uiPort)
+	go context.api.start(args.UISocket)
 
 	log.Println("finished initalizing all")
 

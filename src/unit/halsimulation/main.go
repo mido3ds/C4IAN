@@ -125,7 +125,7 @@ func (c *Context) sendAudioMsgs() {
 
 	// every rand(avg=2s, stdev=300ms): send(rand(audio msg))
 	for {
-		time.Sleep(time.Duration(normal(2, 0.3)) * time.Second)
+		time.Sleep(time.Duration(normal(5, 2)) * time.Second)
 
 		audioBuffer, err := ioutil.ReadFile(c.audiosFiles[rand.Intn(len(c.audiosFiles))])
 		if err != nil {
@@ -275,7 +275,7 @@ func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs i
 func (c *Context) sendCodeMsgs() {
 	// every rand(avg=3s, stdev=1s): send(rand(number for code msg))
 	for {
-		time.Sleep(time.Duration(normal(3, 1)) * time.Second)
+		time.Sleep(time.Duration(normal(6, 3)) * time.Second)
 
 		err := halapi.CodeMsg{
 			Code: rand.Intn(400),
@@ -296,34 +296,34 @@ func (c *Context) sendSensorsData() {
 
 	// every 10s with probabliy=60%: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=20))
 	for {
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 
-		if rand.Intn(100) < 60 {
-			hb := int(normal(70, 20))
+		//if rand.Intn(100) < 60 {
+		hb := int(normal(70, 20))
 
-			if c.locAgent != nil {
-				loc := c.locAgent.location
-				lon = loc.Lon
-				lat = loc.Lat
-			} else {
-				lon = normal(32.4, .02)
-				lat = normal(43.098, .03)
-			}
-
-			err := halapi.SensorData{
-				Location: halapi.Location{
-					Lon: lon,
-					Lat: lat,
-				},
-				HeartBeat: halapi.HeartBeat{
-					BeatsPerMinut: hb,
-				},
-			}.Write(c.halConn)
-
-			if err != nil {
-				log.Panic(err)
-			}
+		if c.locAgent != nil {
+			loc := c.locAgent.location
+			lon = loc.Lon
+			lat = loc.Lat
+		} else {
+			lon = normal(32.4, .02)
+			lat = normal(43.098, .03)
 		}
+
+		err := halapi.SensorData{
+			Location: halapi.Location{
+				Lon: lon,
+				Lat: lat,
+			},
+			HeartBeat: halapi.HeartBeat{
+				BeatsPerMinut: hb,
+			},
+		}.Write(c.halConn)
+
+		if err != nil {
+			log.Panic(err)
+		}
+		//}
 	}
 }
 

@@ -50,12 +50,12 @@ class Profile extends React.Component {
             <div>
                 <Arwes>
                     <Content className={`profile-root ${classes.root}`}>
-                        <UnitList onChange={activatedUnit => this.updateActiveUnit(activatedUnit)}></UnitList>
+                        <UnitList port={this.props.port} onChange={activatedUnit => this.updateActiveUnit(activatedUnit)}></UnitList>
                         <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
                             <ProfileList onChange={activatedTab => this.updateActiveTab(activatedTab)}></ProfileList>
                             {React.cloneElement(
                                 profileComponents[this.state.activatedTab],
-                                { unit: this.state.activatedUnit }
+                                { unit: this.state.activatedUnit, port: this.props.port}
                             )}
                         </div>
                     </Content>

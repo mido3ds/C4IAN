@@ -5,7 +5,7 @@ import './Map.css'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
-function Map({ unit }) {
+function Map({ unit, port }) {
     const profileMapContainer = useRef(null);
     const map = useRef(null);
 
@@ -24,9 +24,9 @@ function Map({ unit }) {
     }
 
     useEffect(() => {
-        if(!unit) return
+        if(!unit || !port) return
         var coordinates = []
-        getSensorsData(unit.ip).then(sensorData => {
+        getSensorsData(unit.ip, port).then(sensorData => {
             if (!sensorData || !sensorData.length) {
                 if (map.current) {
                     map.current.remove()
@@ -101,7 +101,7 @@ function Map({ unit }) {
                 .addTo(map.current);
     
         })
-    },[unit])
+    },[unit, port])
 
     return (
         <>  

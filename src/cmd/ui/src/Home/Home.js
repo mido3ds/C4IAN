@@ -14,7 +14,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ
 
 const numDeltas = 50;
 
-const Home = forwardRef(({selectedTab}, ref) => {
+const Home = forwardRef(({selectedTab, port}, ref) => {
     const mapContainer = useRef(null);
     const msgsRef = useRef(null);
     const map = useRef(null);
@@ -78,13 +78,13 @@ const Home = forwardRef(({selectedTab}, ref) => {
                 clearTimeout(units[newData.src].timerID);
                 units[newData.src].lng = newData.lon
                 units[newData.src].lat = newData.lat
+                map.current.fitBounds(getBounds(units));
             } else {
                 units[newData.src].lng = newData.lon
                 units[newData.src].lat = newData.lat
                 drawMarker(newData.src, units)
             }
 
-            map.current.fitBounds(getBounds(units));
 
             units[newData.src].heartbeat = newData.heartbeat
             units[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
@@ -137,6 +137,7 @@ const Home = forwardRef(({selectedTab}, ref) => {
     }
 
     useEffect(() => {
+        if(!port) return
         if (Object.keys(units).length ) return
         if (map.current) return; 
         map.current = new mapboxgl.Map({
@@ -148,13 +149,13 @@ const Home = forwardRef(({selectedTab}, ref) => {
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
 
-        var eventSource = new EventSource("http://localhost:3170/events")
+        var eventSource = new EventSource("http://localhost:" + port + "/events")
         eventSource.addEventListener("sensors-data", ev => {
             onDataChange(JSON.parse(ev.data))
         })
 
-        getUnits().then(initialData => {
-            getMembers().then(members => {
+        getUnits(port).then(initialData => {
+            getMembers(port).then(members => {
                 setUnits(units => {
                     initialData.forEach(unit => {
                         units[unit.ip] = { name: unit.name, ip: unit.ip, active: unit.active, lng: unit.lon, lat: unit.lat, heartbeat: unit.heartbeat, InDanger: unit.heartbeat < HeartBeatThreshold }
@@ -176,12 +177,12 @@ const Home = forwardRef(({selectedTab}, ref) => {
                 })
             })
         })
-    });
+    }, [port]);
 
     return (
         <>
-            <GroupSelect></GroupSelect>
-            <ChatWindow ref={msgsRef}></ChatWindow>
+            <GroupSelect port={port}></GroupSelect>
+            <ChatWindow port={port} ref={msgsRef}></ChatWindow>
             <MapPopup selectedUnit={units[selectedUnit]} />
             <div>
                 <div ref={mapContainer} className="map-container" />

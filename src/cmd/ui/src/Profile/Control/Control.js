@@ -8,7 +8,7 @@ import { postAudioMsg, postMsg } from '../../Api/Api'
 const msgsCode = {"StartVideo":2, "StopVideo": 3, "Attack": 4}
 const msgs = {2: "Stream start request", 3: "Stream end request" , 4: "Attack" }
 
-function Control({ unit }) {
+function Control({ unit, port }) {
     const recordAudioRef = useRef(null);
     const confirmationModalRef = useRef(null);
     const [confirmationMsgCode, setConfirmationMsgCode] = useState(null)
@@ -20,13 +20,12 @@ function Control({ unit }) {
 
     var onSendMsg = () => {
         NotificationManager.info(msgs[confirmationMsgCode] + " message will be sent to " + unit.name)
-        postMsg(unit.ip, {code: confirmationMsgCode,})
+        postMsg(unit.ip, {code: confirmationMsgCode,}, port)
     }
-
 
     var onSendAudio = (audio) => {
         NotificationManager.info("Your audio message will be sent to " + unit.name)
-        postAudioMsg(unit.ip, audio)
+        postAudioMsg(unit.ip, audio, port)
     }
     
     return (
