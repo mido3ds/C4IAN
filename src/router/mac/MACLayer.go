@@ -54,6 +54,7 @@ func (c *MACLayerConn) Write(packet []byte, dest net.HardwareAddr) {
 
 	_, err = c.packetConn.WriteTo(b, &raw.Addr{HardwareAddr: dest})
 	if err != nil {
+		log.Println("packet length: ", len(packet))
 		log.Panic("failed to write to device driver, err: ", err)
 	}
 }

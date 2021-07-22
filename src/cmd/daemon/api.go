@@ -119,7 +119,7 @@ func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {
 
 	audioMsg := models.Audio{}
 	audioMsg.Body = buffer.Bytes()
-	audioMsg.Time = time.Now().Unix()
+	audioMsg.Time = time.Now().UnixNano()
 
 	go api.dbManager.AddSentAudio(ip, &audioMsg)
 
@@ -138,7 +138,7 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	msg.Time = time.Now().Unix()
+	msg.Time = time.Now().UnixNano()
 	go api.dbManager.AddSentMessage(ip, &msg)
 	go api.netManager.SendTCP(ip, api.unitsPort, msg)
 	w.WriteHeader(http.StatusOK)

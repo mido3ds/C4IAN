@@ -126,7 +126,7 @@ func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 		(SELECT * FROM received_sensors_data)
 		ON ip = src AND last_activity = time
 		`,
-		time.Now().Unix(),
+		time.Now().UnixNano(),
 		InactiveThresholdInSeconds,
 	)
 	if err != nil {

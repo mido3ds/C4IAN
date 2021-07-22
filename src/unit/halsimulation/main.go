@@ -303,7 +303,7 @@ func (c *Context) sendSensorsData() {
 
 	// every 3s to 7s: send(location=rand(avg=(lon,lat), stdev=(.02,.03)),heartbeat=rand(avg=70,stdev=30))
 	for {
-		time.Sleep(time.Duration(normal(5, 2)) * time.Second)
+		time.Sleep(time.Duration(uniform(4, 8)) * time.Second)
 
 		hb := int(normal(80, 15))
 

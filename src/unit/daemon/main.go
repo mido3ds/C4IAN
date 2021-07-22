@@ -321,7 +321,7 @@ func (c *Context) sendVideoFragmentUDP(fragment, metadata []byte, filename strin
 
 	err = encoder.Encode(&models.VideoFragment{
 		ID:       c.videoID,
-		Time:     time.Now().Unix(),
+		Time:     time.Now().UnixNano(),
 		Body:     fragment,
 		Metadata: metadata,
 		FileName: filename,
@@ -354,7 +354,7 @@ func (c *Context) sendSensorDataUDP(lon, lat float64, beatsPerMinute int) error 
 	}
 
 	err = encoder.Encode(&models.SensorData{
-		Time:      time.Now().Unix(),
+		Time:      time.Now().UnixNano(),
 		Heartbeat: beatsPerMinute,
 		Lat:       lat,
 		Lon:       lon,
@@ -386,7 +386,7 @@ func (c *Context) sendAudioMessageTCP(fragment []byte) error {
 	}
 
 	err = encoder.Encode(&models.Audio{
-		Time: time.Now().Unix(),
+		Time: time.Now().UnixNano(),
 		Body: fragment,
 	})
 	if err != nil {
@@ -417,7 +417,7 @@ func (c *Context) sendCodeMessageTCP(code int) error {
 
 	err = encoder.Encode(&models.Message{
 		Code: code,
-		Time: time.Now().Unix(),
+		Time: time.Now().UnixNano(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to encode code message, err: %v", err)
