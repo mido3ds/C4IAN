@@ -1,0 +1,38 @@
+#!/bin/bash -e
+
+function usage() {
+    echo "Runs log visualiser"
+    echo "log file is read from /var/log/caian/log.db"
+}
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help)
+            usage
+            exit
+            ;;
+        --)
+            shift
+            OPTS="$@"
+            break
+            ;;
+        *)
+            echo "Unknown parameter \"$1\""
+            usage
+            exit 1
+    esac
+    shift
+done
+
+
+function ctrl_c() {
+    sudo kill -KILL $PID1 $PID2
+}
+
+(cd ./log-visualizer/backend/; sudo ./backend) > /dev/null &
+PID1=$! & 
+npm start --prefix ./log-visualizer/ui > /dev/null &
+PID2=$! & 
+wait $PID1
+wait $PID2
+
