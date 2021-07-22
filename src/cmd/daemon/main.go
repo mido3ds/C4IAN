@@ -71,6 +71,7 @@ func main() {
 		},
 	)
 	go api.Start(args.UISocket, args.UnitsPort, args.VideosPath, dbManager, netManager)
+	go netManager.SendGroupsHello(groupMembers, args.UnitsPort)
 	netManager.Listen(args.Port)
 	log.Println("finished initalizing all")
 	waitSIGINT()

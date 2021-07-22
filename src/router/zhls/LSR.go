@@ -5,16 +5,13 @@ import (
 	"net"
 	"time"
 
+	. "github.com/mido3ds/C4IAN/src/router/constants"
 	. "github.com/mido3ds/C4IAN/src/router/flood"
 	. "github.com/mido3ds/C4IAN/src/router/mac"
 	. "github.com/mido3ds/C4IAN/src/router/msec"
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 	. "github.com/mido3ds/C4IAN/src/router/zhls/zid"
 	"github.com/starwander/goraph"
-)
-
-const (
-	interzoneLSRDelay = 1 * time.Second // Time between sending interzone LSR packets
 )
 
 type LSRController struct {
@@ -56,7 +53,7 @@ func (lsr *LSRController) Close() {
 
 func (lsr *LSRController) sendInterzoneLSR() {
 	for {
-		time.Sleep(interzoneLSRDelay)
+		time.Sleep(InterzoneLSRDelay)
 		// Get a list of neighbor zones
 		neighborZones, isMaxIP := lsr.topology.GetNeighborZones(ToNodeID(lsr.myIP))
 

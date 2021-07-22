@@ -168,7 +168,7 @@ func (c *Context) streamVideo() {
 
 func (c *Context) watchM3U8(m3u8path string) {
 	for {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 		c.sendM3U8(m3u8path)
 	}
 }

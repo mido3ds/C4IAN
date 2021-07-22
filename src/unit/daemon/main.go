@@ -72,6 +72,7 @@ func main() {
 
 type Context struct {
 	Args
+	name    string
 	storeDB *sql.DB
 
 	halConn net.Conn
@@ -91,6 +92,7 @@ type Context struct {
 
 func newContext(args *Args) *Context {
 	context := &Context{
+		name:                  args.iface[0:2],
 		Args:                  *args,
 		_videoSeqno:           0,
 		videoID:               0,
@@ -251,16 +253,19 @@ func (c *Context) listenCmdUdp() {
 }
 
 func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
-	log.Println("Received a msg: ", msg)
 	switch msg.Code {
 	case StartVideoStreamingCode:
 		log.Println("start video streaming code")
 		c.setExpectingVideoStream(true)
-		c.videoID++
 		c.resetVideoSeqNo()
+		if c.videoStreamTimer != nil {
+			c.videoStreamTimer.Stop()
+			c.videoStreamTimer = nil
+		}
 		c.videoStreamTimer = time.AfterFunc(VideoStreamingNoEndTimeout, func() {
 			log.Println("didn't receive end video streaming for 1 minute, closing video streaming")
 			c.setExpectingVideoStream(false)
+			c.videoID++
 		})
 		c.api.sendCodeMsgEvent(msg.Code)
 		break
@@ -271,10 +276,14 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 			c.videoStreamTimer = nil
 		}
 		c.setExpectingVideoStream(false)
+		c.videoID++
 		c.api.sendCodeMsgEvent(msg.Code)
 		break
+	case Hello:
+		// Ignore hello messages
+		break
 	default:
-		log.Println("generic code msg")
+		log.Println("generic code msg: ", msg.Code)
 
 		c.halMutex.Lock()
 		defer c.halMutex.Unlock()

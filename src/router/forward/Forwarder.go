@@ -357,8 +357,8 @@ func (f *Forwarder) forwardFloodedBroadcastMessages() {
 		go func() {
 			// inject it into my ip layer
 			payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
-			packet := append(iphdr, payload...)
-			f.ipConn.Write(packet)
+			IPv4SetDest(iphdr, f.ip)
+			f.ipConn.Write(append(iphdr, payload...))
 		}()
 
 		// continue flooding

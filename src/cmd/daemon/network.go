@@ -75,6 +75,12 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	log.Println("Sent TCP packet to: ", dstAddrss)
 }
 
+func (netManager *NetworkManager) SendGroupsHello(groupMembers map[string][]string, port int) {
+	for group := range groupMembers {
+		netManager.SendUDP(group, port, models.Message{Code: -1})
+	}
+}
+
 func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload interface{}) {
 	address, err := net.ResolveUDPAddr("udp", dstAddrss+":"+strconv.Itoa(dstPort))
 	if err != nil {
@@ -237,7 +243,9 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 			log.Panic(err)
 		}
 		videoFragment.Src = srcIP
-		log.Println("received video fragment: filename=", videoFragment.FileName) // TODO: remove
+		log.Println(
+			"received video fragment: filename=", videoFragment.FileName, " id=", videoFragment.ID,
+		) // TODO: remove
 		go netManager.onReceiveVideoFragment(videoFragment)
 	default:
 		log.Panic("Unknow packet type received through TCP from: ", srcIP)
