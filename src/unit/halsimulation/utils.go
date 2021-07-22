@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+func uniform(min, max float64) float64 {
+	return min + (rand.Float64() * (max - min))
+}
+
 func normal(mean, stdDev float64) float64 {
 	return rand.NormFloat64()*stdDev + mean
 }
