@@ -54,7 +54,7 @@ function App() {
   var perodicStartStream = (data) => {
     setStreams(streams => {
       if (!streams) return
-      if (streams.some(e => e.id === data.id && e.src === data.src)) {
+      if (streams.some(stream => stream.id === data.id && stream.src === data.src)) {
         // Resend start stream request
         setPort(port => {
           postMsg(data.src, { code: 2, }, port)
@@ -64,6 +64,7 @@ function App() {
           perodicStartStream(data)
         }, 30 * 1000)
       }
+      return streams
     })
   }
 
