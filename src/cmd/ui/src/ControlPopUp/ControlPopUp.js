@@ -26,10 +26,6 @@ class ControlPopUp extends React.Component {
         })
     }
 
-    _onGetMessage = (msg) => {
-
-    }
-
     render() {
         return (
             <div>
@@ -41,8 +37,8 @@ class ControlPopUp extends React.Component {
                     <button className="close" onClick={this.closeModal}>
                         &times;
                     </button>
-                    {!this.props.group ? <> </> :
-                        <Control port={this.props.port} type="group" unit={{ ...this.props.group, name: this.props.group.id !== "broadcast" ? this.props.group.id + " group" : "all units"}}> </Control>
+                    {!this.props.group || !this.props.radius ? <> </> :
+                        <Control port={this.props.port} type="group" unit={{ ...this.props.group, name: this.props.group.id !== "broadcast" ? this.props.group.id + " group" : "all units on radius " + this.props.radius.toString(10)}}> </Control>
                     }
                 </Modal>
             </div>
