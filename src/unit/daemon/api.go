@@ -18,8 +18,6 @@ import (
 	"gopkg.in/antage/eventsource.v1"
 )
 
-const UIPort = 3006
-
 type API struct {
 	context     *Context
 	eventSource eventsource.EventSource
@@ -28,7 +26,7 @@ type API struct {
 func newAPI(context *Context) *API {
 	es := eventsource.New(nil, func(req *http.Request) [][]byte {
 		return [][]byte{
-			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: http://localhost:%v", UIPort)),
+			[]byte(fmt.Sprintf("Access-Control-Allow-Origin: *")),
 		}
 	})
 	return &API{eventSource: es, context: context}
