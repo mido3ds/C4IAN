@@ -237,7 +237,9 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 			log.Panic(err)
 		}
 		videoFragment.Src = srcIP
-		log.Println("received video fragment: filename=", videoFragment.FileName) // TODO: remove
+		log.Println(
+			"received video fragment: filename=", videoFragment.FileName, " id=", videoFragment.ID,
+		) // TODO: remove
 		go netManager.onReceiveVideoFragment(videoFragment)
 	default:
 		log.Panic("Unknow packet type received through TCP from: ", srcIP)
