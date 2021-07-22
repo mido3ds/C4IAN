@@ -41,7 +41,6 @@ function GroupSelect({port}) {
     var onGetRadius = (radius) => {
         setChosenGroup(group => {
             group.ip = "255.255." + (radius >> 8).toString(10) + "." + (radius & 0xff).toString(10)
-            console.log(group.ip)
             return group
         })
         recordAudioRef.current.openModal();
@@ -61,6 +60,7 @@ function GroupSelect({port}) {
         var notificationMsg = chosenGroup.id === "broadcast" ? "Your audio message will be sent to all units." :
             "Your audio message will be sent to the " + chosenGroup.id + " group."
         NotificationManager.info(notificationMsg)
+        console.log(chosenGroup)
         postAudioMsg(chosenGroup.ip, audio, port)
     }
 
@@ -71,7 +71,7 @@ function GroupSelect({port}) {
             {groups ? <nav class="circular-menu">
                 <div class="circle">
                     {groups.map((group, index) => {
-                        return <img alt={IDs[index]} key={index} onClick={() => onGroupIconClick({ ip: group, id: IDs[groupIDs[group]] })} id={IDs[index]} src={srcImages[index]} />
+                        return <img alt={IDs[index]} key={index} onClick={() => onGroupIconClick({ ip: group.ip, id: IDs[groupIDs[group.ip]] })} id={IDs[index]} src={srcImages[index]} />
                     })}
                     <img alt="broadcast" onClick={() => onGroupIconClick({ ip: "0.0.0.0", id: "broadcast" })} id="broadcast" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnN2Z2pzPSJodHRwOi8vc3ZnanMuY29tL3N2Z2pzIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgeD0iMCIgeT0iMCIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTIiIHhtbDpzcGFjZT0icHJlc2VydmUiIGNsYXNzPSIiPjxnPjxnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSI2My4yIiBmaWxsPSIjMDQwMDAwIiBkYXRhLW9yaWdpbmFsPSIjMDAwMDAwIiBzdHlsZT0iIiBjbGFzcz0iIj48L2NpcmNsZT48cGF0aCBkPSJtMTQxLjY5NSAxNDEuNjk1LTIxLjIxMy0yMS4yMTNjLTM2LjI1MSAzNi4yNTEtNTYuMjE1IDg0LjM3OS01Ni4yMTUgMTM1LjUxOHMxOS45NjQgOTkuMjY3IDU2LjIxNiAxMzUuNTE4bDIxLjIxMy0yMS4yMTNjLTMwLjU4Ni0zMC41ODUtNDcuNDI5LTcxLjE4LTQ3LjQyOS0xMTQuMzA1czE2Ljg0My04My43MiA0Ny40MjgtMTE0LjMwNXoiIGZpbGw9IiMwNDAwMDAiIGRhdGEtb3JpZ2luYWw9IiMwMDAwMDAiIHN0eWxlPSIiIGNsYXNzPSIiPjwvcGF0aD48cGF0aCBkPSJtOTYuMjczIDk2LjI3My0yMS4yMTItMjEuMjEyYy00OC40MDQgNDguNDAzLTc1LjA2MSAxMTIuNjYyLTc1LjA2MSAxODAuOTM5czI2LjY1NyAxMzIuNTM2IDc1LjA2MSAxODAuOTM5bDIxLjIxMy0yMS4yMTNjLTQyLjczNy00Mi43MzctNjYuMjc0LTk5LjQ2Mi02Ni4yNzQtMTU5LjcyNnMyMy41MzctMTE2Ljk4OSA2Ni4yNzMtMTU5LjcyN3oiIGZpbGw9IiMwNDAwMDAiIGRhdGEtb3JpZ2luYWw9IiMwMDAwMDAiIHN0eWxlPSIiIGNsYXNzPSIiPjwvcGF0aD48cGF0aCBkPSJtNDM2LjkzOSA3NS4wNjEtMjEuMjEzIDIxLjIxM2M0Mi43MzcgNDIuNzM3IDY2LjI3NCA5OS40NjIgNjYuMjc0IDE1OS43MjZzLTIzLjUzNyAxMTYuOTg5LTY2LjI3MyAxNTkuNzI3bDIxLjIxMyAyMS4yMTNjNDguNDAzLTQ4LjQwNCA3NS4wNi0xMTIuNjYzIDc1LjA2LTE4MC45NHMtMjYuNjU3LTEzMi41MzYtNzUuMDYxLTE4MC45Mzl6IiBmaWxsPSIjMDQwMDAwIiBkYXRhLW9yaWdpbmFsPSIjMDAwMDAwIiBzdHlsZT0iIiBjbGFzcz0iIj48L3BhdGg+PHBhdGggZD0ibTM5MS41MTggMTIwLjQ4Mi0yMS4yMTMgMjEuMjEzYzMwLjU4NSAzMC41ODUgNDcuNDI4IDcxLjE4IDQ3LjQyOCAxMTQuMzA1cy0xNi44NDQgODMuNzItNDcuNDI5IDExNC4zMDVsMjEuMjEzIDIxLjIxM2MzNi4yNTEtMzYuMjUxIDU2LjIxNi04NC4zNzkgNTYuMjE2LTEzNS41MThzLTE5Ljk2NC05OS4yNjctNTYuMjE1LTEzNS41MTh6IiBmaWxsPSIjMDQwMDAwIiBkYXRhLW9yaWdpbmFsPSIjMDAwMDAwIiBzdHlsZT0iIiBjbGFzcz0iIj48L3BhdGg+PHBhdGggZD0ibTM0Ni4wOTUgMTY1LjkwNS0yMS4yMTMgMjEuMjEzYzE4LjQzMyAxOC40MzMgMjguNTg0IDQyLjg5NiAyOC41ODQgNjguODgycy0xMC4xNTEgNTAuNDQ5LTI4LjU4NCA2OC44ODJsMjEuMjEzIDIxLjIxM2MyNC4xLTI0LjA5OSAzNy4zNzItNTYuMDk2IDM3LjM3Mi05MC4wOTVzLTEzLjI3Mi02NS45OTYtMzcuMzcyLTkwLjA5NXoiIGZpbGw9IiMwNDAwMDAiIGRhdGEtb3JpZ2luYWw9IiMwMDAwMDAiIHN0eWxlPSIiIGNsYXNzPSIiPjwvcGF0aD48cGF0aCBkPSJtMTY1LjkwNSAxNjUuOTA1Yy0yNC4xIDI0LjA5OS0zNy4zNzIgNTYuMDk1LTM3LjM3MiA5MC4wOTVzMTMuMjcyIDY1Ljk5NiAzNy4zNzIgOTAuMDk1bDIxLjIxMy0yMS4yMTNjLTE4LjQzMy0xOC40MzMtMjguNTg0LTQyLjg5Ni0yOC41ODQtNjguODgyczEwLjE1MS01MC40NDkgMjguNTg0LTY4Ljg4MnoiIGZpbGw9IiMwNDAwMDAiIGRhdGEtb3JpZ2luYWw9IiMwMDAwMDAiIHN0eWxlPSIiIGNsYXNzPSIiPjwvcGF0aD48L2c+PC9nPjwvc3ZnPg==" />
                 </div>
