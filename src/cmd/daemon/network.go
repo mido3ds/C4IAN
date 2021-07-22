@@ -185,7 +185,12 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 }
 
 func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println("Could not close connection with ", conn.RemoteAddr(), ", err: ", err)
+		}
+	}()
 
 	// Extract the IP address of the source
 	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
