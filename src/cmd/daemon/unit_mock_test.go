@@ -137,7 +137,7 @@ func SendSensorsData(i float64, port int) {
 	encoder.Encode(models.SensorDataType)
 	encoder.Encode(&models.SensorData{
 		Src:       "10.0.0.3",
-		Time:      time.Now().Unix(),
+		Time:      time.Now().UnixNano(),
 		Heartbeat: 10.0,
 		Lat:       41.4568 + i*0.2,
 		Lon:       -79.0512 + i*0.3,
@@ -161,7 +161,7 @@ func SendVideoFragment(id int, index int, port int) {
 	encoder.Encode(models.VideoFragmentType)
 	encoder.Encode(&models.VideoFragment{
 		ID:       id,
-		Time:     time.Now().Unix(),
+		Time:     time.Now().UnixNano(),
 		FileName: "frag" + strconv.Itoa(index) + ".ts",
 		Body:     []byte("video fragment" + strconv.Itoa(index) + " "),
 		Metadata: []byte("metadata sent with frag id: " + strconv.Itoa(id) + ", index: " + strconv.Itoa(index)),
@@ -182,7 +182,7 @@ func SendMessage(code int, port int) {
 
 	encoder := gob.NewEncoder(conn)
 	encoder.Encode(models.MessageType)
-	encoder.Encode(&models.Message{Src: "10.0.0.3", Time: time.Now().Unix(), Code: code})
+	encoder.Encode(&models.Message{Src: "10.0.0.3", Time: time.Now().UnixNano(), Code: code})
 	conn.Close()
 }
 
@@ -200,7 +200,7 @@ func SendAudio(i int, port int) {
 	encoder := gob.NewEncoder(conn)
 	encoder.Encode(models.AudioType)
 	encoder.Encode(&models.Audio{
-		Time: time.Now().Unix(),
+		Time: time.Now().UnixNano(),
 		Body: []byte("audio" + strconv.Itoa(i)),
 	})
 	conn.Close()
