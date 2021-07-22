@@ -42,7 +42,7 @@ class ControlPopUp extends React.Component {
                         &times;
                     </button>
                     {!this.props.group ? <> </> :
-                        <Control port={port} type="group" unit={{ ...this.props.group, name: this.props.group.id !== "broadcast" ? this.props.group.id + " group" : "all units"}}> </Control>
+                        <Control port={this.props.port} type="group" unit={{ ...this.props.group, name: this.props.group.id !== "broadcast" ? this.props.group.id + " group" : "all units"}}> </Control>
                     }
                 </Modal>
             </div>
