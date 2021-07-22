@@ -20,15 +20,15 @@ const (
 	// Time to live of ODMRP packet
 	ODMRPDefaultTTL = 100
 	// The age of entries in the members table
-	MembersTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	MembersTableTimeout = 5 * time.Second
 	// The age of entries in the forward table
-	ForwardTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	ForwardTableTimeout = 5 * time.Second
 	// The age of entries of ODMRP cache
-	ODMRPCacheTimeout = 2 * time.Second // 960 * time.Millisecond
+	ODMRPCacheTimeout = 5 * time.Second
 	// The age of entries in the multi forward table
-	MultiForwardTableTimeout = 2 * time.Second // 960 * time.Millisecond
+	MultiForwardTableTimeout = 5 * time.Second
 	// The delay between consequent joinquery to maintain the multicast graph
-	JQRefreshTime = 400 * time.Millisecond
+	JQRefreshTime = 500 * time.Millisecond
 	// The Timeout to fill the forward table to start sending the message
-	FillForwardTableTimeout = 5 * time.Second
+	FillForwardTableTimeout = 4 * time.Second
 )

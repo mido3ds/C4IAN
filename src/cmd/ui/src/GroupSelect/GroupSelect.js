@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import  ControlPopUp from "../ControlPopUp/ControlPopUp" 
+import  ControlPopUp from "../ControlPopUp/ControlPopUp"
+import GetRadius from '../GetRadius/GetRadius'; 
 import { getGroups } from '../Api/Api'
 import './GroupSelect.css';
 
@@ -12,10 +13,11 @@ const srcImages = ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My
 
 function GroupSelect({port}) {
     const sendMsgRef = useRef(null);
-
+    const getRadiusRef = useRef(null);
     const [chosenGroup, setChosenGroup] = useState(null)
     const [groups, setGroups] = useState([])
     const [groupIDs, setGroupIDs] = useState({})
+    const [radius, setRadius] = useState(null)
 
     useEffect(() => {
         if(groups.length !== 0 || !port) return
@@ -42,14 +44,29 @@ function GroupSelect({port}) {
         document.querySelector('.circle').classList.toggle('open');
     }
 
+    var onGetRadius = (radius) => {
+        setRadius(radius)
+        setChosenGroup(group => {
+            group.ip = "255.255." + (radius >> 8).toString(10) + "." + (radius & 0xff).toString(10)
+            return group
+        })
+        sendMsgRef.current.openModal();
+    }
+
     var onGroupIconClick = (group) => {
         setChosenGroup(group)
-        sendMsgRef.current.openModal();
+
+        if(group.id === "broadcast") {
+            getRadiusRef.current.open();
+        } else {
+            sendMsgRef.current.openModal();
+        }
     }
 
     return (
         <>
-            <ControlPopUp port={port} group={chosenGroup} ref={sendMsgRef}> </ControlPopUp>
+            <GetRadius onGetRadius={onGetRadius} ref={getRadiusRef}> </GetRadius>
+            <ControlPopUp radius={radius} port={port} group={chosenGroup} ref={sendMsgRef}> </ControlPopUp>
             {groups ? <nav class="circular-menu">
                 <div class="circle">
                     {groups.map((group, index) => {
