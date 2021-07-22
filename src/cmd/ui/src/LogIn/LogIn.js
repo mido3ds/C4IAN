@@ -19,23 +19,28 @@ const styles = theme => ({
 class LogIn extends React.Component {
     render() {
         const { classes } = this.props;
-        
+
         return (
+
             <div>
-                <Arwes>
-                    <Content className={`logIn-root ${classes.root}`}>
-                        <Words animate className="back-text"> Back </Words>
-                        <Words  className="hello-text">  </Words>
-                        <img className="home-unit-image" alt="unit" src={uImage}></img>
-                        <Words  className="welcome-text">  </Words>
-                        <Words animate className="access-text"> </Words>
-                        <Words animate className="identification-text"> PLEASE IDENTIFY YOURSELF</Words>
-                        <TextField onLogIn={()=>{this.props.onLogIn()}}> </TextField>
-                    </Content>
-                </Arwes>
+                {!this.props.port ? <> </> :
+                    <Arwes>
+                        <Content className={`logIn-root ${classes.root}`}>
+                            <Words animate className="back-text"> Back </Words>
+                            <Words className="hello-text">  </Words>
+                            <img className="home-unit-image" alt="unit" src={uImage}></img>
+                            <Words className="welcome-text">  </Words>
+                            <Words animate className="access-text"> </Words>
+                            <Words animate className="identification-text"> PLEASE IDENTIFY YOURSELF</Words>
+                            <TextField onLogIn={() => { this.props.onLogIn() }}> </TextField>
+                        </Content>
+                    </Arwes>
+                }
             </div>
+
         );
     }
 }
 
 export default withTemplate(withStyles(styles)(LogIn));
+
