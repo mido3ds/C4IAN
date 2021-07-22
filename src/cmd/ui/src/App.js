@@ -53,8 +53,7 @@ function App() {
 
   var perodicStartStream = (data) => {
     setStreams(streams => {
-      if (!streams) return
-      if (streams.some(e => e.id === data.id && e.src === data.src)) {
+      if (streams.some(stream => stream.id === data.id && stream.src === data.src)) {
         // Resend start stream request
         setPort(port => {
           postMsg(data.src, { code: 2, }, port)
@@ -62,8 +61,9 @@ function App() {
         })
         setTimeout(() => {
           perodicStartStream(data)
-        }, 50 * 1000)
+        }, 30 * 1000)
       }
+      return streams
     })
   }
 
@@ -100,13 +100,11 @@ function App() {
   }
 
   var onReceiveStream = (data) => {
-    if (streams.some(e => e.src === data.src)) {
+    if (streams.some(stream => stream.src === data.src)) {
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
       setStreams([...streams, data])
-      setTimeout(() => {
-        perodicStartStream(data)
-      }, 50 * 1000)
+      perodicStartStream(data)
 
       setSelectedTab(selectedTab => {
         setUnitNames(unitNames => {

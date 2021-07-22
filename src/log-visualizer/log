@@ -31,7 +31,7 @@ function ctrl_c() {
 
 (cd ./log-visualizer/backend/; sudo ./backend) > /dev/null &
 PID1=$! & 
-npm start --prefix ./log-visualizer/ui > /dev/null &
+npm start --prefix ./log-visualizer/ui &
 PID2=$! & 
 wait $PID1
 wait $PID2
