@@ -221,28 +221,31 @@ func (c *Context) listenCmdUdp() {
 	var packetType models.Type
 	var msg models.Message
 	var audio models.Audio
-	decoder := gob.NewDecoder(conn)
 
 	for {
-		err := decoder.Decode(&packetType)
+		buffer := make([]byte, 64*1024)
+		length, err := conn.Read(buffer)
 		if err != nil {
-			log.Panic("failed to decode type, err:", err)
+			log.Panic(err)
 		}
+		decoder := gob.NewDecoder(bytes.NewBuffer(buffer[:length]))
 
-		if packetType == models.MessageType {
-			err := decoder.Decode(&msg)
-			if err != nil {
-				log.Panic("error occurred, will close connection with cmd:", err)
+		for decoder.Decode(&packetType) == nil {
+			if packetType == models.MessageType {
+				err := decoder.Decode(&msg)
+				if err != nil {
+					log.Panic("error occurred, will close connection with cmd:", err)
+				}
+				c.onCodeMsgReceivedFromCMD(&msg)
+			} else if packetType == models.AudioType {
+				err := decoder.Decode(&audio)
+				if err != nil {
+					log.Panic("error occurred, will close connection with cmd:", err)
+				}
+				c.onAudioMsgReceivedFromCMD(&audio)
+			} else {
+				log.Panic("received unrecognized msg type on tcp")
 			}
-			c.onCodeMsgReceivedFromCMD(&msg)
-		} else if packetType == models.AudioType {
-			err := decoder.Decode(&audio)
-			if err != nil {
-				log.Panic("error occurred, will close connection with cmd:", err)
-			}
-			c.onAudioMsgReceivedFromCMD(&audio)
-		} else {
-			log.Panic("received unrecognized msg type on tcp")
 		}
 	}
 }
