@@ -262,7 +262,7 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 }
 
 func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
-	log.Println("Generate JoinReply")
+	// log.Println("Generate JoinReply")
 	jr := &joinReply{
 		seqNum:   jq.seqNum,
 		destIP:   c.ip,
