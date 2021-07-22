@@ -13,5 +13,8 @@ export const sentCodes = {
 export const receivedCodes = {
   "2": "Start Streming",
   "3": "End Streaming",
-  "4": "Attack",
+  "4": "We spotted an opening, attack!",
+  "5": "Fall back!",
+  "6": "We have been compromised, retreat to the base!",
+  "7": "You are scattered and vulnerable, regroup!"
 };
