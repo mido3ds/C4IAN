@@ -7,12 +7,12 @@ import './ChatBox.css'
 
 const sentCodes = { 2: "Start Streming", 3: "End Streaming", 4: "Attack" }
 
-function ChatBox({ unit }) {
+function ChatBox({ unit, port }) {
     const [msgs, setMsgs] = useState(null)
 
     useEffect(() => {
-        if (unit) {
-            getMsgs(unit.ip).then(msgsData => {
+        if (unit && port) {
+            getMsgs(unit.ip, port).then(msgsData => {
                 setMsgs(msgsData)
                 if (!msgsData || !msgsData.length) {
                     window.$('.chat-container').css('overflow-y', 'hidden')
@@ -24,7 +24,7 @@ function ChatBox({ unit }) {
                 return
             })
         }
-    },[unit])
+    },[unit, port])
 
     return (
         <div className="content-wrapper">

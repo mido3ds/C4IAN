@@ -4,7 +4,7 @@ import { getSensorsData } from '../../Api/Api'
 import moment from 'moment'
 import './HeartBeatChart.css'
 
-function HeartBeatChart({ unit }) {
+function HeartBeatChart({ unit, port }) {
     const [series, setSeries] = useState([{ data: [] }])
     const [options, setOptions] = useState({
         chart: {
@@ -44,12 +44,12 @@ function HeartBeatChart({ unit }) {
 
     
     useEffect(() => {
-        if (!unit) return
+        if (!unit || !port) return
 
         var data = []
         var time = []
 
-        getSensorsData(unit.ip).then(sensorData => {
+        getSensorsData(unit.ip, port).then(sensorData => {
             if (!sensorData || !sensorData.length) {
                 setSeries(series => {
                     return [{ data: [] }]
@@ -150,8 +150,7 @@ function HeartBeatChart({ unit }) {
                 }
             })
         })
-        console.log(unit, time, data)
-    }, [unit])
+    }, [unit, port])
 
     return (
         <>{!series[0].data.length ?

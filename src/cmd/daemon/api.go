@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strconv"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -36,7 +36,7 @@ func NewAPI() *API {
 	return &API{eventSource: es}
 }
 
-func (api *API) Start(port int, unitsPort int, videosPath string, dbManager *DatabaseManager, netManager *NetworkManager) {
+func (api *API) Start(socket string, unitsPort int, videosPath string, dbManager *DatabaseManager, netManager *NetworkManager) {
 	// Initialize members
 	api.unitsPort = unitsPort
 	api.netManager = netManager
@@ -68,15 +68,28 @@ func (api *API) Start(port int, unitsPort int, videosPath string, dbManager *Dat
 
 	router.Use(api.jsonContentType)
 
-	// Listen for HTTP requests
+	// Use CORS handler with mux router
 	c := cors.New(cors.Options{
 		OptionsPassthrough: false,
 		AllowedOrigins:     []string{"*"},
 		AllowCredentials:   true,
 	})
 	handler := c.Handler(router)
-	address := ":" + strconv.Itoa(port)
-	log.Fatal(http.ListenAndServe(address, handler))
+
+	// Open unix socket
+	if err := os.RemoveAll(socket); err != nil {
+		log.Fatal(err)
+	}
+
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	defer listener.Close()
+
+	log.Println("API listening on: ", socket)
+	// Serve HTTP requests over unix socket
+	log.Fatal(http.Serve(listener, handler))
 }
 
 func (api *API) SendEvent(body models.Event) {

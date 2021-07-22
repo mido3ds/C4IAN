@@ -125,6 +125,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 
 				// receive message by injecting it in loopback
 				DatabaseLogger.LogForwarding(packet[ZIDHeaderLen+IPv4HeaderLen:], ip.DestIP)
+				log.Println("Forwarding packet to IP layer")
 				f.ipConn.Write(ipPacket)
 			} else { // i'm a forwarder
 				//log.Println("Forward msg from: ", ip.SrcIP, "to: ", ip.DestIP, "ttl: ", ip.TTL)

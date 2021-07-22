@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import Stream from './Stream/Stream'
 
 
-function Streams({streams, onEndStream}) {
+function Streams({streams, onEndStream, port}) {
 
     useEffect(() => {
         var number = window.$('.stream').length;
@@ -20,7 +20,7 @@ function Streams({streams, onEndStream}) {
                 <p className="no-streams-msg"> No streams available </p> :
                 streams.map((value, index) => {
                     return <div className="stream">
-                        <Stream onEndStream={onEndStream} stream={value}> </Stream>
+                        <Stream onEndStream={onEndStream} stream={value} port={port}> </Stream>
                     </div>
                 })}
             </div>
