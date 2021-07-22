@@ -84,7 +84,7 @@ const Home = forwardRef(({selectedTab, port}, ref) => {
                 drawMarker(newData.src, units)
             }
 
-            map.current.fitBounds(getBounds(units));
+            //map.current.fitBounds(getBounds(units));
 
             units[newData.src].heartbeat = newData.heartbeat
             units[newData.src].timerID = setTimeout(() => { onTimeout(newData.src) }, 2 * 60 * 1000)
