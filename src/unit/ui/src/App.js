@@ -2,8 +2,8 @@ import { NotificationContainer, NotificationManager } from 'react-notifications'
 import React, { useState, useEffect, useRef } from 'react';
 import Profile from './Profile/Profile'
 import PlayAudio from './PlayAudio/PlayAudio'
+import GetPort from './GetPort/GetPort';
 import { receivedCodes } from './codes'
-import { baseURL } from './Api/Api'
 
 import 'react-notifications/lib/notifications.css';
 import './index.css';
@@ -11,10 +11,13 @@ import './index.css';
 
 function App() {
   const playAudioRef = useRef(null);
+  const getPortRef = useRef(null);
+
   const [audioModalName, setAudioModalName] = useState(null);
   const [audioModalData, setAudioModalData] = useState(null);
   const [msgs, setMsgs] = useState([]);
   const [audios, setAudios] = useState([]);
+  const [port, setPort] = useState(null)
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -41,8 +44,9 @@ function App() {
     });
   }
 
-  useEffect(() => {
-      var eventSource = new EventSource(baseURL+'events')
+  var onGetPort = (port) => {
+    setPort(() => {
+      var eventSource = new EventSource("http://localhost:" + port + "/events")
       eventSource.addEventListener("CODE-EVENT", ev => {
         onReceiveMessage(ev.data)
       })
@@ -50,13 +54,21 @@ function App() {
       eventSource.addEventListener("AUDIO-EVENT", ev => {
         onReceiveAudio(JSON.parse(ev.data))
       })
+      return port
+    })
+  }
+
+  useEffect(() => {
+    if(!port) getPortRef.current.open();
   }, [])
 
   return (
     <>
       <NotificationContainer />
+      <GetPort onGetPort={onGetPort} ref={getPortRef}> </GetPort>
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
-      <Profile msgs={msgs} audios={audios} setMsgs={setMsgs} />
+      
+      {!port ? <> </> : <Profile msgs={msgs} audios={audios} setMsgs={setMsgs} />}
     </>
   );
 }
