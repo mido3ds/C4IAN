@@ -8,7 +8,7 @@ import { getUnits, getMembers } from '../Api/Api'
 import { groupIDs } from '../groupIDs'
 import './Home.css'
 
-const HeartBeatThreshold = 60
+const HeartBeatThreshold = 50
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYWhtZWRhZmlmaSIsImEiOiJja3F6YzJibGUwNXEyMnNsZ2U2N2lod2xqIn0.U2YYTWHCYqkCUBaAFd9MfA';
 
