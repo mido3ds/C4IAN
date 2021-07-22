@@ -125,7 +125,7 @@ func (f *Forwarder) forwardZIDFromMACLayer() {
 
 				// receive message by injecting it in loopback
 				DatabaseLogger.LogForwarding(packet[ZIDHeaderLen+IPv4HeaderLen:], ip.DestIP)
-				log.Println("Forwarding packet to IP layer")
+				log.Println("Forwarding unicast packet to IP layer")
 				f.ipConn.Write(ipPacket)
 			} else { // i'm a forwarder
 				//log.Println("Forward msg from: ", ip.SrcIP, "to: ", ip.DestIP, "ttl: ", ip.TTL)
@@ -258,6 +258,7 @@ func (f *Forwarder) forwardIPFromMACLayer() {
 				ipPacket := append(ipHdr, ipPayload...)
 
 				// receive message by injecting it in loopback
+				log.Println("Forwarding unicast packet to IP layer")
 				f.ipConn.Write(ipPacket)
 			}
 
@@ -293,6 +294,7 @@ func (f *Forwarder) forwardFromIPLayer() {
 
 		go func() {
 			packet := p.Packet.Data()
+			log.Println("Received IP packet")
 
 			// TODO (low priority): speed up by fanout netfilter feature
 
@@ -316,8 +318,10 @@ func (f *Forwarder) forwardFromIPLayer() {
 				case UnicastIPAddr:
 					f.sendUnicast(packet, ip.DestIP)
 				case MulticastIPAddr:
+					log.Println("Sending multicast packet")
 					f.sendMulticast(packet, ip.DestIP)
 				case BroadcastIPAddr:
+					log.Println("Sending broadcast packet")
 					f.sendBroadcast(packet)
 				default:
 					log.Panic("got invalid ip address from ip layer")
@@ -353,8 +357,8 @@ func (f *Forwarder) forwardFloodedBroadcastMessages() {
 		go func() {
 			// inject it into my ip layer
 			payload := f.msec.Decrypt(encryptedPacket[ZIDHeaderLen+IPv4HeaderLen:])
-			IPv4SetDest(iphdr, f.ip)
-			f.ipConn.Write(append(iphdr, payload...))
+			packet := append(iphdr, payload...)
+			f.ipConn.Write(packet)
 		}()
 
 		// continue flooding

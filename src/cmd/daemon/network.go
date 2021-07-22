@@ -113,7 +113,7 @@ func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload
 	if err != nil {
 		log.Panic(err)
 	}
-	log.Println("Sent UDP to: ", dstAddrss+":"+strconv.Itoa(dstPort))
+	log.Println("Sent UDP (", n, "bytes) to: ", dstAddrss+":"+strconv.Itoa(dstPort))
 }
 
 func (netManager *NetworkManager) ListenTCP(port int) {
