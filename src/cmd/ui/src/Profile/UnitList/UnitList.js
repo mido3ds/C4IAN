@@ -5,7 +5,7 @@ import anime from 'animejs'
 
 import './UnitList.css';
 
-function UnitList({ onChange, type }) {
+function UnitList({ onChange, port }) {
     const [firstUnit, setFirstUnit] = useState(null)
     const [secondUnit, setSecondUnit] = useState(null)
     const [thirdUnit, setThirdUnit] = useState(null)
@@ -13,8 +13,8 @@ function UnitList({ onChange, type }) {
     const [units, setUnits] = useState([]);
 
     useEffect(() => {
-        if ( units.length ) return
-        getUnits().then(initialData => {
+        if ( units.length || !port ) return
+        getUnits(port).then(initialData => {
             setUnits(units => {
                 initialData.forEach(unit => {
                     units.push({ name: unit.name, ip: unit.ip})

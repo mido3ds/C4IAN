@@ -4,7 +4,7 @@ import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
 import { getAudioMsgs, getVideos } from '../../Api/Api'
 
- function Gallery({type, unit}) {
+ function Gallery({type, unit, port}) {
     const [data, setData] = useState(null);
     const [startItem, setStartItem] = useState(0)
 
@@ -13,17 +13,17 @@ import { getAudioMsgs, getVideos } from '../../Api/Api'
     }
 
     useEffect(() => {
-        if(!unit) return
+        if(!unit || !port) return
         if(type === "audio") {
-            getAudioMsgs(unit.ip).then(audios => {
+            getAudioMsgs(unit.ip, port).then(audios => {
                 setData(audios)
             })
         } else if (type === "video") {
-            getVideos(unit.ip).then(videos => {
+            getVideos(unit.ip, port).then(videos => {
                 setData(videos)
             })
         }
-    },[type, unit])
+    },[type, unit, port])
 
     return (
         <div className="gallery-container">

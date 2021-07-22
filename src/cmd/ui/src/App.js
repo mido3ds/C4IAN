@@ -4,6 +4,7 @@ import Profile from './Profile/Profile'
 import Home from './Home/Home'
 import LogIn from './LogIn/LogIn'
 import Menu from './Menu/Menu'
+import GetPort from './GetPort/GetPort';
 import PlayAudio from './PlayAudio/PlayAudio'
 import Streams from './Streams/Streams'
 import { postMsg, getNames } from './Api/Api';
@@ -13,10 +14,10 @@ import 'react-notifications/lib/notifications.css';
 import './index.css';
 import './App.css';
 
-
 function App() {
   const playAudioRef = useRef(null);
   const homeRef = useRef(null);
+  const getPortRef = useRef(null);
 
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
@@ -26,7 +27,9 @@ function App() {
   const [streamsTimer, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
 
-  const [unitNames, setUnitNames] = useState({})
+  const [unitNames, setUnitNames] = useState(null)
+
+  const [port, setPort] = useState(null)
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -42,15 +45,21 @@ function App() {
       return streams
     })
 
-    postMsg(data.src, { code: 3, })
+    setPort(port => {
+      postMsg(data.src, { code: 3, }, port)
+      return port
+    })
   }
 
   var perodicStartStream = (data) => {
-    setStreams( streams => {
-      if(!streams) return
+    setStreams(streams => {
+      if (!streams) return
       if (streams.some(e => e.id === data.id && e.src === data.src)) {
         // Resend start stream request
-        postMsg(data.src, { code: 2, })
+        setPort(port => {
+          postMsg(data.src, { code: 2, }, port)
+          return port
+        })
         setTimeout(() => {
           perodicStartStream(data)
         }, 50 * 1000)
@@ -60,8 +69,11 @@ function App() {
 
   var perodicCheckStreamsPage = () => {
     setStreams(streams => {
-      streams.forEach(stream => {
-        postMsg(stream.src, { code: 3, })
+      setPort(port => {
+        streams.forEach(stream => {
+          postMsg(stream.src, { code: 3, }, port)
+        })
+        return port
       })
       return []
     })
@@ -81,8 +93,8 @@ function App() {
 
   var onReceiveMessage = (data) => {
     setSelectedTab(selectedTab => {
-        if (selectedTab === "Map") 
-          homeRef.current.onNewMessage(data)
+      if (selectedTab === "Map")
+        homeRef.current.onNewMessage(data)
       return selectedTab
     })
   }
@@ -107,6 +119,28 @@ function App() {
     }
   }
 
+  var onGetPort = (port) => {
+    setPort(() => {
+      var eventSource = new EventSource("http://localhost:" + port + "/events")
+      eventSource.addEventListener("msg", ev => {
+        onReceiveMessage(JSON.parse(ev.data))
+      })
+
+      eventSource.addEventListener("audio", ev => {
+        onReceiveAudio(JSON.parse(ev.data))
+      })
+
+      eventSource.addEventListener("video", ev => {
+        onReceiveStream(JSON.parse(ev.data))
+      })
+
+      getNames(port).then(unitsData => {
+        setUnitNames(unitsData)
+      })
+      return port
+    })
+  }
+
   useEffect(() => {
     if (selectedTab === "Streams") {
       setStreamsTimer(streamsTimer => {
@@ -123,6 +157,11 @@ function App() {
 
 
   useEffect(() => {
+    if (!port) {
+      getPortRef.current.open();
+      return
+    }
+    
     window.$('.menu').css('visibility', 'visible')
     window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
 
@@ -130,23 +169,7 @@ function App() {
       .filter(function (idx) { return this.innerHTML === selectedTab })
       .addClass('selected')
 
-    var eventSource = new EventSource("http://localhost:3170/events")
-    eventSource.addEventListener("msg", ev => {
-      onReceiveMessage(JSON.parse(ev.data))
-    })
-
-    eventSource.addEventListener("audio", ev => {
-      onReceiveAudio(JSON.parse(ev.data))
-    })
-
-    eventSource.addEventListener("video", ev => {
-      onReceiveStream(JSON.parse(ev.data))
-    })
-
-    getNames().then(unitsData => {
-      setUnitNames(unitsData)
-    })
-  }, [])
+  }, [port])
 
   var onChange = (selectedTab) => {
     setSelectedTab(selectedTab)
@@ -165,6 +188,7 @@ function App() {
 
   return (
     <>
+      <GetPort onGetPort={onGetPort} ref={getPortRef}> </GetPort>
       <NotificationContainer />
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
       <Menu onChange={selectedTab => onChange(selectedTab)}> </Menu>
@@ -172,11 +196,11 @@ function App() {
         selectedTab === "Log Out" ?
           <LogIn onLogIn={() => { onChange("Map") }} />
           : selectedTab === "Map" ?
-            <Home ref={homeRef} selectedTab={selectedTab}/>
+            <Home port={port} ref={homeRef} selectedTab={selectedTab} />
             : selectedTab === "Units" ?
-              <Profile />
+              <Profile port={port} />
               : selectedTab === "Streams" ?
-                <Streams streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
+                <Streams port={port} streams={streams} onEndStream={stream => onEndStreamRequest(stream)} />
                 : <> </>
       }
     </>

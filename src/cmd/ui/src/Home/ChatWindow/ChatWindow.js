@@ -6,7 +6,7 @@ import './ChatWindow.css'
 
 Modal.setAppElement('#root');
 
-const ChatWindow = forwardRef((props, ref) => {
+const ChatWindow = forwardRef(({port}, ref) => {
     const [messages, setMessages] = useState([])
     const [unitsNames, setUnitsNames] = useState([])
 
@@ -22,8 +22,9 @@ const ChatWindow = forwardRef((props, ref) => {
     }));
 
     useEffect(() => {
-        getAllMsgs().then(msgs =>
-            getNames().then(unitNames => {
+        if(!port) return
+        getAllMsgs(port).then(msgs =>
+            getNames(port).then(unitNames => {
                 setMessages(messages => {
                     msgs.forEach(msg => {
                         var msgData = receivedCodes.hasOwnProperty(msg.code) ? receivedCodes[msg.code] : (msg.code).toString(10)
@@ -35,7 +36,7 @@ const ChatWindow = forwardRef((props, ref) => {
                 var element = document.querySelector(".chat-window-wrapper");
                 if (element) element.scrollTop = element.scrollHeight;
             }))
-    },[]);
+    },[port]);
 
     return (
         <div className="chat-window-wrapper">
