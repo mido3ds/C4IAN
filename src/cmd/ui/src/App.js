@@ -53,7 +53,6 @@ function App() {
 
   var perodicStartStream = (data) => {
     setStreams(streams => {
-      if (!streams) return
       if (streams.some(stream => stream.id === data.id && stream.src === data.src)) {
         // Resend start stream request
         setPort(port => {
@@ -101,7 +100,7 @@ function App() {
   }
 
   var onReceiveStream = (data) => {
-    if (streams.some(e => e.src === data.src)) {
+    if (streams.some(stream => stream.src === data.src)) {
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
       setStreams([...streams, data])
