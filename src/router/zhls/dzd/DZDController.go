@@ -66,7 +66,7 @@ func (d *DZDController) Start() {
 }
 
 func (d *DZDController) forwardToNeighborZones(dstIP net.IP) {
-	log.Println("Searching for", dstIP)
+	// log.Println("Searching for", dstIP)
 	neighborsZones, _ := d.topology.GetNeighborZones(ToNodeID(d.myIP))
 	for _, zone := range neighborsZones {
 		dzRequestPacket := d.createDZRequestPacket(d.myIP, MyZone(), zone, dstIP, []ZoneID{MyZone().ID})
@@ -157,7 +157,7 @@ func (d *DZDController) handleDZResponsePackets(packet []byte) {
 	go d.sendBufferedMsgs(dzResponseHeader.requiredDstIP)
 
 	if dzResponseHeader.dstIP.Equal(d.myIP) {
-		log.Println("Discovered zone of:", dzResponseHeader.requiredDstIP, ", zone: ", dzResponseHeader.requiredDstZone)
+		// log.Println("Discovered zone of:", dzResponseHeader.requiredDstIP, ", zone: ", dzResponseHeader.requiredDstZone)
 		return
 	}
 

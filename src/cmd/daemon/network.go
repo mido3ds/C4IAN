@@ -113,6 +113,7 @@ func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Println("Sent UDP (", n, "bytes) to: ", dstAddrss+":"+strconv.Itoa(dstPort))
 }
 
 func (netManager *NetworkManager) ListenTCP(port int) {
@@ -186,6 +187,7 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 
 func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 	defer func() {
+		log.Println("Closing TCP connection with ", conn.RemoteAddr())
 		err := conn.Close()
 		if err != nil {
 			log.Println("Could not close connection with ", conn.RemoteAddr(), ", err: ", err)
