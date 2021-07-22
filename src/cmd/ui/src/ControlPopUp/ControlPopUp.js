@@ -37,7 +37,7 @@ class ControlPopUp extends React.Component {
                     <button className="close" onClick={this.closeModal}>
                         &times;
                     </button>
-                    {!this.props.group || !this.props.radius ? <> </> :
+                    {!this.props.group || (!this.props.radius && this.props.group.id === "broadcast") ? <> </> :
                         <Control port={this.props.port} type="group" unit={{ ...this.props.group, name: this.props.group.id !== "broadcast" ? this.props.group.id + " group" : "all units on radius " + this.props.radius.toString(10)}}> </Control>
                     }
                 </Modal>
