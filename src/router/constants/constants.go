@@ -9,12 +9,14 @@ const (
 	SARPHoldTime = 500 * time.Millisecond
 	// Time between consequent sARP requests (neighborhood discoveries)
 	SARPDelay = 1 * time.Second
+	// Time between sending interzone LSR packets
+	InterzoneLSRDelay = 1 * time.Second
 	// The age of entries in the destination zone discovery (DZD) cache
-	DZCacheAge = 5 * time.Second
+	DZCacheAge = 60 * time.Second
 	// The delay between consequent trials to find destination zone
 	DZDRetryTimeout = 3 * time.Second
 	// The maximum number of attempts to find the destination zone
-	DZDMaxRetry = 2
+	DZDMaxRetry = 5
 
 	// ODMRP
 	// Time to live of ODMRP packet
