@@ -57,6 +57,9 @@ func NewRouter(ifaceName, passphrase, locSocket string, zlen byte, mgrpFilePath 
 	}
 	log.Println("iface ipv4: ", ip)
 
+	// tell linux to reduce MSS to accomodate our added headers
+	kernel.SetMaxMSS(ifaceName, ip, 1400)
+
 	// Initialize database logger
 	DatabaseLogger.Initialize(ip)
 
