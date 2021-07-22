@@ -36,6 +36,13 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetPrefix("[" + iface + "] ")
 
+	// Create a random seed for rand based on the interface name
+	var seed int64 = 0
+	for i, char := range iface {
+		seed += int64(i * int(char))
+	}
+	rand.Seed(seed)
+
 	context := newContext(args)
 
 	go context.sendAudioMsgs()
