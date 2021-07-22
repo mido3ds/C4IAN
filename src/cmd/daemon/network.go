@@ -75,6 +75,12 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 	log.Println("Sent TCP packet to: ", dstAddrss)
 }
 
+func (netManager *NetworkManager) SendGroupsHello(groupMembers map[string][]string, port int) {
+	for group := range groupMembers {
+		netManager.SendUDP(group, port, models.Message{Code: -1})
+	}
+}
+
 func (netManager *NetworkManager) SendUDP(dstAddrss string, dstPort int, payload interface{}) {
 	address, err := net.ResolveUDPAddr("udp", dstAddrss+":"+strconv.Itoa(dstPort))
 	if err != nil {
