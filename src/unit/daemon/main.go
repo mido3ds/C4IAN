@@ -251,7 +251,6 @@ func (c *Context) listenCmdUdp() {
 }
 
 func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
-	log.Println("Received a msg: ", msg)
 	switch msg.Code {
 	case StartVideoStreamingCode:
 		log.Println("start video streaming code")
@@ -278,8 +277,11 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 		c.videoID++
 		c.api.sendCodeMsgEvent(msg.Code)
 		break
+	case Hello:
+		// Ignore hello messages
+		break
 	default:
-		log.Println("generic code msg")
+		log.Println("generic code msg: ", msg.Code)
 
 		c.halMutex.Lock()
 		defer c.halMutex.Unlock()
