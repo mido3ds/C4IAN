@@ -49,7 +49,7 @@ function GroupSelect({port}) {
 
     return (
         <>
-            <ControlPopUp group={chosenGroup} ref={sendMsgRef}> </ControlPopUp>
+            <ControlPopUp port={port} group={chosenGroup} ref={sendMsgRef}> </ControlPopUp>
             {groups ? <nav class="circular-menu">
                 <div class="circle">
                     {groups.map((group, index) => {
