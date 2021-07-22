@@ -140,7 +140,12 @@ func (api *API) postMsg(w http.ResponseWriter, r *http.Request) {
 	}
 	msg.Time = time.Now().UnixNano()
 	go api.dbManager.AddSentMessage(ip, &msg)
-	go api.netManager.SendTCP(ip, api.unitsPort, msg)
+
+	if isMulticastOrBroadcast(ip) {
+		go api.netManager.SendUDP(ip, api.unitsPort, msg)
+	} else {
+		go api.netManager.SendTCP(ip, api.unitsPort, msg)
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
