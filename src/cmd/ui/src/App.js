@@ -186,9 +186,6 @@ function App() {
       window.$('.menu .item span')
         .filter(function (idx) { return this.innerHTML === sTab })
         .addClass('selected')
-
-      if (sTab === "Map")
-        homeRef.current.onChangePort(port)
     }
   }
 

@@ -4,7 +4,7 @@ import './Pagination.css';
 
 function Pagination({ dataSize, paginate }) {
   const [pageNumber, setPageNumber] = useState(1);
-  const [hasNext, setHasNext] = useState(pageNumber - Math.ceil(dataSize/4) < 0)
+  const [hasNext, setHasNext] = useState(pageNumber - Math.ceil(dataSize/6) < 0)
 
   useEffect(() => {
     let decButton = document.querySelector('#dec-btn');
@@ -30,17 +30,18 @@ function Pagination({ dataSize, paginate }) {
       paginationWrapper.classList.add('transition-prev');
       setPageNumber(() => {
         paginate(pageNumber - 1);
+        setHasNext((pageNumber - 1) - Math.ceil(dataSize/6) < 0)
         return pageNumber - 1
       });
-      setHasNext(pageNumber - Math.ceil(dataSize/4) < 0)
     }
+    
     else if (inc && hasNext) {
       paginationWrapper.classList.add('transition-next');
       setPageNumber(() => {
         paginate(pageNumber + 1);
+        setHasNext((pageNumber + 1) - Math.ceil(dataSize/6) < 0)
         return pageNumber + 1
       });
-      setHasNext(pageNumber - Math.ceil(dataSize/4) < 0)
     }
 
     setTimeout(cleanClasses, 500);

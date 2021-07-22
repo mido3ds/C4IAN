@@ -7,17 +7,16 @@ function ChatBox({ msgs }) {
 
     useEffect(() => {
         if (!msgs || !msgs.length) {
-            window.$('.chat-container').css('overflow-y', 'hidden')
+            window.$('.chat-box').css('overflow-y', 'hidden')
         } else {
-            window.$('.chat-container').css('overflow-y', 'scroll')
-            var element = document.querySelector(".chat-container");
+            window.$('.chat-box').css('overflow-y', 'scroll')
+            var element = document.querySelector(".chat-box");
             if(element) element.scrollTop = element.scrollHeight;
         }
         return
     },[msgs])
 
     return (
-        <div className="content-wrapper">
             <div className="chat-container">
                 {msgs && msgs.length ?
                     <ul className="chat-box chatContainerScroll">
@@ -28,13 +27,13 @@ function ChatBox({ msgs }) {
                                             <div className="chat-text"> {sentCodes[msg.Code]} </div>
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                                            <div className="chat-name"> Me </div>
+                                            <div className="chat-name"> unit soldier </div>
                                         </div>
                                     </li> :
                                     <li className="chat-left">
                                         <div className="chat-avatar">
                                             <img className="unit-item-profile-image" alt="unit" src={uImage}></img>
-                                            <div className="chat-name"> {"Command Center"} </div>
+                                            <div className="chat-name"> cmd leader</div>
                                         </div>
                                         <div className="chat-text"> {receivedCodes[msg.Body]} </div>
                                     </li>
@@ -42,10 +41,11 @@ function ChatBox({ msgs }) {
                             </>
                         })}
                     </ul> :
-                    <p className="no-data-chat-msg"> No data to be previewed </p>
+                    <div className="no-data-chat-msg"> 
+                        <p> No data to be previewed </p> 
+                    </div>
                     }
             </div>
-        </div>
     )
 
 } export default ChatBox;
