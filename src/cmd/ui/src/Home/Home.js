@@ -184,7 +184,7 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
             container: mapContainer.current,
             style: 'mapbox://styles/ahmedafifi/ckr3eqazg5ndn18p3pgmuffc1',
             center: [0, 0],
-            zoom: 10
+            zoom: 0
         });
         
         map.current.addControl(new mapboxgl.FullscreenControl());
