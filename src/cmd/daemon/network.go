@@ -134,7 +134,7 @@ func (netManager *NetworkManager) ListenTCP(port int) {
 		// Handle any incoming connections
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println(err)
+			log.Println("Could not accept TCP connection from: ", conn.RemoteAddr(), ", err: ", err)
 			continue
 		}
 		log.Println("received tcp connection from unit, address:", conn.RemoteAddr()) // TODO: remove
@@ -185,7 +185,12 @@ func (netManager *NetworkManager) ListenUDP(port int) {
 }
 
 func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println("Could not close connection with ", conn.RemoteAddr(), ", err: ", err)
+		}
+	}()
 
 	// Extract the IP address of the source
 	srcIP := strings.Split(conn.RemoteAddr().String(), ":")[0]
@@ -208,7 +213,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		}
 
 		msg.Src = srcIP
-		netManager.onReceiveMsg(msg)
+		go netManager.onReceiveMsg(msg)
 
 		log.Println("received code msg from unit:", msg) // TODO: remove
 	case models.AudioType:
@@ -219,7 +224,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		}
 
 		audio.Src = srcIP
-		netManager.onReceiveAudio(audio)
+		go netManager.onReceiveAudio(audio)
 
 		log.Println("received audio msg from unit: len=", len(audio.Body)) // TODO: remove
 	case models.VideoFragmentType:
@@ -230,7 +235,7 @@ func (netManager *NetworkManager) handleTCPConnection(conn net.Conn) {
 		}
 		videoFragment.Src = srcIP
 		log.Println("received video fragment: filename=", videoFragment.FileName) // TODO: remove
-		netManager.onReceiveVideoFragment(videoFragment)
+		go netManager.onReceiveVideoFragment(videoFragment)
 	default:
 		log.Panic("Unknow packet type received through TCP from: ", srcIP)
 	}
