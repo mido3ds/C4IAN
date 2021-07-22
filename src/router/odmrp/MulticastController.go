@@ -240,14 +240,14 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	}
 	// im the prev hop for the next one
 	jq.prevHop = c.mac
-	log.Println("Cache after change prev hop")
-	log.Println(c.cacheTable.String())
+	// log.Println("Cache after change prev hop")
+	// log.Println(c.cacheTable.String())
 
 	// grpIPExists := c.memberTable.Get(jq.GrpIP)
 	// memberTable for faster recieving
 	// if grpIPExists || c.imInDests(jq) {
 	if c.imInDests(jq) {
-		log.Printf("im in dests, (ip:%#v, mac: %#v)\n", c.ip.String(), c.mac.String()) // TODO: remove this
+		// log.Printf("im in dests, (ip:%#v, mac: %#v)\n", c.ip.String(), c.mac.String()) // TODO: remove this
 		// fill member table
 		c.memberTable.set(jq.grpIP)
 
@@ -294,8 +294,7 @@ func (c *MulticastController) updateJoinReply(jr *joinReply, ft *MultiForwardTab
 	newNextHops := []net.HardwareAddr{}
 
 	// Fill srcIPs and nextHops of the JoinReply
-	log.Println("Debug before")
-	log.Println(c.cacheTable.String())
+	// log.Println(c.cacheTable.String())
 	for i := 0; i < len(jr.srcIPs); i++ {
 		if !jr.srcIPs[i].Equal(c.ip) { // TODO check if I can remove this if
 			cacheEntry, ok := c.cacheTable.get(jr.srcIPs[i])
@@ -323,8 +322,8 @@ func (c *MulticastController) sendJoinReply(jr *joinReply) {
 	for i := 0; i < len(jr.nextHops); i++ {
 		c.jrConn.Write(encJR, jr.nextHops[i])
 	}
-	msg := fmt.Sprintf("ip: %#v sends JoinReply to", c.ip.String())
-	logMacIPs(msg, jr.nextHops)
+	// msg := fmt.Sprintf("ip: %#v sends JoinReply to", c.ip.String())
+	// logMacIPs(msg, jr.nextHops)
 }
 
 func (c *MulticastController) onRecvJoinReply(ft *MultiForwardTable) {
