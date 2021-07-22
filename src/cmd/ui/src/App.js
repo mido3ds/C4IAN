@@ -103,7 +103,7 @@ function App() {
     if (streams.some(stream => stream.src === data.src)) {
       streams[streams.findIndex(stream => stream.src === data.src)].id = data.id;
     } else {
-      setStreams([...streams, data])
+      setStreams((streams) => { return [...streams, data] })
       perodicStartStream(data)
 
       setSelectedTab(selectedTab => {
