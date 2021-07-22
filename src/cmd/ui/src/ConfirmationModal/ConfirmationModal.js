@@ -4,7 +4,7 @@ import './ConfirmationModal.css'
 
 Modal.setAppElement('#root');
 
-const msgs = {2: "stream start request", 3: "stream end request" , 4: "attack" }
+const msgs = {2: "stream start request", 3: "stream end request" , 4: "attack", 5: "defense", 6: "escape", 7: "regroup" }
 
 class ConfirmationModal extends React.Component {
     constructor(props) {

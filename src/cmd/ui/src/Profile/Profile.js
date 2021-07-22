@@ -22,7 +22,7 @@ const styles = theme => ({
 });
 
 const profileComponents = {
-    "Control": <Control />,
+    "Control": <Control type="unit" />,
     "Audios": <Gallery type="audio" />,
     "Videos": <Gallery type="video" />,
     "Messages": <ChatBox/>,

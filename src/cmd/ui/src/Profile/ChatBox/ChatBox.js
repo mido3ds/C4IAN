@@ -5,7 +5,7 @@ import moment from 'moment';
 import { receivedCodes } from '../../codes'
 import './ChatBox.css'
 
-const sentCodes = { 2: "Start Streming", 3: "End Streaming", 4: "Attack" }
+const sentCodes = { 2: "Start Streming", 3: "End Streaming", 4: "Attack", 5: "Defense", 6: "Escape", 7: "Regroup" }
 
 function ChatBox({ unit, port }) {
     const [msgs, setMsgs] = useState(null)

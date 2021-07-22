@@ -186,6 +186,7 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
             center: [0, 0],
             zoom: 10
         });
+        
         map.current.addControl(new mapboxgl.FullscreenControl());
         map.current.addControl(new mapboxgl.NavigationControl());
     }, []);

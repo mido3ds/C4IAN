@@ -8,7 +8,43 @@
     align-items: center;
 }
 
-.attack-icon {
+.group-attack-icon {
+  top: 50px;
+  left: 180px;
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.escape-icon {
+  top: 220px;
+  left: 180px;
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.regroup-icon {
+  top: 47px;
+  right: 175px;  
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+
+.defense-icon {
+  top: 217px;
+  right: 170px;  
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+}
+
+.unit-attack-icon {
   top: 110px;
   left: 410px;
   position: absolute;

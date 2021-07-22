@@ -1,0 +1,31 @@
+
+.get-msg-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    right: 50%;;
+    left: 50%;;
+    border-radius: 20px;;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 300px;
+    background-color: rgba(1, 51, 38, 0.911);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.get-msg-modal > .close {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    padding: 2px 5px;
+    line-height: 20px;
+    right: -10px;
+    top: -10px;
+    font-size: 24px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #cfcece;
+}
