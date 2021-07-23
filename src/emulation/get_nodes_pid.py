@@ -32,6 +32,7 @@ def node_to_tcp(name: str) -> int:
 
     return 3200 + num
 
+
 kind = sys.argv[1]
 mode = sys.argv[2]
 
@@ -55,12 +56,13 @@ def cmd_get_groups_file(name):
     return metadata['cmd']['groups_file'][name]
 
 
-assert(kind in ['r', 'u', 'c', 'h'])
+assert(kind in ['C4IAN', 'batman', 'oslr',
+                'babel', 'netsukuku', 'u', 'c', 'h'])
 assert(mode in ['nsenter', 'socat'])
 
 n = 0
 
-if kind == 'r':
+if kind == 'C4IAN':
     for name, pid in get_nodes():
         n += 1
         assert mode == 'nsenter'
@@ -70,6 +72,32 @@ if kind == 'r':
               f'--pass xXxHaCkEr_MaNxXx '  # very hard to guess password
               f'--location-socket /tmp/{name}.router.locsock '
               f'--mgroups-file {router_get_groups_file(name)} ')
+
+elif kind == 'batman':
+    for name, pid in get_nodes():
+        n += 1
+        assert mode == 'nsenter'
+        print(f'-t {pid} -n '
+              f'batmand '
+              f'{name}-wlan0 ')
+
+elif kind == 'oslr':
+    for name, pid in get_nodes():
+        n += 1
+        assert mode == 'nsenter'
+        # TODO
+
+elif kind == 'babel':
+    for name, pid in get_nodes():
+        n += 1
+        assert mode == 'nsenter'
+        # TODO
+
+elif kind == 'netsukuku':
+    for name, pid in get_nodes():
+        n += 1
+        assert mode == 'nsenter'
+        # TODO
 
 elif kind == 'u':
     for name, pid in get_nodes():

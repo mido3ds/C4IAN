@@ -2,15 +2,26 @@
 
 function usage() {
     F=$(realpath --relative-to=. $0)
-    echo "Usage: ${F} [-w|--watch] [-- <options to pass to all routers>]"
-    echo "Runs all routers, pass -w|--watch to watch changes in executable"
+    echo "Usage: ${F} [-w|--watch] <C4IAN | batman | oslr | babel | netsukuku> [-- <options to pass to all routers>]"
+    echo "Runs all routers, of given type, pass -w|--watch to watch changes in executable"
     echo "Pass any other options after -- to all routers argv"
 }
+
+RTR_CHOSEN=0
+RTR_TYPE=C4IAN
 
 while [ "$1" != "" ]; do
     PARAM=`echo $1 | awk -F= '{print $1}'`
     VALUE=`echo $1 | awk -F= '{print $2}'`
     case $PARAM in
+        C4IAN | batman | oslr | babel | netsukuku)
+            if [[ $RTR_CHOSEN -eq 1 ]]; then
+                usage
+                exit 1
+            fi
+            RTR_TYPE=$1
+            RTR_CHOSEN=1
+            ;;
         -h | --help)
             usage
             exit
@@ -33,7 +44,7 @@ while [ "$1" != "" ]; do
 done
 
 # check nodes exist
-python3 emulation/get_nodes_pid.py r nsenter 1>&2 >/dev/null || ( echo No nodes found; exit 1 )
+python3 emulation/get_nodes_pid.py $RTR_TYPE nsenter 1>&2 >/dev/null || ( echo No nodes found; exit 1 )
 
 mkdir -p /var/log/caian/ 
 
@@ -51,7 +62,7 @@ echo "stdout+stderr is saved in /var/log/caian/routers"
 exec &> >(tee  -a /var/log/caian/routers)
 echo ------------------------
 
-python3 emulation/get_nodes_pid.py r nsenter | while read line; do
+python3 emulation/get_nodes_pid.py $RTR_TYPE nsenter | while read line; do
     line="${line} ${OPTS}"
     if [[ $WATCH -eq 1 ]]; then
         ./emulation/watchdog --file ./router/router --command "nsenter $line" &
