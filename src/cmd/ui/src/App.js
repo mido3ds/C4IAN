@@ -22,7 +22,7 @@ function App() {
   const [audioModalName, setAudioModalName] = useState(null)
   const [audioModalData, setAudioModalData] = useState(null)
 
-  const [selectedTab, setSelectedTab] = useState("Map")
+  const [selectedTab, setSelectedTab] = useState("Log Out")
 
   const [streamsTimer, setStreamsTimer] = useState(null)
   const [streams, setStreams] = useState([])
@@ -165,13 +165,6 @@ function App() {
 
   useEffect(() => {
     getPortRef.current.open();
-    
-    window.$('.menu').css('visibility', 'visible')
-    window.$('.menu .item span').each(function () { window.$(this).removeClass('selected') })
-
-    window.$('.menu .item span')
-      .filter(function (idx) { return this.innerHTML === selectedTab })
-      .addClass('selected')
   }, [])
 
   var onChange = (sTab) => {
