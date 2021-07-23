@@ -11,7 +11,7 @@ CREATE TABLE forwarding (
     time        int,
     ip          text,
     dst         text,
-    packet_hash blob
+    packet_hash text
 );
 
 DROP TABLE IF EXISTS locations;
