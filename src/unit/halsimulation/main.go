@@ -47,7 +47,11 @@ func main() {
 
 	// go context.sendAudioMsgs()
 	// go context.sendCodeMsgs()
-	go context.sendSensorsData()
+
+	if context.sensors {
+		go context.sendSensorsData()
+	}
+
 	go context.streamVideo()
 
 	go context.receiveMsgs()
