@@ -64,7 +64,8 @@ function App() {
     if (!port) getPortRef.current.open();
     else {
       getName(port).then(name => {
-        setName(name.name)
+        setName(name.name);
+        document.title = name.name;
       })
     }
   }, [port])
