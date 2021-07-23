@@ -29,12 +29,13 @@ func (dbManager *DatabaseManager) GetPackets() []Packet {
 	return packets
 }
 
-func (dbManager *DatabaseManager) GetPacketData(hash []byte) PacketData {
+func (dbManager *DatabaseManager) GetPacketData(hash string) *PacketData {
 	// Get path
 	row := dbManager.db.QueryRowx(
 		`
 		SELECT GROUP_CONCAT(ip) as path, MIN(time) as start_time FROM 
-		(SELECT * FROM forwarding WHERE packet_hash = $1 ORDER BY time)
+		(SELECT MIN(time) as time, ip FROM forwarding 
+		 WHERE packet_hash = $1 GROUP BY ip ORDER BY time)
 		`,
 		hash,
 	)
@@ -42,7 +43,9 @@ func (dbManager *DatabaseManager) GetPacketData(hash []byte) PacketData {
 	var startTime int64
 	err := row.Scan(&path, &startTime)
 	if err != nil {
-		log.Panic(err)
+		log.Println(hash)
+		log.Println(err)
+		return nil
 	}
 
 	// Get most recent locations of nodes before forwarding the packet
@@ -55,7 +58,8 @@ func (dbManager *DatabaseManager) GetPacketData(hash []byte) PacketData {
 		startTime,
 	)
 	if err != nil {
-		log.Panic(err)
+		log.Println(err)
+		return nil
 	}
 	locations := make(map[string]Location)
 	for rows.Next() {
@@ -64,7 +68,7 @@ func (dbManager *DatabaseManager) GetPacketData(hash []byte) PacketData {
 		rows.Scan(&ip, &location.Lat, &location.Lon)
 		locations[ip] = location
 	}
-	return PacketData{
+	return &PacketData{
 		Path:      strings.Split(path, ","),
 		Locations: locations,
 	}
