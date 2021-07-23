@@ -29,7 +29,7 @@ function ctrl_c() {
     sudo kill -KILL $PID1 $PID2
 }
 
-(cd ./log-visualizer/backend/; sudo ./backend) > /dev/null &
+(cd ./log-visualizer/backend/; sudo ./backend ${OPTS}) > /dev/null &
 PID1=$! & 
 npm start --prefix ./log-visualizer/ui &
 PID2=$! & 

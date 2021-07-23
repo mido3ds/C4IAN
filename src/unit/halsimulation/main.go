@@ -172,7 +172,7 @@ func (c *Context) streamVideo() {
 
 func (c *Context) watchM3U8(m3u8path string) {
 	for {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		c.sendM3U8(m3u8path)
 	}
 }
@@ -241,7 +241,7 @@ func (c *Context) sendM3U8(m3u8path string) {
 func runFFmpeg(ffmpegPath, videoPath, m3u8Path, outdir string, fragmentDurSecs int) {
 	args := []string{
 		`-i`, videoPath,
-		`-framerate`, `60`,
+		`-framerate`, `20`,
 		`-s`, `480x360`,
 		`-level`, `3.0`,
 		`-fs`, `6500`,

@@ -140,8 +140,16 @@ function App() {
       });
     })
 
-    getMsgs().then(msgs => {
-      setMsgs(msgs)
+    getMsgs().then(rawMsgs => {
+      let counter = {}
+      let filteredMsgs = [] 
+      rawMsgs.forEach(msg => {
+        if (!counter.hasOwnProperty(msg.dst)) {
+          counter[msg.dst] = 1
+          filteredMsgs.push(msg)
+        }
+      })
+      setMsgs(filteredMsgs)
     })
   }, [])
 
