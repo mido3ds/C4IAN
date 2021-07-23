@@ -5,6 +5,16 @@
     margin-bottom: -100px;
 }
 
+.focus-icon {
+    position: absolute;
+    right: 5px;
+    top: 160px;
+    width: 40px;
+    height: 40px;
+    z-index: 10;
+    cursor: pointer;
+}
+
 .map-unit {
     background-image: url('../images/unit.png');
     background-size: cover;
