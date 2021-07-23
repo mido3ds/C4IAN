@@ -139,6 +139,10 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
     }
 
     var loadData = (receivedPort) => {
+        var eventSource = new EventSource("http://localhost:" + receivedPort + "/events")
+        eventSource.addEventListener("sensors-data", ev => {
+            onDataChange(JSON.parse(ev.data))
+        })
         getUnits(receivedPort).then(initialData => {
             getMembers(receivedPort).then(members => {
                 getGroups(receivedPort).then(groups => {
@@ -179,11 +183,6 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
     }
 
     var onGetPort = (receivedPort) => {
-        var eventSource = new EventSource("http://localhost:" + receivedPort + "/events")
-        eventSource.addEventListener("sensors-data", ev => {
-            onDataChange(JSON.parse(ev.data))
-        })
-
         loadData(receivedPort)
     }
 
