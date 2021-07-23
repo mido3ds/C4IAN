@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -92,7 +93,7 @@ type Context struct {
 
 func newContext(args *Args) *Context {
 	context := &Context{
-		name:                  args.iface[0:2],
+		name:                  strings.Split(args.iface, "-")[0],
 		Args:                  *args,
 		_videoSeqno:           0,
 		videoID:               0,

@@ -1,6 +1,7 @@
 package database_logger
 
 import (
+	"encoding/base64"
 	"net"
 	"time"
 
@@ -47,10 +48,11 @@ func (dbManager *DatabaseManager) LogLocation(location GpsLocation) {
 
 func (dbManager *DatabaseManager) LogForwarding(payload []byte, dst net.IP) {
 	hash := HashSHA3(payload)
+	encodedHash := base64.StdEncoding.EncodeToString(hash)
 	for {
 		_, err := dbManager.db.Exec(
 			"INSERT INTO forwarding VALUES ($1, $2, $3, $4)",
-			time.Now().UnixNano(), dbManager.myIP.String(), dst.String(), hash,
+			time.Now().UnixNano(), dbManager.myIP.String(), dst.String(), encodedHash,
 		)
 		if err == nil {
 			break

@@ -77,7 +77,9 @@ func (netManager *NetworkManager) SendTCP(dstAddrss string, dstPort int, payload
 
 func (netManager *NetworkManager) SendGroupsHello(groupMembers map[string][]string, port int) {
 	for group := range groupMembers {
-		netManager.SendUDP(group, port, models.Message{Code: -1})
+		for i := 0; i < 3; i++ {
+			netManager.SendUDP(group, port, models.Message{Code: -1})
+		}
 	}
 }
 

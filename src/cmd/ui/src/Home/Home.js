@@ -157,13 +157,18 @@ const Home = forwardRef(({ selectedTab, port }, ref) => {
                             units[membership.unitIP] = { ...units[membership.unitIP], groupID: groupIDs[membership.groupIP] }
                         });
 
+                        let activeUnits = false
                         for (const unitIP in units) {
                             if (units[unitIP].lng !== 1000 && units[unitIP].lat !== 1000) {
                                 drawMarker(unitIP, units)
+                                activeUnits = true
                             }
                         }
 
-                        map.current.fitBounds(getBounds(units));
+                        if(initialData?.length && activeUnits) {
+                            map.current.setCenter([initialData[Math.floor(initialData.length/2)].lon, initialData[Math.floor(initialData.length/2)].lat]);
+                            map.current.setZoom(15);
+                        }
 
                         return units
                     })

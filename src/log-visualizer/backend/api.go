@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -53,11 +52,11 @@ func (api *API) getPackets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) getPacketData(w http.ResponseWriter, r *http.Request) {
-	encodedHash := mux.Vars(r)["hash"]
-	hash, err := base64.StdEncoding.DecodeString(encodedHash)
-	if err != nil {
-		log.Panic(err)
-	}
+	hash := mux.Vars(r)["hash"]
 	data := api.dbManager.GetPacketData(hash)
-	json.NewEncoder(w).Encode(data)
+	if data == nil {
+		w.WriteHeader(404)
+	} else {
+		json.NewEncoder(w).Encode(data)
+	}
 }

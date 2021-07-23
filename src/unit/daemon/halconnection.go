@@ -64,7 +64,7 @@ func (c *Context) listenHAL() {
 			log.Println("accept error:", err)
 		} else {
 			log.Println("HAL connected")
-			c.serveHAL(conn)
+			go c.serveHAL(conn)
 		}
 	}
 }

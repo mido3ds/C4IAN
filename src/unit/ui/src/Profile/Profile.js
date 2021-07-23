@@ -46,7 +46,7 @@ class Profile extends React.Component {
                     <Content className={`profile-root ${classes.root}`}>
                         <div className="profile-container">
                             <div className="unit-name">
-                                <p> this.props.name </p>
+                                <p> {this.props.name} </p>
                             </div>
                             <ProfileList onChange={activatedTab => this.updateActiveTab(activatedTab)}></ProfileList>
                             <div data-augmented-ui="tl-2-clip-x tr-clip r-clip-y br-clip-x br-clip border l-rect-y bl-clip-x " className="profile-frame">
