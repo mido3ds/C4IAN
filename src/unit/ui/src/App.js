@@ -64,7 +64,7 @@ function App() {
     if (!port) getPortRef.current.open();
     else {
       getName(port).then(name => {
-        setName(name)
+        setName(name.name)
       })
     }
   }, [port])
