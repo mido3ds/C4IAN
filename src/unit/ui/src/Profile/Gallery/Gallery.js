@@ -2,14 +2,14 @@ import './Gallery.css';
 import React, { useState, useEffect } from 'react';
 import GalleryItem from './GalleryItem/GalleryItem'
 import Pagination from './Pagination/Pagination'
-import { AudiosDB } from '../../db'
 
- function Gallery({type, audios}) {
+
+function Gallery({audios}) {
     const [data, setData] = useState(null);
     const [startItem, setStartItem] = useState(0)
 
     var paginate = (pageNumber) => {
-        setStartItem(4 * (pageNumber - 1));
+        setStartItem(6 * (pageNumber - 1));
     }
 
     useEffect(() => {
@@ -21,13 +21,15 @@ import { AudiosDB } from '../../db'
     return (
         <div className="gallery-container">
             {!data || !data.length ?
-            <p className="no-data-gallery-msg"> No data to be previewed </p> 
+            <div className="no-data-gallery-msg"> 
+                <p> No data to be previewed </p> 
+            </div>
             : 
             <> 
                 <div className="items-container">
                     {
-                        [...Array(Math.min(data.length - startItem, 4))].map((x, i) => 
-                            <GalleryItem name= {"Command Center"} type={type} data={data[i]} key={i} time={data[i + startItem].time} />
+                        [...Array(Math.min(data.length - startItem, 6))].map((x, i) => 
+                             <GalleryItem name= {"Command Center"} data={data[i]} key={i} time={data[i + startItem].time} />
                         )
                     }
                 </div>

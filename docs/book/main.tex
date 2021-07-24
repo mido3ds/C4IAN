@@ -7,42 +7,48 @@
 \usepackage{utf8}
 \usepackage[T1]{fontenc}
 \usepackage{helvet}
-\usepackage[table]{xcolor}
+\usepackage[table, xcdraw]{xcolor}
 \usepackage{pagecolor}
 \usepackage{afterpage}
+\usepackage{float}
 \usepackage{array}
 \usepackage[acronym,toc,section]{glossaries}
-\usepackage{nomencl}
 \usepackage[english]{babel}
-\usepackage[style=ieee]{biblatex}
+% TODO: use style=ieee but it brokes encoding
+\usepackage[backend=biber,bibencoding=utf8]{biblatex}
 \usepackage[toc,page]{appendix}
 \usepackage{fancyhdr}
 \usepackage{lmodern}
 \usepackage{listings}
 \usepackage{listings-golang}
+\usepackage{enumitem}
+\usepackage{multirow}
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+
 
 \addbibresource{references.bib}
 
 \newcommand{\gpProject}{C4IAN}
 \newcommand{\gpYear}{2021}
-\newcommand{\gpDate}{July 23, \gpYear}
-\newcommand{\gpSupervisor}{Dr. Ahmed Hamdi}
+\newcommand{\gpDate}{July 24, \gpYear}
+\newcommand{\gpSupervisor}{Dr. Ahmed Hamdy}
 \newcommand{\gpSupervisorEmail}{ahamdy@eng.cu.edu.eg}
 \newcommand{\gpSupervisorMobile}{+2 01012697605}
-\newcommand{\gpStudentFirst}{Abdulrahman Khalid Hassan} % TODO
-\newcommand{\gpStudentFirstEmail}{xxx@example.com} % TODO
-\newcommand{\gpStudentFirstMobile}{+2 01xxxxxxxxx} % TODO
-\newcommand{\gpStudentSecond}{Ahmed Mahmoud AbdEl-Monaem} % TODO
-\newcommand{\gpStudentSecondEmail}{ahmed.afifi.cufe@gmail.com} % TODO
-\newcommand{\gpStudentSecondMobile}{+2 01003242713} % TODO
+\newcommand{\gpStudentFirst}{Abdulrahman Khalid Hassan}
+\newcommand{\gpStudentFirstEmail}{abdulrahman.elshafei98@gmail.com}
+\newcommand{\gpStudentFirstMobile}{+2 01011315175}
+\newcommand{\gpStudentSecond}{Ahmed Mahmoud AbdEl-Monaem}
+\newcommand{\gpStudentSecondEmail}{ahmed.afifi.cufe@gmail.com}
+\newcommand{\gpStudentSecondMobile}{+2 01003242713}
 \newcommand{\gpStudentThird}{Mahmoud Othman Adas}
 \newcommand{\gpStudentThirdEmail}{mahmoud.othman.adas@gmail.com}
 \newcommand{\gpStudentThirdMobile}{+2 01019426003}
 \newcommand{\gpStudentFourth}{Yosry Mohammad Yosry}
 \newcommand{\gpStudentFourthEmail}{yosrym93@gmail.com}
-\newcommand{\gpStudentFourthMobile}{+2 01149392716} % TODO
-\definecolor{gpCoverBGColor}{HTML}{013220}
-\definecolor{gpCoverTextColor}{HTML}{FFFFFF}
+\newcommand{\gpStudentFourthMobile}{+2 01149392716}
+\definecolor{gpCoverBGColor}{HTML}{FFFFFF}
+\definecolor{gpCoverTextColor}{HTML}{000000}
 
 \renewcommand*{\contentsname}{Table of Contents}
 \renewcommand{\familydefault}{\sfdefault}
@@ -55,14 +61,7 @@
 \fancyhead[LE]{\gpYear{} | \gpProject{}}
 \fancyhead[RE,LO]{}
 
-% list of abbreviations won't show if you don't declare and use one or more acronyms
-% for more info https://www.overleaf.com/learn/latex/Glossaries#Acronyms
-\makeglossaries
-
-% list of symbols won't show if you don't declare and use on or more symbols, but it will show in table of contents nevertheless, you may need to remve it from there
-% for more info https://www.overleaf.com/learn/latex/Nomenclatures#Basic_Syntax
-\makenomenclature
-\renewcommand{\nomname}{List of Symbols}
+\input{acronyms}
 
 % golang code listing preferences
 \newcommand{\setGolang}{\lstset{%

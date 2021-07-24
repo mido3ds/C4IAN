@@ -7,6 +7,7 @@ import { receivedCodes } from './codes'
 
 import 'react-notifications/lib/notifications.css';
 import './index.css';
+import { getName } from './Api/Api';
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [msgs, setMsgs] = useState([]);
   const [audios, setAudios] = useState([]);
   const [port, setPort] = useState(null)
+  const [name, setName] = useState(null)
 
   var onPlayAudio = (name, data) => {
     setAudioModalName(name);
@@ -32,14 +34,14 @@ function App() {
       sent: false,
       Body: code,
     };
-    setMsgs((msgs)=> {
+    setMsgs((msgs) => {
       return [...msgs, msg]
     });
   }
 
   var onReceiveAudio = (audio) => {
     NotificationManager.info("Command Center sends audio message, click here to play it!", '', 3006, () => onPlayAudio("Command Center", audio.body), true);
-    setAudios((audios)=> {
+    setAudios((audios) => {
       return [...audios, audio]
     });
   }
@@ -50,7 +52,7 @@ function App() {
       eventSource.addEventListener("CODE-EVENT", ev => {
         onReceiveMessage(ev.data)
       })
-  
+
       eventSource.addEventListener("AUDIO-EVENT", ev => {
         onReceiveAudio(JSON.parse(ev.data))
       })
@@ -59,16 +61,22 @@ function App() {
   }
 
   useEffect(() => {
-    if(!port) getPortRef.current.open();
-  }, [])
+    if (!port) getPortRef.current.open();
+    else {
+      getName(port).then(name => {
+        setName(name.name);
+        document.title = name.name;
+      })
+    }
+  }, [port])
 
   return (
     <>
       <NotificationContainer />
       <GetPort onGetPort={onGetPort} ref={getPortRef}> </GetPort>
       <PlayAudio name={audioModalName} audio={audioModalData} ref={playAudioRef}></PlayAudio>
-      
-      {!port ? <> </> : <Profile port={port} msgs={msgs} audios={audios} setMsgs={setMsgs} />}
+
+      {!port ? <> </> : <Profile name={name} port={port} msgs={msgs} audios={audios} setMsgs={setMsgs} />}
     </>
   );
 }

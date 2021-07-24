@@ -3,22 +3,26 @@
 \thispagestyle{empty}
 {\color{gpCoverTextColor}
 \begin{figure}
-\hspace*{4.5em}\includegraphics[width=1.09in]{images/cu-logo.png}\\
+\includegraphics[width=1.09in]{images/cu-logo.png}\\
 {\color{gpCoverTextColor} 
-\hspace*{4em} Cairo University\\
-\hspace*{3em}Faculty of Engineering\\
+Cairo University\\
+Faculty of Engineering\\
 Department of Computer Engineering
 }
 \vspace{30pt}
 \end{figure}
 
 \begin{center}
-    \vspace{20pt}
-    {\fontsize{42}{50} \selectfont \textbf{\gpProject{}}}
+    \vspace{10pt}
+    {\fontsize{32}{50} \selectfont \textbf{\gpProject{}}}
     \vspace{15pt}
     
-    % add logo if you want, unfortunately the background is green and it might not look right
-    
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/logo.png}
+    \label{fig:log-vis}
+    \end{figure}
+
     \vspace{10pt}
     \textbf{A Graduation Project Report Submitted}
     \vspace{3pt}\\
@@ -42,7 +46,7 @@ Department of Computer Engineering
     \end{tabular}
     \end{center}
     
-    \vspace{15pt}
+    \vspace{8pt}
     {\Large \textbf{Supervised by}}\\
     \vspace{5pt}
     \textbf{\gpSupervisor}
@@ -50,7 +54,7 @@ Department of Computer Engineering
     \vspace{15pt}
     \textbf{\gpDate{}}
     
-    \vspace{30pt}
+    \vspace{10pt}
     All rights reserved. This report may not be reproduced in whole or in part, by photocopying or other means, without the permission of the authors/department.    
 \end{center}
 \newpage
@@ -69,15 +73,15 @@ Department of Computer Engineering
 %         \item Testing/development tools and summary of testing results
 %         \item The sponsor(s), if any
 %     \end{itemize}
-    
-Mobile Ad-hoc Networks (MANETs) is an evergrowing research field due to their numereous practical applications. MANETs provide means for infrastructure-less communications, which are utilized by tactical teams, military, emergency and rescue teams, drone swarms, etc.
 
-C4IAN (Command, Control, Communications, Computing \& Intelligence using Ad-hoc Networks) is a scalable communications solution for tactical teams. It builds a MANET on-the-go between command centers and units allowing them to communicate effectively and securely while moving freely, without the need for any infrastructure.
+\quad \acrfull{manets} is an ever-growing research field due to their numerous practical applications. \acrshort{manets} provide means for infrastructure-less communications, they are utilized by tactical teams, military, emergency and rescue teams, drone swarms, and many others. \\
 
-Our system runs on handheld tactical devices, robots, drones, or any other Linux-based platform. It provides both a platform-independent network layer which routes data through dynamically changing and scalable topologies, and an application for tactical teams’ units and
-command centers.
+\acrshort{caian} (\acrlong{caian}) is a scalable communications solution for tactical teams. It builds a \acrshort{manet} on-the-go between command centers and units, allowing them to communicate effectively and securely while moving freely, without the need for any infrastructure. \\
 
-% TODO: Testing/development tools and summary of testing results
+Our system can be run on handheld tactical devices, robots, drones, or any other Linux-based platform. It features both a platform-independent network layer which routes data through dynamically changing and scalable topologies, and applications for tactical teams’ units and command centers to communicate through. \\
+
+\acrshort{caian}'s router implements \acrfull{zhls} routing for uni-casting, \acrfull{odmrp} for multi-casting, and a unique \acrfull{vrb} that is based on \acrshort{zhls}. We also introduced some improvements to \acrshort{zhls} and \acrshort{odmrp} to optimize their implementation.
+
 \newpage
 
 \begin{arabtext}
@@ -86,12 +90,20 @@ command centers.
 }\vspace{20pt}
 \input{arabic-abstract.txt}
 \end{arabtext}
-{\color{white} \tiny \section*{~} \addcontentsline{toc}{section}{\<المُلَخص>}}
+{\color{white} 
+\tiny 
+\section*{~} 
+\addcontentsline{toc}
+{section}
+{\<المُلَخص>}
+}
 \newpage
 
-\section*{Acknowledgement}
-\addcontentsline{toc}{section}{Acknowledgement}
-Your acknowledgment and dedication should be written here
+\section*{Acknowledgment}
+\addcontentsline{toc}{section}{Acknowledgment}
+\quad Our gratitude to those who helped us cannot be put in words. First, we would like to express our appreciation and thankfulness to our supervisor, \textbf{Dr. Ahmed Hamdy}, for his utmost care and support for us during our work. His guidance and mentorship have been critical to our success. \\
+
+We would also like to thank our family, friends and colleagues, who have always been there to support us and push us forward. We are defined by the people who surround us, and those people made us who we are today.
 \newpage
 
 \tableofcontents
@@ -103,10 +115,10 @@ Your acknowledgment and dedication should be written here
 \listoftables
 \addcontentsline{toc}{section}{List of Tables}
 
+\clearpage
+
 \printglossary[type=\acronymtype,title=List of Abbreviations]
 
-\printnomenclature
-\addcontentsline{toc}{section}{\nomname} % don't forget to remove this if you don't have any symbols in this document
 \clearpage
 
 \section*{Contacts}
@@ -123,7 +135,7 @@ Your acknowledgment and dedication should be written here
     \gpStudentThird & \gpStudentThirdEmail & \gpStudentThirdMobile\\\hline
     \gpStudentFourth & \gpStudentFourthEmail & \gpStudentFourthMobile\\\hline
 \end{tabular}
-
+\\
 \subsubsection*{Supervisor}
 \rowcolors{2}{gray!25}{white}
 \begin{tabular}{|l | l | l|}
@@ -137,7 +149,7 @@ Your acknowledgment and dedication should be written here
 \vspace*{\fill}
 \begin{center}
 \begin{minipage}{.45\textwidth}
-This page is left intentionally blank
+This page is intentionally left blank
 \end{minipage}
 \end{center}
 \vfill % equivalent to \vspace{\fill}

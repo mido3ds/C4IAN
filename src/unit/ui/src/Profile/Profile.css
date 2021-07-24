@@ -9,6 +9,14 @@
     font-size: 15px;
 }
 
+.profile-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;    
+    align-items: center;
+    flex-direction: row;
+}
+
 .profile-frame {
     overflow: visible;
     width: 900px;
@@ -43,4 +51,15 @@
     zoom: 90%;
 
     transform: perspective(1500px) rotateY(0deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.unit-name {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    font-size: 30px;
+
 }

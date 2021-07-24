@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -72,6 +73,7 @@ func main() {
 
 type Context struct {
 	Args
+	name    string
 	storeDB *sql.DB
 
 	halConn net.Conn
@@ -91,6 +93,7 @@ type Context struct {
 
 func newContext(args *Args) *Context {
 	context := &Context{
+		name:                  strings.Split(args.iface, "-")[0],
 		Args:                  *args,
 		_videoSeqno:           0,
 		videoID:               0,
@@ -251,7 +254,6 @@ func (c *Context) listenCmdUdp() {
 }
 
 func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
-	log.Println("Received a msg: ", msg)
 	switch msg.Code {
 	case StartVideoStreamingCode:
 		log.Println("start video streaming code")
@@ -278,8 +280,11 @@ func (c *Context) onCodeMsgReceivedFromCMD(msg *models.Message) {
 		c.videoID++
 		c.api.sendCodeMsgEvent(msg.Code)
 		break
+	case Hello:
+		// Ignore hello messages
+		break
 	default:
-		log.Println("generic code msg")
+		log.Println("generic code msg: ", msg.Code)
 
 		c.halMutex.Lock()
 		defer c.halMutex.Unlock()

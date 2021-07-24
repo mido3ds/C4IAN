@@ -37,6 +37,7 @@ func (api *API) start(socket string) {
 	router := mux.NewRouter()
 
 	// API endpoints
+	router.HandleFunc("/api/name", api.getName).Methods(http.MethodGet)
 	router.HandleFunc("/api/audio-msg", api.postAudioMsg).Methods(http.MethodPost)
 	router.HandleFunc("/api/code-msg", api.postMsg).Methods(http.MethodPost)
 
@@ -84,6 +85,12 @@ func (api *API) sendAudioMsgEvent(body *models.Audio) {
 		log.Panic(err)
 	}
 	api.eventSource.SendEventMessage(string(payload), "AUDIO-EVENT", "")
+}
+
+func (api *API) getName(w http.ResponseWriter, r *http.Request) {
+	nameMap := make(map[string]string)
+	nameMap["name"] = api.context.name
+	json.NewEncoder(w).Encode(nameMap)
 }
 
 func (api *API) postAudioMsg(w http.ResponseWriter, r *http.Request) {

@@ -10,8 +10,8 @@
 }
 
 .mission-icon {
-  top: 180px;
-  right: 260px;
+  top: 175px;
+  right: 250px;
   width: 60px;
   height: 60px;
   position: absolute;
@@ -20,7 +20,7 @@
 
 .backup-icon {
   top: 340px;
-  right: 290px;
+  right: 280px;
   width: 60px;
   height: 60px;
   position: absolute;
@@ -28,7 +28,7 @@
 }
 
 .danger-icon {
-  top: 60px;
+  top: 40px;
   left: 420px;
   width: 60px;
   height: 60px;
@@ -38,7 +38,7 @@
 
 .audio-icon {
   top: 180px;
-  left: 270px;
+  left: 250px;
   width: 60px;
   height: 60px;
   position: absolute;
@@ -47,7 +47,7 @@
 
 .plan-icon {
   top: 340px;
-  left: 290px;
+  left: 270px;
   position: absolute;
   width: 60px;
   height: 60px;

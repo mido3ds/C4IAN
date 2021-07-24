@@ -12,7 +12,7 @@ import (
 
 var mutex sync.RWMutex
 
-const InactiveThresholdInSeconds = 60 * 2
+const InactiveThresholdInNanoseconds = 60 * time.Second
 
 type DatabaseManager struct {
 	db *sqlx.DB
@@ -127,7 +127,7 @@ func (dbManager *DatabaseManager) GetUnits() []models.Unit {
 		ON ip = src AND last_activity = time
 		`,
 		time.Now().UnixNano(),
-		InactiveThresholdInSeconds,
+		InactiveThresholdInNanoseconds,
 	)
 	if err != nil {
 		log.Panic(err)
