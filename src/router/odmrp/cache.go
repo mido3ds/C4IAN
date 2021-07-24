@@ -11,6 +11,8 @@ import (
 	. "github.com/mido3ds/C4IAN/src/router/tables"
 )
 
+// key: srcIP
+// value: (seqNo, grpIP, prevHop, cost)
 type cacheEntry struct {
 	seqNo   uint64
 	grpIP   net.IP
@@ -55,7 +57,7 @@ func (f *cache) set(src net.IP, entry *cacheEntry) bool {
 		val.timer.Stop()
 	}
 	entry.timer = f.timers.Add(ODMRPCacheTimeout, func() {
-		// f.del(src)
+		f.del(src)
 	})
 	f.m.Set(IPv4ToUInt32(src), entry)
 	return true

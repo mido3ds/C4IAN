@@ -344,7 +344,7 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 	// TODO remove log
 	// log.Printf("Recieved JoinReply %#v\n", jr.prevHop.String())
 
-	// update forwarding table
+	// c
 	forwardingEntry := &forwardingEntry{nextHop: jr.prevHop, cost: jr.cost}
 	refreshForwarder := c.forwardingTable.set(jr.destIP, forwardingEntry)
 	if refreshForwarder {
