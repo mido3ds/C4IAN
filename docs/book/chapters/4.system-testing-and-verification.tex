@@ -72,7 +72,7 @@ To be able to create, edit and visualize the topology either offline or online (
 
 Figure \ref{fig:edit-ui} shows edit UI, it has a map with units each has its name and range, you can move/add/delete nodes and change the hierarchical zones \textit{Zlen} and apply a mobility simulation with some configuration while connected to Mininet.
 
-\begin{figure}
+\begin{figure}[!hbf]
     \centering
     \includegraphics[width=15cm]{images/edit-ui.png}
     \caption{Edit GUI}
@@ -119,7 +119,7 @@ This helped us avoid changing the interface for the UI just to test inside the t
 
 Figure \ref{fig:socat-diagram} shows how the socket forwarding happens with the testbed.
 
-\begin{figure}
+\begin{figure}[!hbf]
     \centering
     \includegraphics[width=13cm]{images/socat-diagram.png}
     \caption{Socat Forwarding and UI}
@@ -131,7 +131,7 @@ Our main goal in evaluating each module in \acrshort{caian} was to make sure it 
 
 For the reasons stated above, testing development could not be postponed after code development. As a result, our testing strategy was obvious from the start in terms of the need for a testing environment that allows us to construct multiple topologies with varied patterns of movement and exchange and route messages between different nodes in these topologies. \acrshort{caian} testing development plan can be mainly divided into three components as shown in Figure \ref{fig:testing-strategy}: \acrshort{utils} testing development, integration testing development and network testing development that serves both module and integration testing.
 
-\begin{figure}
+\begin{figure}[!hbf]
     \centering
     \includegraphics[width=15cm]{images/testing-plan.png}
     \caption{Testing Strategy}
@@ -152,13 +152,13 @@ In \acrshort{caian}, Module testing is done sequentially into two steps as show 
 
 
 \subsection{Integration Testing}
-Integration testing was a difficult process in \acrshort{caian}. It contains e2e testing using a topology that comprises a variety of various types of nodes, each with its own user interface and routing options.
+Integration testing was a difficult process in \acrshort{caian}. It contains end-to-end testing using a topology that has numerous of nodes, each with its own user interface and router.
 
 The integration testing was split into two primary procedures that ran simultaneously. The initial step was to evaluate the app's functionality from units to command centers and back. This process was carried out both automatically using \acrshort{hal} scripts to simulate units and send periodic sensor data and stream videos to the command center, as well as manually to test both unit and command center user interfaces and ensure that multicast and broadcast data was sent only to its intended destination.
 
 The second step in the integration testing process was to test the routing decisions. Data delivery to its intended destination wasn't enough for us to declare that the system functioned as it's intended to be. It was critical to observe and evaluate each node's routing choice, as well as how data is delivered from its source to its intended destination. To accomplish so, we created a log visualizer software as shown in Figure \ref{fig:log-vis} that can collect all the router logs and evaluate their forwarding decisions, and displaying them to us in a way that allows us to appraise the router's performance and behavior. 
 
-\begin{figure}
+\begin{figure}[!hbf]
     \centering
     \includegraphics[width=7cm]{images/log-vis1.png}
     \includegraphics[trim={0 0 0 1.3cm},clip,width=7cm]{images/log-vis2.png}

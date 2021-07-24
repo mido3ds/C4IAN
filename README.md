@@ -6,26 +6,57 @@ Build a network on the go for tactical teams in war and emergency situations.
 
 Supports video/audio streaming and messaging with unicast, multicast and broadcast cababilities.
 
+# Table Of Contents
+<!--ts-->
+* [ Problem Statement. ](#problem-statement)
+* [ Motivation. ](#motivation)
+* [ Demo. ](#demo)
+* [ System Architecture. ](#system-arch)
+* [ Development. ](#development)
+* [ Developers. ](#developers)
+<!--te-->
+
+
 ## Problem Statement
+<a name="problem-statement"></a>
 Tactical teams face troubles to achieve scalable and reliable communications in the battlefield or during
 emergencies due to the lack of a network infrastructure and the high mobility of units. They also need a
 method to collect real time data and analyze it to have a competitive advantage in the battleground.
 
 ## Motivation
+<a name="motivation"></a>
 Mobile ad-hoc networks can be formed on the go, without any infrastructure. They promise more
 flexibility and reliability than manual radio broadcasting. We are interested in building such complex
 distributed systems.
 
-## System Overview
-![System Overview](./docs/figures/nodes_diagram.png)
+## Demo
+<a name="demo"></a>
 
-## System Architecture
+### English Demo Video
+<div align="center">
+  <a href="https://youtu.be/591PVS4rE8Y">
+    <img src="https://img.youtube.com/vi/591PVS4rE8Y/0.jpg" alt="Nabd Showcase" width="560" height="315">
+  </a>
+</div>
+
+### Arabic Demo Video
+
+<div align="center">
+  <a href="https://youtu.be/aT0k4FVapXM">
+    <img src="https://img.youtube.com/vi/aT0k4FVapXM/0.jpg" alt="Nabd Showcase" width="560" height="315">
+  </a>
+</div>
+
+## System Architecture 
+<a name="system-arch"></a>
 ![System Architecture](./docs/figures/system.png)
 
+<a name="development"></a>
 # Development
 > Follow the rest of `README`s.
 
 ## Common Requirements
+<a name="common-reqs"></a>
 ### golang 1.15.8
 ```
 $ sudo apt update && sudo apt install -y wget && (
@@ -91,3 +122,13 @@ sudo python3 -m pip install simple-websocket-server numpy
 ```
 $ sudo apt install -y libgconf-2-4
 ```
+
+# :copyright: Developers
+<a name="developers"></a>
+
+| Name                                |              Email               |
+| ----------------------------------- | :------------------------------: |
+| Abdulrahman Khalid Hassan           | abdulrahman.elshafei98@gmail.com |
+| Ahmad Mahmoud AbdElMen'em           |   ahmed.afifi.cufe@gmail.com     |
+| Mahmoud Othman Adas                 |   mido3ds@gmail.com              |
+| Yosry Mohammad Yosry                |       yosrym93@gmail.com         |   

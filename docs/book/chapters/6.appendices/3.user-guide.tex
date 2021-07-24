@@ -39,7 +39,8 @@ $ sudo apt update && sudo apt install -y wget && (
     mkdir -p $HOME/.config/go/1.15/{bin,pkg,src}
     echo >>"$HOME"/.bashrc
     echo 'export GOPATH="$HOME/.config/go/1.15"' >>"$HOME"/.bashrc
-    echo 'export PATH="$PATH:/usr/local/go/bin:$GOPATH/bin"' >>"$HOME"/.bashrc
+    echo 'export PATH="$PATH:/usr/local/go/bin:$GOPATH/bin"'\ 
+        >>"$HOME"/.bashrc
     echo >>"$HOME"/.bashrc
     . "$HOME"/.bashrc
 )
@@ -60,7 +61,8 @@ $ sudo apt update && sudo apt install -y libnetfilter-queue-dev
 \subsection{Known Issues}
 \subsubsection{Electron with libgconf}
 \begin{verbatim}
-electron: error while loading shared libraries: libgconf-2.so.4: cannot open shared object file: No such file or directory    
+electron: error while loading shared libraries: libgconf-2.so.4: cannot
+open shared object file: No such file or directory    
 \end{verbatim}
 \textbf{Solution} Run:
 \begin{verbatim}

@@ -148,7 +148,7 @@ The router provides unicast, multicast and broadcast services to the upper layer
 \subsection{Modular Decomposition}
 Figure \ref{fig:router-modules} shows the modules of the router in detail.
 
-\begin{figure}
+\begin{figure}[!hbf]
     \centering
     \includegraphics[width=14cm]{images/router-modules.png}
     \caption{The Router Modules}
@@ -174,14 +174,14 @@ The router reads and writes packets from the kernel in 3 ways:
 
 \subsubsection{Forwarder}
 
+The forwarder constitutes our data plane. It is where all the data packets pass and get routed. The forwarder listens to packets coming from the \acrshort{ip} layer and packets coming from the \acrshort{mac} layer. Packets coming from the \acrshort{ip} layer are packets originating at the current node, while packets coming from the \acrshort{mac} layer are packets arriving from other nodes, either addressed to the current node or to another destination. The forwarder is responsible for controlling the flow of those data packets. Figure \ref{fig:forwarder-data-flow} shows how the data flows through the forwarder.
+
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=0.9\linewidth]{images/forwarder-data-flow.png}
     \caption{Data Flow Through the Forwarder}
     \label{fig:forwarder-data-flow}
 \end{figure}
-
-The forwarder constitutes our data plane. It is where all the data packets pass and get routed. The forwarder listens to packets coming from the \acrshort{ip} layer and packets coming from the \acrshort{mac} layer. Packets coming from the \acrshort{ip} layer are packets originating at the current node, while packets coming from the \acrshort{mac} layer are packets arriving from other nodes, either addressed to the current node or to another destination. The forwarder is responsible for controlling the flow of those data packets. Figure \ref{fig:forwarder-data-flow} shows how the data flows through the forwarder.
 
 When the forwarder receives data from the \acrshort{ip} layer, it first checks the type of routing required for the \acrshort{ip} packet depending on the destination \acrshort{ip} address, which can be unicasting, multicasting, or broadcasting:
 \begin{itemize}[itemsep=1pt, topsep=5pt]
@@ -273,12 +273,6 @@ Using CFB mode enables the packet to be encrypted without increasing its size be
 It was also chosen among other stream modes because of its capability to detect tampering with the packet, in case someone changed one bit the whole stream will change completely which will be detected easily either by the \acrshort{ip} header checksum or version or TCP/UDP/ICMP length or checksum or the application layer.
 This provides authentication besides confidentiality.
 
-\subsection{Design Constraints}
-Explain the constraints that affect the design of the module
-
-\subsection{Other Description}
-Give any other necessary discussion of the module to ensure that it is clearly described.
-
 \section{Unicast Controller}
 \subsection{Functional Description}
 The unicast controller is in charge of one-to-one transmission between two network nodes; that is, one sender and one receiver, each with an \acrshort{ip} address. At every node, it creates a forwarding table, which includes the best next-hop to forward a packet to for each possible destination. Collectively, this constitutes finding a path from every possible source to every reachable destination. As indicated in the preceding section, we believe \acrfull{zhls} is one of the best hybrid unicast protocols for this task. As a result, we chose it as our unicast routing protocol.
@@ -342,7 +336,7 @@ The main reason that Secure \acrshort{arp} can use encryption to secure its comm
     \caption{\acrshort{sarp} Header}
     \label{fig:sarp-header}
 \end{figure}
-In Secure \acrshort{arp}, all packets contain consist of a \acrshort{zid} header and a \acrshort{sarp} header that is shown by Figure \ref{fig:sarp-header}. The header fields are as follows:
+In Secure \acrshort{arp}, all packets consist of a \acrshort{zid} header and a \acrshort{sarp} header that is shown by Figure \ref{fig:sarp-header}. The header fields are as follows:
 \begin{itemize}[itemsep=1pt, topsep=5pt]
     \item \textbf{Type:} \acrshort{sarp} packets are either a \textit{\acrshort{sarp} Request} or a \textit{\acrshort{sarp} Response}.
     \item \textbf{\acrshort{ip} address:} The \acrshort{ip} address of the sender.
@@ -484,9 +478,9 @@ On-Demand Multicast Routing Protocol (ODMRP) may be divided into two part, the c
 \\
 \subsubsection{Control Packets Generator}
 Generating right control packets is critical for this protocol as ODMRP depends on the control packets for filling the tables, construct the routes and the network soft state maintenance.
-This module generates two important control packets called Join Query (format illustrated in Figure \ref{fig:join-query}) and Join Reply (format illustrated in Figure \ref{fig:join-reply}) .
+This module generates two important control packets called Join Query (format illustrated in Figure \ref{fig:join-query}) and Join Reply (format illustrated in Figure \ref{fig:join-reply}).
 \\
-Join Query is generated when a multicast source has packets to transmit but no route and group membership is known, Join Query packet contains the following fields: 
+A Join Query is generated when a multicast source has packets to transmit but no route and group membership is known, a Join Query packet contains the following fields: 
 \begin{itemize}[itemsep=1pt, topsep=5pt]
     \item \textbf{Dests Count:} The Number of destinations IPs.
     \item \textbf{Checksum:} It is used to validate the received control packet.
@@ -611,7 +605,7 @@ Figure \ref{fig:multi-forward-table-entry} represents one entry of Multi Forward
 \\
 \subsection{ODMRP Protocol Flow}
 \label{sec:odmrp-protocol-flow}
-In ODMRP, group membership and multicast routes are formed and updated by the source on demand. When a multicast source has packets to transmit but no route and group membership is known (Multi Forward \ref{fig:multi-forward-table-entry} Table is empty), it floods an advertising control packet. This packet, named Join Query (format illustrated in Figure \ref{fig:join-query}) and it is regularly sent by the flooder to the whole network to refresh the membership information and update the routes.
+In ODMRP \cite{ODMRP}, group membership and multicast routes are formed and updated by the source on demand. When a multicast source has packets to transmit but no route and group membership is known (Multi Forward \ref{fig:multi-forward-table-entry} Table is empty), it floods an advertising control packet. This packet, named Join Query (format illustrated in Figure \ref{fig:join-query}) and it is regularly sent by the flooder to the whole network to refresh the membership information and update the routes.
 \\
 \\
 When a node gets a Join Query packet, time to live is decreased by one, and it records the source address and the unique identifier of this control packet to its Cache Table \ref{fig:cache-table-entry} to identify duplication to construct the join reply later.
@@ -667,6 +661,12 @@ Video Streamer is a submodule of both the Daemon and User Interface that will be
 \subsubsection{Daemon}
 The daemon of the command center client is a highly concurrent program that runs in the background on the command center's devices. It exchanges code messages, audio messages with units, and receive sensors data and video streaming from the units through a network interface, runs a database to keep track of all sent and received data, and connects to the user interface through a \acrshort{rest}ful \acrshort{api} server.
 
+On the network interface, the unit has two concurrent routines that listen for TCP connections and UDP datagrams. When receiving a TCP connection or a UDP datagram, the incoming data is handled in a separate concurrent routine to avoid missing connections or incoming datagrams while processing previous ones. Any data received is prepended with a byte that identifies the packet type. The packet payload is then decoded, the data is stored in the database, and the user interface is notified through \acrfull{sse}. The network interface also provides routines to send or receive packets over TCP or UDP to units, in case the command center needs to send code messages or audio messages to a unit, a group of units, or all the units. Note that all TCP and UDP data transfers are routed using our router.
+
+The \acrshort{rest}ful \acrshort{api} server runs in a concurrent routine and provides endpoints for the user interface to collect and present stored data. In addition, it provides endpoints for the user interface to send code messages or audio messages to unit(s). All sent and received data are stored in the database. Since the database is accessed through different concurrent subroutines, mutual exclusion techniques are used to synchronize access to the database.
+
+The main routine reads any necessary configuration or command line arguments on startup, initializes the database, then starts and orchestrates the aforementioned subroutines. Figure \ref{fig:cmd-daemon} shows a complete picture of the command center client daemon.
+
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{images/cmd-daemon.png}
@@ -674,32 +674,26 @@ The daemon of the command center client is a highly concurrent program that runs
     \label{fig:cmd-daemon}
 \end{figure} 
 
-On the network interface, the unit has two concurrent routines that listen for TCP connections and UDP datagrams. When receiving a TCP connection or a UDP datagram, the incoming data is handled in a separate concurrent routine to avoid missing connections or incoming datagrams while processing previous ones. Any data received is prepended with a byte that identifies the packet type. The packet payload is then decoded, the data is stored in the database, and the user interface is notified through \acrfull{sse}. The network interface also provides routines to send or receive packets over TCP or UDP to units, in case the command center needs to send code messages or audio messages to a unit, a group of units, or all the units. Note that all TCP and UDP data transfers are routed using our router.
-
-The \acrshort{rest}ful \acrshort{api} server runs in a concurrent routine and provides endpoints for the user interface to collect and present stored data. In addition, it provides endpoints for the user interface to send code messages or audio messages to unit(s). All sent and received data are stored in the database. Since the database is accessed through different concurrent subroutines, mutual exclusion techniques are used to synchronize access to the database.
-
-The main routine reads any necessary configuration or command line arguments on startup, initializes the database, then starts and orchestrates the aforementioned subroutines. Figure \ref{fig:cmd-daemon} shows a complete picture of the command center client daemon.
-
 \subsubsection{Video Streamer}
 For video streaming, we use HTTP Live Streaming (HLS) protocol. While video streaming is running at a unit, the command center client receives a metadata file and video segment files from the units continuously. The video streamer receives those files through the daemon, continuously updates the metadata, and stores the video segment files. In a dedicated media directory, the video streamer creates a directory per video stream per unit to store the video stream's metadata and video segment files and serve them to the user interface through a file server \acrshort{api} which maps endpoints paths to local file system paths.
+
+When a video stream starts, the video streamer notifies the user interface through a \acrshort{sse}. The user interface reads the metadata to identify the available video segments, and starts fetching the video segments and displaying the video stream continuously through the file server \acrshort{api}. Figure \ref{fig:video-streamer} visualizes the data flow through the video streamer.
 
 \begin{figure}[!htb]
     \centering
     \includegraphics[width=\linewidth]{images/video-streamer.png}
     \caption{Video Streamer Data Flow}
     \label{fig:video-streamer}
-\end{figure} 
-
-When a video stream starts, the video streamer notifies the user interface through a \acrshort{sse}. The user interface reads the metadata to identify the available video segments, and starts fetching the video segments and displaying the video stream continuously through the file server \acrshort{api}. Figure \ref{fig:video-streamer} visualizes the data flow through the video streamer.
+\end{figure}
 
 \subsubsection{User Interface}
 The user interface in command center client allows operation leaders to manage and visualize units data, as well as record command audios and choose command codes that they want to send to these units.
 There is two-way communication between the command center client daemon and the user interface. Data that recently arrived at the command center daemon is sent directly to the user interface using \acrfull{sse} to be visualized immediately to the operation leaders. While the data history is sent from command center daemon to user interface using \acrfull{rest} \acrshort{api} endpoints. 
 
 Command center user interface is divided mainly into four pages: a login page, a map page, a units page, and finally a streams page. 
-The login page is used to authenticate the operation leader to prevent masquerade attacks.
+The login page is used to authenticate the operation leader to prevent masquerade attacks, as shown by Figure \ref{fig:cmd-ui-login}.
 
-\begin{figure}
+\begin{figure}[!htb]
     \centering
     \includegraphics[width=15cm]{images/cmd-ui-login.png}
     \caption{\acrshort{cmd} \acrshort{ui} Login}
@@ -707,31 +701,33 @@ The login page is used to authenticate the operation leader to prevent masquerad
 \end{figure}
 
 
-The map page is where the operation leader can view all nearby units' precise positions on a real map. Each unit is color-coded according to the group it belongs to, assisting the operation leader in analyzing group movements. When some unit sensor data indicates that this unit is in danger, or when some unit was inactive for more than two minutes and did not provide any sensor data during that time, the operation lead is informed. Any communications received from neighboring units are shown in a chat window. As soon as the data reaches the user interface, there will live update at the command center's screen. 
+The map page is where the operation leader can view all nearby units' precise positions on a real map, as shown by Figure \ref{fig:cmd-ui-map-ch4}. Each unit is color-coded according to the group it belongs to, assisting the operation leader in analyzing group movements. When some unit sensor data indicates that this unit is in danger, or when some unit was inactive for more than two minutes and did not provide any sensor data during that time, the operation lead is informed. Any communications received from neighboring units are shown in a chat window. As soon as the data reaches the user interface, there will live update at the command center's screen. 
 
-\begin{figure}
+\begin{figure}[!htb]
     \centering
     \includegraphics[width=15cm]{images/cmd-ui-map.png}
     \caption{\acrshort{cmd} \acrshort{ui} Map}
-    \label{fig:cmd-ui-map}
+    \label{fig:cmd-ui-map-ch4}
 \end{figure}
 
 
-The operation leader can use the unit page to examine all of a unit's data history or send voice or message orders to it. All audios, videos, messages, position history, and sensors data of a unit are visible to the operation leader. \begin{figure}
+The operation leader can use the unit page (in Figure \ref{fig:cmd-ui-units-ch4}) to examine all of a unit's data history or send voice or message orders to it. All audios, videos, messages, position history, and sensors data of a unit are visible to the operation leader. 
+
+\begin{figure}[!htb]
     \centering
     \includegraphics[width=15cm]{images/cmd-ui-units.png}
     \caption{\acrshort{cmd} \acrshort{ui} Units}
-    \label{fig:cmd-ui-units}
+    \label{fig:cmd-ui-units-ch4}
 \end{figure}
 
 
-Finally, the operation leader may examine all live streams received from any nearby unit on the Streams page.
+Finally, the operation leader may examine all live streams received from any nearby unit on the Streams page. This is shown by Figure \ref{fig:cmd-ui-streams-ch4}
 
-\begin{figure}
+\begin{figure}[!htb]
     \centering
     \includegraphics[width=15cm]{images/cmd-ui-streaming.png}
     \caption{\acrshort{cmd} \acrshort{ui} Streams}
-    \label{fig:cmd-ui-streams}
+    \label{fig:cmd-ui-streams-ch4}
 \end{figure}
 
 
@@ -757,7 +753,7 @@ More detail about the unit device in \ref{subsubsec:units-dev}.
 \subsection{Modular Decomposition}
 Figure \ref{fig:unit-modules} shows the modules of the unit client.
 
-\begin{figure}
+\begin{figure}[!htb]
     \centering
     \includegraphics[width=11cm]{images/unit-modules.png}
     \caption{Unit Modules}
