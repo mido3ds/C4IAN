@@ -282,34 +282,34 @@ In this section we compare some commonly used multicast routing protocols and co
 \begin{itemize}[itemsep=1pt, topsep=5pt]
 \item \acrfull{odmrp}:
 
-\acrshort{odmrp} is a reactive protocol which is mesh-based and source initiated protocol, it also maintains a mesh by following the soft-state approach.
+\acrshort{odmrp} \cite{ODMRP} is a reactive protocol which is mesh-based and source initiated protocol, it also maintains a mesh by following the soft-state approach.
 
 \item Protocol for Unified Multicasting through Announcement (PUMA):
 
-PUMA is reactive protocol and distributed, it is mesh-based and receiver initiated protocol, PUMA’s all transmissions are broadcast and doesn’t depend on any unicast protocols.
+PUMA \cite{PUMA} is reactive protocol and distributed, it is mesh-based and receiver initiated protocol, PUMA’s all transmissions are broadcast and doesn’t depend on any unicast protocols.
 
 \item Multicast Ad-hoc On demand Distance Vector Protocol (MAODV):
 
-MAODV is a reactive tree based protocol and hard-state, it uses a broadcast route discovery mechanism to discover the multicast routes on demand, it’s a multicast extension of the \acrshort{aodv} protocol.\cite{chow2008multiple}
+MAODV \cite{MAODV} is a reactive tree based protocol and hard-state, it uses a broadcast route discovery mechanism to discover the multicast routes on demand, it’s a multicast extension of the \acrshort{aodv} protocol.\cite{chow2008multiple}
 
 \item Overlay Boruvka-based Ad-hoc Multicast Protocol (OBAMP):
 
-OBAMP is a proactive mesh-first overlay multicast protocol, it is used to find the minimum spanning tree protocol which is a receiver initiated and soft-state approach.
+OBAMP \cite{OBAMP} is a proactive mesh-first overlay multicast protocol, it is used to find the minimum spanning tree protocol which is a receiver initiated and soft-state approach.
 
 \item Application Layer Multicast Algorithm (ALMA):
 
-ALMA is a proactive tree-based protocol, it is a receiver initiated protocol and soft-state approach, it is a flexible and highly adaptive overlay multicast protocol.
+ALMA \cite{ALMA} is a proactive tree-based protocol, it is a receiver initiated protocol and soft-state approach, it is a flexible and highly adaptive overlay multicast protocol.
 
-\item enhanced version of ALMA (ALMA-H):
+\item Enhanced version of ALMA (ALMA-H):
 
-ALMA-H is a proactive tree-based protocol, it is an enhanced version of ALMA for tree efficiency, it is a receiver driven and soft-state approach.
+ALMA-H \cite{ALMA} is a proactive tree-based protocol, it is an enhanced version of ALMA for tree efficiency, it is a receiver driven and soft-state approach.
 
 
 \end{itemize}
 
 \subsection{Performance Evaluation Of Multicast Routing Protocols}
 
-The performance evaluation criteria used to compare these protocols are Throughput, Reliability, End-to-End delay and Packet Delivery Ratio by increasing the numbers and speed of the nodes.
+The performance evaluation criteria used to compare these protocols are Throughput, Reliability, End-to-End delay and Packet Delivery Ratio by increasing the numbers and speed of the nodes. \cite{multicast-survay}
 
 \begin{enumerate}[itemsep=1pt, topsep=5pt]
     \item Throughput: the ratio between the number of data packets generated to the number of the data packets received.
@@ -324,7 +324,7 @@ In this scenario the performance is measured for the four performance metrics by
 \\
 Figure \ref{fig:nodes-vs} top left graph shows the simulation results of throughput in (Kbps) versus number of nodes.
 \\
-The results show that on increasing the number of nodes, \acrshort{odmrp} gives higher throughput than the other protocols that is because \acrshort{odmrp} deliver data packets in high rate as its operation is on-demand, on the other hand MAODV has the worst throughput as most of the nodes don’t participate in data transfer
+The results show that on increasing the number of nodes, \acrshort{odmrp} \cite{ODMRP} gives higher throughput than the other protocols that is because \acrshort{odmrp} deliver data packets in high rate as its operation is on-demand, on the other hand MAODV has the worst throughput as most of the nodes don’t participate in data transfer
 \\
 \\
 Figure \ref{fig:nodes-vs} top right graph shows the simulation results of reliability versus the number of nodes where the number of senders is only one, so all protocols demonstrated high reliability.
@@ -386,7 +386,7 @@ The packet delivery ratio of all the protocols decreases when the speed increase
 \end{figure}
 
 \section{Implemented Multicast Routing: \acrshort{odmrp}}
-The Wireless Adaptive Mobility (WAM) Laboratory at the University of California, Los Angeles created the \acrfull{odmrp}, to reduce channel overhead and enhance scalability, \acrshort{odmrp} employs on-demand routing methods.
+The Wireless Adaptive Mobility (WAM) Laboratory at the University of California, Los Angeles created the \acrfull{odmrp} \cite{ODMRP}, to reduce channel overhead and enhance scalability, \acrshort{odmrp} employs on-demand routing methods.
 It constructs a forwarding mesh for each multicast group using the idea of a forwarding group, which is a collection of nodes responsible for passing multicast data.
 The disadvantages of multicast trees in mobile wireless networks, such as inconsistent connectivity, traffic concentration, frequent tree reconfiguration, and non-shortest path in a shared tree, are addressed by maintaining and utilizing a mesh instead of a tree.
 To keep multicast group members, a soft-state technique is used.
@@ -447,7 +447,25 @@ The reasons we chose \acrshort{odmrp} as our multicast routing protocol are summ
 
 There is always room for optimization. \acrshort{odmrp} is one of the best multicast routing protocols but with some modifications as We did in broadcasting the join reply packets by using the filled tables to only sending the join reply packet to the upstream nodes, it also can be optimized further by other extendable versions of \acrshort{odmrp}:
 \begin{itemize}[itemsep=1pt, topsep=5pt]
-    \item E-\acrshort{odmrp} version of \acrshort{odmrp} with adaptive refresh. Rather than mobility prediction, receivers report connection breakages, which drives adaptation. A basic local recovery is easily incorporated with the adaptive refreshing method. In light load, E-\acrshort{odmrp} may have a slightly lower packet delivery ratio than \acrshort{odmrp}, but it may be better in high loads.
-    \item RODMRP which seeks to be robust to network or node failures and to provide a continuous multicast service for live data streaming.
+    \item E-\acrshort{odmrp} version of \acrshort{odmrp} with adaptive refresh. Rather than mobility prediction, receivers report connection breakages, which drives adaptation. A basic local recovery is easily incorporated with the adaptive refreshing method. In light load, EODMRP \cite{EODMRP} may have a slightly lower packet delivery ratio than \acrshort{odmrp}, but it may be better in high loads.
+    \item RODMRP \cite{RODMRP} which seeks to be robust to network or node failures and to provide a continuous multicast service for live data streaming.
     \item It also could be extended to work with zones.
 \end{itemize}
+
+% @INPROCEEDINGS{MAODV,
+
+%   author={Zhong, Mingyang and Fu, Yunqing and Jia, Xinqiang},
+
+%   booktitle={2011 International Conference on E-Business and E-Government (ICEE)}, 
+
+%   title={MAODV multicast routing protocol based on node mobility prediction}, 
+
+%   year={2011},
+
+%   volume={},
+
+%   number={},
+
+%   pages={1-4},
+
+%   doi={10.1109/ICEBEG.2011.5881805}}

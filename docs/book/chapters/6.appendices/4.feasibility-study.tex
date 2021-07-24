@@ -1,6 +1,7 @@
 \chapter{Feasibility Study}
 
-\quad  In this appendix, we discuss the feasibility of C4IAN. As chapter 2 covered marketing and financial aspects, we will focus on technical, operational, and legal feasibility.
+\quad  In this appendix, we discuss the feasibility of C4IAN. 
+As chapter \ref{ch:feasability} covered marketing and financial aspects, we will focus on technical, operational, and legal feasibility.
 
 \section{Technical Feasibility}
 
@@ -19,10 +20,17 @@ After the produce is designed, the implementation phase requires skills in low l
 In our initial design of C4IAN, we use Wi-Fi as the MAC Layer. This causes no legal problems as Wi-Fi bands belong to the ISM bands, which are free to use without licensing. For some applications, a different band with different properties may be required. Even though the router implementation mostly will not need to be modified to accommodate other MAC layers, some legal obstacles may rise. Using bands outside the ISM bands requires legal licensing, with laws differing by country. If C4IAN is to be operated in such bands, necessary licensing must be acquired first.
 
 \section{SWOT Analysis}
+Figure \ref{fig:swot} shows the SWOT (Strengths, Weaknesses, Opportunities and Threats) analysis of the product.
+SWOT analysis helps in project and expectations management.
+
+One of the main weaknesses of the product is that it only targets Linux.
+However, it is not a major problem, as at the end the product will be installed on closed embedded systems and mostly users will be indifferent.
+
+The product is user-friendly and scalable, yet the customers have difficult requirements.
 
 \begin{figure}[!htb]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/swot.png}
+    \includegraphics[width=0.6\linewidth]{images/swot.png}
     \caption{SWOT Analysis}
     \label{fig:swot}
 \end{figure}
