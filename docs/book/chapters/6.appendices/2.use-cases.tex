@@ -1,2 +1,21 @@
 \chapter{Use Cases}
-Include all your use cases
+%Include all your use cases
+
+C4IAN is designed to provide infrastructure-less wireless communications for tactical teams. It provides the following services for command centers and units, who can be moving freely:
+\begin{itemize}[noitemsep, topsep=0pt]
+    \item Exchanging code messages between units and command centers.
+    \item Exchanging audio messages between units and command centers.
+    \item Assigning units to groups, and sending audio messages from command centers to a specific groups (multicasting), or to all units (broadcasting).
+    \item Streaming sensors' data (location, heartbeat, etc.) from units to command centers.
+    \item Streaming videos from combat cameras at the units to command centers on-demand.
+    \item Recording and visualizing all communications history with different units at command centers.
+\end{itemize} 
+
+\vspace{\baselineskip}
+
+These services are provided by the implemented clients for command centers and units. However, the underlying router is a generic MANET router that can be easily used for further applications by modifying or extending the software clients. Some examples are:
+\begin{itemize}[noitemsep, topsep=0pt]
+    \item Controlling fleets of drones or autonomous vehicles.
+    \item Providing communications for smart robots with decentralized coordination.
+    \item Aggregating sensors data from moving vehicles.
+\end{itemize}

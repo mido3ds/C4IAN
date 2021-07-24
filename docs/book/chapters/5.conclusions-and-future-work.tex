@@ -1,29 +1,134 @@
 \chapter{Conclusions and Future Work}
 
-This chapter should summarize the whole project, it features and limitation. Moreover, you should give directions for future work
+% This chapter should summarize the whole project, it features and limitation. Moreover, you should give directions for future work
 
-In this space, before the first section, write an introductory paragraph for the chapter
+% In this space, before the first section, write an introductory paragraph for the chapter
+
+We have introduced \acrshort{caian} as a communications solution for tactical teams, and thoroughly explained how it works. In this chapter, we let you catch a glimpse of how our journey looked like. We describe the challenges that we faced, the lessons that we learned, and summarize what we achieved. Finally, we discuss what the future may look like for \acrshort{caian}.    
 
 \section{Faced Challenges}
-Mention all the problems/challenges that you faced while working with the project and how you overcome them
+% Mention all the problems/challenges that you faced while working with the project and how you overcome them
+
+The core of \acrshort{caian} is the router. Routing in \acrshort{manets} is a research problem that has no established solutions. A multitude of routing protocols are being researched, with only a few implementations. Working on such a problem has introduced us to a variety of challenges.
+
+\subsection{\acrshort{manet} routing}
+Routing in \acrshort{manets} is an open-ended research problem that we had no background of. We needed to accumulate the necessary background knowledge through research papers and books. Afterward, we had to choose and tune adequate routing protocols for our project. We began our journey through literature, understanding and comparing different approaches until we were able to select candidate protocols. Moreover, The papers explaining routing protocols focused on theory. As no open-source implementations exist, we had to fill in the missing pieces during our implementation.
+
+\subsection{Interfacing with Linux Kernel}
+The router module works in layer 3 of the TCP/\acrshort{ip} network stack. Ideally, it would be implemented as a kernel module that replaces \acrshort{ip} routing in Linux. This approach comes with a huge implementation overhead of learning kernel modules, debugging the kernel, and others too many to list. To stay focused on the routing problem, we decided to run the router in user mode. In order to be able to implement routing in user mode, we needed to intercept and re-inject packets at different layers of the Linux network stack. This involved understanding different interfaces offered by the Linux network stack, and a few hacks and tricks to be able to achieve the necessary task in user mode.
+
+\subsection{Testbed}
+We decided not to use a simulation for our project, to implement a fully-functional product. However, we still needed a testbed that runs multiple nodes with different topologies and mobility models. Creating the testbed involved writing complex scripts to run multiple instances of the project in separate network namespaces and be able to communicate with them from the default namespace to run the user interfaces, and using a tool called Mininet-WiFi that provides emulated wireless interfaces to simulate connectivity between nodes. Mininet-WiFi was one of a very few available options, so we had to adapt our needs to the tool and its shortcomings.
+
+\subsection{Testing and Debugging}
+Testing and debugging the project is not easy, as we are debugging a whole network at once. Even with a small-sized network, troubleshooting involves running several instances at once and tracing their logs concurrently (especially when debugging multicasting). Furthermore, we had to develop a simple \acrshort{gui} that renders the nodes as they move through different zones on a map, to help us create and debug different topologies.
+
+\subsection{Performance Metrics}
+\acrshort{caian} is implemented as a fully functional program in user space. Other implementations of research papers are only implemented in simulation, while the few publicly available fully functional implementations run in kernel space, and without encryption. This fact made acquiring any performance metrics and testing against other routing solutions almost impossible. The lack of open source implementations of \acrshort{manet} routing solutions combined with the lack of proper tools to emulate large enough mobile ad-hoc networks for testing is disappointing. 
 
 \section{Gained Experience}
-Mentioned the experience/skills that you gained from working with the project
+% Mentioned the experience/skills that you gained from working with the project
 
+Working on developing \acrshort{caian} has been an enriching experience that we learned from in different ways:
+\begin{itemize}[itemsep=1pt, topsep=5pt]
+    \item We gained a deeper understanding of networks and routing, especially \acrshort{manets}.
+    \item Exposure to research papers and being up-to-date with the advancements in \acrshort{manet} routing.
+    \item Reasoning about protocols and choosing the practical ones, keeping trade-offs in mind.
+    \item Navigating and understanding protocols \acrshort{rfc}s.
+    \item Writing highly concurrent programs.
+    \item More experience with low-level implementations and interfacing with Linux.
+    \item We learned several tools and technologies such as \textit{Golang} and \textit{Electron.js}. 
+    \item Teamwork, effective collaboration, and asynchronous online communications.
+\end{itemize}
 \section{Conclusions}
-Write your conclusions regarding the project. Mention its features and limitations
+% Write your conclusions regarding the project. Mention its features and limitations
+
+Routing in \acrshort{manets} is a research problem that is yet to have solid implementations. \acrshort{caian} as a system implements unicast routing, multicast routing, and broadcast routing. It is one of a very few concrete open source implementations. It offers reliable communications without infrastructure. Nonetheless, it does have its limitations. Due to the lack of proper tools, \acrshort{caian} is yet to be tested on a very large scale. Introducing scale introduces problems, and stress testing \acrshort{caian} in a very large network is something that we do not have the proper tools to do at the moment. Moreover, \acrshort{caian}'s current implementation only runs on Linux, It is not a cross-platform solution. 
 
 \section{Future Work}
-Give possible extensions, enhancements and future work of you project, such that subsequent students could build on your work and develop larger systems/platforms.
+% Give possible extensions, enhancements and future work of you project, such that subsequent students could build on your work and develop larger systems/platforms.
 
-Example citation, Let's cite! The Einstein's journal paper \cite{einstein} and the Dirac's 
-book \cite{dirac} are physics related items. 
+\acrshort{caian} is one of a few of its kind. It can be extended and built upon in many ways in the future. In this section, we list a few ways in which \acrshort{caian} can be extended.
 
+\subsection{Hardware Deployment}
+Currently, \acrshort{caian} is a software system that provides communications to tactical teams. The system can be deployed on any Linux-based platform for more realistic testing and benchmarking. Moreover, the router can be used for any other application involving \acrshort{manets}. The system can be extended with proper software clients to be used for communication in fleets of autonomous vehicles or robots.
 
-Example nomenclatures, 
-\nomenclature{\(c\)}{Speed of light in a vacuum}
-\nomenclature{\(h\)}{Planck constant}
+\subsection{Multicast Support for TCP}
+One possible large-scale extension is to build a multicast variation of TCP. Since the scope of our project was concerned with routing, we did not have time to work on such a transport layer protocol. Multicast support for TCP is also a research problem, with no deployed protocols on Linux. The lack of support for TCP in multicasting has restricted our ability to make the most out of multicast routing. If implemented, the use cases of \acrshort{caian} can be extended to support reliable delivery of messages and audio to multiple units at once.
 
-Example abbreviations, Given a set of numbers, there are elementary methods to compute its \acrlong{gcd}, which is abbreviated \acrshort{gcd}. This process is similar to that used for the \acrfull{lcm}.
+\subsection{Alternatives to Mininet-WiFi}
+Mininet-WiFi is a great tool that enabled us to test our system with a variety of topologies. 
+Nonetheless, it has its shortcomings. 
+Mininet-WiFi limits the number of nodes that we can use to 100 nodes, which can be a problem when testing for scalability. 
+Furthermore, the way Mininet-WiFi handles mobility and node ranges is a little cumbersome. 
+At the time of writing, we did not find any better alternatives. 
+If a better alternative comes up in the future, it may be worth switching the testbed to use it.
+
+We might need to write our own alternative.
+At the end, Mininet-Wifi is a wrapper around \textit{wmediumd} and \textit{mac80211\_hwsim} which are simple enough to be improved for better networks emulation and for support for more virtual radios.
+
+\subsection{Uniform Shapes for Hierarchical Zones}
+In \acrshort{caian}, zones are hierarchical and have a rectangular shape. Using more uniform shapes such triangles and hexagons will make zones at the same level have more consistent areas. However, the zone computations will be less straightforward and may be more CPU intensive, which could hurt the limited battery capacity in the handheld devices.
+
+We need to explore the tradeoffs in this area.
+
+\subsection{Implementing The Router as a Kernel Module}
+A kernel module is a piece of software that runs in the kernel, it can call any kernel functions and access its data directly with the highest privileges in the system.
+The advantage of writing a kernel module for the router is that kernel modules don't cause overheads while accessing packets and modifying them.
+Because they are in the kernel side, they can access the packet buffer directly and modify it in place, which means it takes less time than doing the same in the user space, as the later needs copying from kernel space to user space and back again after the router finishes the packet task.
+
+On the other hand kernel modules are not safe, because if they caused a failure, you won't simply restart it, you might have to restart the whole machine, and maybe even enter a broken state of the whole system where nothing functions and it requires a manual intervention, which is not ideal for a software that might be updated very rarely and be required to function for the most number of continues hours and be very reliable.
+
+Also, if the kernel module has a small bug, it might be a big security hole and might give the attacker a control over the whole system silently.
+On the other hand, the same bug on the user space might be abused for a small limit.
+Thus, writing programs for the user space is much safer and secure.
+
+This is a trade-off between performance and security.
+And we chose security and safety.
+
+Nevertheless, the performance hit, due to copying back and forth, might be small.
+But we need to assure that by writing a small part of the router in the kernel space and compare the differences.
+At the end, we might not need to write the whole router in the kernel.
+We may just write the part that encrypts the packet and adds \textit{\acrshort{zid}} and let it copy the packet's header to user space to decide its forwarding destination, this might reduce the performance penalty.
+
+Doing reactive routing with Linux's forwarding tables is tricky, we also need to explore how to deal with this without user space router.
+
+\subsection{Forwarding with \acrshort{ebpf}}
+Writing a kernel module is risky because it may damage the whole system for one small bug.
+Kernel modules are not isolated, and if compromised, the whole system is compromised.
+Thus \textit{\acrshort{ebpf}} is introduced.
+
+\acrfull{ebpf}, which found on most \textit{UNIX} operating systems and developed lately for Microsoft Windows.
+It's an interface for user space programs to insert code that runs safely in the kernel.
+This code can filter syscalls, packets and events on the kernel and operate on those data.
+The safe part of \acrshort{ebpf} is that all code is executed in a virtual machine, and before executing them they are verified to not access any unauthorized data or cause any memory leaks or destroy any memory it doesn't hold.
+
+\acrshort{ebpf} may speed up forwarding as it can just operate on the kernel space directly and thus safe time of copying packets back and forth.
+Also, they are generally much safer than writing kernel modules directly, thanks to the verification system and the virtual machine.
+
+BPF was designed first for networking applications, and later came the extensions which serve other applications, like security and syscalls modifications, that seek high performance integration with the kernel functionality.
+
+We might need to explore using \acrshort{ebpf} for the forwarding plan on the performance of the router.
+
+\subsection{No FFmpeg}
+Currently, we use \textit{FFmpeg} for video streaming.
+We give it the video source, let it be a camera stream or a video file or a URL for another stream, and it cuts it into \acrshort{hls} chunks and produces \texttt{.m3u8} metadata files which we move around to the frontend player.
+
+We may reach a better user experience by reducing the complexity of the code base, and instead of calling another program, which has its downsides of how to deal with evens back and forth between the producer and consumer of the \acrfull{hls} segments which we fixed in a non-ideal way.
+We might implement our own \acrshort{hls} segmenter, which just segment the video source in memory directly and serve with minimal latency.
+
+\subsection{Different Quality Levels of Streaming}
+Currently, the unit daemon only streams at one level of quality, this is for simplicity.
+But we might need to have multiple available streams with different qualities for each one.
+\acrshort{hls} already supports this, but the problem resides in the power and memory tradeoffs against the performance, given that the unit devices have limited capacity for battery.
+
+We might need to try a different approach than the one \acrshort{hls} took.
+If the network and battery are in good conditions, the CMD daemon gets notified of the availability of streaming at a higher quality, and they may select a higher quality if they wanted to which the unit reacts to by encoding and streaming at the selected quality level.
+
+This is different from what \acrshort{hls} does, which is making all the levels available proactively.
+Clearly, \acrshort{hls}' approach is not suitable for handheld devices, and we need a reactive approach.
+This may require us to extend the protocol.
+
+\newpage
 
 \printbibliography
