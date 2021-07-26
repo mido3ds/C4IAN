@@ -56,6 +56,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 
 		// pass src sender in MSRC
 		// like MSRC=3
+		// sudo MTEST=1 MSRC=1, MEMS=5,6,10 ./st
 		src := "10.0.0.1"
 		if msrc := os.Getenv("MSRC"); msrc != "" {
 			src = "10.0.0." + msrc
@@ -243,10 +244,10 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	// log.Println("Cache after change prev hop")
 	// log.Println(c.cacheTable.String())
 
-	// grpIPExists := c.memberTable.Get(jq.GrpIP)
+	grpIPExists := c.memberTable.get(jq.grpIP)
+	// if c.imInDests(jq) {
 	// memberTable for faster recieving
-	// if grpIPExists || c.imInDests(jq) {
-	if c.imInDests(jq) {
+	if grpIPExists || c.imInDests(jq) {
 		// log.Printf("im in dests, (ip:%#v, mac: %#v)\n", c.ip.String(), c.mac.String()) // TODO: remove this
 		// fill member table
 		c.memberTable.set(jq.grpIP)
@@ -296,12 +297,10 @@ func (c *MulticastController) updateJoinReply(jr *joinReply, ft *MultiForwardTab
 	// Fill srcIPs and nextHops of the JoinReply
 	// log.Println(c.cacheTable.String())
 	for i := 0; i < len(jr.srcIPs); i++ {
-		if !jr.srcIPs[i].Equal(c.ip) { // TODO check if I can remove this if
-			cacheEntry, ok := c.cacheTable.get(jr.srcIPs[i])
-			if ok && cacheEntry.grpIP.Equal(jr.grpIP) {
-				newSrcIPs = append(newSrcIPs, jr.srcIPs[i])
-				newNextHops = append(newNextHops, cacheEntry.prevHop)
-			}
+		cacheEntry, ok := c.cacheTable.get(jr.srcIPs[i])
+		if ok && cacheEntry.grpIP.Equal(jr.grpIP) {
+			newSrcIPs = append(newSrcIPs, jr.srcIPs[i])
+			newNextHops = append(newNextHops, cacheEntry.prevHop)
 		}
 	}
 
@@ -344,7 +343,6 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 	// TODO remove log
 	// log.Printf("Recieved JoinReply %#v\n", jr.prevHop.String())
 
-	// c
 	forwardingEntry := &forwardingEntry{nextHop: jr.prevHop, cost: jr.cost}
 	refreshForwarder := c.forwardingTable.set(jr.destIP, forwardingEntry)
 	if refreshForwarder {
