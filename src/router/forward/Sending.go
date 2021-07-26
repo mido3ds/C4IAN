@@ -81,7 +81,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 
 	// write to device driver
 	es, exist := f.MultiForwTable.Get(grpIP)
-	log.Println(f.MultiForwTable.String())
+	// log.Println(f.MultiForwTable.String())
 	if exist {
 		for item := range es.Items.Iter() {
 			// log.Printf("Send packet to:%#v\n", item.Value.(*NextHopEntry).NextHop.String())
