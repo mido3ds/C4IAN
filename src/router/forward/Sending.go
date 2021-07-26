@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net"
+	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/database_logger"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -69,6 +70,7 @@ func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 			log.Println("error")
 			return
 		}
+		time.Sleep(1 * time.Second)
 	}
 
 	// build packet
