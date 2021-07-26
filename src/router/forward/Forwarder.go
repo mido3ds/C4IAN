@@ -39,6 +39,7 @@ type Forwarder struct {
 	bcFlooder *GlobalFlooder
 }
 
+// Create new forwarder
 func NewForwarder(iface *net.Interface, ip net.IP, msec *MSecLayer,
 	neighborsTable *NeighborsTable, dzdController *DZDController,
 	mcGetMissingEntries func(grpIP net.IP) bool,

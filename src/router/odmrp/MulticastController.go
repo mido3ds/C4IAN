@@ -20,20 +20,20 @@ import (
 type MulticastController struct {
 	gmTable         *GroupMembersTable // have grpIP: [destIP1, destIP2, destIP3, ...] where to send?
 	queryFlooder    *GlobalFlooder     // control message flooder
-	jrConn          *MACLayerConn
-	ip              net.IP
-	mac             net.HardwareAddr
-	forwardingTable *forwardingTable
-	cacheTable      *cache        // cache for duplicate checks and for building forwarding table
-	memberTable     *membersTable // member table group ips, Am I a destination?
-	msec            *MSecLayer    // decreption & encryption
-	packetSeqNo     uint64
-	ch              chan bool
-	refJoinQuery    *Timer
-	timers          *TimersQueue
-	startSending    bool
+	jrConn          *MACLayerConn      // nac layer connection for join reply
+	ip              net.IP             // ip of the router
+	mac             net.HardwareAddr   // mac address of the router
+	forwardingTable *forwardingTable   // forwarding table using in routing
+	cacheTable      *cache             // cache for duplicate checks and for building forwarding table
+	memberTable     *membersTable      // member table group ips, Am I a destination?
+	msec            *MSecLayer         // decreption & encryption
+	packetSeqNo     uint64             // packet unique identifier
+	ch              chan byte          // channel used by threads to exit the get missing entries of the multi forward table function
+	refJoinQuery    *Timer             // timer to send join query periodically until router calls stop
+	timers          *TimersQueue       // timers queue used by tables to delete the expired entries
 }
 
+// NewMulticastController creates a new multicast controller to do multicast routing and filling the multi forward table
 func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAddr, msec *MSecLayer, mgrpFilePath string, timers *TimersQueue) (*MulticastController, error) {
 	queryFlooder := NewGlobalFlooder(ip, iface, JoinQueryEtherType, msec)
 
@@ -46,17 +46,14 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 	var mgrpContent string
 	if os.Getenv("MTEST") == "1" {
 		address := "224.0.2.1"
-		// log.Println("ODMRP TEST MODE")
-		// pass members ids in MEMS env var
-		// like MEMS=5,14,20
+		// pass members ids of the multicast group in MEMS env var used like this MEMS=5,14,20
 		var membersIPs []string
 		for _, i := range strings.Split(os.Getenv("MEMS"), ",") {
 			membersIPs = append(membersIPs, "\"10.0.0."+i+"\"")
 		}
 
-		// pass src sender in MSRC
-		// like MSRC=3
-		// sudo MTEST=1 MSRC=1, MEMS=5,6,10 ./st
+		// pass src sender in MSRC used like this MSRC=3
+		// sudo MTEST=1 MSRC=1, MEMS=5,6,10 ./start routers
 		src := "10.0.0.1"
 		if msrc := os.Getenv("MSRC"); msrc != "" {
 			src = "10.0.0." + msrc
@@ -64,6 +61,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 
 		// start sender & receivers
 		if ip.String() == src {
+			// start sending udp packets
 			go sendUDPPackets(address)
 		} else {
 			for _, ip2 := range membersIPs {
@@ -76,6 +74,7 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		// log.Printf("multicast test mode, adr={%v}, members={%v}\n", address, membersIPs)
 		mgrpContent = "{\"" + address + "\": [" + strings.Join(membersIPs, ", ") + "]}"
 	} else {
+		// if not in the test mode read group members table from json file
 		mgrpContent = readOptionalJsonFile(mgrpFilePath)
 	}
 
@@ -91,13 +90,13 @@ func NewMulticastController(iface *net.Interface, ip net.IP, mac net.HardwareAdd
 		cacheTable:      newCache(timers),
 		memberTable:     newMembersTable(timers),
 		msec:            msec,
-		ch:              make(chan bool),
+		ch:              make(chan byte),
 		packetSeqNo:     0,
 		timers:          timers,
-		startSending:    false,
 	}, nil
 }
 
+// start sending udp packets periodically
 func sendUDPPackets(address string) {
 	adr, err := net.ResolveUDPAddr("udp", address+":1234")
 	if err != nil {
@@ -112,6 +111,7 @@ func sendUDPPackets(address string) {
 	i := 0
 	log.Println("******sending udp packets")
 	for {
+		// every 5 seconds send a packet
 		time.Sleep(5 * time.Second)
 		msg := fmt.Sprintf("message #%v", i)
 		i++
@@ -123,6 +123,7 @@ func sendUDPPackets(address string) {
 	}
 }
 
+// when recieving udp packets this function is called to do some logs
 func receiveUDPPackets(address string) {
 	adr, err := net.ResolveUDPAddr("udp", address+":1234")
 	if err != nil {
@@ -148,7 +149,7 @@ func receiveUDPPackets(address string) {
 // GetMissingEntries called by forwarder when it doesn't find and entry
 // for given grpIP in the forwarding table
 //
-// forwarder should put the returned entries in the forwarding table
+// forwarder should put the returned entries in the multi forwarding table
 //
 // it may return false in case it can't find any path to the grpIP
 // or can't find the grpIP itself
@@ -164,31 +165,43 @@ func (c *MulticastController) GetMissingEntries(grpIP net.IP) bool {
 	// Add max timeout to fill Forward Table
 	t1 := c.timers.Add(FillForwardTableTimeout, func() {
 		for i := 0; i < len(destsIPs); i++ {
-			c.ch <- false
+			c.ch <- 0
 		}
 	})
 
 	// Wait until timeout or recieve join reply from a destination
-	flag := false
+	var dstsCount byte = 0
 	for i := 0; i < len(destsIPs); i++ {
-		flag = flag || <-c.ch
+		dstsCount += <-c.ch
 	}
 	// stop timer
 	t1.Stop()
 	// true if destination(s) is/are found, false if didn't recieve a join reply from a destination
-	return flag
+	return dstsCount > 0
 }
 
+// Start called by forwarder when to start the multicast controller
+// and filling the required tables
+//
+// forwarder should put the returned entries in the forwarding table
+//
+// it starts two threads for listening for the flooded join query messages
+// and listening for join reply messages
 func (c *MulticastController) Start(ft *MultiForwardTable) {
 	log.Println("~~ MulticastController started ~~")
 	go c.queryFlooder.ListenForFloodedMsgs(c.onRecvJoinQuery)
 	go c.onRecvJoinReply(ft)
 }
 
+// sendJoinQuery start generating and sending join query messages and it called periodically
+// on-demand when the source tries to send packets
+//
+// it starts two threads for listening for the flooded join query messages
+// and listening for join reply messages
 func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
+	// change the unique identifier for the join query packet
 	c.packetSeqNo++
 	jq := joinQuery{
-		// TODO encode time to seqNo (Not Sure!!)
 		seqNum:  c.packetSeqNo,
 		ttl:     ODMRPDefaultTTL,
 		srcIP:   c.ip,
@@ -212,10 +225,17 @@ func (c *MulticastController) sendJoinQuery(grpIP net.IP, members []net.IP) {
 	})
 }
 
+// stop sending join query packet it is called whenever the router wants to stop sending packets
 func (c *MulticastController) stopSending() {
 	c.refJoinQuery.Stop()
 }
 
+// onRecvJoinQuery when the router receives join query control packet it encrypts it
+// then updates it and fills the required tables then continues the flooding process
+// on-demand when the source tries to send packets
+//
+// and it checks if the router is a destination and if true starts generating the join reply
+// control message and pass it back to the source router
 func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	payload := c.msec.Decrypt(encryptedPayload)
 
@@ -262,6 +282,12 @@ func (c *MulticastController) onRecvJoinQuery(encryptedPayload []byte) []byte {
 	return c.msec.Encrypt(jq.marshalBinary())
 }
 
+// onRecvJoinQuery when the router receives join query control packet it decrypts it
+// then updates it and fills the required tables then continues the flooding process
+// on-demand when the source tries to send packets
+//
+// and it checks if the router is a destination and if true starts generating the join reply
+// control message and pass it back to the source router
 func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
 	// log.Println("Generate JoinReply")
 	jr := &joinReply{
@@ -288,6 +314,8 @@ func (c *MulticastController) generateJoinReply(jq *joinQuery) *joinReply {
 	return nil
 }
 
+// updateJoinReply when the router receives join reply control packet it decrypts it
+// then updates it and fills the required tables then returns nil if no next hops found
 func (c *MulticastController) updateJoinReply(jr *joinReply, ft *MultiForwardTable) *joinReply {
 	jr.cost = calcNewJRCost(jr)
 	jr.prevHop = c.mac
@@ -316,15 +344,17 @@ func calcNewJRCost(jr *joinReply) uint16 {
 	return jr.cost + 1
 }
 
+// sendJoinReply start sending join replies packet using a set of next hops
 func (c *MulticastController) sendJoinReply(jr *joinReply) {
 	encJR := c.msec.Encrypt(jr.marshalBinary())
 	for i := 0; i < len(jr.nextHops); i++ {
 		c.jrConn.Write(encJR, jr.nextHops[i])
 	}
 	// msg := fmt.Sprintf("ip: %#v sends JoinReply to", c.ip.String())
-	// logMacIPs(msg, jr.nextHops)
+	// logMacAddresses(msg, jr.nextHops)
 }
 
+// onRecvJoinReply reads from the mac layer and start handling the recevied join reply control packet
 func (c *MulticastController) onRecvJoinReply(ft *MultiForwardTable) {
 	for {
 		msg := c.jrConn.Read()
@@ -332,6 +362,13 @@ func (c *MulticastController) onRecvJoinReply(ft *MultiForwardTable) {
 	}
 }
 
+// handleJoinReply when the router receives join reply it calls this function
+// to updates it the join reply packet and fills the required tables then continues
+// sending the join reply to the sources process
+//
+// and it checks if the router is a souce and if true this means it found route between source
+// and this one destination and  sends 1 to the get missing entries function
+// through the multicast controller channel
 func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable) {
 	decryptedJR := c.msec.Decrypt(msg)
 
@@ -340,22 +377,24 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 		log.Panicln("Corrupted JoinReply msg received")
 	}
 
-	// TODO remove log
 	// log.Printf("Recieved JoinReply %#v\n", jr.prevHop.String())
-
+	// fills forward table
 	forwardingEntry := &forwardingEntry{nextHop: jr.prevHop, cost: jr.cost}
 	refreshForwarder := c.forwardingTable.set(jr.destIP, forwardingEntry)
+	// fills multi forward table if forward table is updated
 	if refreshForwarder {
 		ft.Set(jr.grpIP, jr.prevHop)
 	}
 
+	// check if a i am a source node
 	if c.imInSrcs(jr) {
 		// log.Println("Source Recieved JoinReply !!")
 		newJR := c.updateJoinReply(jr, ft)
 		if newJR != nil {
 			c.sendJoinReply(newJR)
 		}
-		c.ch <- true
+		// pass 1 as I recevied a join reply from a destination and I am a source node
+		c.ch <- 1
 	} else {
 		newJR := c.updateJoinReply(jr, ft)
 		if newJR != nil {
@@ -370,6 +409,7 @@ func (c *MulticastController) handleJoinReply(msg []byte, ft *MultiForwardTable)
 	// log.Println(ft)
 }
 
+// checks if the router is a destination node
 func (c *MulticastController) imInDests(jq *joinQuery) bool {
 	for i := 0; i < len(jq.dests); i++ {
 		if c.ip.Equal(jq.dests[i]) {
@@ -379,6 +419,7 @@ func (c *MulticastController) imInDests(jq *joinQuery) bool {
 	return false
 }
 
+// checks if the router is a source node
 func (c *MulticastController) imInSrcs(jr *joinReply) bool {
 	for i := 0; i < len(jr.srcIPs); i++ {
 		if c.ip.Equal(jr.srcIPs[i]) {
@@ -388,11 +429,13 @@ func (c *MulticastController) imInSrcs(jr *joinReply) bool {
 	return false
 }
 
+// Close closes multicast controller with its connections
 func (c *MulticastController) Close() {
 	c.jrConn.Close()
 	c.queryFlooder.Close()
 }
 
+// readOptionalJsonFile reads json file from a file path
 func readOptionalJsonFile(path string) string {
 	if path != "" {
 		content, err := ioutil.ReadFile(path)
@@ -404,7 +447,8 @@ func readOptionalJsonFile(path string) string {
 	return "{}"
 }
 
-func logMacIPs(msg string, macIPs []net.HardwareAddr) {
+// logMacAddresses logs mac addresses ipv4
+func logMacAddresses(msg string, macIPs []net.HardwareAddr) {
 	msg += ": {"
 	for i := 0; i < len(macIPs); i++ {
 		msg += fmt.Sprintf("%#v, ", macIPs[i].String())
@@ -413,6 +457,7 @@ func logMacIPs(msg string, macIPs []net.HardwareAddr) {
 	log.Println(msg)
 }
 
+// logIPs logs ip addresses ipv4
 func logIPs(msg string, ips []net.IP) {
 	msg += ": {"
 	for i := 0; i < len(ips); i++ {
@@ -422,6 +467,7 @@ func logIPs(msg string, ips []net.IP) {
 	log.Println(msg)
 }
 
+// IsDest checks if the router is a destination from the members table
 func (c *MulticastController) IsDest(grpIP net.IP) bool {
 	return c.memberTable.get(grpIP)
 }

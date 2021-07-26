@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"log"
 	"net"
-	"time"
 
 	. "github.com/mido3ds/C4IAN/src/router/database_logger"
 	. "github.com/mido3ds/C4IAN/src/router/ip"
@@ -61,16 +60,18 @@ func (f *Forwarder) sendUnicast(packet []byte, dstIP net.IP) {
 	DatabaseLogger.LogForwarding(buffer.Bytes()[ZIDHeaderLen+IPv4HeaderLen:], dstIP)
 }
 
+// sendMulticast takes a packet the router wants to send and the multicast group ip to send the packet to
 func (f *Forwarder) sendMulticast(packet []byte, grpIP net.IP) {
 	// log.Printf("Node IP:%#v, fwd table: %#v\n", f.ip.String(), f.MultiForwTable.String())
 	_, ok := f.MultiForwTable.Get(grpIP)
 	if !ok {
+		// get missing entries from the multi forward table
 		ok = f.mcGetMissingEntries(grpIP)
 		if !ok {
 			log.Println("error")
 			return
 		}
-		time.Sleep(1 * time.Second)
+		// time.Sleep(1 * time.Second)
 	}
 
 	// build packet
