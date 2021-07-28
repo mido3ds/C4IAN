@@ -1,4 +1,5 @@
 __pycache__
+.vscode/
 *.mp4
 *units.json
 *groups.json
