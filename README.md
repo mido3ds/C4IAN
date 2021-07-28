@@ -113,6 +113,16 @@ $ sudo apt install -y libgconf-2-4
 
 ## Command Center Client
 <a name="cmd-app"></a>
+Command centers are responsible for the central administration and operational management
+of a group of units. High-end computers with strong CPUs, high power consumption capabilities, and large storage and RAM capabilities are expected to be used as command center clients. The command centers are located near the operation field and have a wide wireless range, allowing them to link to a group of troops in the field. They’re assumed to have
+limited (or no) mobility
+### Units
+![cmd units ui](./docs/figures/cmd-ui-units.png)
+### Map
+![cmd units ui](./docs/figures/cmd-ui-map.png)
+### Video Streaming
+![cmd units ui](./docs/figures/cmd-ui-streaming.png)
+
 
 ## Unit Client
 <a name="cmd-app"></a>
