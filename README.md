@@ -15,6 +15,8 @@ Supports video/audio streaming and messaging with unicast, multicast and broadca
 * [ Application Layer. ](#app-layer)
   * [Command Center Client. ](#cmd-app)
   * [Unit Client. ](#unit-app)
+  * [Emulation Map. ](#emulation-map)
+  * [Log Visualizer. ](#log-visualizer)
   * [ Demo. ](#demo)
 * [ Developers. ](#developers)
 <!--te-->
@@ -36,8 +38,8 @@ distributed systems.
 <a name="system-arch"></a>
 ![System Architecture](./docs/figures/system.png)
 ![User Clients](./docs/figures/user-clients.png)
-<img src="./docs/figures/zhls-modules.png" alt="zhls modules" width="1000px"/>
-<img src="./docs/figures/ODMRP-Modules.png" alt="odrmp modules" width="1000px"/>
+<img src="./docs/figures/zhls-modules.png" alt="zhls modules" width="100%"/>
+<img src="./docs/figures/ODMRP-Modules.png" alt="odrmp modules" width="100%"/>
 
 
 
@@ -124,13 +126,27 @@ limited (or no) mobility
 ### Units
 ![cmd units ui](./docs/figures/cmd-ui-units.png)
 ### Map
-![cmd units ui](./docs/figures/cmd-ui-map.png)
+![cmd map](./docs/figures/cmd-ui-map.png)
 ### Video Streaming
-![cmd units ui](./docs/figures/cmd-ui-streaming.png)
+![cmd video streaming](./docs/figures/cmd-ui-streaming.png)
 
 
 ## Unit Client
-<a name="cmd-app"></a>
+<a name="unit-app"></a>
+### Home
+![unit home](./docs/figures/unit-home.png)
+### Audios
+![unit audios](./docs/figures/unit-audios.png)
+### Chatbox
+![unit chatbox](./docs/figures/unit-chatbox.png)
+
+# Emulation Map
+<a name="emulation-map"></a>
+![log visualizer](./docs/figures/edit-ui.png)
+
+## Log visualizer
+<a name="log-visualizer"></a>
+<img src="./docs/figures/log-vis1.png" alt="log visualizer" width="100%"/>
 
 ## Demo
 <a name="demo"></a>
@@ -138,7 +154,7 @@ limited (or no) mobility
 ### English Demo Video
 <div align="center">
   <a href="https://youtu.be/591PVS4rE8Y">
-    <img src="https://img.youtube.com/vi/591PVS4rE8Y/0.jpg" alt="Nabd Showcase" width="560" height="315">
+    <img src="https://img.youtube.com/vi/591PVS4rE8Y/0.jpg" alt="English Demo" width="100%">
   </a>
 </div>
 
@@ -146,7 +162,7 @@ limited (or no) mobility
 
 <div align="center">
   <a href="https://youtu.be/aT0k4FVapXM">
-    <img src="https://img.youtube.com/vi/aT0k4FVapXM/0.jpg" alt="Nabd Showcase" width="560" height="315">
+    <img src="https://img.youtube.com/vi/aT0k4FVapXM/0.jpg" alt="Arabic Demo" width="100%">
   </a>
 </div>
 
