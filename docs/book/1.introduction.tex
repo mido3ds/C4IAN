@@ -1,0 +1,251 @@
+\chapter{Introduction}
+\pagenumbering{arabic}
+% This chapter is to introduce your project, justify the need for it and explain the steps you follow to achieve it. The main outcomes from the project should be clearly stated. The organization of the document should finally be given
+
+% In this space, before the first section, write a general introduction to the project
+
+An ad-hoc network is a decentralized network that does not rely on pre-existing infrastructure. There are no dedicated routers or access points. Instead, hosts (user devices) act as both a user and a router in the network. When a message is sent, it gets forwarded between different nodes in the network until it reaches its destination.\cite{wu2004ad} \cite{ramanathan2002brief} \\
+
+\acrfull{manets} are a type of wireless ad-hoc networks where the devices can move freely. This increases the versatility of the network, and extends its use cases to more practical applications. Nonetheless, the routing problem becomes much more complex as the topology of the network is changing dynamically. Links between devices are frequently broken, and devices need to be up-to-date with the most recent version of the topology to be able to communicate. Furthermore, as the network size increases, keeping track of such a dynamic topology becomes even harder.\cite{mohapatra2004ad} \\
+
+Naturally, \acrshort{manets} have always been an active area of research due to the complexity of the routing problem. Different approaches to the routing problem are being researched continuously, with very few practical implementations. \\
+
+\acrshort{caian} (\acrlong{caian}) is a scalable communications solution for tactical teams. It builds a \acrshort{manet} on-the-go between command centers and units, allowing them to communicate effectively and securely while moving freely, without the need for any infrastructure.
+
+\section{Motivation and Justification}
+Tactical teams, such as emergency and rescue teams, police officers, and military battalions, require a robust communications solution. They cannot rely on infrastructure-based communications (such as cellular networks) for multiple reasons:
+\begin{itemize}[itemsep=1pt, topsep=5pt]
+    \item They can be damaged during an emergency or a catastrophe.
+    \item They are unavailable in remote areas.
+    \item They can be easily targeted by enemies.
+    \item Commercial ones may not be secure enough.
+\end{itemize}
+Hence, \acrshort{manets} are usually the obvious means of communications for such tactical teams. \acrshort{caian} aims to provide a software \acrshort{manet}-based communications solution for tactical teams, that can be deployed on any Linux platform.
+
+\section{Project Objectives and Problem Definition}
+We aim to build a scalable software system that provides reliable communications between devices that are moving freely, without any infrastructure. The core of such a system is routing. Our core objective is to develop a scalable \acrshort{manet} routing solution that will be the basis of a concrete communications system. \\
+
+\acrshort{manet} routing is an open-ended research problem. There are no established protocols that work for all use cases. \acrshort{caian} implements unicast, multicast, and broadcast routing. For each type of routing, there are many protocols in the research literature, with very few implementations. We surveyed many protocols, selected and tuned adequate ones, and morphed the results of theoretical research into concrete practical implementations.
+
+\section{Project Outcomes}
+The outcome of the project is two-fold. The core part is a Linux-based network layer that implements unicast, multicast, and broadcast routing. The customer-facing part is an application that utilizes this network layer to provide communications to command centers and units in a tactical team.
+
+\section{Document Organization}
+In this chapter, we provided an introduction to \acrshort{manets} and to our communications system for tactical teams, \acrshort{caian}. The rest of the document is organized as follows:
+\begin{itemize}[itemsep=1pt, topsep=5pt]
+    \item In chapter 2 we discuss the potential market for our product, and the competition we may face.
+    \item In chapter 3 we review different approaches to unicast and multicast routing in \acrshort{manets}, and lay the necessary background to understand the routing problem. 
+    \item In chapter 4 we explain how our system works. We dive deep into the architecture of \acrshort{caian} and discover what every module contributes.
+    \item In chapter 5 we explain how we tested different aspects of our system, and how it compares to related work.
+    \item In chapter 6 we conclude the document by describing the challenges we faced, the lessons that we learned, and what the future may look like for \acrshort{caian}.
+\end{itemize}
+
+Afterwards, the appendices outline the development platforms and tools that we used, different use cases of \acrshort{caian}, the user guide, code documentation, and a comprehensive feasibility study.
+
+\chapter{Market Feasibility Study}
+\label{ch:feasability}
+Achieving scalable and reliable communications in areas that lack network infrastructure is a difficult problem, especially in critical situations such as the battlefield or during emergencies. It is also needed for collecting real time data and analyze it to have a competitive advantage in the battleground.
+\\
+\acrfull{manets} can be formed on-the-go, without any infrastructure. They promise more flexibility and reliability than manual radio broadcasting.
+\\
+
+\section{Targeted Customers}
+Our initial market will be the tactical teams by providing tactical system and its products for defense industry, rescue teams and police we will provide in yearly subscription for using our products, training and support. As our team gets sophisticated enough, our target customer base will widen, and we will build another solution to fit a normal customer using the same router module. We will build a communication/streaming/gaming service and target customers who do not have internet infrastructure in their area, by providing additional servers in their areas which will act as routers and have significant caches of movies and web data.
+
+\section{Market Survey}
+\subsection{Bittium}
+% https://www.bittium.com/index.php?id=2167&locate=PRM%2F2020%2F3729781
+Bittium \cite{Bittium} specializes in the development of reliable, secure communications and connectivity solutions with experience over 35 years in advanced radio communication technologies. Bittium provides innovative products and services, customized solutions based on its product platforms and \acrfull{rnd} services. Complementing its communications and connectivity solutions, Bittium offers proven information security solutions for mobile devices and portable computers. Bittium also provides healthcare technology products and services for biosignal measuring in the areas of cardiology, neurology, rehabilitation, occupational health and sports medicine. Net sales in 2020 were EUR 78.4 million and operating profit was EUR 2.1 million.
+\\
+\\
+Bittium offers communication options, which are critical in combat. Bittium TAC WIN, the company's primary competing product, is a high-performance wireless network solution that enables fast and flexible link, point-to-multipoint, and \acrshort{manet} (Mobile Ad Hoc Network) connections.
+\\
+The system enables improved connection to current wired and wireless IP infrastructures and legacy systems, as well as broadband IP data transmission for mobility troops in all areas of the battlefield. 
+\\
+\\
+The Estonian Defense Forces requested a tactical communication network based on the Bittium TAC WIN system.
+\\
+The TAC WIN system will be used to modernize IP data transmission, improve the performance of the tactical data transmission, and diversify the wireless and cable connections of the Estonian Land Forces' system entity.
+\\
+The Bittium Tough \acrfull{voip} product family's products will be used to upgrade the Land Forces' IP voice service, and when combined with the Bittium TAC WIN system, it forms a software solution that seamlessly integrates the tactical network and its voice services for leading troops in the most demanding situations.
+\\
+\\
+On July 1, 2021, Bittium has received another purchased order from the Finnish Defense Forces for the development of a new software version for the software defined radio based Bittium Tactical Wireless IP Network system.
+\\
+The purchase order is worth roughly 2.3 million EUR (excl. VAT), with extra purchases with a maximum value of 0.5 million EUR (excl. VAT) are included in the procurement decision.
+The development work will be completed by the end of the first half of 2022.
+\subsection{Hytera}
+% https://www.hytera.com/
+Hytera \cite{Hytera} is a Chinese manufacturer of radio transceivers and radio systems. Hytera's sales and revenue in 2020 is 6.06 Billion dollars \cite{Hytera-Finance}.
+% https://www.wsj.com/market-data/quotes/CN/002583/financials
+\\
+\\
+Hytera provides two types of products \acrfull{dmr} and \acrfull{poc} systems and applications.
+The main competitor product is Hytera HALO Dispatch which is a \acrfull{poc} radio systems that enables countrywide or single-site communications and dispatching, as well as rapid group calling that supports data, audio, and video. The three systems are capable of functioning as stand-alone networks.
+\\
+Hytera Halo Dispatch Software is billed annually. The first year is $999, each additional year is $599.00.
+
+\section{Business Case and Financial Analysis }
+The target product of our company is to produce the entire system from A to Z by request. The unit cost is estimated to range from 3000 to 5000 EGP, including its testing. The command center device cost is estimated to range from 8,000 to 10,000 EGP including its testing.
+In this section, two aspects will be addressed:
+\begin{enumerate}[itemsep=1pt, topsep=5pt]
+    \item Business Case.
+    \item Financial Analysis.
+\end{enumerate}
+
+\subsection{Business Case}
+In the business case, we will illustrate the projected amount of product sales over the next five years, which is shown in Table \ref{tbl:business-case}, as well as how we will adjust the pricing to compete.
+
+\begin{center}
+\begin{table}[!htbp]
+\centering
+\begin{tabular}{|c|c|cccc}
+\cline{1-2}
+\rowcolor[HTML]{C0C0C0} 
+\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Years}}                                  & \cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Year 1}}                         & {\color[HTML]{343434} \textbf{Year 2}}                                                                                             & {\color[HTML]{343434} \textbf{Year 3}}                                                                                             & {\color[HTML]{343434} \textbf{Year 4}}                                                                                             & {\color[HTML]{343434} \textbf{Year 5}}                                                                                             \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{CMD Ordered}                                                                           & \textbf{1,000}                                                                         & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{2,000}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{3,000}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{5,000}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{10,000}}                                                                       \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{Units Ordered}                                                 & \cellcolor[HTML]{FFFFFF}\textbf{10,000}                                                & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{15,000}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{20,000}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{50,000}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{80,000}}                                                                       \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{CMD Cost}                                                      & \textbf{10,000}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{10,100}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{10,300}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{10,500}}                                                                       & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{10,550}}                                                                       \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Unit Cost}                                                                             & \textbf{4,000}                                                                         & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{4,200}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{4,400}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{4,600}}                                                                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{4,650}}                                                                        \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}Purchased \\ CMD Cost\end{tabular}} & \cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}22,000 \\ EGP\end{tabular}} & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}25,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}30,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}40,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}41,000 \\ EGP\end{tabular}}}                        \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Purchased \\ Unit Cost\end{tabular}}                        & \textbf{\begin{tabular}[c]{@{}c@{}}10,000 \\ EGP\end{tabular}}                         & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}12,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}15,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}17,000 \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}17,500 \\ EGP\end{tabular}}}                        \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Profit From \\ Purchasing\end{tabular}}                     & \textbf{\begin{tabular}[c]{@{}c@{}}72M\\  EGP\end{tabular}}                     & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}146.8M \\ EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}271.1M\\ EGP\end{tabular}}}                         & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}767.5M\\  EGP\end{tabular}}}                        & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}1.3325B\\ EGP\end{tabular}}}                        \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Profit From \\ Maintenance\end{tabular}}                    & \textbf{\begin{tabular}[c]{@{}c@{}}2M \\ EGP\end{tabular}}                             & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}4M \\ EGP\end{tabular}}}                            & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}6M\\  EGP\end{tabular}}}                            & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}10M\\ EGP\end{tabular}}}                            & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}20M\\ EGP\end{tabular}}}                            \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+\cellcolor[HTML]{FFFFC7}{\color[HTML]{34696D} \textbf{Total Profit}}                           & {\color[HTML]{34696D} \textbf{\begin{tabular}[c]{@{}c@{}}74M\\  EGP\end{tabular}}}     & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFC7}{\color[HTML]{34696D} \textbf{\begin{tabular}[c]{@{}c@{}}150.8M\\  EGP\end{tabular}}}} & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFC7}{\color[HTML]{34696D} \textbf{\begin{tabular}[c]{@{}c@{}}277.1M\\  EGP\end{tabular}}}} & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFC7}{\color[HTML]{34696D} \textbf{\begin{tabular}[c]{@{}c@{}}777.5M\\  EGP\end{tabular}}}} & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFC7}{\color[HTML]{34696D} \textbf{\begin{tabular}[c]{@{}c@{}}1.3525B\\ EGP\end{tabular}}}} \\ \hline
+\end{tabular}
+\caption{Business case over 5 years}
+\label{tbl:business-case}
+\end{table}
+\end{center}
+
+\subsection{Financial Analysis}
+Financial analysis is done based on the company's business case to predict the Capital Expenses (Capex) and the Operational Expenses (Opex).
+\\
+Table \ref{tbl:capex-table} displays the Capex and Table \ref{tbl:opex-table} shows the Opex.
+
+\begin{center}
+\begin{table}[!htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\rowcolor[HTML]{C0C0C0} 
+{\color[HTML]{343434} \textbf{Items And Supplies}}                                                                            & {\color[HTML]{343434} \textbf{Cost}}       \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Offices, chairs, air conditioners, \\ security cameras, routers and switches\end{tabular}} & \textbf{90,000 EGP}                        \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Developers Laptops}                                                                                                   & \textbf{10 * 15 = 150,000 EGP}             \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}30 units of Raspberry Pi\\  4 Model B 4 GB for testing\end{tabular}}                        & \textbf{1,720.00 * 30 = 51,600 EGP}         \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}30 units of RC Waterproof 2.4Ghz \\ All Terrain Off-Road Amphibious Car\end{tabular}}      & \textbf{600 * 30 = 18,000 EGP}              \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+{\color[HTML]{34696D} \textbf{Total Capex}}                                                                                   & {\color[HTML]{34696D} \textbf{409,600 EGP}} \\ \hline
+\end{tabular}
+\caption{Capex Table}
+\label{tbl:capex-table}
+\end{table}
+
+\begin{table}[!htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\rowcolor[HTML]{C0C0C0} 
+{\color[HTML]{343434} \textbf{Items And Supplies}}                                                & {\color[HTML]{343434} \textbf{Cost per Month}} \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Employees' salaries}                                                                      & \textbf{150,000 EGP}                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Office Rent}                                                                              & \textbf{4,000 EGP}                              \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}\textbf{Training customers and testing fields Rent}} & \textbf{12,000 EGP}                            \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Office maintenance}                                                                       & \textbf{2,000 EGP}                              \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Servers maintenance}                                                                      & \textbf{3,000 EGP}                              \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Bills (electricity, water, gas, \\ etc.)\end{tabular}}         & \textbf{2,000 EGP}                              \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+{\color[HTML]{34696D} \textbf{Total Opex}}                                                        & {\color[HTML]{34696D} \textbf{173,000 EGP}}     \\ \hline
+\end{tabular}
+\caption{Opex Table}
+\label{tbl:opex-table}
+\end{table}
+
+
+
+\begin{table}[!htbp]
+\centering
+\resizebox{18cm}{!}{%
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\rowcolor[HTML]{C0C0C0} 
+\multicolumn{13}{|c|}{\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Money Going Out}}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           \\ \hline
+\rowcolor[HTML]{C0C0C0} 
+\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Month}}                                       & \cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{1}} & {\color[HTML]{343434} \textbf{2}}        & {\color[HTML]{343434} \textbf{3}}        & {\color[HTML]{343434} \textbf{4}}        & {\color[HTML]{343434} \textbf{5}}                                                        & {\color[HTML]{343434} \textbf{6}}                                                        & {\color[HTML]{343434} \textbf{7}}                                                        & {\color[HTML]{343434} \textbf{8}}                                                        & {\color[HTML]{343434} \textbf{9}}                                                        & {\color[HTML]{343434} \textbf{10}}                                                       & {\color[HTML]{343434} \textbf{11}}                                                       & {\color[HTML]{343434} \textbf{12}}                                                       \\ \hline
+\rowcolor[HTML]{C0C0C0} 
+\multicolumn{13}{|c|}{\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Capex}}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{Office}                                                             & \cellcolor[HTML]{FFFFFF}\textbf{7,500}                    & \textbf{7,500}                           & \textbf{7,500}                           & \textbf{7,500}                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           & \textbf{7,500}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{Laptops}                                                            & \cellcolor[HTML]{FFFFFF}\textbf{12,500}                   & \textbf{12,500}                          & \textbf{12,500}                          & \textbf{12,500}                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          & \textbf{12,500}                                                                          \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}30 Unit \\ Raspberry \\ Pi\end{tabular}} & \cellcolor[HTML]{FFFFFF}\textbf{4,300}                    & \textbf{4,300}                           & \textbf{4,300}                           & \textbf{4,300}                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           & \textbf{4,300}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{30 Unit Car}                                                        & \cellcolor[HTML]{FFFFFF}\textbf{1,500}                    & \textbf{1,500}                           & \textbf{1,500}                           & \textbf{1,500}                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           & \textbf{1,500}                                                                           \\ \hline
+\rowcolor[HTML]{C0C0C0} 
+\multicolumn{13}{|c|}{\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Opex}}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{Salaries}                                                                                   & \cellcolor[HTML]{FFFFFF}\textbf{150,000}                  & \textbf{150,000}                         & \textbf{150,000}                         & \textbf{150,000}                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         & \textbf{150,000}                                                                         \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}Office\\ Rent\end{tabular}}              & \textbf{4,000}                                            & \textbf{4,000}                           & \textbf{4,000}                           & \textbf{4,000}                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           & \textbf{4,000}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Fields\\ Rent\end{tabular}}                                      & \textbf{12,000}                                           & \textbf{12,000}                          & \textbf{12,000}                          & \textbf{12,000}                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          & \textbf{12,000}                                                                          \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Office\\ Maintenance\end{tabular}}                               & \textbf{2,000}                                            & \textbf{2,000}                           & \textbf{2,000}                           & \textbf{2,000}                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{\begin{tabular}[c]{@{}c@{}}Servers\\ Maintenance\end{tabular}}      & \cellcolor[HTML]{FFFFFF}\textbf{3,000}                    & \textbf{3,000}                           & \textbf{3,000}                           & \textbf{3,000}                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           & \textbf{3,000}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{Bills}                                                              & \textbf{2,000}                                            & \textbf{2,000}                           & \textbf{2,000}                           & \textbf{2,000}                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \textbf{2,000}                                                                           & \cellcolor[HTML]{FFFFFF}\textbf{2,000}                                                   & \textbf{2,000}                                                                           \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+{\color[HTML]{329A9D} \textbf{Total Out}}                                                           & {\color[HTML]{329A9D} \textbf{198,800}}                   & {\color[HTML]{329A9D} \textbf{198,800}}  & {\color[HTML]{329A9D} \textbf{198,800}}  & {\color[HTML]{329A9D} \textbf{198,800}}  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  & {\color[HTML]{329A9D} \textbf{198,800}}                                                  \\ \hline
+\rowcolor[HTML]{C0C0C0} 
+\multicolumn{13}{|c|}{\cellcolor[HTML]{C0C0C0}{\color[HTML]{343434} \textbf{Money Going In}}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\textbf{\begin{tabular}[c]{@{}c@{}}Total CMD\\ \& Unit \\ Purchased\\ Profits\end{tabular}}         & \textbf{0}                                                & \textbf{0}                               & \textbf{0}                               & \textbf{0}                               & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         & \textbf{925,000}                                                                         \\ \hline
+\rowcolor[HTML]{FFFFFF} 
+\cellcolor[HTML]{FFFFFF}\textbf{Maintainance}                                                       & \cellcolor[HTML]{FFFFFF}\textbf{0}                        & \textbf{0}                               & \textbf{0}                               & \textbf{0}                               & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          & \textbf{500,00}                                                                          \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+{\color[HTML]{329A9D} \textbf{Total In}}                                                            & {\color[HTML]{329A9D} \textbf{0}}                         & {\color[HTML]{329A9D} \textbf{0}}        & {\color[HTML]{329A9D} \textbf{0}}        & {\color[HTML]{329A9D} \textbf{0}}        & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.425\\ Million\end{tabular}}}  \\ \hline
+\rowcolor[HTML]{FFFFC7} 
+{\color[HTML]{329A9D} \textbf{Profit}}                                                              & {\color[HTML]{329A9D} \textbf{-198,800}}                  & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.2262\\ Million\end{tabular}}} & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.2262\\ Million\end{tabular}}} & {\color[HTML]{329A9D} \textbf{\begin{tabular}[c]{@{}c@{}}1.2262\\ Million\end{tabular}}} & {\color[HTML]{329A9D} \textbf{1,226,200}} & {\color[HTML]{329A9D} \textbf{1,226,200}} & {\color[HTML]{329A9D} \textbf{1,226,200}} & {\color[HTML]{329A9D} \textbf{1,226,200}} & {\color[HTML]{329A9D} \textbf{1,226,200}} \\ \hline
+\rowcolor[HTML]{FFFFC7}
+{\color[HTML]{329A9D} \textbf{Taxes (25\%)}}                                                          & {\color[HTML]{329A9D} \textbf{0}}                  & {\color[HTML]{329A9D} \textbf{0}} & {\color[HTML]{329A9D} \textbf{0}} & {\color[HTML]{329A9D} \textbf{0}} & {\color[HTML]{329A9D} \textbf{306,550}}                                                  & {\color[HTML]{329A9D} \textbf{306,550}}   & {\color[HTML]{329A9D} \textbf{306,550}} & {\color[HTML]{329A9D} \textbf{306,550}} & {\color[HTML]{329A9D} \textbf{306,550}} & {\color[HTML]{329A9D} \textbf{306,550}}  & {\color[HTML]{329A9D} \textbf{306,550}}   & {\color[HTML]{329A9D} \textbf{306,550}} \\ \hline
+\rowcolor[HTML]{FFFFC7}
+{\color[HTML]{329A9D} \textbf{Net Profit}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{-198,800}} & {\color[HTML]{329A9D} \textbf{919,650}}                                                  & {\color[HTML]{329A9D} \textbf{919,650}}   & {\color[HTML]{329A9D} \textbf{919,650}} & {\color[HTML]{329A9D} \textbf{919,650}} & {\color[HTML]{329A9D} \textbf{919,650}} & {\color[HTML]{329A9D} \textbf{919,650}}  & {\color[HTML]{329A9D} \textbf{919,650}}   & {\color[HTML]{329A9D} \textbf{919,650}} \\ \hline
+
+\rowcolor[HTML]{FFFFC7}
+{\color[HTML]{329A9D} \textbf{Cumulative Profit}}                                                          & {\color[HTML]{329A9D} \textbf{-198,800}}                  & {\color[HTML]{329A9D} \textbf{-397,600}} & {\color[HTML]{329A9D} \textbf{-596,400}} & {\color[HTML]{329A9D} \textbf{-795,200}} & {\color[HTML]{329A9D} \textbf{124,450}}                                                  & {\color[HTML]{329A9D}
+\textbf{1,044,100}} & {\color[HTML]{329A9D} \textbf{1,963,750}} & {\color[HTML]{329A9D} \textbf{2,883,400}} & {\color[HTML]{329A9D} \textbf{3,803,050}} & {\color[HTML]{329A9D} \textbf{4,722,700}}  & {\color[HTML]{329A9D} \textbf{5,642,350}} & {\color[HTML]{329A9D} \textbf{6,562,000}} \\ \hline
+\end{tabular}
+}
+\caption{Cache Flow Table in (EGP)}
+\label{tbl:cache-flow-table}
+
+\end{table}
+\end{center}
+
+As can be seen in the Cash  Flow  Table \ref{tbl:cache-flow-table}, it is expected that we do not sell any units or command center devices for the first four months. These four months are dedicated for testing and training troops. We should break even by the beginning of May with a cumulative profit value of \textbf{124,450 EGP}. The main profit contribution comes from the purchase, not the support.
+\\
+This means that depending only on maintenance is not a good strategy, and that we should always keep our customers happy with reasonable prices and excellent services.
+\\
+Our product is the only one of its kind in the Middle East. Moreover, our product is so much cheaper than our competitors outside the Middle East. Hytera Halo Dispatch Software mentioned in the previous section is an example. It costs \$999 per unit per year. They also adopt a different business model and they depend more on the annual subscription.
+\\
+In our case, we build the system unit or CMD and sell it one time with a maintenance subscription, which is so much cheaper than selling annual subscription used by other companies.
