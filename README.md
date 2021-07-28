@@ -10,9 +10,12 @@ Supports video/audio streaming and messaging with unicast, multicast and broadca
 <!--ts-->
 * [ Problem Statement. ](#problem-statement)
 * [ Motivation. ](#motivation)
-* [ Demo. ](#demo)
 * [ System Architecture. ](#system-arch)
 * [ Development. ](#development)
+* [ Application Layer. ](#app-layer)
+  * [Command Center Client. ](#cmd-app)
+  * [Unit Client. ](#unit-app)
+  * [ Demo. ](#demo)
 * [ Developers. ](#developers)
 <!--te-->
 
@@ -28,24 +31,6 @@ method to collect real time data and analyze it to have a competitive advantage 
 Mobile ad-hoc networks can be formed on the go, without any infrastructure. They promise more
 flexibility and reliability than manual radio broadcasting. We are interested in building such complex
 distributed systems.
-
-## Demo
-<a name="demo"></a>
-
-### English Demo Video
-<div align="center">
-  <a href="https://youtu.be/591PVS4rE8Y">
-    <img src="https://img.youtube.com/vi/591PVS4rE8Y/0.jpg" alt="Nabd Showcase" width="560" height="315">
-  </a>
-</div>
-
-### Arabic Demo Video
-
-<div align="center">
-  <a href="https://youtu.be/aT0k4FVapXM">
-    <img src="https://img.youtube.com/vi/aT0k4FVapXM/0.jpg" alt="Nabd Showcase" width="560" height="315">
-  </a>
-</div>
 
 ## System Architecture 
 <a name="system-arch"></a>
@@ -122,6 +107,33 @@ sudo python3 -m pip install simple-websocket-server numpy
 ```
 $ sudo apt install -y libgconf-2-4
 ```
+
+# Application Layer
+<a name="app-layer"></a>
+
+## Command Center Client
+<a name="cmd-app"></a>
+
+## Unit Client
+<a name="cmd-app"></a>
+
+## Demo
+<a name="demo"></a>
+
+### English Demo Video
+<div align="center">
+  <a href="https://youtu.be/591PVS4rE8Y">
+    <img src="https://img.youtube.com/vi/591PVS4rE8Y/0.jpg" alt="Nabd Showcase" width="560" height="315">
+  </a>
+</div>
+
+### Arabic Demo Video
+
+<div align="center">
+  <a href="https://youtu.be/aT0k4FVapXM">
+    <img src="https://img.youtube.com/vi/aT0k4FVapXM/0.jpg" alt="Nabd Showcase" width="560" height="315">
+  </a>
+</div>
 
 # :copyright: Developers
 <a name="developers"></a>
