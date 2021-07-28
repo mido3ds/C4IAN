@@ -6,7 +6,7 @@ Build a network on the go for tactical teams in war and emergency situations.
 
 Supports video/audio streaming and messaging with unicast, multicast and broadcast cababilities.
 
-# Table Of Contents
+## 📝 Table of Content
 <!--ts-->
 * [ Problem Statement. ](#problem-statement)
 * [ Motivation. ](#motivation)
@@ -18,7 +18,11 @@ Supports video/audio streaming and messaging with unicast, multicast and broadca
   * [Emulation Map. ](#emulation-map)
   * [Log Visualizer. ](#log-visualizer)
   * [ Demo. ](#demo)
+* [Book](/docs/pdf/)[ (pdf) ](./docs/pdf/book.pdf)
+* [Presentation](/docs/presentations/)
 * [ Developers. ](#developers)
+
+
 <!--te-->
 
 
