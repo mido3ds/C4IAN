@@ -35,6 +35,11 @@ distributed systems.
 ## System Architecture 
 <a name="system-arch"></a>
 ![System Architecture](./docs/figures/system.png)
+![User Clients](./docs/figures/user-clients.png)
+<img src="./docs/figures/zhls-modules.png" alt="zhls modules" width="1000px"/>
+<img src="./docs/figures/ODMRP-Modules.png" alt="odrmp modules" width="1000px"/>
+
+
 
 <a name="development"></a>
 # Development
